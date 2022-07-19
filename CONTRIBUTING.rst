@@ -7,7 +7,6 @@
 .. _Sphinx: https://www.sphinx-doc.org/en/master/
 .. _readthedocs: https://readthedocs.org/
 .. _me: https://github.com/bckohan
-.. _npm: https://docs.npmjs.com/downloading-and-installing-node-js-and-npm
 
 Contributing
 ############
@@ -26,7 +25,7 @@ contact me_.
 Installation
 ------------
 
-`enum-properties` uses Poetry_ for environment, package and dependency
+`django-enum` uses Poetry_ for environment, package and dependency
 management. Poetry_ greatly simplifies environment bootstrapping. Once it's
 installed:
 
@@ -37,7 +36,7 @@ installed:
 Documentation
 -------------
 
-`enum-properties` documentation is generated using Sphinx_ with the
+`django-enum` documentation is generated using Sphinx_ with the
 readthedocs_ theme. Any new feature PRs must provide updated documentation for
 the features added. To build the docs run:
 
@@ -50,7 +49,7 @@ the features added. To build the docs run:
 Static Analysis
 ---------------
 
-`enum-properties` uses Pylint_ for python linting. Header imports are also
+`django-enum` uses Pylint_ for python linting. Header imports are also
 standardized using isort_. Static type checking is not done because the code
 simply relies too heavily on metaprogramming for it to be useful. Before any
 PR is accepted the following must be run, and static analysis tools should not
@@ -59,8 +58,8 @@ justified is acceptable:
 
 .. code-block::
 
-    poetry run isort enum_properties
-    poetry run pylint enum_properties
+    poetry run isort django_enum
+    poetry run pylint django_enum
     poetry run doc8 -q doc
     poetry check
     poetry run pip check
@@ -71,8 +70,8 @@ justified is acceptable:
 Running Tests
 -------------
 
-`enum-properties` is setup to use pytest_ to run unit tests. All the tests are
-housed in enum_properties/tests/tests.py. Before a PR is accepted, all tests
+`django-enum` is setup to use pytest_ to run unit tests. All the tests are
+housed in django_enum/tests/tests.py. Before a PR is accepted, all tests
 must be passing and the code coverage must be at 100%. A small number of
 exempted error handling branches are acceptable.
 
@@ -88,11 +87,11 @@ To run a single test, or group of tests in a class:
 
     poetry run pytest <path_to_tests_file>::ClassName::FunctionName
 
-For instance to run all tests in TestEnums, and then just the
+For instance to run all tests in TestDjangoEnums, and then just the
 test_properties_and_symmetry test you would do:
 
 .. code-block::
 
-    poetry run pytest enum_properties/tests/tests.py::TestEnums
-    poetry run pytest enum_properties/tests/tests.py::TestEnums::test_properties_and_symmetry
+    poetry run pytest django_enum/tests/tests.py::TestDjangoEnums
+    poetry run pytest django_enum/tests/tests.py::TestDjangoEnums::test_properties_and_symmetry
 

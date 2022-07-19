@@ -22,73 +22,116 @@
 .. |Test Status| image:: https://github.com/bckohan/django-enum/workflows/test/badge.svg
    :target: https://github.com/bckohan/django-enum/actions
 
+
+.. _Django: https://www.djangoproject.com/
+.. _GitHub: https://github.com/bckohan/django-enum
+.. _PyPI: https://pypi.python.org/pypi/django-enum
+.. _Enum: https://docs.python.org/3/library/enum.html#enum.Enum
+.. _ValueError: https://docs.python.org/3/library/exceptions.html#ValueError
+.. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
+
+
 Django Enum
 ###########
 
-Add properties to Python enumeration values with a simple declarative syntax.
-`Enum Properties <https://django-enum.readthedocs.io/en/latest/>`_ is a
-lightweight extension to
-`Python's Enum class <https://docs.python.org/3/library/enum.html>`_. Example:
+Full and natural Django_ support for Python Enum_ fields.
+
+`django-enum <https://django-enum.readthedocs.io/en/latest/>`_ provides a new
+model field type, ``EnumField``, that resolves the correct native Django_ field
+type for the given enumeration based on its value type and range. For example,
+``IntegerChoices`` that contain values between 0 and 32767 become
+`PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
 
 .. code:: python
 
-    from enum_properties import EnumProperties, p
-    from enum import auto
+    from django.db import models
+    from django_enum import EnumField
 
-    class Color(EnumProperties, p('rgb'), p('hex')):
+    class MyModel(models.Model):
 
-        # name   value      rgb       hex
-        RED    = auto(), (1, 0, 0), 'ff0000'
-        GREEN  = auto(), (0, 1, 0), '00ff00'
-        BLUE   = auto(), (0, 0, 1), '0000ff'
+        class TextEnum(models.TextChoices):
 
-    # the named p() values in the Enum's inheritance become properties on
-    # each value, matching the order in which they are specified
+            VALUE0 = 'V0', 'Value 0'
+            VALUE1 = 'V1', 'Value 1'
+            VALUE2 = 'V2', 'Value 2'
 
-    Color.RED.rgb   == (1, 0, 0)
-    Color.GREEN.rgb == (0, 1, 0)
-    Color.BLUE.rgb  == (0, 0, 1)
+        class IntEnum(models.IntegerChoices):
 
-    Color.RED.hex   == 'ff0000'
-    Color.GREEN.hex == '00ff00'
-    Color.BLUE.hex  == '0000ff'
+            ONE   = 1, 'One'
+            TWO   = 2, 'Two',
+            THREE = 3, 'Three'
 
-Properties may also be symmetrically mapped to enumeration values, using
-s() values:
+        # this is equivalent to:
+        #  CharField(max_length=2, choices=TextEnum.choices, null=True, blank=True)
+        txt_enum = EnumField(TextEnum, null=True, blank=True)
+
+        # this is equivalent to
+        #  PositiveSmallIntegerField(choices=IntEnum.choices)
+        int_enum = EnumField(IntEnum)
+
+
+EnumField is more than just an alias. The fields are now assignable and
+accessible as their enumeration type rather than by-value:
 
 .. code:: python
 
-    from enum_properties import EnumProperties, s
-    from enum import auto
+    instance = MyModel.objects.create(
+        txt_enum=TextEnum.VALUE1,
+        int_enum=3  # by-value assignment also works
+    )
 
-    class Color(EnumProperties, s('rgb'), s('hex', case_fold=True)):
+    instance.txt_enum == TextEnum('V1')
+    instance.txt_enum.label == 'Value 1'
 
-        RED    = auto(), (1, 0, 0), 'ff0000'
-        GREEN  = auto(), (0, 1, 0), '00ff00'
-        BLUE   = auto(), (0, 0, 1), '0000ff'
+    instance.int_enum == IntEnum['THREE']
+    instance.int_enum.value == 3
 
-    # any named s() values in the Enum's inheritance become properties on
-    # each value, and the enumeration value may be instantiated from the
-    # property's value
 
-    Color((1, 0, 0)) == Color.RED
-    Color((0, 1, 0)) == Color.GREEN
-    Color((0, 0, 1)) == Color.BLUE
+`django-enum <https://django-enum.readthedocs.io/en/latest/>`_ also provides
+``IntegerChoices`` and ``TextChoices`` types that extend from
+`enum-properties <https://pypi.org/project/enum-properties/>`_ which makes
+possible rich enumeration fields.
 
-    Color('ff0000') == Color.RED
-    Color('FF0000') == Color.RED  # case_fold makes mapping case insensitive
-    Color('00ff00') == Color.GREEN
-    Color('00FF00') == Color.GREEN
-    Color('0000ff') == Color.BLUE
-    Color('0000FF') == Color.BLUE
+.. code:: python
 
-    Color.RED.hex == 'ff0000'
+    from enum_properties import s
+    from django_enum import TextChoices  # use instead of django's TextChoices
+    from django.db import models
+
+    class MyModel(models.Model):
+
+        class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
+
+            # name   value   label       rgb       hex
+            RED     = 'R',   'Red',   (1, 0, 0), 'ff0000'
+            GREEN   = 'G',   'Green', (0, 1, 0), '00ff00'
+            BLUE    = 'B',   'Blue',  (0, 0, 1), '0000ff'
+
+            # any named s() values in the Enum's inheritance become properties on
+            # each value, and the enumeration value may be instantiated from the
+            # property's value
+
+        color = EnumField(Color)
+
+    instance = MyModel.objects.create(color=Color('FF0000'))
+    instance.color == Color('Red') == Color('R') == Color((1, 0, 0))
+
+    # save back by any symmetric value
+    instance.color = 'FF0000'
+    instance.save()
+    instance.color.hex == 'ff0000'
+
+
+.. note::
+    Consider using
+    `django-render-static <https://pypi.org/project/django-render-static/>`_
+    to make your enumerations DRY_ across the full stack!
 
 Please report bugs and discuss features on the
 `issues page <https://github.com/bckohan/django-enum/issues>`_.
 
-`Contributions <https://github.com/bckohan/django-enum/blob/main/CONTRIBUTING.rst>`_ are
-encouraged!
+`Contributions <https://github.com/bckohan/django-enum/blob/main/CONTRIBUTING.rst>`_
+are encouraged!
 
 `Full documentation at read the docs. <https://django-enum.readthedocs.io/en/latest/>`_
 
@@ -101,6 +144,6 @@ Installation
 
        pip install django-enum
 
+.. note::
 
-.. _GitHub: http://github.com/bckohan/django-enum
-.. _PyPI: http://pypi.python.org/pypi/django-enum
+    ``django-enum`` *does not* need to be added to ``INSTALLED_APPS``.
