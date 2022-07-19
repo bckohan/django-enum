@@ -27,6 +27,7 @@
 .. _GitHub: https://github.com/bckohan/django-enum
 .. _PyPI: https://pypi.python.org/pypi/django-enum
 .. _Enum: https://docs.python.org/3/library/enum.html#enum.Enum
+.. _enumerations: https://docs.python.org/3/library/enum.html#enum.Enum
 .. _ValueError: https://docs.python.org/3/library/exceptions.html#ValueError
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 
@@ -34,7 +35,7 @@
 Django Enum
 ###########
 
-Full and natural Django_ support for Python Enum_ fields.
+Full and natural support for enumerations_ as Django model fields.
 
 `django-enum <https://django-enum.readthedocs.io/en/latest/>`_ provides a new
 model field type, ``EnumField``, that resolves the correct native Django_ field
@@ -70,7 +71,7 @@ type for the given enumeration based on its value type and range. For example,
         int_enum = EnumField(IntEnum)
 
 
-EnumField is more than just an alias. The fields are now assignable and
+``EnumField`` is more than just an alias. The fields are now assignable and
 accessible as their enumeration type rather than by-value:
 
 .. code:: python
@@ -90,7 +91,7 @@ accessible as their enumeration type rather than by-value:
 `django-enum <https://django-enum.readthedocs.io/en/latest/>`_ also provides
 ``IntegerChoices`` and ``TextChoices`` types that extend from
 `enum-properties <https://pypi.org/project/enum-properties/>`_ which makes
-possible rich enumeration fields.
+possible very rich enumeration fields.
 
 .. code:: python
 
