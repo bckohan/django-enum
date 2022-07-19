@@ -123,6 +123,7 @@ possible rich enumeration fields.
 
 
 .. note::
+
     Consider using
     `django-render-static <https://pypi.org/project/django-render-static/>`_
     to make your enumerations DRY_ across the full stack!
