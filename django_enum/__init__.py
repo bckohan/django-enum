@@ -8,22 +8,22 @@ r"""
 
 *******************************************************************************
 """
+from django_enum.choices import (
+    DjangoEnumPropertiesMeta,
+    FloatChoices,
+    IntegerChoices,
+    TextChoices,
+)
 from django_enum.fields import (
+    EnumBigIntegerField,
+    EnumCharField,
     EnumField,
     EnumFloatField,
-    EnumCharField,
-    EnumSmallIntegerField,
     EnumIntegerField,
-    EnumBigIntegerField,
-    EnumPositiveSmallIntegerField,
+    EnumPositiveBigIntegerField,
     EnumPositiveIntegerField,
-    EnumPositiveBigIntegerField
-)
-from django_enum.choices import (
-    TextChoices,
-    IntegerChoices,
-    FloatChoices,
-    DjangoEnumPropertiesMeta
+    EnumPositiveSmallIntegerField,
+    EnumSmallIntegerField,
 )
 from django_enum.forms import EnumChoiceField
 

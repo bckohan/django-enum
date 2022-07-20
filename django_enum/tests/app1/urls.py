@@ -4,10 +4,10 @@ from django_enum.tests.app1.views import (
     EnumTesterCreateView,
     EnumTesterDeleteView,
     EnumTesterDetailView,
+    EnumTesterFilterViewSet,
+    EnumTesterFormView,
     EnumTesterListView,
     EnumTesterUpdateView,
-    EnumTesterFilterViewSet,
-    EnumTesterFormView
 )
 from django_filters.views import FilterView
 

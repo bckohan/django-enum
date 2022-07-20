@@ -1,21 +1,21 @@
+from django.forms import ModelForm
 from django.urls import reverse_lazy
 from django.views.generic import DetailView, ListView
-from django.forms import ModelForm
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django_enum.filters import FilterSet as EnumFilterSet
 from django_enum import EnumChoiceField
-from django_filters.views import FilterView
-from django_enum.tests.app1.models import EnumTester
+from django_enum.filters import FilterSet as EnumFilterSet
 from django_enum.tests.app1.enums import (
-    TextEnum,
+    BigIntEnum,
+    BigPosIntEnum,
     Constants,
-    SmallPosIntEnum,
-    SmallIntEnum,
     IntEnum,
     PosIntEnum,
-    BigPosIntEnum,
-    BigIntEnum
+    SmallIntEnum,
+    SmallPosIntEnum,
+    TextEnum,
 )
+from django_enum.tests.app1.models import EnumTester
+from django_filters.views import FilterView
 
 
 class EnumTesterDetailView(DetailView):

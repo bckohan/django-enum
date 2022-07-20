@@ -3,46 +3,78 @@ Support for symmetrical property enumeration types derived from Django choice
 types. These choices types are drop in replacements for the Django
 IntegerChoices and TextChoices.
 """
-from enum_properties import (
-    SymmetricMixin,
-    EnumPropertiesMeta
-)
 from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
 
-
-class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesMeta):
-    """Derive """
-    pass
+try:
+    from enum_properties import EnumPropertiesMeta, SymmetricMixin
 
 
-class DjangoSymmetricMixin(SymmetricMixin):
-    _symmetric_builtins_ = ['name', 'label']
+    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesMeta):
+        """
+        A composite meta class that combines Django's Choices metaclass with
+        enum-properties metaclass. This metaclass will add Django's expected
+        choices attribute and label properties to enumerations and
+        enum-properties' generic property support.
+        """
 
 
-class TextChoices(
-    DjangoSymmetricMixin,
-    DjangoTextChoices,
-    metaclass=DjangoEnumPropertiesMeta
-):
-    pass
+    class DjangoSymmetricMixin(SymmetricMixin):
+        """
+        An enumeration mixin that makes Django's Choices type label field
+        symmetric.
+        """
+        _symmetric_builtins_ = ['name', 'label']
 
 
-class IntegerChoices(
-    DjangoSymmetricMixin,
-    DjangoIntegerChoices,
-    metaclass=DjangoEnumPropertiesMeta
-):
-    pass
+    class TextChoices(
+        DjangoSymmetricMixin,
+        DjangoTextChoices,
+        metaclass=DjangoEnumPropertiesMeta
+    ):
+        """
+        A character enumeration type that extends Django's TextChoices and
+        accepts enum-properties property lists.
+        """
 
 
-class FloatChoices(
-    DjangoSymmetricMixin,
-    float,
-    Choices,
-    metaclass=DjangoEnumPropertiesMeta
-):
-    pass
+    class IntegerChoices(
+        DjangoSymmetricMixin,
+        DjangoIntegerChoices,
+        metaclass=DjangoEnumPropertiesMeta
+    ):
+        """
+        An integer enumeration type that extends Django's IntegerChoices and
+        accepts enum-properties property lists.
+        """
 
+
+    class FloatChoices(
+        DjangoSymmetricMixin,
+        float,
+        Choices,
+        metaclass=DjangoEnumPropertiesMeta
+    ):
+        """
+        A floating point enumeration type that accepts enum-properties
+        property lists.
+        """
+
+except (ImportError, ModuleNotFoundError):
+
+    class MissingEnumProperties:
+        """Throw error if choice types are used without enum-properties"""
+
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                f'{self.__class__.__name__} requires enum-properties to be '
+                f'installed.'
+            )
+
+    DjangoEnumPropertiesMeta = MissingEnumProperties
+    DjangoSymmetricMixin = MissingEnumProperties
+    TextChoices = MissingEnumProperties
+    IntegerChoices = MissingEnumProperties
+    FloatChoices = MissingEnumProperties

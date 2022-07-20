@@ -7,7 +7,6 @@ from django.db import transaction
 from django.test import Client, TestCase
 from django.urls import reverse
 from django_enum import TextChoices
-from enum_properties import s
 from django_enum.tests.app1.enums import (
     BigIntEnum,
     BigPosIntEnum,
@@ -19,7 +18,8 @@ from django_enum.tests.app1.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
-from django_enum.tests.app1.models import EnumTester
+from django_enum.tests.app1.models import EnumTester, MyModel
+from enum_properties import s
 
 APP1_DIR = Path(__file__).parent / 'app1'  # this dir does not exist and must be cleaned up
 
@@ -737,3 +737,32 @@ class TestRequests(TestCase):
 
                     if not field.null and not field.blank:
                         self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
+
+
+class TestExamples(TestCase):
+
+    def test_readme(self):
+        instance = MyModel.objects.create(
+            txt_enum=MyModel.TextEnum.VALUE1,
+            int_enum=3,  # by-value assignment also works
+            color=MyModel.Color('FF0000')
+        )
+
+        self.assertEqual(instance.txt_enum, MyModel.TextEnum('V1'))
+        self.assertEqual(instance.txt_enum.label, 'Value 1')
+
+        self.assertEqual(instance.int_enum, MyModel.IntEnum['THREE'])
+
+        instance.full_clean()
+        self.assertEqual(instance.int_enum.value, 3)
+
+        self.assertEqual(instance.color, MyModel.Color('Red'))
+        self.assertEqual(instance.color, MyModel.Color('R'))
+        self.assertEqual(instance.color, MyModel.Color((1, 0, 0)))
+
+        # save back by any symmetric value
+        instance.color = 'FF0000'
+        instance.full_clean()
+        instance.save()
+
+        self.assertEqual(instance.color.hex, 'ff0000')

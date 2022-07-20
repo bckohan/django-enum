@@ -1,7 +1,17 @@
 from django.db import models
 from django.urls import reverse
-from django_enum import EnumField
-from django_enum.tests.app1.enums import *
+from django_enum import EnumField, IntegerChoices, TextChoices
+from django_enum.tests.app1.enums import (
+    BigIntEnum,
+    BigPosIntEnum,
+    Constants,
+    IntEnum,
+    PosIntEnum,
+    SmallIntEnum,
+    SmallPosIntEnum,
+    TextEnum,
+)
+from enum_properties import s
 
 
 class EnumTester(models.Model):
@@ -60,3 +70,31 @@ class EnumTester(models.Model):
 
     class Meta:
         ordering = ('id',)
+
+
+class MyModel(models.Model):
+
+    class TextEnum(models.TextChoices):
+
+        VALUE0 = 'V0', 'Value 0'
+        VALUE1 = 'V1', 'Value 1'
+        VALUE2 = 'V2', 'Value 2'
+
+    class IntEnum(models.IntegerChoices):
+
+        ONE   = 1, 'One'
+        TWO   = 2, 'Two',
+        THREE = 3, 'Three'
+
+    class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
+        # name   value   label       rgb       hex
+        RED = 'R', 'Red', (1, 0, 0), 'ff0000'
+        GREEN = 'G', 'Green', (0, 1, 0), '00ff00'
+        BLUE = 'B', 'Blue', (0, 0, 1), '0000ff'
+
+    txt_enum = EnumField(TextEnum, null=True, blank=True)
+    int_enum = EnumField(IntEnum)
+    color = EnumField(Color)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)

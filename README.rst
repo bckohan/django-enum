@@ -71,20 +71,21 @@ type for the given enumeration based on its value type and range. For example,
         int_enum = EnumField(IntEnum)
 
 
-``EnumField`` is more than just an alias. The fields are now assignable and
-accessible as their enumeration type rather than by-value:
+``EnumField`` *is more than just an alias. The fields are now assignable and
+accessible as their enumeration type rather than by-value:*
 
 .. code:: python
 
     instance = MyModel.objects.create(
-        txt_enum=TextEnum.VALUE1,
+        txt_enum=MyModel.TextEnum.VALUE1,
         int_enum=3  # by-value assignment also works
     )
+    instance.refresh_from_db()
 
-    instance.txt_enum == TextEnum('V1')
+    instance.txt_enum == MyModel.TextEnum('V1')
     instance.txt_enum.label == 'Value 1'
 
-    instance.int_enum == IntEnum['THREE']
+    instance.int_enum == MyModel.IntEnum['THREE']
     instance.int_enum.value == 3
 
 
@@ -96,7 +97,7 @@ possible very rich enumeration fields.
 .. code:: python
 
     from enum_properties import s
-    from django_enum import TextChoices  # use instead of django's TextChoices
+    from django_enum import TextChoices  # use instead of Django's TextChoices
     from django.db import models
 
     class MyModel(models.Model):
@@ -114,13 +115,14 @@ possible very rich enumeration fields.
 
         color = EnumField(Color)
 
-    instance = MyModel.objects.create(color=Color('FF0000'))
-    instance.color == Color('Red') == Color('R') == Color((1, 0, 0))
+    instance = MyModel.objects.create(color=MyModel.Color('FF0000'))
+    instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
 
     # save back by any symmetric value
     instance.color = 'FF0000'
-    instance.save()
+    instance.full_clean()
     instance.color.hex == 'ff0000'
+    instance.save()
 
 
 .. note::
