@@ -1,7 +1,10 @@
 from django.db import models
 from django.urls import reverse
+from enum import auto
 from django_enum import EnumField, IntegerChoices, TextChoices
 from django_enum.tests.app1.enums import (
+    DJIntEnum,
+    DJTextEnum,
     BigIntEnum,
     BigPosIntEnum,
     Constants,
@@ -65,6 +68,9 @@ class EnumTester(models.Model):
     )
     ################################################
 
+    dj_int_enum = EnumField(DJIntEnum, default=DJIntEnum.ONE.value)
+    dj_text_enum = EnumField(DJTextEnum, default=DJTextEnum.A.value)
+
     def get_absolute_url(self):
         return reverse('django_enum_tests_app1:enum-detail', kwargs={'pk': self.pk})
 
@@ -96,5 +102,3 @@ class MyModel(models.Model):
     int_enum = EnumField(IntEnum)
     color = EnumField(Color)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)

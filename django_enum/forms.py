@@ -36,3 +36,15 @@ class EnumChoiceField(ChoiceField):
 
     def clean(self, value):
         return super().clean(self._coerce(value))
+
+    # def prepare_value(self, value):
+    #     return value
+    #
+    # def to_python(self, value):
+    #     return value
+    #
+    # def validate(self, value):
+    #     if value in self.empty_values and self.required:
+    #         raise ValidationError(
+    #           self.error_messages['required'], code='required'
+    #         )

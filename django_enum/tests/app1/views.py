@@ -13,6 +13,8 @@ from django_enum.tests.app1.enums import (
     SmallIntEnum,
     SmallPosIntEnum,
     TextEnum,
+    DJIntEnum,
+    DJTextEnum
 )
 from django_enum.tests.app1.models import EnumTester
 from django_filters.views import FilterView
@@ -47,6 +49,8 @@ class EnumTesterFormView(UpdateView):
         big_int = EnumChoiceField(BigIntEnum)
         constant = EnumChoiceField(Constants)
         text = EnumChoiceField(TextEnum)
+        dj_int_enum = EnumChoiceField(DJIntEnum)
+        dj_text_enum = EnumChoiceField(DJTextEnum)
 
         class Meta:
             model = EnumTester

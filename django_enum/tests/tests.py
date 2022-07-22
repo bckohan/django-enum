@@ -17,11 +17,96 @@ from django_enum.tests.app1.enums import (
     SmallIntEnum,
     SmallPosIntEnum,
     TextEnum,
+    DJIntEnum,
+    DJTextEnum
 )
 from django_enum.tests.app1.models import EnumTester, MyModel
 from enum_properties import s
+from django.test import TestCase
+from django.core.management import call_command
+import os
+from django_test_migrations.constants import MIGRATION_TEST_MARKER
+from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
-APP1_DIR = Path(__file__).parent / 'app1'  # this dir does not exist and must be cleaned up
+
+def set_models(version):
+    from importlib import reload
+    from django.conf import settings
+    from shutil import copyfile
+    from .edit_tests import models
+    import warnings
+    copyfile(
+        settings.TEST_EDIT_DIR / f'_{version}.py',
+        settings.TEST_MIGRATION_DIR.parent / 'models.py'
+    )
+    with warnings.catch_warnings():
+        warnings.filterwarnings('ignore')
+        reload(models)
+
+
+APP1_DIR = Path(__file__).parent / 'app1'
+
+
+class TestChoices(TestCase):
+    """Test that Django's choices types work as expected"""
+
+    def setUp(self):
+        pass
+
+    def test_integer_choices(self):
+
+        EnumTester.objects.create(dj_int_enum=DJIntEnum.ONE)
+        EnumTester.objects.create(dj_int_enum=DJIntEnum.TWO)
+        EnumTester.objects.create(dj_int_enum=DJIntEnum.THREE)
+
+        for obj in EnumTester.objects.all():
+            self.assertIsInstance(obj.dj_int_enum, DJIntEnum)
+
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum='1').count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=1).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum.ONE).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum(1)).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum['ONE']).count(), 1)
+
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum='2').count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=2).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum.TWO).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum(2)).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum['TWO']).count(), 1)
+
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum='3').count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=3).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum.THREE).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum(3)).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_int_enum=DJIntEnum['THREE']).count(), 1)
+
+        EnumTester.objects.all().delete()
+
+    def test_text_choices(self):
+
+        EnumTester.objects.create(dj_text_enum=DJTextEnum.A)
+        EnumTester.objects.create(dj_text_enum=DJTextEnum.B)
+        EnumTester.objects.create(dj_text_enum=DJTextEnum.C)
+
+        for obj in EnumTester.objects.all():
+            self.assertIsInstance(obj.dj_text_enum, DJTextEnum)
+
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum='A').count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum.A).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum('A')).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum['A']).count(), 1)
+
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum='B').count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum.B).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum('B')).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum['B']).count(), 1)
+
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum='C').count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum.C).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum('C')).count(), 1)
+        self.assertEqual(EnumTester.objects.filter(dj_text_enum=DJTextEnum['C']).count(), 1)
+
+        EnumTester.objects.all().delete()
 
 
 class TestDjangoEnums(TestCase):
@@ -619,11 +704,14 @@ class TestRequests(TestCase):
                 'big_pos_int': BigPosIntEnum.VAL3,
                 'big_int': BigIntEnum.VAL2,
                 'constant': Constants.GOLDEN_RATIO,
-                'text': TextEnum.VALUE2
+                'text': TextEnum.VALUE2,
+                'dj_int_enum': DJIntEnum.TWO,
+                'dj_text_enum': DJTextEnum.C
             },
             follow=True
         )
         soup = Soup(response.content, features='html.parser')
+
         added = soup.find_all('div', class_='enum')[-1]
         self.assertEqual(
             SmallPosIntEnum(added.find(class_="small_pos_int").find("span", class_="value").text),
@@ -656,6 +744,14 @@ class TestRequests(TestCase):
         self.assertEqual(
             TextEnum(added.find(class_="text").find("span", class_="value").text),
             TextEnum.VALUE2
+        )
+        self.assertEqual(
+            DJIntEnum(int(added.find(class_="dj_int_enum").find("span", class_="value").text)),
+            DJIntEnum.TWO
+        )
+        self.assertEqual(
+            DJTextEnum(added.find(class_="dj_text_enum").find("span", class_="value").text),
+            DJTextEnum.C
         )
         EnumTester.objects.last().delete()
 
@@ -766,3 +862,670 @@ class TestExamples(TestCase):
         instance.save()
 
         self.assertEqual(instance.color.hex, 'ff0000')
+
+    """
+    # Django breaks auto
+    def test_auto_enum(self):
+        from django_enum import IntegerChoices
+        from enum import auto
+
+        class AutoEnum(IntegerChoices):
+            ONE = auto(), 'One'
+            TWO = auto(), 'Two'
+            THREE = auto(), 'Three'
+    """
+
+
+class ResetModelsMixin:
+
+    @classmethod
+    def tearDownClass(cls):
+        from django.conf import settings
+        with open(
+                settings.TEST_MIGRATION_DIR.parent / 'models.py',
+                'w'
+        ) as models_file:
+            models_file.write('')
+
+        super().tearDownClass()
+
+
+class TestMigrations(ResetModelsMixin, TestCase):
+    """Run through migrations"""
+
+    @classmethod
+    def setUpClass(cls):
+        from django.conf import settings
+        for migration in [
+            settings.TEST_MIGRATION_DIR / '0001_initial.py',
+            settings.TEST_MIGRATION_DIR / '0002_alter_values.py',
+            settings.TEST_MIGRATION_DIR / '0003_remove_black.py',
+            settings.TEST_MIGRATION_DIR / '0004_remove_int_enum.py',
+            settings.TEST_MIGRATION_DIR / '0005_add_int_enum.py'
+        ]:
+            if os.path.exists(migration):  # pragma: no cover
+                os.remove(migration)
+
+        super().setUpClass()
+
+    def test_makemigrate_1(self):
+        from django.conf import settings
+        set_models(1)
+        self.assertFalse(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0001_initial.py')
+        )
+
+        call_command('makemigrations')
+
+        self.assertTrue(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0001_initial.py')
+        )
+
+    def test_makemigrate_2(self):
+        from django.conf import settings
+        set_models(2)
+        self.assertFalse(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0002_alter_values.py')
+        )
+
+        call_command('makemigrations', name='alter_values')
+
+        self.assertTrue(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0002_alter_values.py')
+        )
+
+    def test_makemigrate_3(self):
+        from django.conf import settings
+        set_models(3)
+        self.assertFalse(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0003_remove_black.py')
+        )
+
+        call_command('makemigrations', name='remove_black')
+
+        self.assertTrue(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0003_remove_black.py')
+        )
+
+    def test_makemigrate_4(self):
+        from django.conf import settings
+        set_models(4)
+        self.assertFalse(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0004_change_names.py')
+        )
+
+        call_command('makemigrations', name='change_names')
+
+        # should not exist!
+        self.assertFalse(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0004_change_names.py')
+        )
+
+    def test_makemigrate_5(self):
+        from django.conf import settings
+        set_models(5)
+        self.assertFalse(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0004_remove_int_enum.py')
+        )
+
+        call_command('makemigrations', name='remove_int_enum')
+
+        # should not exist!
+        self.assertTrue(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0004_remove_int_enum.py')
+        )
+
+    def test_makemigrate_6(self):
+        from django.conf import settings
+        set_models(6)
+        self.assertFalse(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0005_add_int_enum.py')
+        )
+
+        call_command('makemigrations', name='add_int_enum')
+
+        # should not exist!
+        self.assertTrue(
+            os.path.isfile(settings.TEST_MIGRATION_DIR / '0005_add_int_enum.py')
+        )
+
+
+class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
+
+    migrate_from = ('django_enum_tests_edit_tests', '0001_initial')
+    migrate_to = ('django_enum_tests_edit_tests', '0001_initial')
+
+    @classmethod
+    def setUpClass(cls):
+        set_models(1)
+        super().setUpClass()
+
+    def test_0001_initial(self):
+
+        MigrationTester = self.new_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        # Let's create a model with just a single field specified:
+        for int_enum, color in [
+            (0, 'R'),
+            (1, 'G'),
+            (2, 'B'),
+            (0, 'K'),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+        self.assertEqual(len(MigrationTester._meta.get_fields()), 3)
+        self.assertEqual(MigrationTester.objects.filter(int_enum=0).count(), 2)
+        self.assertEqual(MigrationTester.objects.filter(int_enum=1).count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(int_enum=2).count(), 1)
+
+        self.assertEqual(MigrationTester.objects.filter(color='R').count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(color='G').count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(color='B').count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(color='K').count(), 1)
+
+    def test_0001_code(self):
+        from .edit_tests.models import MigrationTester
+
+        # Let's create a model with just a single field specified:
+        for int_enum, color in [
+            (MigrationTester.IntEnum(0), MigrationTester.Color((1,0,0))),
+            (MigrationTester.IntEnum['TWO'], MigrationTester.Color('00FF00')),
+            (MigrationTester.IntEnum.THREE, MigrationTester.Color('Blue')),
+            (MigrationTester.IntEnum.ONE, MigrationTester.Color.BLACK),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+        for obj in MigrationTester.objects.all():
+            self.assertIsInstance(
+                obj.int_enum,
+                MigrationTester.IntEnum
+            )
+            self.assertIsInstance(
+                obj.color,
+                MigrationTester.Color
+            )
+
+        self.assertEqual(MigrationTester.objects.filter(
+            int_enum=MigrationTester.IntEnum.ONE).count(), 2)
+        self.assertEqual(MigrationTester.objects.filter(
+            int_enum=MigrationTester.IntEnum(1)).count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(
+            int_enum=MigrationTester.IntEnum['THREE']).count(), 1)
+
+        self.assertEqual(
+            MigrationTester.objects.filter(color=(1, 0, 0)).count(), 1)
+        self.assertEqual(
+            MigrationTester.objects.filter(color='GREEN').count(), 1)
+        self.assertEqual(
+            MigrationTester.objects.filter(color='Blue').count(), 1)
+        self.assertEqual(
+            MigrationTester.objects.filter(color='000000').count(), 1)
+
+        MigrationTester.objects.all().delete()
+
+
+class TestAlterValuesMigration(ResetModelsMixin, MigratorTestCase):
+
+    migrate_from = ('django_enum_tests_edit_tests', '0001_initial')
+    migrate_to = ('django_enum_tests_edit_tests', '0002_alter_values')
+
+    @classmethod
+    def setUpClass(cls):
+        set_models(2)
+        super().setUpClass()
+
+    def prepare(self):
+
+        MigrationTester = self.old_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        # Let's create a model with just a single field specified:
+        for int_enum, color in [
+            (0, 'R'),
+            (1, 'G'),
+            (2, 'B'),
+            (0, 'K'),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+    def test_0002_alter_values(self):
+
+        MigrationTesterOld = self.old_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+        MigrationTesterNew = self.new_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        for value in reversed(
+            MigrationTesterOld._meta.get_field('int_enum').choices
+        ):
+            for obj in MigrationTesterNew.objects.filter(int_enum=value[0]):
+                obj.int_enum = value[0] + 1
+                obj.save()
+
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=0).count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=1).count(), 2)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=2).count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=3).count(), 1)
+
+        self.assertEqual(MigrationTesterNew.objects.filter(color='R').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='G').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='B').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='K').count(), 1)
+
+    def test_0002_code(self):
+        from .edit_tests.models import MigrationTester
+
+        MigrationTester.objects.all().delete()
+
+        # Let's create a model with just a single field specified:
+        for int_enum, color in [
+            (MigrationTester.IntEnum(1), MigrationTester.Color((1, 0, 0))),
+            (MigrationTester.IntEnum['TWO'], MigrationTester.Color('00FF00')),
+            (MigrationTester.IntEnum.THREE, MigrationTester.Color('Blue')),
+            (MigrationTester.IntEnum.ONE, MigrationTester.Color.BLACK),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+        for obj in MigrationTester.objects.all():
+            self.assertIsInstance(
+                obj.int_enum,
+                MigrationTester.IntEnum
+            )
+            self.assertIsInstance(
+                obj.color,
+                MigrationTester.Color
+            )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum.ONE,
+                color=(1, 0, 0)
+            ).count(), 1)
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum.ONE,
+                color=MigrationTester.Color.BLACK
+            ).count(), 1)
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum(2),
+                color='GREEN'
+            ).count(), 1)
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=3,
+                color='Blue'
+            ).count(), 1)
+
+        MigrationTester.objects.all().delete()
+
+
+class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
+
+    migrate_from = ('django_enum_tests_edit_tests', '0002_alter_values')
+    migrate_to = ('django_enum_tests_edit_tests', '0003_remove_black')
+
+    @classmethod
+    def setUpClass(cls):
+        set_models(3)
+        super().setUpClass()
+
+    def prepare(self):
+
+        MigrationTester = self.old_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        # Let's create a model with just a single field specified:
+        for int_enum, color in [
+            (1, 'R'),
+            (2, 'G'),
+            (3, 'B'),
+            (1, 'K'),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+    def test_0003_remove_black(self):
+
+        MigrationTesterOld = self.old_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        MigrationTesterOld.objects.filter(color='K').delete()
+
+        MigrationTesterNew = self.new_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=0).count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=1).count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=2).count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=3).count(), 1)
+
+        self.assertEqual(MigrationTesterNew.objects.filter(color='R').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='G').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='B').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='K').count(), 0)
+
+    def test_0003_code(self):
+        from .edit_tests.models import MigrationTester
+
+        MigrationTester.objects.all().delete()
+
+        self.assertFalse(hasattr(MigrationTester.Color, 'BLACK'))
+
+        # Let's create a model with just a single field specified:
+        for int_enum, color in [
+            (MigrationTester.IntEnum(1), MigrationTester.Color((1, 0, 0))),
+            (MigrationTester.IntEnum['TWO'], MigrationTester.Color('00FF00')),
+            (MigrationTester.IntEnum.THREE, MigrationTester.Color('Blue'))
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+        for obj in MigrationTester.objects.all():
+            self.assertIsInstance(
+                obj.int_enum,
+                MigrationTester.IntEnum
+            )
+            self.assertIsInstance(
+                obj.color,
+                MigrationTester.Color
+            )
+
+        self.assertEqual(MigrationTester.objects.count(), 3)
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum.ONE,
+                color=(1, 0, 0)
+            ).count(), 1)
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum(2),
+                color='GREEN'
+            ).count(), 1)
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=3,
+                color='Blue'
+            ).count(), 1)
+
+        MigrationTester.objects.all().delete()
+
+    def test_rename_names_code(self):
+        # no migration was generated for this model class change
+        set_models(4)
+        from .edit_tests.models import MigrationTester
+
+        MigrationTester.objects.all().delete()
+
+        for int_enum, color in [
+            (MigrationTester.IntEnum.ONE, MigrationTester.Color.RD),
+            (MigrationTester.IntEnum(2), MigrationTester.Color('GR')),
+            (MigrationTester.IntEnum['THREE'], MigrationTester.Color('0000ff')),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+        for obj in MigrationTester.objects.all():
+            self.assertIsInstance(
+                obj.int_enum,
+                MigrationTester.IntEnum
+            )
+            self.assertIsInstance(
+                obj.color,
+                MigrationTester.Color
+            )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum(1),
+                color=MigrationTester.Color('RD')
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum.TWO,
+                color=MigrationTester.Color((0, 1, 0))
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum['THREE'],
+                color=MigrationTester.Color('Blue')
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.count(),
+            3
+        )
+
+        MigrationTester.objects.all().delete()
+
+
+class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
+
+    migrate_from = ('django_enum_tests_edit_tests', '0003_remove_black')
+    migrate_to = ('django_enum_tests_edit_tests', '0004_remove_int_enum')
+
+    @classmethod
+    def setUpClass(cls):
+        set_models(5)
+        super().setUpClass()
+
+    def prepare(self):
+
+        MigrationTester = self.old_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        # Let's create a model with just a single field specified:
+        for int_enum, color in [
+            (1, 'R'),
+            (2, 'G'),
+            (3, 'B'),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+    def test_0004_remove_int_enum(self):
+        from django.core.exceptions import FieldDoesNotExist, FieldError
+
+        MigrationTesterNew = self.new_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        self.assertRaises(
+            FieldDoesNotExist,
+            MigrationTesterNew._meta.get_field,
+            'int_num'
+        )
+        self.assertRaises(
+            FieldError,
+            MigrationTesterNew.objects.filter,
+            {'int_enum': 1}
+        )
+
+    def test_0004_code(self):
+        from .edit_tests.models import MigrationTester
+
+        MigrationTester.objects.all().delete()
+
+        for color in [
+            MigrationTester.Color.RD,
+            MigrationTester.Color('GR'),
+            MigrationTester.Color('0000ff')
+        ]:
+            MigrationTester.objects.create(color=color)
+
+        for obj in MigrationTester.objects.all():
+            self.assertFalse(hasattr(obj, 'int_enum'))
+            self.assertIsInstance(
+                obj.color,
+                MigrationTester.Color
+            )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                color=MigrationTester.Color('RD')
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                color=MigrationTester.Color((0, 1, 0))
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                color=MigrationTester.Color('Blue')
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.count(),
+            3
+        )
+
+        MigrationTester.objects.all().delete()
+
+
+class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
+
+    migrate_from = ('django_enum_tests_edit_tests', '0004_remove_int_enum')
+    migrate_to = ('django_enum_tests_edit_tests', '0005_add_int_enum')
+
+    @classmethod
+    def setUpClass(cls):
+        set_models(6)
+        super().setUpClass()
+
+    def prepare(self):
+
+        MigrationTester = self.old_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        # Let's create a model with just a single field specified:
+        for color in ['R', 'G', 'B']:
+            MigrationTester.objects.create(color=color)
+
+    def test_0005_add_int_enum(self):
+        from django.core.exceptions import FieldDoesNotExist, FieldError
+
+        MigrationTesterNew = self.new_state.apps.get_model(
+            'django_enum_tests_edit_tests',
+            'MigrationTester'
+        )
+
+        self.assertEqual(
+            MigrationTesterNew.objects.filter(int_enum__isnull=True).count(),
+            3
+        )
+
+        MigrationTesterNew.objects.filter(color='R').update(int_enum='A')
+        MigrationTesterNew.objects.filter(color='G').update(int_enum='B')
+        MigrationTesterNew.objects.filter(color='B').update(int_enum='C')
+
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=0).count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=1).count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=2).count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=3).count(), 0)
+
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum='A').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum='B').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum='C').count(), 1)
+
+        self.assertEqual(MigrationTesterNew.objects.filter(color='R').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='G').count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color='B').count(), 1)
+
+    def test_0005_code(self):
+        from .edit_tests.models import MigrationTester
+
+        MigrationTester.objects.all().delete()
+
+        for int_enum, color in [
+            (MigrationTester.IntEnum.A, MigrationTester.Color.RED),
+            (MigrationTester.IntEnum('B'), MigrationTester.Color('Green')),
+            (MigrationTester.IntEnum['C'], MigrationTester.Color('0000ff')),
+        ]:
+            MigrationTester.objects.create(int_enum=int_enum, color=color)
+
+        for obj in MigrationTester.objects.all():
+            self.assertIsInstance(
+                obj.int_enum,
+                MigrationTester.IntEnum
+            )
+            self.assertIsInstance(
+                obj.color,
+                MigrationTester.Color
+            )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum('A'),
+                color=MigrationTester.Color('Red')
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum.B,
+                color=MigrationTester.Color((0, 1, 0))
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=MigrationTester.IntEnum['C'],
+                color=MigrationTester.Color('BLUE')
+            ).count(),
+            1
+        )
+
+        self.assertEqual(
+            MigrationTester.objects.count(),
+            3
+        )
+
+        MigrationTester.objects.all().delete()
+
+
+def test_migration_test_marker_tag():
+    """Ensure ``MigratorTestCase`` sublasses are properly tagged."""
+    assert MIGRATION_TEST_MARKER in TestInitialMigration.tags
+    assert MIGRATION_TEST_MARKER in TestAlterValuesMigration.tags
+    assert MIGRATION_TEST_MARKER in TestRemoveBlackMigration.tags
+    assert MIGRATION_TEST_MARKER in TestRemoveIntEnumMigration.tags
+    assert MIGRATION_TEST_MARKER in TestAddIntEnumMigration.tags

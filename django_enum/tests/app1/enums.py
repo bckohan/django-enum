@@ -1,6 +1,24 @@
 from django.utils.translation import gettext as _
 from django_enum import FloatChoices, IntegerChoices, TextChoices
 from enum_properties import p, s
+from django.db.models import (
+    IntegerChoices as DjangoIntegerChoices,
+    TextChoices as DjangoTextChoices
+)
+
+
+class DJIntEnum(DjangoIntegerChoices):
+
+    ONE = 1, 'One'
+    TWO = 2, 'Two'
+    THREE = 3, 'Three'
+
+
+class DJTextEnum(DjangoTextChoices):
+
+    A = 'A', 'Label A'
+    B = 'B', 'Label B'
+    C = 'C', 'Label C'
 
 
 class TextEnum(TextChoices, p('version'), p('help'), s('aliases', case_fold=True)):

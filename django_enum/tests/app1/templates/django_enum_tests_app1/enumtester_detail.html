@@ -11,6 +11,8 @@
     <p class="big_int">big_int: <b><span class="value">{{ object.big_int.value }}</span></b> <b><span class="label">{{ object.big_int.label }}</span></b></p>
     <p class="constant">constant: <b><span class="value">{{ object.constant.value }}</span></b> <b><span class="label">{{ object.constant.label }}</span></b></p>
     <p class="text">text: <b><span class="value">{{ object.text.value }}</span></b> <b><span class="label">{{ object.text.label }}</span></b></p>
+    <p class="dj_int_enum">dj_int_enum: <b><span class="value">{{ object.dj_int_enum.value }}</span></b> <b><span class="label">{{ object.dj_int_enum.label }}</span></b></p>
+    <p class="dj_text_enum">dj_text_enum: <b><span class="value">{{ object.dj_text_enum.value }}</span></b> <b><span class="label">{{ object.dj_text_enum.label }}</span></b></p>
 
     <p>
     <a href="{% url 'django_enum_tests_app1:enum-update' pk=object.pk %}">Edit</a>

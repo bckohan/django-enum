@@ -127,6 +127,7 @@ Installation
    :caption: Contents:
 
    usage
+   migrations
    examples
    reference
    changelog

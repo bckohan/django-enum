@@ -42,6 +42,7 @@ MIDDLEWARE = (
 )
 
 INSTALLED_APPS = (
+    'django_enum.tests.edit_tests',
     'django_enum.tests.app1',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -62,3 +63,6 @@ STATIC_URL = '/static/'
 DEBUG = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+TEST_EDIT_DIR = Path(__file__).parent / 'edit_tests' / 'edits'
+TEST_MIGRATION_DIR = Path(__file__).parent / 'edit_tests' / 'migrations'

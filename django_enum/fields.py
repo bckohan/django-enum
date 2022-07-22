@@ -22,6 +22,8 @@ class EnumMixin:
     and convert any values to the Enumeration type in question.
 
     :param enum: The enum class
+    :param strict: If True (default) the field will throw ValueErrors if the
+        value is not coercible to a valid enumeration type.
     :param args: Any standard unnamed field arguments for the underlying
         field type.
     :param field_kwargs: Any standard named field arguments for the underlying
@@ -29,20 +31,45 @@ class EnumMixin:
     """
 
     enum = None
+    strict = True
 
-    def __init__(self, *args, enum, **kwargs):
+    def _coerce_to_value_type(self, value):
+        """Coerce the value to the enumerations value type"""
+        return type(self.enum.values[0])(value)
+
+    def __init__(self, *args, enum=None, strict=strict, **kwargs):
         self.enum = enum
-        kwargs.setdefault('choices', self.enum.choices)
+        self.strict = strict if enum else False
+        if self.enum is not None:
+            kwargs.setdefault('choices', enum.choices if enum else [])
         super().__init__(*args, **kwargs)
+
+    def _try_coerce(self, value):
+        if self.enum is not None:
+            try:
+                value = self.enum(value)
+            except (TypeError, ValueError):
+                try:
+                    value = self.enum(self._coerce_to_value_type(value))
+                except (TypeError, ValueError) as err:
+                    if self.strict:
+                        raise ValueError(
+                            f"'{value}' is not a valid {self.enum.__name__} "
+                            f"required by field {self.name}."
+                        ) from err
+        return value
 
     def deconstruct(self):
         """
-        Preserve enum class for migrations
+        Preserve enum class for migrations. Strict is omitted because
+        reconstructed fields are *always* non-strict sense enum is null.
 
         See deconstruct_
         """
         name, path, args, kwargs = super().deconstruct()
-        kwargs['enum'] = self.enum
+        if self.enum is not None:
+            kwargs['choices'] = self.enum.choices
+
         return name, path, args, kwargs
 
     def get_prep_value(self, value):
@@ -51,21 +78,11 @@ class EnumMixin:
 
         See get_prep_value_
         """
-        if value is not None:
-            if not isinstance(value, self.enum):
-                try:
-                    value = self.enum(value).value
-                except (TypeError, ValueError) as err:
-                    raise ValueError(
-                        f"Field '{self.name}' expected a "
-                        f"'{self.enum.__name__}' but got '{value}'.",
-                    ) from err
-            else:
+        if value is not None and self.enum is not None:
+            value = self._try_coerce(value)
+            if isinstance(value, self.enum):
                 value = value.value
         return super().get_prep_value(value)
-
-    # def get_db_prep_save(self, value, connection):
-    #     return self.get_db_prep_value(value, connection=connection)
 
     def get_db_prep_value(self, value, connection, prepared=False):
         """
@@ -74,16 +91,9 @@ class EnumMixin:
 
         See get_db_prep_value_
         """
-        if value is not None:
-            if not isinstance(value, self.enum):
-                try:
-                    value = self.enum(value).value
-                except (TypeError, ValueError) as err:
-                    raise ValueError(
-                        f"Field '{self.name}' expected a "
-                        f"'{self.enum.__name__}' but got '{value}'.",
-                    ) from err
-            else:
+        if value is not None and self.enum is not None:
+            value = self._try_coerce(value)
+            if isinstance(value, self.enum):
                 value = value.value
         return super().get_db_prep_value(
             value,
@@ -104,7 +114,7 @@ class EnumMixin:
         """
         if value is None:  # pragma: no cover
             return value
-        return self.enum(value)
+        return self._try_coerce(value)
 
     def to_python(self, value):
         """
@@ -117,12 +127,12 @@ class EnumMixin:
         :raises ValidationError: If the value is not mappable to a valid
             enumeration
         """
-        if isinstance(value, self.enum) or value is None:
+        if self.enum is None or isinstance(value, self.enum) or value is None:
             return value
 
         try:
-            return self.enum(value)
-        except (TypeError, ValueError) as err:
+            return self._try_coerce(value)
+        except ValueError as err:
             raise ValidationError(
                 f"'{value}' is not a valid {self.enum.__name__}."
             ) from err
@@ -160,10 +170,11 @@ class EnumCharField(EnumMixin, CharField):
     A database field supporting enumerations with character values.
     """
 
-    def __init__(self, enum, *args, **kwargs):
+    def __init__(self, *args, enum=None, **kwargs):
+        choices = kwargs.get('choices', enum.choices if enum else [])
         kwargs.setdefault(
             'max_length',
-            max([len(define.value) for define in enum])
+            max([len(choice[0]) for choice in choices])
         )
         super().__init__(*args, enum=enum, **kwargs)
 
