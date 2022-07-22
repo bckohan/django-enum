@@ -1,10 +1,8 @@
+from django.db.models import IntegerChoices as DjangoIntegerChoices
+from django.db.models import TextChoices as DjangoTextChoices
 from django.utils.translation import gettext as _
 from django_enum import FloatChoices, IntegerChoices, TextChoices
 from enum_properties import p, s
-from django.db.models import (
-    IntegerChoices as DjangoIntegerChoices,
-    TextChoices as DjangoTextChoices
-)
 
 
 class DJIntEnum(DjangoIntegerChoices):

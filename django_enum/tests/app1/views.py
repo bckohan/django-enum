@@ -8,13 +8,13 @@ from django_enum.tests.app1.enums import (
     BigIntEnum,
     BigPosIntEnum,
     Constants,
+    DJIntEnum,
+    DJTextEnum,
     IntEnum,
     PosIntEnum,
     SmallIntEnum,
     SmallPosIntEnum,
     TextEnum,
-    DJIntEnum,
-    DJTextEnum
 )
 from django_enum.tests.app1.models import EnumTester
 from django_filters.views import FilterView

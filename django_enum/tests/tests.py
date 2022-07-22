@@ -1,8 +1,10 @@
+import os
 from pathlib import Path
 
 from bs4 import BeautifulSoup as Soup
 from django.core import serializers
 from django.core.exceptions import ValidationError
+from django.core.management import call_command
 from django.db import transaction
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -11,30 +13,29 @@ from django_enum.tests.app1.enums import (
     BigIntEnum,
     BigPosIntEnum,
     Constants,
+    DJIntEnum,
+    DJTextEnum,
     IntEnum,
     PosIntEnum,
     PrecedenceTest,
     SmallIntEnum,
     SmallPosIntEnum,
     TextEnum,
-    DJIntEnum,
-    DJTextEnum
 )
 from django_enum.tests.app1.models import EnumTester, MyModel
-from enum_properties import s
-from django.test import TestCase
-from django.core.management import call_command
-import os
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
+from enum_properties import s
 
 
 def set_models(version):
-    from importlib import reload
-    from django.conf import settings
-    from shutil import copyfile
-    from .edit_tests import models
     import warnings
+    from importlib import reload
+    from shutil import copyfile
+
+    from django.conf import settings
+
+    from .edit_tests import models
     copyfile(
         settings.TEST_EDIT_DIR / f'_{version}.py',
         settings.TEST_MIGRATION_DIR.parent / 'models.py'

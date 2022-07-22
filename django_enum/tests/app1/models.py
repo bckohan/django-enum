@@ -1,13 +1,14 @@
+from enum import auto
+
 from django.db import models
 from django.urls import reverse
-from enum import auto
 from django_enum import EnumField, IntegerChoices, TextChoices
 from django_enum.tests.app1.enums import (
-    DJIntEnum,
-    DJTextEnum,
     BigIntEnum,
     BigPosIntEnum,
     Constants,
+    DJIntEnum,
+    DJTextEnum,
     IntEnum,
     PosIntEnum,
     SmallIntEnum,

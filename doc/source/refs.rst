@@ -10,3 +10,4 @@
 .. _to_python: https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.Field.to_python
 .. _get_prep_value: https://docs.djangoproject.com/en/stable/ref/models/fields/#django.db.models.Field.get_prep_value
 .. _full_clean: https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean
+.. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself

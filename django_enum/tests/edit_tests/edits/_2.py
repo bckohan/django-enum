@@ -1,5 +1,5 @@
 from django.db import models
-from django_enum import TextChoices, EnumField
+from django_enum import EnumField, TextChoices
 from enum_properties import s
 
 
