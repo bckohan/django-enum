@@ -43,6 +43,7 @@ try:
         """
         @classmethod
         def filter_for_lookup(cls, field, lookup_type):
+            """For EnumFields use the EnumFilter class by default"""
             if isinstance(field, EnumMixin) and getattr(field, 'enum', None):
                 return EnumFilter, {'enum': field.enum}
             return super().filter_for_lookup(field, lookup_type)
