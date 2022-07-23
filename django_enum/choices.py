@@ -73,8 +73,39 @@ except (ImportError, ModuleNotFoundError):
                 f'installed.'
             )
 
-    DjangoEnumPropertiesMeta = MissingEnumProperties
     DjangoSymmetricMixin = MissingEnumProperties
-    TextChoices = MissingEnumProperties
-    IntegerChoices = MissingEnumProperties
-    FloatChoices = MissingEnumProperties
+
+
+    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesMeta):
+        """
+        Throw error if metaclass is used without enum-properties
+
+        Needs to be strict subclass of same metaclass as Enum to make it to
+        the ImportError.
+        """
+        def __init__(self, *args, **kwargs):
+            raise ImportError(
+                f'{self.__class__.__name__} requires enum-properties to be '
+                f'installed.'
+            )
+
+    class TextChoices(
+        DjangoSymmetricMixin,
+        str,
+        Choices
+    ):
+        """Raises ImportError on class definition"""
+
+    class IntegerChoices(
+        DjangoSymmetricMixin,
+        int,
+        Choices
+    ):
+        """Raises ImportError on class definition"""
+
+    class FloatChoices(
+        DjangoSymmetricMixin,
+        float,
+        Choices
+    ):
+        """Raises ImportError on class definition"""
