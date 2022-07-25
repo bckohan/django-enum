@@ -22,24 +22,31 @@ from django_enum.tests.app1.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
-from django_enum.tests.app1.models import EnumTester, MyModel
+from django_enum.tests.app1.models import (
+    EnumTester,
+    MyModel,
+    PerfCompare,
+    SingleFieldPerf,
+    SingleEnumPerf
+)
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 from enum_properties import s
+from time import perf_counter
 
 
 def set_models(version):
     import warnings
     from importlib import reload
     from shutil import copyfile
-
     from django.conf import settings
-
     from .edit_tests import models
+
     copyfile(
         settings.TEST_EDIT_DIR / f'_{version}.py',
         settings.TEST_MIGRATION_DIR.parent / 'models.py'
     )
+
     with warnings.catch_warnings():
         warnings.filterwarnings('ignore')
         reload(models)
@@ -116,7 +123,7 @@ class TestChoices(TestCase):
         EnumTester.objects.all().delete()
 
 
-class TestDjangoEnums(TestCase):
+class TestEnumPropertiesIntegration(TestCase):
 
     def setUp(self):
         pass
@@ -371,7 +378,7 @@ class TestDjangoEnums(TestCase):
 
     def test_saving(self):
         """
-        Test that the Enum metaclass picks the correct database field type for each enum.
+        Test that enum values can be saved directly.
         """
         tester = EnumTester.objects.create(
             small_pos_int=SmallPosIntEnum.VAL2,
@@ -489,6 +496,105 @@ class TestDjangoEnums(TestCase):
         tester.save()
         self.assertEqual(tester.text, None)
 
+    def test_values(self):
+        """tests that queryset values returns Enumeration instances for enum fields"""
+        obj = EnumTester.objects.create(
+            small_pos_int=SmallPosIntEnum.VAL2,
+            small_int='Value -32768',
+            pos_int=2147483647,
+            int=-2147483648,
+            big_pos_int='Value 2147483647',
+            big_int='VAL2',
+            constant='φ',
+            text='V TWo',
+            dj_int_enum=3,
+            dj_text_enum=DJTextEnum.A,
+            non_strict_int=75
+        )
+
+        values = EnumTester.objects.filter(pk=obj.pk).values().first()
+        self.assertEqual(values['small_pos_int'], SmallPosIntEnum.VAL2)
+        self.assertEqual(values['small_int'], SmallIntEnum.VALn1)
+        self.assertEqual(values['pos_int'], PosIntEnum.VAL3)
+        self.assertEqual(values['int'], IntEnum.VALn1)
+        self.assertEqual(values['big_pos_int'], BigPosIntEnum.VAL3)
+        self.assertEqual(values['big_int'], BigIntEnum.VAL2)
+        self.assertEqual(values['constant'], Constants.GOLDEN_RATIO)
+        self.assertEqual(values['text'], TextEnum.VALUE2)
+        self.assertEqual(values['dj_int_enum'], DJIntEnum.THREE)
+        self.assertEqual(values['dj_text_enum'], DJTextEnum.A)
+        self.assertEqual(values['non_strict_int'], 75)
+
+        obj = EnumTester.objects.create(
+            small_pos_int=SmallPosIntEnum.VAL2,
+            small_int='Value -32768',
+            pos_int=2147483647,
+            int=-2147483648,
+            big_pos_int='Value 2147483647',
+            big_int='VAL2',
+            constant='φ',
+            text='V TWo',
+            dj_int_enum=3,
+            dj_text_enum=DJTextEnum.A,
+            non_strict_int=SmallPosIntEnum.VAL1
+        )
+        values = EnumTester.objects.filter(pk=obj.pk).values().first()
+        self.assertEqual(values['non_strict_int'], SmallPosIntEnum.VAL1)
+
+        # also test equality symmetry
+        self.assertEqual(values['small_pos_int'], 'Value 2')
+        self.assertEqual(values['small_int'], 'Value -32768')
+        self.assertEqual(values['pos_int'], 2147483647)
+        self.assertEqual(values['int'], -2147483648)
+        self.assertEqual(values['big_pos_int'], 'Value 2147483647')
+        self.assertEqual(values['big_int'], 'VAL2')
+        self.assertEqual(values['constant'], 'φ')
+        self.assertEqual(values['text'], 'V TWo')
+
+        # symmetry doesnt work on Django choice fields
+        self.assertEqual(values['dj_int_enum'], 3)
+        self.assertEqual(values['dj_text_enum'], 'A')
+        ################
+
+        self.assertEqual(values['non_strict_int'], 'Value 1')
+
+    def test_non_strict(self):
+        """
+        Test that non strict fields allow assignment and read of non-enum values.
+        """
+        values = {
+            SmallPosIntEnum.VAL1,
+            SmallPosIntEnum.VAL2,
+            SmallPosIntEnum.VAL3,
+            10,
+            12,
+            15
+        }
+        for value in values:
+            EnumTester.objects.create(non_strict_int=value)
+
+        for obj in EnumTester.objects.filter(non_strict_int__isnull=False):
+            self.assertTrue(obj.non_strict_int in values)
+
+        self.assertEqual(
+            EnumTester.objects.filter(non_strict_int=SmallPosIntEnum.VAL1).count(), 1
+        )
+        self.assertEqual(
+            EnumTester.objects.filter(non_strict_int=SmallPosIntEnum.VAL2).count(), 1
+        )
+        self.assertEqual(
+            EnumTester.objects.filter(non_strict_int=SmallPosIntEnum.VAL3).count(), 1
+        )
+        self.assertEqual(
+            EnumTester.objects.filter(non_strict_int=10).count(), 1
+        )
+        self.assertEqual(
+            EnumTester.objects.filter(non_strict_int=12).count(), 1
+        )
+        self.assertEqual(
+            EnumTester.objects.filter(non_strict_int=15).count(), 1
+        )
+
     def test_serialization(self):
         tester = EnumTester.objects.create(
             small_pos_int=SmallPosIntEnum.VAL2,
@@ -498,7 +604,10 @@ class TestDjangoEnums(TestCase):
             big_pos_int=BigPosIntEnum.VAL3,
             big_int=BigIntEnum.VAL2,
             constant=Constants.GOLDEN_RATIO,
-            text=TextEnum.VALUE2
+            text=TextEnum.VALUE2,
+            dj_int_enum=DJIntEnum.TWO,
+            dj_text_enum=DJTextEnum.C,
+            non_strict_int=5
         )
 
         serialized = serializers.serialize('json', EnumTester.objects.all())
@@ -517,6 +626,9 @@ class TestDjangoEnums(TestCase):
         self.assertEqual(tester.big_int, BigIntEnum.VAL2)
         self.assertEqual(tester.constant, Constants.GOLDEN_RATIO)
         self.assertEqual(tester.text, TextEnum.VALUE2)
+        self.assertEqual(tester.dj_int_enum, DJIntEnum.TWO)
+        self.assertEqual(tester.dj_text_enum, DJTextEnum.C)
+        self.assertEqual(tester.non_strict_int, 5)
 
     def test_validate(self):
         tester = EnumTester.objects.create()
@@ -548,6 +660,10 @@ class TestDjangoEnums(TestCase):
         self.assertTrue(tester._meta.get_field('big_int').validate(BigPosIntEnum.VAL2, tester) is None)
         self.assertTrue(tester._meta.get_field('constant').validate('φ', tester) is None)
         self.assertTrue(tester._meta.get_field('text').validate('default', tester) is None)
+
+        self.assertTrue(tester._meta.get_field('dj_int_enum').validate(1, tester) is None)
+        self.assertTrue(tester._meta.get_field('dj_text_enum').validate('A', tester) is None)
+        self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
 
     def test_clean(self):
 
@@ -701,101 +817,115 @@ class TestRequests(TestCase):
 
     def test_post(self):
         c = Client()
-        response = c.post(
-            reverse('django_enum_tests_app1:enum-add'),
-            {
-                'small_pos_int': SmallPosIntEnum.VAL2,
-                'small_int': SmallIntEnum.VAL0,
-                'pos_int': PosIntEnum.VAL1,
-                'int': IntEnum.VALn1,
-                'big_pos_int': BigPosIntEnum.VAL3,
-                'big_int': BigIntEnum.VAL2,
-                'constant': Constants.GOLDEN_RATIO,
-                'text': TextEnum.VALUE2,
-                'dj_int_enum': DJIntEnum.TWO,
-                'dj_text_enum': DJTextEnum.C
-            },
-            follow=True
-        )
-        soup = Soup(response.content, features='html.parser')
 
-        added = soup.find_all('div', class_='enum')[-1]
-        self.assertEqual(
-            SmallPosIntEnum(added.find(class_="small_pos_int").find("span", class_="value").text),
-            SmallPosIntEnum.VAL2
-        )
-        self.assertEqual(
-            SmallIntEnum(added.find(class_="small_int").find("span", class_="value").text),
-            SmallIntEnum.VAL0
-        )
-        self.assertEqual(
-            PosIntEnum(added.find(class_="pos_int").find("span", class_="value").text),
-            PosIntEnum.VAL1
-        )
-        self.assertEqual(
-            IntEnum(added.find(class_="int").find("span", class_="value").text),
-            IntEnum.VALn1
-        )
-        self.assertEqual(
-            BigPosIntEnum(added.find(class_="big_pos_int").find("span", class_="value").text),
-            BigPosIntEnum.VAL3
-        )
-        self.assertEqual(
-            BigIntEnum(added.find(class_="big_int").find("span", class_="value").text),
-            BigIntEnum.VAL2
-        )
-        self.assertEqual(
-            Constants(added.find(class_="constant").find("span", class_="value").text),
-            Constants.GOLDEN_RATIO
-        )
-        self.assertEqual(
-            TextEnum(added.find(class_="text").find("span", class_="value").text),
-            TextEnum.VALUE2
-        )
-        self.assertEqual(
-            DJIntEnum(int(added.find(class_="dj_int_enum").find("span", class_="value").text)),
-            DJIntEnum.TWO
-        )
-        self.assertEqual(
-            DJTextEnum(added.find(class_="dj_text_enum").find("span", class_="value").text),
-            DJTextEnum.C
-        )
-        EnumTester.objects.last().delete()
+        # test normal choice field and our EnumChoiceField
+        for form_url in ['enum-add', 'enum-form-add']:
+            response = c.post(
+                reverse(f'django_enum_tests_app1:{form_url}'),
+                {
+                    'small_pos_int': SmallPosIntEnum.VAL2,
+                    'small_int': SmallIntEnum.VAL0,
+                    'pos_int': PosIntEnum.VAL1,
+                    'int': IntEnum.VALn1,
+                    'big_pos_int': BigPosIntEnum.VAL3,
+                    'big_int': BigIntEnum.VAL2,
+                    'constant': Constants.GOLDEN_RATIO,
+                    'text': TextEnum.VALUE2,
+                    'dj_int_enum': DJIntEnum.TWO,
+                    'dj_text_enum': DJTextEnum.C,
+                    'non_strict_int': SmallPosIntEnum.VAL1
+                },
+                follow=True
+            )
+            soup = Soup(response.content, features='html.parser')
+
+            added = soup.find_all('div', class_='enum')[-1]
+            self.assertEqual(
+                SmallPosIntEnum(added.find(class_="small_pos_int").find("span", class_="value").text),
+                SmallPosIntEnum.VAL2
+            )
+            self.assertEqual(
+                SmallIntEnum(added.find(class_="small_int").find("span", class_="value").text),
+                SmallIntEnum.VAL0
+            )
+            self.assertEqual(
+                PosIntEnum(added.find(class_="pos_int").find("span", class_="value").text),
+                PosIntEnum.VAL1
+            )
+            self.assertEqual(
+                IntEnum(added.find(class_="int").find("span", class_="value").text),
+                IntEnum.VALn1
+            )
+            self.assertEqual(
+                BigPosIntEnum(added.find(class_="big_pos_int").find("span", class_="value").text),
+                BigPosIntEnum.VAL3
+            )
+            self.assertEqual(
+                BigIntEnum(added.find(class_="big_int").find("span", class_="value").text),
+                BigIntEnum.VAL2
+            )
+            self.assertEqual(
+                Constants(added.find(class_="constant").find("span", class_="value").text),
+                Constants.GOLDEN_RATIO
+            )
+            self.assertEqual(
+                TextEnum(added.find(class_="text").find("span", class_="value").text),
+                TextEnum.VALUE2
+            )
+            self.assertEqual(
+                DJIntEnum(int(added.find(class_="dj_int_enum").find("span", class_="value").text)),
+                DJIntEnum.TWO
+            )
+            self.assertEqual(
+                DJTextEnum(added.find(class_="dj_text_enum").find("span", class_="value").text),
+                DJTextEnum.C
+            )
+            self.assertEqual(
+                SmallPosIntEnum(added.find(class_="non_strict_int").find("span", class_="value").text),
+                SmallPosIntEnum.VAL1
+            )
+            EnumTester.objects.last().delete()
 
     def test_add_form(self):
         c = Client()
-        response = c.get(reverse('django_enum_tests_app1:enum-add'))
-        soup = Soup(response.content, features='html.parser')
+        # test normal choice field and our EnumChoiceField
+        for form_url in ['enum-add', 'enum-form-add']:
+            response = c.get(reverse(f'django_enum_tests_app1:{form_url}'))
+            soup = Soup(response.content, features='html.parser')
 
-        for field in [
-            'small_pos_int',
-            'small_int',
-            'pos_int',
-            'int',
-            'big_pos_int',
-            'big_int',
-            'constant',
-            'text',
-        ]:
-            field = EnumTester._meta.get_field(field)
-            expected = dict(zip(field.enum.values, field.enum.labels))  # value -> label
-            null_opt = False
-            for option in soup.find('select', id=f'id_{field.name}').find_all('option'):
-                if (option['value'] is None or option['value'] == '') and option.text.count('-') >= 2:
-                    self.assertTrue(field.blank or field.null)
-                    null_opt = True
-                    continue
+            for field in [
+                'small_pos_int',
+                'small_int',
+                'pos_int',
+                'int',
+                'big_pos_int',
+                'big_int',
+                'constant',
+                'text',
+                'dj_int_enum',
+                'dj_text_enum',
+                'non_strict_int'
+            ]:
+                field = EnumTester._meta.get_field(field)
+                expected = dict(zip([en for en in field.enum], field.enum.labels))  # value -> label
+                null_opt = False
+                for option in soup.find('select', id=f'id_{field.name}').find_all('option'):
+                    if (option['value'] is None or option['value'] == '') and option.text.count('-') >= 2:
+                        self.assertTrue(field.blank or field.null)
+                        null_opt = True
+                        continue
 
-                try:
-                    self.assertEqual(str(expected[field.enum(option['value']).value]), option.text)
-                    del expected[field.enum(option['value'])]
-                except KeyError:  # pragma: no cover
-                    self.fail(f'{field.name} did not expect option {option["value"]}: {option.text}.')
+                    try:
+                        value = int(option['value']) if field.name == 'dj_int_enum' else option['value']
+                        self.assertEqual(str(expected[field.enum(value)]), option.text)
+                        del expected[field.enum(value)]
+                    except KeyError:  # pragma: no cover
+                        self.fail(f'{field.name} did not expect option {option["value"]}: {option.text}.')
 
-            self.assertEqual(len(expected), 0)
+                self.assertEqual(len(expected), 0)
 
-            if not field.null and not field.blank:
-                self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
+                if not field.null and not field.blank:
+                    self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
 
     def test_update_form(self):
         c = Client()
@@ -816,7 +946,7 @@ class TestRequests(TestCase):
                     'text',
                 ]:
                     field = EnumTester._meta.get_field(field)
-                    expected = dict(zip(field.enum.values, field.enum.labels))  # value -> label
+                    expected = dict(zip([en for en in field.enum], field.enum.labels))  # value -> label
                     null_opt = False
                     for option in soup.find('select', id=f'id_{field.name}').find_all('option'):
 
@@ -829,10 +959,10 @@ class TestRequests(TestCase):
 
                         try:
                             enum = field.enum(option['value'])
-                            self.assertEqual(str(expected[enum.value]), option.text)
+                            self.assertEqual(str(expected[enum]), option.text)
                             if option.has_attr('selected'):
                                 self.assertEqual(getattr(obj, field.name), enum)
-                            del expected[enum.value]
+                            del expected[enum]
                         except KeyError:  # pragma: no cover
                             self.fail(f'{field.name} did not expect option {option["value"]}: {option.text}.')
 
@@ -840,6 +970,95 @@ class TestRequests(TestCase):
 
                     if not field.null and not field.blank:
                         self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
+
+
+class TestBulkOperations(TestCase):
+
+    NUMBER = 250
+
+    def test_bulk_create(self):
+
+        objects = []
+        for obj in range(0, self.NUMBER):
+            objects.append(EnumTester(
+                small_pos_int=SmallPosIntEnum.VAL2,
+                small_int='Value -32768',
+                pos_int=2147483647,
+                int=-2147483648,
+                big_pos_int='Value 2147483647',
+                big_int='VAL2',
+                constant='φ',
+                text='V TWo',
+                dj_int_enum=3,
+                dj_text_enum=DJTextEnum.A,
+                non_strict_int=15
+            ))
+
+        EnumTester.objects.bulk_create(objects)
+
+        self.assertEqual(
+            EnumTester.objects.filter(
+                small_pos_int=SmallPosIntEnum.VAL2,
+                small_int='Value -32768',
+                pos_int=2147483647,
+                int=-2147483648,
+                big_pos_int='Value 2147483647',
+                big_int='VAL2',
+                constant='φ',
+                text='V TWo',
+                dj_int_enum=3,
+                dj_text_enum=DJTextEnum.A,
+                non_strict_int=15
+            ).count(),
+            self.NUMBER
+        )
+
+    def test_bulk_update(self):
+        objects = []
+        for obj in range(0, self.NUMBER):
+            obj = EnumTester.objects.create(
+                small_pos_int=SmallPosIntEnum.VAL2,
+                small_int='Value -32768',
+                pos_int=2147483647,
+                int=-2147483648,
+                big_pos_int='Value 2147483647',
+                big_int='VAL2',
+                constant='φ',
+                text='V TWo',
+                dj_int_enum=3,
+                dj_text_enum=DJTextEnum.A,
+                non_strict_int=15
+            )
+            obj.non_strict_int = 100
+            obj.constant = 'π'
+            obj.big_int = -2147483649
+            objects.append(obj)
+
+        self.assertEqual(len(objects), self.NUMBER)
+        EnumTester.objects.bulk_update(
+            objects,
+            [
+                'constant',
+                'non_strict_int',
+            ]
+        )
+
+        self.assertEqual(
+            EnumTester.objects.filter(
+                small_pos_int=SmallPosIntEnum.VAL2,
+                small_int='Value -32768',
+                pos_int=2147483647,
+                int=-2147483648,
+                big_pos_int='Value 2147483647',
+                big_int='VAL2',
+                constant='PI',
+                text='V TWo',
+                dj_int_enum=3,
+                dj_text_enum=DJTextEnum.A,
+                non_strict_int=100
+            ).count(),
+            self.NUMBER
+        )
 
 
 class TestExamples(TestCase):
@@ -903,15 +1122,9 @@ class TestMigrations(ResetModelsMixin, TestCase):
     @classmethod
     def setUpClass(cls):
         from django.conf import settings
-        for migration in [
-            settings.TEST_MIGRATION_DIR / '0001_initial.py',
-            settings.TEST_MIGRATION_DIR / '0002_alter_values.py',
-            settings.TEST_MIGRATION_DIR / '0003_remove_black.py',
-            settings.TEST_MIGRATION_DIR / '0004_remove_int_enum.py',
-            settings.TEST_MIGRATION_DIR / '0005_add_int_enum.py'
-        ]:
-            if os.path.exists(migration):  # pragma: no cover
-                os.remove(migration)
+        import glob
+        for migration in glob.glob(f'{settings.TEST_MIGRATION_DIR}/000*py'):
+            os.remove(migration)
 
         super().setUpClass()
 
@@ -1287,14 +1500,16 @@ class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
             (MigrationTester.IntEnum.ONE, MigrationTester.Color.RD),
             (MigrationTester.IntEnum(2), MigrationTester.Color('GR')),
             (MigrationTester.IntEnum['THREE'], MigrationTester.Color('0000ff')),
+            (42, MigrationTester.Color('Blue'))
         ]:
             MigrationTester.objects.create(int_enum=int_enum, color=color)
 
         for obj in MigrationTester.objects.all():
-            self.assertIsInstance(
-                obj.int_enum,
-                MigrationTester.IntEnum
-            )
+            if obj.int_enum != 42:
+                self.assertIsInstance(
+                    obj.int_enum,
+                    MigrationTester.IntEnum
+                )
             self.assertIsInstance(
                 obj.color,
                 MigrationTester.Color
@@ -1325,8 +1540,17 @@ class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
         )
 
         self.assertEqual(
+            MigrationTester.objects.filter(
+                int_enum=42,
+                color=MigrationTester.Color('Blue')
+            ).count(),
+            1
+        )
+        self.assertEqual(MigrationTester.objects.get(int_enum=42).int_enum, 42)
+
+        self.assertEqual(
             MigrationTester.objects.count(),
-            3
+            4
         )
 
         MigrationTester.objects.all().delete()
@@ -1526,6 +1750,13 @@ class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
             3
         )
 
+        self.assertRaises(
+            ValueError,
+            MigrationTester.objects.create,
+            int_enum='D',
+            color=MigrationTester.Color('Blue')
+        )
+
         MigrationTester.objects.all().delete()
 
 
@@ -1611,3 +1842,153 @@ class TestOptionalDependencies(TestChoices):
 
             self.do_test_integer_choices()
             self.do_test_text_choices()
+
+
+class PerformanceTest(TestCase):
+
+    COUNT = 10000
+
+    def test_save_performance(self):
+        enum_start = perf_counter()
+        for idx in range(0, self.COUNT):
+            EnumTester.objects.create(
+                small_pos_int=SmallPosIntEnum.VAL2,
+                small_int='Value -32768',
+                pos_int=2147483647,
+                int=-2147483648,
+                big_pos_int='Value 2147483647',
+                big_int='VAL2',
+                constant='φ',
+                text='V TWo',
+                dj_int_enum=3,
+                dj_text_enum=DJTextEnum.A,
+                non_strict_int=15
+            )
+        enum_stop = perf_counter()
+
+        choice_start = perf_counter()
+        for idx in range(0, self.COUNT):
+            PerfCompare.objects.create(
+                small_pos_int=2,
+                small_int=-32768,
+                pos_int=2147483647,
+                int=-2147483648,
+                big_pos_int=2147483647,
+                big_int=2,
+                constant=1.61803398874989484820458683436563811,
+                text='V22',
+                dj_int_enum=3,
+                dj_text_enum='A',
+                non_strict_int=15
+            )
+        choice_stop = perf_counter()
+
+        enum_direct_start = perf_counter()
+        for idx in range(0, self.COUNT):
+            EnumTester.objects.create(
+                small_pos_int=SmallPosIntEnum.VAL2,
+                small_int=SmallIntEnum.VALn1,
+                pos_int=PosIntEnum.VAL3,
+                int=IntEnum.VALn1,
+                big_pos_int=BigPosIntEnum.VAL3,
+                big_int=BigIntEnum.VAL2,
+                constant=Constants.GOLDEN_RATIO,
+                text=TextEnum.VALUE2,
+                dj_int_enum=DJIntEnum.THREE,
+                dj_text_enum=DJTextEnum.A,
+                non_strict_int=15
+            )
+        enum_direct_stop = perf_counter()
+
+        enum_time = enum_stop - enum_start
+        choice_time = choice_stop - choice_start
+        enum_direct_time = enum_direct_stop - enum_direct_start
+        # flag if performance degrades signficantly - running about 2x for big lookups
+        self.assertTrue((enum_time / choice_time) < 3)
+        # print(f'{enum_time} {enum_direct_time} {choice_time}')
+
+    def test_read_performance(self):
+
+        for idx in range(0, self.COUNT):
+            EnumTester.objects.create(
+                small_pos_int=SmallPosIntEnum.VAL2,
+                small_int=SmallIntEnum.VALn1,
+                pos_int=PosIntEnum.VAL3,
+                int=IntEnum.VALn1,
+                big_pos_int=BigPosIntEnum.VAL3,
+                big_int=BigIntEnum.VAL2,
+                constant=Constants.GOLDEN_RATIO,
+                text=TextEnum.VALUE2,
+                dj_int_enum=DJIntEnum.THREE,
+                dj_text_enum=DJTextEnum.A,
+                non_strict_int=15
+            )
+
+        for idx in range(0, self.COUNT):
+            PerfCompare.objects.create(
+                small_pos_int=2,
+                small_int=-32768,
+                pos_int=2147483647,
+                int=-2147483648,
+                big_pos_int=2147483647,
+                big_int=2,
+                constant=1.61803398874989484820458683436563811,
+                text='V22',
+                dj_int_enum=3,
+                dj_text_enum='A',
+                non_strict_int=15
+            )
+
+        self.assertEqual(EnumTester.objects.count(), self.COUNT)
+        self.assertEqual(PerfCompare.objects.count(), self.COUNT)
+
+        enum_start = perf_counter()
+        for _ in EnumTester.objects.all():
+            continue
+        enum_stop = perf_counter()
+
+        choice_start = perf_counter()
+        for _ in PerfCompare.objects.all():
+            continue
+        choice_stop = perf_counter()
+
+        enum_time = enum_stop - enum_start
+        choice_time = choice_stop - choice_start
+        self.assertTrue((enum_time / choice_time) < 7)
+        # print(f'{enum_time} {choice_time}')
+
+    def test_single_field_perf_diff(self):
+
+        enum_start = perf_counter()
+        for idx in range(0, self.COUNT):
+            SingleEnumPerf.objects.create(small_pos_int=0)
+        enum_stop = perf_counter()
+
+        choice_start = perf_counter()
+        for idx in range(0, self.COUNT):
+            SingleFieldPerf.objects.create(small_pos_int=0)
+        choice_stop = perf_counter()
+
+        enum_time = enum_stop - enum_start
+        choice_time = choice_stop - choice_start
+
+        # Enum tends to be about ~12% slower
+        self.assertTrue((enum_time / choice_time) < 1.5)
+        # print(f'{enum_time} {choice_time}')
+
+        enum_start = perf_counter()
+        for _ in SingleEnumPerf.objects.all():
+            continue
+        enum_stop = perf_counter()
+
+        choice_start = perf_counter()
+        for _ in SingleFieldPerf.objects.all():
+            continue
+        choice_stop = perf_counter()
+
+        enum_time = enum_stop - enum_start
+        choice_time = choice_stop - choice_start
+
+        # print(f'{enum_time} {choice_time}')
+        # tends to be about 1.8x slower
+        self.assertTrue((enum_time / choice_time) < 2.5)

@@ -41,7 +41,7 @@ exclude = ["django_enum/tests"]
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
 Django = ">=3.2,<5.0"
-enum-properties = "^1.0.0"
+enum-properties = {version = "^1.1.1", optional = true}
 django-filter = {version = "^22.1", optional = true}
 
 [tool.poetry.dev-dependencies]
@@ -72,5 +72,5 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.extras]
-all = ["django-filter"]
+all = ["django-filter", "enum-properties"]
 

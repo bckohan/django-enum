@@ -16,6 +16,7 @@ from django_enum.tests.app1.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
+from django_enum.tests.app1.forms import EnumTesterForm
 from django_enum.tests.app1.models import EnumTester
 from django_filters.views import FilterView
 
@@ -40,21 +41,11 @@ class EnumTesterUpdateView(UpdateView):
 
 class EnumTesterFormView(UpdateView):
 
-    class EnumTesterForm(ModelForm):
-        small_pos_int = EnumChoiceField(SmallPosIntEnum)
-        small_int = EnumChoiceField(SmallIntEnum)
-        pos_int = EnumChoiceField(PosIntEnum)
-        int = EnumChoiceField(IntEnum)
-        big_pos_int = EnumChoiceField(BigPosIntEnum)
-        big_int = EnumChoiceField(BigIntEnum)
-        constant = EnumChoiceField(Constants)
-        text = EnumChoiceField(TextEnum)
-        dj_int_enum = EnumChoiceField(DJIntEnum)
-        dj_text_enum = EnumChoiceField(DJTextEnum)
+    form_class = EnumTesterForm
+    model = EnumTester
 
-        class Meta:
-            model = EnumTester
-            fields = '__all__'
+
+class EnumTesterFormCreateView(CreateView):
 
     form_class = EnumTesterForm
     model = EnumTester

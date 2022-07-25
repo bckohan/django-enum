@@ -72,6 +72,15 @@ class EnumTester(models.Model):
     dj_int_enum = EnumField(DJIntEnum, default=DJIntEnum.ONE.value)
     dj_text_enum = EnumField(DJTextEnum, default=DJTextEnum.A.value)
 
+    # Non-strict
+    non_strict_int = EnumField(
+        SmallPosIntEnum,
+        strict=False,
+        null=True,
+        default=None,
+        blank=True
+    )
+
     def get_absolute_url(self):
         return reverse('django_enum_tests_app1:enum-detail', kwargs={'pk': self.pk})
 
@@ -103,3 +112,73 @@ class MyModel(models.Model):
     int_enum = EnumField(IntEnum)
     color = EnumField(Color)
 
+
+class PerfCompare(models.Model):
+
+    small_pos_int = models.PositiveSmallIntegerField(choices=SmallPosIntEnum.choices, null=True, default=None, db_index=True, blank=True)
+    small_int = models.SmallIntegerField(choices=SmallIntEnum.choices, null=False, default=SmallIntEnum.VAL3, db_index=True, blank=True)
+
+    pos_int = models.PositiveIntegerField(choices=PosIntEnum.choices, default=PosIntEnum.VAL3, db_index=True, blank=True)
+    int = models.IntegerField(choices=IntEnum.choices, null=True, db_index=True, blank=True)
+
+    big_pos_int = models.PositiveBigIntegerField(choices=BigPosIntEnum.choices, null=True, default=None, db_index=True, blank=True)
+    big_int = models.BigIntegerField(choices=BigIntEnum.choices, default=BigIntEnum.VAL0, db_index=True, blank=True)
+
+    constant = models.FloatField(choices=Constants.choices, null=True, default=None, db_index=True, blank=True)
+
+    text = models.CharField(choices=TextEnum.choices, max_length=4, null=True, default=None, db_index=True, blank=True)
+
+    # basic choice fields - used to compare behavior
+    int_choice = models.IntegerField(
+        default=1,
+        null=False,
+        blank=True,
+        choices=((1, 'One'), (2, 'Two'), (3, 'Three'))
+    )
+
+    char_choice = models.CharField(
+        max_length=1,
+        default='A',
+        null=False,
+        blank=True,
+        choices=(('A', 'First'), ('B', 'Second'), ('C', 'Third'))
+    )
+
+    int_field = models.IntegerField(
+        default=1,
+        null=False,
+        blank=True
+    )
+
+    float_field = models.FloatField(
+        default=1.5,
+        null=False,
+        blank=True
+    )
+
+    char_field = models.CharField(
+        max_length=1,
+        default='A',
+        null=False,
+        blank=True
+    )
+    ################################################
+
+    dj_int_enum = models.PositiveSmallIntegerField(choices=DJIntEnum.choices, default=DJIntEnum.ONE.value)
+    dj_text_enum = models.CharField(choices=DJTextEnum.choices, default=DJTextEnum.A.value, max_length=1)
+
+    # Non-strict
+    non_strict_int = models.PositiveSmallIntegerField(choices=SmallPosIntEnum.choices, null=True, default=None, blank=True)
+
+    class Meta:
+        ordering = ('id',)
+
+
+class SingleEnumPerf(models.Model):
+
+    small_pos_int = EnumField(enum=SmallPosIntEnum, null=True, default=None, db_index=True, blank=True)
+
+
+class SingleFieldPerf(models.Model):
+
+    small_pos_int = models.PositiveSmallIntegerField(choices=SmallPosIntEnum.choices, null=True, default=None, db_index=True, blank=True)

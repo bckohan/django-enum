@@ -45,7 +45,7 @@ class EnumMixin:
         super().__init__(*args, **kwargs)
 
     def _try_coerce(self, value):
-        if self.enum is not None:
+        if self.enum is not None and not isinstance(value, self.enum):
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):

@@ -17,7 +17,6 @@ class MigrationTester(models.Model):
         GR = 'G', 'Green', (0, 1, 0), '00ff00'
         BL = 'B', 'Blue', (0, 0, 1), '0000ff'
 
-    int_enum = EnumField(IntEnum)
+    # change strict - should not generate a migration
+    int_enum = EnumField(IntEnum, strict=False)
     color = EnumField(Color)
-
-

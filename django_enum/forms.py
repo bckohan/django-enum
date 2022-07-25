@@ -18,20 +18,25 @@ class EnumChoiceField(ChoiceField):
             **kwargs
         )
 
+    def _coerce_to_value_type(self, value):
+        """Coerce the value to the enumerations value type"""
+        return type(self.enum.values[0])(value)
+
     def _coerce(self, value):
-        """
-        Validate that the value is coercible to the enumeration type.
-        """
         if value == self.empty_value or value in self.empty_values:
             return self.empty_value
-        try:
-            value = self.enum(value).value
-        except (ValueError, TypeError, ValidationError) as err:
-            raise ValidationError(
-                f'{value} is not a valid {self.enum}.',
-                code='invalid_choice',
-                params={'value': value},
-            ) from err
+        if self.enum is not None and not isinstance(value, self.enum):
+            try:
+                value = self.enum(value)
+            except (TypeError, ValueError):
+                try:
+                    value = self.enum(self._coerce_to_value_type(value))
+                except (TypeError, ValueError) as err:
+                    raise ValidationError(
+                        f'{value} is not a valid {self.enum}.',
+                        code='invalid_choice',
+                        params={'value': value},
+                    ) from err
         return value
 
     def clean(self, value):

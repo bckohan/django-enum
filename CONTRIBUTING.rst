@@ -31,7 +31,7 @@ installed:
 
 .. code-block::
 
-    poetry install
+    poetry install -E all
 
 Documentation
 -------------

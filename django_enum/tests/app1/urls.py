@@ -8,6 +8,7 @@ from django_enum.tests.app1.views import (
     EnumTesterFormView,
     EnumTesterListView,
     EnumTesterUpdateView,
+    EnumTesterFormCreateView
 )
 from django_filters.views import FilterView
 
@@ -31,6 +32,7 @@ urlpatterns = [
         name='enum-filter_explicit'
     ),
     path('enum/add/', EnumTesterCreateView.as_view(), name='enum-add'),
+    path('enum/form/add/', EnumTesterFormCreateView.as_view(), name='enum-form-add'),
     path('enum/<int:pk>/', EnumTesterUpdateView.as_view(), name='enum-update'),
     path('enum/form/<int:pk>/', EnumTesterFormView.as_view(), name='enum-form-update'),
     path('enum/<int:pk>/delete/', EnumTesterDeleteView.as_view(), name='enum-delete'),
