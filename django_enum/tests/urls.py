@@ -3,5 +3,5 @@ from django.urls import include, path
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('app1/', include('django_enum.tests.app1.urls'))
+    path('enum_prop/', include('django_enum.tests.enum_prop.urls'))
 ]

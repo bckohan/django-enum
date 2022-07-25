@@ -1,6 +1,6 @@
 from django.urls import path
-from django_enum.tests.app1.models import EnumTester
-from django_enum.tests.app1.views import (
+from django_enum.tests.enum_prop.models import EnumTester
+from django_enum.tests.enum_prop.views import (
     EnumTesterCreateView,
     EnumTesterDeleteView,
     EnumTesterDetailView,
@@ -12,7 +12,7 @@ from django_enum.tests.app1.views import (
 )
 from django_filters.views import FilterView
 
-app_name = 'django_enum_tests_app1'
+app_name = 'django_enum_tests_enum_prop'
 
 urlpatterns = [
     path('enum/<int:pk>', EnumTesterDetailView.as_view(), name='enum-detail'),
@@ -22,7 +22,7 @@ urlpatterns = [
         FilterView.as_view(
             model=EnumTester,
             filterset_fields='__all__',
-            template_name='django_enum_tests_app1/enumtester_list.html'
+            template_name='django_enum_tests_enum_prop/enumtester_list.html'
         ),
         name='enum-filter'
     ),

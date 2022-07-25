@@ -4,7 +4,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django_enum import EnumChoiceField
 from django_enum.filters import FilterSet as EnumFilterSet
-from django_enum.tests.app1.enums import (
+from django_enum.tests.enum_prop.enums import (
     BigIntEnum,
     BigPosIntEnum,
     Constants,
@@ -16,8 +16,8 @@ from django_enum.tests.app1.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
-from django_enum.tests.app1.forms import EnumTesterForm
-from django_enum.tests.app1.models import EnumTester
+from django_enum.tests.enum_prop.forms import EnumTesterForm
+from django_enum.tests.enum_prop.models import EnumTester
 from django_filters.views import FilterView
 
 
@@ -54,7 +54,7 @@ class EnumTesterFormCreateView(CreateView):
 class EnumTesterDeleteView(DeleteView):
     model = EnumTester
     success_url = reverse_lazy(
-        'django_enum_tests_app1:enum-list'
+        'django_enum_tests_enum_prop:enum-list'
     )
 
 
@@ -68,5 +68,5 @@ class EnumTesterFilterViewSet(FilterView):
     filterset_class = EnumTesterFilter
     model = EnumTester
     template_name = (
-        'django_enum_tests_app1/enumtester_list.html'
+        'django_enum_tests_enum_prop/enumtester_list.html'
     )

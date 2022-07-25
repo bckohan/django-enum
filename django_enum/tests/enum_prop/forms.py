@@ -1,6 +1,6 @@
 from django.forms import ModelForm
 from django_enum import EnumChoiceField
-from django_enum.tests.app1.enums import (
+from django_enum.tests.enum_prop.enums import (
     SmallPosIntEnum,
     SmallIntEnum,
     PosIntEnum,
@@ -12,7 +12,7 @@ from django_enum.tests.app1.enums import (
     DJIntEnum,
     DJTextEnum
 )
-from django_enum.tests.app1.models import EnumTester
+from django_enum.tests.enum_prop.models import EnumTester
 
 
 class EnumTesterForm(ModelForm):

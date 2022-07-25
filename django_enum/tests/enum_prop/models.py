@@ -3,7 +3,7 @@ from enum import auto
 from django.db import models
 from django.urls import reverse
 from django_enum import EnumField, IntegerChoices, TextChoices
-from django_enum.tests.app1.enums import (
+from django_enum.tests.enum_prop.enums import (
     BigIntEnum,
     BigPosIntEnum,
     Constants,
@@ -82,7 +82,7 @@ class EnumTester(models.Model):
     )
 
     def get_absolute_url(self):
-        return reverse('django_enum_tests_app1:enum-detail', kwargs={'pk': self.pk})
+        return reverse('django_enum_tests_enum_prop:enum-detail', kwargs={'pk': self.pk})
 
     class Meta:
         ordering = ('id',)

@@ -43,7 +43,7 @@ MIDDLEWARE = (
 
 INSTALLED_APPS = (
     'django_enum.tests.edit_tests',
-    'django_enum.tests.app1',
+    'django_enum.tests.enum_prop',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

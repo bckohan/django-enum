@@ -9,7 +9,7 @@ from django.db import transaction
 from django.test import Client, TestCase
 from django.urls import reverse
 from django_enum import TextChoices
-from django_enum.tests.app1.enums import (
+from django_enum.tests.enum_prop.enums import (
     BigIntEnum,
     BigPosIntEnum,
     Constants,
@@ -22,7 +22,7 @@ from django_enum.tests.app1.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
-from django_enum.tests.app1.models import (
+from django_enum.tests.enum_prop.models import (
     EnumTester,
     MyModel,
     PerfCompare,
@@ -52,7 +52,7 @@ def set_models(version):
         reload(models)
 
 
-APP1_DIR = Path(__file__).parent / 'app1'
+APP1_DIR = Path(__file__).parent / 'enum_prop'
 
 
 class TestChoices(TestCase):
@@ -821,7 +821,7 @@ class TestRequests(TestCase):
         # test normal choice field and our EnumChoiceField
         for form_url in ['enum-add', 'enum-form-add']:
             response = c.post(
-                reverse(f'django_enum_tests_app1:{form_url}'),
+                reverse(f'django_enum_tests_enum_prop:{form_url}'),
                 {
                     'small_pos_int': SmallPosIntEnum.VAL2,
                     'small_int': SmallIntEnum.VAL0,
@@ -890,7 +890,7 @@ class TestRequests(TestCase):
         c = Client()
         # test normal choice field and our EnumChoiceField
         for form_url in ['enum-add', 'enum-form-add']:
-            response = c.get(reverse(f'django_enum_tests_app1:{form_url}'))
+            response = c.get(reverse(f'django_enum_tests_enum_prop:{form_url}'))
             soup = Soup(response.content, features='html.parser')
 
             for field in [
@@ -932,7 +932,7 @@ class TestRequests(TestCase):
         # test normal choice field and our EnumChoiceField
         for form_url in ['enum-update', 'enum-form-update']:
             for obj in self.objects:
-                response = c.get(reverse(f'django_enum_tests_app1:{form_url}', kwargs={'pk': obj.pk}))
+                response = c.get(reverse(f'django_enum_tests_enum_prop:{form_url}', kwargs={'pk': obj.pk}))
                 soup = Soup(response.content, features='html.parser')
 
                 for field in [
