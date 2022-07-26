@@ -1,72 +1,59 @@
-from django.forms import ModelForm
-from django.urls import reverse_lazy
-from django.views.generic import DetailView, ListView
-from django.views.generic.edit import CreateView, DeleteView, UpdateView
-from django_enum import EnumChoiceField
-from django_enum.filters import FilterSet as EnumFilterSet
-from django_enum.tests.enum_prop.enums import (
-    BigIntEnum,
-    BigPosIntEnum,
-    Constants,
-    DJIntEnum,
-    DJTextEnum,
-    IntEnum,
-    PosIntEnum,
-    SmallIntEnum,
-    SmallPosIntEnum,
-    TextEnum,
-)
-from django_enum.tests.enum_prop.forms import EnumTesterForm
-from django_enum.tests.enum_prop.models import EnumTester
-from django_filters.views import FilterView
+try:
+    from django.urls import reverse_lazy
+    from django_enum.filters import FilterSet as EnumFilterSet
+    from django_enum.tests.djenum import views
+    from django_enum.tests.enum_prop.forms import EnumTesterForm
+    from django_enum.tests.enum_prop.models import EnumTester
 
 
-class EnumTesterDetailView(DetailView):
-    model = EnumTester
+    class EnumTesterDetailView(views.EnumTesterDetailView):
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
 
 
-class EnumTesterListView(ListView):
-    model = EnumTester
+    class EnumTesterListView(views.EnumTesterListView):
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
 
 
-class EnumTesterCreateView(CreateView):
-    model = EnumTester
-    fields = '__all__'
+    class EnumTesterCreateView(views.EnumTesterCreateView):
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
 
 
-class EnumTesterUpdateView(UpdateView):
-    model = EnumTester
-    fields = '__all__'
+    class EnumTesterUpdateView(views.EnumTesterUpdateView):
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
 
 
-class EnumTesterFormView(UpdateView):
-
-    form_class = EnumTesterForm
-    model = EnumTester
-
-
-class EnumTesterFormCreateView(CreateView):
-
-    form_class = EnumTesterForm
-    model = EnumTester
+    class EnumTesterFormView(views.EnumTesterFormView):
+        form_class = EnumTesterForm
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
 
 
-class EnumTesterDeleteView(DeleteView):
-    model = EnumTester
-    success_url = reverse_lazy(
-        'django_enum_tests_enum_prop:enum-list'
-    )
+    class EnumTesterFormCreateView(views.EnumTesterFormCreateView):
+        form_class = EnumTesterForm
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
 
 
-class EnumTesterFilterViewSet(FilterView):
+    class EnumTesterDeleteView(views.EnumTesterDeleteView):
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
 
-    class EnumTesterFilter(EnumFilterSet):
-        class Meta:
+    try:
+        class EnumTesterFilterViewSet(views.EnumTesterFilterViewSet):
+
+            class EnumTesterFilter(EnumFilterSet):
+                class Meta:
+                    model = EnumTester
+                    fields = '__all__'
+
+            filterset_class = EnumTesterFilter
             model = EnumTester
-            fields = '__all__'
+    except (ImportError, ModuleNotFoundError):  # pragma: no cover
+        pass
 
-    filterset_class = EnumTesterFilter
-    model = EnumTester
-    template_name = (
-        'django_enum_tests_enum_prop/enumtester_list.html'
-    )
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    pass

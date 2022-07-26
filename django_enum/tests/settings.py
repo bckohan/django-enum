@@ -41,9 +41,9 @@ MIDDLEWARE = (
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 )
 
-INSTALLED_APPS = (
-    'django_enum.tests.edit_tests',
-    'django_enum.tests.enum_prop',
+INSTALLED_APPS = [
+    'django_enum.tests.djenum',
+    'django_enum.tests.tmpls',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -51,7 +51,14 @@ INSTALLED_APPS = (
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'django.contrib.admin',
-)
+]
+
+try:
+    import enum_properties
+    INSTALLED_APPS.insert(0, 'django_enum.tests.enum_prop')
+    INSTALLED_APPS.insert(0, 'django_enum.tests.edit_tests')
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    pass
 
 AUTHENTICATION_BACKENDS = (
     "django.contrib.auth.backends.ModelBackend",

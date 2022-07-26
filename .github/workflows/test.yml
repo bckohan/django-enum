@@ -30,13 +30,25 @@ jobs:
       with:
         virtualenvs-create: true
         virtualenvs-in-project: true
-    - name: Install Release Dependencies
+    - name: Install Basic Dependencies
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install --upgrade pip
-        poetry install -E all
+        poetry install
         poetry run pip install -U "${{ matrix.django-version }}"
     - name: Run Unit Tests
+      run: |
+        poetry run pytest
+    - name: Install Enum Properties
+      run: |
+        poetry install -E properties
+    - name: Re-Run Unit Tests
+      run: |
+        poetry run pytest
+    - name: Install Django Filters
+      run: |
+        poetry install -E filters
+    - name: Re-Run Unit Tests
       run: |
         poetry run pytest
     - name: Run Static Analysis

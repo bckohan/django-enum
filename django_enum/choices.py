@@ -76,7 +76,7 @@ except (ImportError, ModuleNotFoundError):
     DjangoSymmetricMixin = MissingEnumProperties
 
 
-    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesMeta):
+    class DjangoEnumPropertiesMeta(ChoicesMeta):
         """
         Throw error if metaclass is used without enum-properties
 

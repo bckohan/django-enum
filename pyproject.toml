@@ -73,4 +73,5 @@ build-backend = "poetry.core.masonry.api"
 
 [tool.poetry.extras]
 all = ["django-filter", "enum-properties"]
-
+properties = ["enum-properties"]
+filters = ["django-filter"]

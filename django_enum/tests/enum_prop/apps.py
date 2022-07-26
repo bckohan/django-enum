@@ -1,9 +1,11 @@
-from django.apps import AppConfig
+try:
+    import enum_properties
+    from django.apps import AppConfig
 
 
-class App1Config(AppConfig):
-    name = 'django_enum.tests.enum_prop'
-    label = name.replace('.', '_')
+    class EnumPropConfig(AppConfig):
+        name = 'django_enum.tests.enum_prop'
+        label = name.replace('.', '_')
 
-    def ready(self):
-        pass
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    pass

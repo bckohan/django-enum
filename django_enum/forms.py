@@ -1,6 +1,7 @@
 """Enumeration support for django model forms"""
 from django.core.exceptions import ValidationError
 from django.forms.fields import ChoiceField
+# pylint: disable=R0801
 
 
 class EnumChoiceField(ChoiceField):
