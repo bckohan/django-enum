@@ -38,13 +38,13 @@ jobs:
         poetry run pip install -U "${{ matrix.django-version }}"
     - name: Run Unit Tests
       run: |
-        poetry run pytest
+        poetry run pytest --cov-fail-under=30
     - name: Install Enum Properties
       run: |
         poetry install -E properties
     - name: Re-Run Unit Tests
       run: |
-        poetry run pytest
+        poetry run pytest --cov-fail-under=30
     - name: Install Django Filters
       run: |
         poetry install -E filters
