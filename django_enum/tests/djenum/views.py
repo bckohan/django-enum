@@ -63,7 +63,7 @@ class EnumTesterDeleteView(URLMixin, DeleteView):
     model = EnumTester
     template_name = 'enumtester_form.html'
 
-    def get_success_url(self):
+    def get_success_url(self):  # pragma: no cover
         return reverse(f'{self.NAMESPACE}:enum-list')
 
 

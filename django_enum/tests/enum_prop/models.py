@@ -68,8 +68,8 @@ try:
         )
         ################################################
 
-        dj_int_enum = EnumField(DJIntEnum, default=DJIntEnum.ONE.value)
-        dj_text_enum = EnumField(DJTextEnum, default=DJTextEnum.A.value)
+        dj_int_enum = EnumField(DJIntEnum, default=DJIntEnum.ONE)
+        dj_text_enum = EnumField(DJTextEnum, default=DJTextEnum.A)
 
         # Non-strict
         non_strict_int = EnumField(

@@ -37,9 +37,9 @@ try:
                 name='enum-filter'
             ),
             path(
-                'enum/filter_explicit/',
+                'enum/filter/symmetric/',
                 EnumTesterFilterViewSet.as_view(),
-                name='enum-filter_explicit'
+                name='enum-filter-symmetric'
             )
         ])
     except (ImportError, ModuleNotFoundError):  # pragma: no cover

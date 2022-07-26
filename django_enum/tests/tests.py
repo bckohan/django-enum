@@ -25,6 +25,19 @@ from django_enum.tests.djenum.enums import (
 from django_enum.tests.djenum.models import EnumTester
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
+from django.http import QueryDict
+
+try:
+    import django_filters
+    DJANGO_FILTERS_INSTALLED = True
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    DJANGO_FILTERS_INSTALLED = False
+
+try:
+    import enum_properties
+    ENUM_PROPERTIES_INSTALLED = True
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    ENUM_PROPERTIES_INSTALLED = False
 
 
 def set_models(version):
@@ -368,8 +381,9 @@ class TestChoices(EnumTypeMixin, TestCase):
             with patch.dict(sys.modules, {'django_filters': None}):
                 reload(sys.modules['django_enum.filters'])
                 self.do_django_filters_missing()
+            reload(sys.modules['django_enum.filters'])
         else:
-            self.do_django_filters_missing()
+            self.do_django_filters_missing()  # pragma: no cover
 
     def do_enum_properties_missing(self):
         import enum
@@ -427,8 +441,9 @@ class TestChoices(EnumTypeMixin, TestCase):
                 from django_enum import choices
                 reload(sys.modules['django_enum.choices'])
                 self.do_enum_properties_missing()
+            reload(sys.modules['django_enum.choices'])
         else:
-            self.do_enum_properties_missing()
+            self.do_enum_properties_missing()  # pragma: no cover
 
 
 class TestFieldTypeResolution(EnumTypeMixin, TestCase):
@@ -535,20 +550,11 @@ class TestRequests(EnumTypeMixin, TestCase):
     NAMESPACE = 'django_enum_tests_djenum'
 
     objects = []
-    values = {
-        val: {} for val in [
-            'small_pos_int',
-            'small_int',
-            'pos_int',
-            'int',
-            'big_pos_int',
-            'big_int',
-            'constant',
-            'text'
-        ]
-    }
+    values = {}
 
     def setUp(self):
+        self.values = {val: {} for val in self.compared_attributes}
+        self.objects = []
         self.MODEL_CLASS.objects.all().delete()
         self.objects.append(
             self.MODEL_CLASS.objects.create()
@@ -596,6 +602,9 @@ class TestRequests(EnumTypeMixin, TestCase):
             for attr in self.values.keys():
                 self.values[attr].setdefault(getattr(obj, attr), [])
                 self.values[attr][getattr(obj, attr)].append(obj.pk)
+
+    def tearDown(self):
+        self.MODEL_CLASS.objects.all().delete()
 
     @property
     def post_params(self):
@@ -674,6 +683,8 @@ class TestRequests(EnumTypeMixin, TestCase):
 
     @staticmethod
     def get_enum_val(enum, value):
+        if value is None or value == '':
+            return None
         if int in enum.__mro__:
             return enum(int(value))
         if float in enum.__mro__:
@@ -765,6 +776,91 @@ class TestRequests(EnumTypeMixin, TestCase):
                     if not field.null and not field.blank:
                         self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
 
+    @property
+    def field_filter_properties(self):
+        return {
+            'small_pos_int': ['value'],
+            'small_int': ['value'],
+            'pos_int': ['value'],
+            'int': ['value'],
+            'big_pos_int': ['value'],
+            'big_int': ['value'],
+            'constant': ['value'],
+            'text': ['value'],
+            'dj_int_enum': ['value'],
+            'dj_text_enum': ['value'],
+            'non_strict_int': ['value']
+        }
+
+    @property
+    def compared_attributes(self):
+        return [
+            'small_pos_int',
+            'small_int',
+            'pos_int',
+            'int',
+            'big_pos_int',
+            'big_int',
+            'constant',
+            'text',
+            'dj_int_enum',
+            'dj_text_enum',
+            'non_strict_int'
+        ]
+
+    def list_to_objects(self, resp_content):
+        objects = {}
+        for obj_div in resp_content.find('body').find_all(f'div', class_='enum'):
+            objects[int(obj_div['data-obj-id'])] = {
+                attr: self.get_enum_val(
+                    self.MODEL_CLASS._meta.get_field(attr).enum,
+                    obj_div.find(f'p', {'class': attr}).find(
+                        'span', class_='value'
+                    ).text
+                )
+                for attr in self.compared_attributes
+            }
+        return objects
+
+    if DJANGO_FILTERS_INSTALLED:
+        def test_django_filter(self):
+            self.do_test_django_filter(
+                reverse(f'{self.NAMESPACE}:enum-filter')
+            )
+
+        def do_test_django_filter(self, url):
+            """
+            Exhaustively test query parameter permutations based on data
+            created in setUp
+            """
+            client = Client()
+            for attr, val_map in self.values.items():
+                for val, objs in val_map.items():
+                    if val is None:
+                        continue  # todo how to query None?
+                    for prop in self.field_filter_properties[attr]:
+                        qry = QueryDict(mutable=True)
+                        prop_vals = getattr(val, prop)
+                        if not isinstance(prop_vals, (set, list)):
+                            prop_vals = [prop_vals]
+                        for prop_val in prop_vals:
+                            qry[attr] = prop_val
+                            objects = {
+                                obj.pk: {
+                                    attr: getattr(obj, attr)
+                                    for attr in self.compared_attributes
+                                } for obj in
+                                self.MODEL_CLASS.objects.filter(id__in=objs)
+                            }
+                            self.assertEqual(len(objects), len(objs))
+                            response = client.get(f'{url}?{qry.urlencode()}')
+                            resp_objects = self.list_to_objects(
+                                Soup(response.content, features='html.parser')
+                            )
+                            self.assertEqual(objects, resp_objects)
+    else:
+        pass  # pragma: no cover
+
 
 class TestBulkOperations(EnumTypeMixin, TestCase):
     """Tests bulk insertions and updates"""
@@ -838,10 +934,9 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
         )
 
 
-try:
+if ENUM_PROPERTIES_INSTALLED:
 
     from enum_properties import s
-    from django_enum import filters
     from django_enum.tests.enum_prop.enums import (
         BigIntEnum,
         BigPosIntEnum,
@@ -1294,6 +1389,30 @@ try:
                 'non_strict_int': self.SmallPosIntEnum.VAL1
             }
 
+        @property
+        def field_filter_properties(self):
+            return {
+                'small_pos_int': ['value', 'name', 'label'],
+                'small_int': ['value', 'name', 'label'],
+                'pos_int': ['value', 'name', 'label'],
+                'int': ['value', 'name', 'label'],
+                'big_pos_int': ['value', 'name', 'label'],
+                'big_int': ['value', 'name', 'label', 'pos'],
+                'constant': ['value', 'name', 'label', 'symbol'],
+                'text': ['value', 'name', 'label', 'aliases'],
+                'dj_int_enum': ['value'],
+                'dj_text_enum': ['value'],
+                'non_strict_int': ['value', 'name', 'label'],
+            }
+
+        if DJANGO_FILTERS_INSTALLED:
+            def test_django_filter(self):
+                self.do_test_django_filter(
+                    reverse(f'{self.NAMESPACE}:enum-filter-symmetric')
+                )
+        else:
+            pass  # pragma: no cover
+
     class TestExamples(TestCase):
 
         def test_readme(self):
@@ -1333,7 +1452,6 @@ try:
                 TWO = auto(), 'Two'
                 THREE = auto(), 'Three'
         """
-
 
     class ResetModelsMixin:
 
@@ -2055,7 +2173,7 @@ try:
         assert MIGRATION_TEST_MARKER in TestAddIntEnumMigration.tags
 
 
-    class TestOptionalDependencies(TestChoices):
+    class TestChoicesEnumProp(TestChoices):
 
         MODEL_CLASS = EnumTester
 
@@ -2281,5 +2399,5 @@ try:
             # tends to be about 1.8x slower
             self.assertTrue((enum_time / choice_time) < 2.5)
 
-except (ImportError, ModuleNotFoundError):  # pragma: no cover
-    pass
+else:
+    pass  # pragma: no cover

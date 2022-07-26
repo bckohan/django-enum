@@ -3,7 +3,7 @@
 {% block content %}
 <h1>EnumTester Objects</h1>
 {% for object in object_list %}
-    <div id="{{object.pk}}" class="enum">
+    <div id="{{object.pk}}" class="enum" data-obj-id="{{ object.pk }}">
         <h2>{{ object.pk }}</h2>
         <p class="small_pos_int">small_pos_int: <b><span class="value">{{ object.small_pos_int.value }}</span></b> <b><span class="label">{{ object.small_pos_int.label }}</span></b></p>
         <p class="small_int">small_int: <b><span class="value">{{ object.small_int.value }}</span></b> <b><span class="label">{{ object.small_int.label }}</span></b></p>
@@ -18,8 +18,8 @@
         <p class="non_strict_int">non_strict_int: <b><span class="value">{{ object.non_strict_int.value}}</span></b> <b><span class="label">{{ object.non_strict_int.label }}</span></b></p>
 
         <p>
-        <a href="{% url 'django_enum_tests_enum_prop:enum-update' pk=object.pk %}">Edit</a>
-        <a href="{% url 'django_enum_tests_enum_prop:enum-delete' pk=object.pk %}">Delete</a>
+        <a href="{{update_path}}">Edit</a>
+        <a href="{{delete_path}}">Delete</a>
         </p>
     </div>
 {% endfor %}
