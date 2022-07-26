@@ -53,7 +53,7 @@ jobs:
         poetry install -E filters
     - name: Run Unit Tests w/ django-filter
       run: |
-        poetry run pytest
+        poetry run pytest --cov-fail-under=30
     - name: Install all deps
       run: |
         poetry install -E all
