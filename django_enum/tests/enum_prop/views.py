@@ -43,7 +43,10 @@ try:
         NAMESPACE = 'django_enum_tests_enum_prop'
 
     try:
-        class EnumTesterFilterViewSet(views.EnumTesterFilterViewSet):
+
+        from django_enum.tests.djenum.views import EnumTesterFilterViewSet
+
+        class EnumTesterFilterViewSet(EnumTesterFilterViewSet):
 
             class EnumTesterFilter(EnumFilterSet):
                 class Meta:

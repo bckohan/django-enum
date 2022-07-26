@@ -36,19 +36,19 @@ jobs:
         poetry run pip install --upgrade pip
         poetry install
         poetry run pip install -U "${{ matrix.django-version }}"
-    - name: Run Unit Tests
+    - name: No Optional Dependency Unit Tests
       run: |
         poetry run pytest --cov-fail-under=30
-    - name: Install Enum Properties
+    - name: Install enum-properties
       run: |
         poetry install -E properties
-    - name: Re-Run Unit Tests
+    - name: Unit Tests w/ enum-properties
       run: |
         poetry run pytest --cov-fail-under=30
-    - name: Install Django Filters
+    - name: Install django-filters
       run: |
         poetry install -E filters
-    - name: Re-Run Unit Tests
+    - name: Run Unit Tests w/ django-filters
       run: |
         poetry run pytest
     - name: Run Static Analysis
