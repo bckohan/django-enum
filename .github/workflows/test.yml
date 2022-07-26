@@ -45,10 +45,19 @@ jobs:
     - name: Unit Tests w/ enum-properties
       run: |
         poetry run pytest --cov-fail-under=30
+    - name: Remove enum-properties
+      run: |
+        poetry run pip uninstall enum-properties --no-input
     - name: Install django-filters
       run: |
         poetry install -E filters
-    - name: Run Unit Tests w/ django-filters
+    - name: Run Unit Tests w/ django-filter
+      run: |
+        poetry run pytest
+    - name: Install all deps
+      run: |
+        poetry install -E all
+    - name: Run Full Unit Tests
       run: |
         poetry run pytest
     - name: Run Static Analysis
