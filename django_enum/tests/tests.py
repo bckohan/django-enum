@@ -23,6 +23,7 @@ from django_enum.tests.djenum.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
+from django_enum.forms import EnumChoiceField
 from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import EnumTester
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
