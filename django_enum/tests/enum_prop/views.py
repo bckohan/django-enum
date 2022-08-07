@@ -1,5 +1,5 @@
 try:
-    from django.urls import reverse_lazy
+    from django.urls import reverse, reverse_lazy
     from django_enum.filters import FilterSet as EnumFilterSet
     from django_enum.tests.djenum import views
     from django_enum.tests.enum_prop.forms import EnumTesterForm
@@ -25,12 +25,19 @@ try:
         model = EnumTester
         NAMESPACE = 'django_enum_tests_enum_prop'
 
+        def get_success_url(self):  # pragma: no cover
+            return reverse(f'{self.NAMESPACE}:enum-update',
+                           kwargs={'pk': self.object.pk})
+
 
     class EnumTesterFormView(views.EnumTesterFormView):
         form_class = EnumTesterForm
         model = EnumTester
         NAMESPACE = 'django_enum_tests_enum_prop'
 
+        def get_success_url(self):  # pragma: no cover
+            return reverse(f'{self.NAMESPACE}:enum-update',
+                           kwargs={'pk': self.object.pk})
 
     class EnumTesterFormCreateView(views.EnumTesterFormCreateView):
         form_class = EnumTesterForm
@@ -39,6 +46,12 @@ try:
 
 
     class EnumTesterDeleteView(views.EnumTesterDeleteView):
+        model = EnumTester
+        NAMESPACE = 'django_enum_tests_enum_prop'
+
+
+    class EnumTesterFormDeleteView(views.EnumTesterFormDeleteView):
+        form_class = EnumTesterForm
         model = EnumTester
         NAMESPACE = 'django_enum_tests_enum_prop'
 

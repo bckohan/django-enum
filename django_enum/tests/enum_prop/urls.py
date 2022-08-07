@@ -6,6 +6,7 @@ try:
         EnumTesterDeleteView,
         EnumTesterDetailView,
         EnumTesterFormCreateView,
+        EnumTesterFormDeleteView,
         EnumTesterFormView,
         EnumTesterListView,
         EnumTesterUpdateView,
@@ -20,7 +21,8 @@ try:
         path('enum/form/add/', EnumTesterFormCreateView.as_view(), name='enum-form-add'),
         path('enum/<int:pk>/', EnumTesterUpdateView.as_view(), name='enum-update'),
         path('enum/form/<int:pk>/', EnumTesterFormView.as_view(), name='enum-form-update'),
-        path('enum/<int:pk>/delete/', EnumTesterDeleteView.as_view(), name='enum-delete')
+        path('enum/<int:pk>/delete/', EnumTesterDeleteView.as_view(), name='enum-delete'),
+        path('enum/form/<int:pk>/delete/', EnumTesterFormDeleteView.as_view(), name='enum-form-delete')
     ]
 
     try:

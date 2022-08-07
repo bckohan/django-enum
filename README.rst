@@ -151,3 +151,15 @@ Installation
 .. note::
 
     ``django-enum`` *does not* need to be added to ``INSTALLED_APPS``.
+
+.. note::
+
+    ``django-enum`` has several optional dependencies that are not pulled in
+    by default. To utilize the
+    `enum-properties <https://pypi.org/project/enum-properties/>`_ choice types
+    you must `pip install enum-properties` and to use the ``EnumFilter`` type
+    for `django-filter <https://pypi.org/project/django-filter/>`_ you
+    must `pip install django-filter`.
+
+If features are utilized that require a missing optional dependency an
+exception will be thrown.

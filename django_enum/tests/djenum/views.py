@@ -46,11 +46,17 @@ class EnumTesterUpdateView(URLMixin, UpdateView):
     fields = '__all__'
     template_name = 'enumtester_form.html'
 
+    def get_success_url(self):  # pragma: no cover
+        return reverse(f'{self.NAMESPACE}:enum-update', kwargs={'pk': self.object.pk})
+
 
 class EnumTesterFormView(URLMixin, UpdateView):
     form_class = EnumTesterForm
     model = EnumTester
     template_name = 'enumtester_form.html'
+
+    def get_success_url(self):  # pragma: no cover
+        return reverse(f'{self.NAMESPACE}:enum-update', kwargs={'pk': self.object.pk})
 
 
 class EnumTesterFormCreateView(URLMixin, CreateView):
@@ -60,6 +66,15 @@ class EnumTesterFormCreateView(URLMixin, CreateView):
 
 
 class EnumTesterDeleteView(URLMixin, DeleteView):
+    model = EnumTester
+    template_name = 'enumtester_form.html'
+
+    def get_success_url(self):  # pragma: no cover
+        return reverse(f'{self.NAMESPACE}:enum-list')
+
+
+class EnumTesterFormDeleteView(URLMixin, DeleteView):
+    form_class = EnumTesterForm
     model = EnumTester
     template_name = 'enumtester_form.html'
 

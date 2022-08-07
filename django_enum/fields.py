@@ -35,6 +35,8 @@ class EnumMixin:
 
     def _coerce_to_value_type(self, value):
         """Coerce the value to the enumerations value type"""
+        # note if enum type is int and a floating point is passed we could get
+        # situations like X.xxx == X - this is acceptable
         return type(self.enum.values[0])(value)
 
     def __init__(self, *args, enum=None, strict=strict, **kwargs):

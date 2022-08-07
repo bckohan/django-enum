@@ -7,6 +7,7 @@ from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import transaction
+from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
 from django_enum import TextChoices
@@ -22,10 +23,10 @@ from django_enum.tests.djenum.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
+from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import EnumTester
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
-from django.http import QueryDict
 
 try:
     import django_filters
@@ -110,6 +111,24 @@ class EnumTypeMixin:
     @property
     def DJTextEnum(self):
         return self.MODEL_CLASS._meta.get_field('dj_text_enum').enum
+
+    def enum_type(self, field_name):
+        return self.MODEL_CLASS._meta.get_field(field_name).enum
+
+    def enum_primitive(self, field_name):
+        enum_type = self.enum_type(field_name)
+        if enum_type in {
+            self.SmallPosIntEnum, self.SmallIntEnum, self.IntEnum,
+            self.PosIntEnum, self.BigIntEnum, self.BigPosIntEnum,
+            self.DJIntEnum
+        }:
+            return int
+        elif enum_type is self.Constants:
+            return float
+        elif enum_type in {self.TextEnum, self.DJTextEnum}:
+            return str
+        else:  # pragma: no cover
+            raise RuntimeError(f'Missing enum type primitive for {enum_type}')
 
 
 class TestChoices(EnumTypeMixin, TestCase):
@@ -375,6 +394,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         import sys
         from importlib import reload
         from unittest.mock import patch
+
         from django_enum import filters
 
         if 'django_filters' in sys.modules:
@@ -387,6 +407,7 @@ class TestChoices(EnumTypeMixin, TestCase):
 
     def do_enum_properties_missing(self):
         import enum
+
         from django_enum.choices import (
             DjangoEnumPropertiesMeta,
             DjangoSymmetricMixin,
@@ -544,6 +565,130 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
         self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, big_pos_int=type('WrongType')())
 
 
+class TestFormField(EnumTypeMixin, TestCase):
+
+    MODEL_CLASS = EnumTester
+    FORM_CLASS = EnumTesterForm
+    form_type = None
+
+    @property
+    def model_params(self):
+        return {
+            'small_pos_int': 0,
+            'small_int': self.SmallIntEnum.VAL2,
+            'pos_int': 2147483647,
+            'int': self.IntEnum.VALn1,
+            'big_pos_int': 2,
+            'big_int': self.BigIntEnum.VAL0,
+            'constant': 2.71828,
+            'text': self.TextEnum.VALUE3,
+            'dj_int_enum': 2,
+            'dj_text_enum': self.DJTextEnum.B,
+            'non_strict_int': self.SmallPosIntEnum.VAL2
+        }
+
+    @property
+    def bad_values(self):
+        return {
+            'small_pos_int': 4.1,
+            'small_int': 'Value 2',
+            'pos_int': 5.3,
+            'int': 10,
+            'big_pos_int': '-12',
+            'big_int': '-12',
+            'constant': 2.7,
+            'text': '143 emma',
+            'dj_int_enum': '',
+            'dj_text_enum': 'D',
+            'non_strict_int': 'Not an int'
+        }
+
+    def test_initial(self):
+        form = self.FORM_CLASS(initial=self.model_params)
+        for field, value in self.model_params.items():
+            self.assertIsInstance(form[field].value(), self.enum_primitive(field))
+            self.assertEqual(form[field].value(), self.enum_type(field)(value).value)
+            self.assertIsInstance(
+                form[field].field.to_python(form[field].value()),
+                self.enum_type(field))
+
+    def test_instance(self):
+        instance = self.MODEL_CLASS.objects.create(**self.model_params)
+        form = self.FORM_CLASS(instance=instance)
+        for field, value in self.model_params.items():
+            self.assertIsInstance(form[field].value(), self.enum_primitive(field))
+            self.assertEqual(form[field].value(), self.enum_type(field)(value).value)
+            self.assertIsInstance(
+                form[field].field.to_python(form[field].value()),
+                self.enum_type(field))
+        instance.delete()
+
+    def test_data(self):
+        form = self.FORM_CLASS(data=self.model_params)
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+        for field, value in self.model_params.items():
+            self.assertIsInstance(form[field].value(), self.enum_primitive(field))
+            self.assertEqual(form[field].value(), self.enum_type(field)(value).value)
+            self.assertIsInstance(form[field].field.to_python(form[field].value()), self.enum_type(field))
+
+    def test_error(self):
+        for field, bad_value in self.bad_values.items():
+            form = self.FORM_CLASS(
+                data={
+                    **self.model_params,
+                    field: bad_value
+                }
+            )
+            form.full_clean()
+            self.assertFalse(form.is_valid())
+            self.assertTrue(field in form.errors)
+
+        form = self.FORM_CLASS(data=self.bad_values)
+        form.full_clean()
+        self.assertFalse(form.is_valid())
+        for field in self.bad_values.keys():
+            self.assertTrue(field in form.errors)
+
+    def test_field_validation(self):
+        for enum_field, bad_value in [
+            (EnumChoiceField(self.SmallPosIntEnum), 4.1),
+            (EnumChoiceField(SmallIntEnum), 123123123),
+            (EnumChoiceField(PosIntEnum), -1),
+            (EnumChoiceField(IntEnum), '63'),
+            (EnumChoiceField(BigPosIntEnum), None),
+            (EnumChoiceField(BigIntEnum), ''),
+            (EnumChoiceField(Constants), 'y'),
+            (EnumChoiceField(TextEnum), 42),
+            (EnumChoiceField(DJIntEnum), '5.3'),
+            (EnumChoiceField(DJTextEnum), 12),
+            (EnumChoiceField(SmallPosIntEnum, strict=False), 'not an int')
+        ]:
+            self.assertRaises(ValidationError, enum_field.validate, bad_value)
+
+    def test_non_strict_field(self):
+        form = self.FORM_CLASS(
+            data={
+                **self.model_params,
+                'non_strict_int': 200
+            }
+        )
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+        self.assertIsInstance(
+            form['non_strict_int'].value(),
+            self.enum_primitive('non_strict_int')
+        )
+        self.assertEqual(
+            form['non_strict_int'].value(),
+            200
+        )
+        self.assertIsInstance(
+            form['non_strict_int'].field.to_python(form['non_strict_int'].value()),
+            self.enum_primitive('non_strict_int')
+        )
+
+
 class TestRequests(EnumTypeMixin, TestCase):
 
     MODEL_CLASS = EnumTester
@@ -611,75 +756,89 @@ class TestRequests(EnumTypeMixin, TestCase):
         return {
             'small_pos_int': self.SmallPosIntEnum.VAL2,
             'small_int': self.SmallIntEnum.VAL0,
-            'pos_int': PosIntEnum.VAL1,
-            'int': IntEnum.VALn1,
-            'big_pos_int': BigPosIntEnum.VAL3,
-            'big_int': BigIntEnum.VAL2,
-            'constant': Constants.GOLDEN_RATIO,
-            'text': TextEnum.VALUE2,
-            'dj_int_enum': DJIntEnum.TWO,
-            'dj_text_enum': DJTextEnum.C,
-            'non_strict_int': SmallPosIntEnum.VAL1
+            'pos_int': self.PosIntEnum.VAL1,
+            'int': self.IntEnum.VALn1,
+            'big_pos_int': self.BigPosIntEnum.VAL2,
+            'big_int': self.BigIntEnum.VAL2,
+            'constant': self.Constants.GOLDEN_RATIO,
+            'text': self.TextEnum.VALUE2,
+            'dj_int_enum': self.DJIntEnum.TWO,
+            'dj_text_enum': self.DJTextEnum.C,
+            'non_strict_int': self.SmallPosIntEnum.VAL1
         }
 
-    def test_post(self):
+    @property
+    def post_params_symmetric(self):
+        return {
+            **self.post_params,
+        }
+
+    def test_add(self):
+        """
+        Test that add forms work and that EnumField type allows creations
+        from symmetric values
+        """
         c = Client()
 
         # test normal choice field and our EnumChoiceField
-        for form_url in ['enum-add', 'enum-form-add']:
+        for form_url, params in [
+            ('enum-add', self.post_params),
+            ('enum-form-add', self.post_params_symmetric)
+        ]:
             response = c.post(
                 reverse(f'{self.NAMESPACE}:{form_url}'),
-                self.post_params,
+                params,
                 follow=True
             )
             soup = Soup(response.content, features='html.parser')
+            added_resp = soup.find_all('div', class_='enum')[-1]
+            added = self.MODEL_CLASS.objects.last()
 
-            added = soup.find_all('div', class_='enum')[-1]
-            self.assertEqual(
-                SmallPosIntEnum(int(added.find(class_="small_pos_int").find("span", class_="value").text)),
-                SmallPosIntEnum.VAL2
+            for param, value in params.items():
+                form_val = added_resp.find(class_=param).find("span", class_="value").text
+                form_val = self.enum_primitive(param)(form_val)
+                if param != 'non_strict_int':
+                    self.assertEqual(
+                        self.enum_type(param)(form_val),
+                        self.enum_type(param)(value)
+                    )
+                else:
+                    self.assertEqual(form_val, value)
+                self.assertEqual(getattr(added, param), form_val)
+            added.delete()
+
+    def test_update(self):
+        """
+        Test that update forms work and that EnumField type allows updates
+        from symmetric values
+        """
+        c = Client()
+
+        # test normal choice field and our EnumChoiceField
+        for form_url, params in [
+            ('enum-update', self.post_params),
+            ('enum-form-update', self.post_params_symmetric)
+        ]:
+            updated = self.MODEL_CLASS.objects.create()
+            response = c.post(
+                reverse(f'{self.NAMESPACE}:{form_url}', kwargs={'pk': updated.pk}),
+                data=params,
+                follow=True
             )
-            self.assertEqual(
-                SmallIntEnum(int(added.find(class_="small_int").find("span", class_="value").text)),
-                SmallIntEnum.VAL0
-            )
-            self.assertEqual(
-                PosIntEnum(int(added.find(class_="pos_int").find("span", class_="value").text)),
-                PosIntEnum.VAL1
-            )
-            self.assertEqual(
-                IntEnum(int(added.find(class_="int").find("span", class_="value").text)),
-                IntEnum.VALn1
-            )
-            self.assertEqual(
-                BigPosIntEnum(int(added.find(class_="big_pos_int").find("span", class_="value").text)),
-                BigPosIntEnum.VAL3
-            )
-            self.assertEqual(
-                BigIntEnum(int(added.find(class_="big_int").find("span", class_="value").text)),
-                BigIntEnum.VAL2
-            )
-            self.assertEqual(
-                Constants(float(added.find(class_="constant").find("span", class_="value").text)),
-                Constants.GOLDEN_RATIO
-            )
-            self.assertEqual(
-                TextEnum(added.find(class_="text").find("span", class_="value").text),
-                TextEnum.VALUE2
-            )
-            self.assertEqual(
-                DJIntEnum(int(added.find(class_="dj_int_enum").find("span", class_="value").text)),
-                DJIntEnum.TWO
-            )
-            self.assertEqual(
-                DJTextEnum(added.find(class_="dj_text_enum").find("span", class_="value").text),
-                DJTextEnum.C
-            )
-            self.assertEqual(
-                SmallPosIntEnum(int(added.find(class_="non_strict_int").find("span", class_="value").text)),
-                SmallPosIntEnum.VAL1
-            )
-            self.MODEL_CLASS.objects.last().delete()
+            updated.refresh_from_db()
+            soup = Soup(response.content, features='html.parser')
+            self.verify_form(updated, soup)
+
+            for param, value in params.items():
+                self.assertEqual(getattr(updated, param), value)
+            updated.delete()
+
+    def test_delete(self):
+        c = Client()
+        for form_url in ['enum-delete', 'enum-form-delete']:
+            deleted = self.MODEL_CLASS.objects.create()
+            c.delete(reverse(f'{self.NAMESPACE}:{form_url}', kwargs={'pk': deleted.pk}))
+            self.assertRaises(self.MODEL_CLASS.DoesNotExist, self.MODEL_CLASS.objects.get, pk=deleted.pk)
 
     @staticmethod
     def get_enum_val(enum, value):
@@ -732,6 +891,56 @@ class TestRequests(EnumTypeMixin, TestCase):
                 if not field.null and not field.blank:
                     self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
 
+    def verify_form(self, obj, soup):
+        for field in [
+            'small_pos_int',
+            'small_int',
+            'pos_int',
+            'int',
+            'big_pos_int',
+            'big_int',
+            'constant',
+            'text',
+        ]:
+            field = EnumTester._meta.get_field(field)
+            expected = dict(zip([en for en in field.enum],
+                                field.enum.labels))  # value -> label
+            null_opt = False
+            for option in soup.find(
+                    'select',
+                    id=f'id_{field.name}'
+            ).find_all('option'):
+
+                if (
+                    option['value'] is None or option['value'] == ''
+                ) and option.text.count('-') >= 2:
+                    self.assertTrue(field.blank or field.null)
+                    null_opt = True
+                    if option.has_attr('selected'):
+                        self.assertIsNone(getattr(obj, field.name))
+                    else:  # pragma: no cover
+                        pass
+                    # (coverage error?? the line below gets hit)
+                    continue  # pragma: no cover
+
+                try:
+                    value = self.get_enum_val(field.enum, option['value'])
+                    self.assertEqual(str(expected[value]), option.text)
+                    if option.has_attr('selected'):
+                        self.assertEqual(getattr(obj, field.name), value)
+                    del expected[value]
+                except KeyError:  # pragma: no cover
+                    self.fail(
+                        f'{field.name} did not expect option {option["value"]}: {option.text}.')
+
+            self.assertEqual(len(expected), 0)
+
+            if not field.null and not field.blank:
+                self.assertFalse(
+                    null_opt,
+                    "An unexpected null option is present"
+                )  # pragma: no cover
+
     def test_update_form(self):
         client = Client()
         # test normal choice field and our EnumChoiceField
@@ -739,42 +948,28 @@ class TestRequests(EnumTypeMixin, TestCase):
             for obj in self.objects:
                 response = client.get(reverse(f'{self.NAMESPACE}:{form_url}', kwargs={'pk': obj.pk}))
                 soup = Soup(response.content, features='html.parser')
+                self.verify_form(obj, soup)
 
-                for field in [
-                    'small_pos_int',
-                    'small_int',
-                    'pos_int',
-                    'int',
-                    'big_pos_int',
-                    'big_int',
-                    'constant',
-                    'text',
-                ]:
-                    field = EnumTester._meta.get_field(field)
-                    expected = dict(zip([en for en in field.enum], field.enum.labels))  # value -> label
-                    null_opt = False
-                    for option in soup.find('select', id=f'id_{field.name}').find_all('option'):
-
-                        if (option['value'] is None or option['value'] == '') and option.text.count('-') >= 2:
-                            self.assertTrue(field.blank or field.null)
-                            null_opt = True
-                            if option.has_attr('selected'):
-                                self.assertIsNone(getattr(obj, field.name))
-                            continue
-
-                        try:
-                            value = self.get_enum_val(field.enum, option['value'])
-                            self.assertEqual(str(expected[value]), option.text)
-                            if option.has_attr('selected'):
-                                self.assertEqual(getattr(obj, field.name), value)
-                            del expected[value]
-                        except KeyError:  # pragma: no cover
-                            self.fail(f'{field.name} did not expect option {option["value"]}: {option.text}.')
-
-                    self.assertEqual(len(expected), 0)
-
-                    if not field.null and not field.blank:
-                        self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
+    def test_non_strict_select(self):
+        client = Client()
+        obj = self.MODEL_CLASS.objects.create(
+            non_strict_int=233
+        )
+        for form_url in ['enum-update', 'enum-form-update']:
+            response = client.get(
+                reverse(
+                    f'{self.NAMESPACE}:{form_url}',
+                    kwargs={'pk': obj.pk}
+                )
+            )
+            soup = Soup(response.content, features='html.parser')
+            self.verify_form(obj, soup)
+            for option in soup.find(
+                'select',
+                id=f'id_non_strict_int'
+            ).find_all('option'):
+                if option.has_attr('selected'):
+                    self.assertEqual(option['value'], '233')
 
     @property
     def field_filter_properties(self):
@@ -936,7 +1131,7 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
 
 if ENUM_PROPERTIES_INSTALLED:
 
-    from enum_properties import s
+    from django_enum.forms import EnumChoiceField
     from django_enum.tests.enum_prop.enums import (
         BigIntEnum,
         BigPosIntEnum,
@@ -950,6 +1145,7 @@ if ENUM_PROPERTIES_INSTALLED:
         SmallPosIntEnum,
         TextEnum,
     )
+    from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
         EnumTester,
         MyModel,
@@ -957,6 +1153,7 @@ if ENUM_PROPERTIES_INSTALLED:
         SingleEnumPerf,
         SingleFieldPerf,
     )
+    from enum_properties import EnumProperties, s
 
 
     class TestEnumPropertiesIntegration(TestCase):
@@ -1257,6 +1454,51 @@ if ENUM_PROPERTIES_INSTALLED:
             tester.save()
             self.assertEqual(tester.text, None)
 
+
+    class TestSymmetricEmptyValEquivalency(TestCase):
+
+        def test(self):
+
+            class EmptyEqEnum(TextChoices, s('prop', case_fold=True)):
+
+                A = 'A', 'ok'
+                B = 'B', 'none'
+
+            self.assertRaises(
+                ValueError,
+                EnumChoiceField,
+                enum=EmptyEqEnum,
+                empty_value=None
+            )
+
+            try:
+                EnumChoiceField(enum=EmptyEqEnum)
+            except Exception:  # pragma: no cover
+                self.fail(
+                    "EnumChoiceField() raised value error with alternative"
+                    "empty_value set."
+                )
+
+            class EmptyEqEnum2(TextChoices, s('prop', case_fold=True)):
+
+                A = 'A', ''
+                B = 'B', 'ok'
+
+            self.assertRaises(
+                ValueError,
+                EnumChoiceField,
+                enum=EmptyEqEnum2
+            )
+
+            try:
+                EnumChoiceField(enum=EmptyEqEnum2, empty_value=None)
+            except Exception:  # pragma: no cover
+                self.fail(
+                    "EnumChoiceField() raised value error with alternative"
+                    "empty_value set."
+                )
+
+
     class TestFieldTypeResolutionProps(TestFieldTypeResolution):
         MODEL_CLASS = EnumTester
 
@@ -1369,6 +1611,45 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_int': -2147483649
             }
 
+
+    class TestFormFieldSymmetric(TestFormField):
+
+        MODEL_CLASS = EnumTester
+        FORM_CLASS = EnumTesterForm
+        form_type = None
+
+        @property
+        def model_params(self):
+            return {
+                'small_pos_int': 0,
+                'small_int': self.SmallIntEnum.VAL2,
+                'pos_int': 'Value 2147483647',
+                'int': 'VALn1',
+                'big_pos_int': 2,
+                'big_int': self.BigPosIntEnum.VAL2,
+                'constant': 'π',
+                'text': 'none',
+                'dj_int_enum': 2,
+                'dj_text_enum': 'B',
+                'non_strict_int': self.SmallPosIntEnum.VAL2
+            }
+
+        @property
+        def bad_values(self):
+            return {
+                'small_pos_int': 4.1,
+                'small_int': 'Value 12',
+                'pos_int': 5.3,
+                'int': 10,
+                'big_pos_int': '-12',
+                'big_int': '-12',
+                'constant': 2.7,
+                'text': '143 emma',
+                'dj_int_enum': '',
+                'dj_text_enum': 'D',
+                'non_strict_int': 'Not an int'
+            }
+
     class TestRequestsProps(TestRequests):
         MODEL_CLASS = EnumTester
         NAMESPACE = 'django_enum_tests_enum_prop'
@@ -1387,6 +1668,22 @@ if ENUM_PROPERTIES_INSTALLED:
                 'dj_int_enum': self.DJIntEnum.TWO,
                 'dj_text_enum': self.DJTextEnum.C,
                 'non_strict_int': self.SmallPosIntEnum.VAL1
+            }
+
+        @property
+        def post_params_symmetric(self):
+            return {
+                'small_pos_int': self.SmallPosIntEnum.VAL2,
+                'small_int': 'Value 0',
+                'pos_int': self.PosIntEnum.VAL1,
+                'int': -2147483648,
+                'big_pos_int': self.BigPosIntEnum.VAL2,
+                'big_int': self.BigPosIntEnum.VAL2,
+                'constant': 'φ',
+                'text': 'v two',
+                'dj_int_enum': self.DJIntEnum.TWO,
+                'dj_text_enum': self.DJTextEnum.C,
+                'non_strict_int': 150
             }
 
         @property
@@ -2250,7 +2547,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertTrue(tester._meta.get_field('dj_text_enum').validate('A', tester) is None)
             self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
 
-    class PerformanceTest(TestCase):
+    class PerformanceTest(TestCase):  # pragma: no cover
 
         COUNT = 10000
 
@@ -2399,5 +2696,5 @@ if ENUM_PROPERTIES_INSTALLED:
             # tends to be about 1.8x slower
             self.assertTrue((enum_time / choice_time) < 2.5)
 
-else:
-    pass  # pragma: no cover
+else:  # pragma: no cover
+    pass

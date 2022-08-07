@@ -1,7 +1,32 @@
 """Enumeration support for django model forms"""
 from django.core.exceptions import ValidationError
 from django.forms.fields import ChoiceField
+from django.forms.widgets import Select
+
 # pylint: disable=R0801
+
+__all__ = ['NonStrictSelect', 'EnumChoiceField']
+
+
+class _Unspecified:
+    """
+    Marker used by EnumChoiceField to determine if empty_value
+    was overridden
+    """
+
+
+class NonStrictSelect(Select):
+    """
+    A Select widget for non-strict EnumChoiceFields that includes any existing
+    non-conforming value as a choice option.
+    """
+
+    def render(self, *args, **kwargs):
+        """Before rendering if we're a non strict field and our value is """
+        value = kwargs.get('value')
+        if value not in self.attrs.get('empty_values', []):
+            self.choices = list(self.choices) + [(value, value)]
+        return super().render(*args, **kwargs)
 
 
 class EnumChoiceField(ChoiceField):
@@ -9,48 +34,129 @@ class EnumChoiceField(ChoiceField):
     The default ``ChoiceField`` will only accept the base enumeration values.
     Use this field on forms to accept any value mappable to an enumeration
     including any labels or symmetric properties.
+
+    :param enum: The Enumeration type
+    :param empty_value: Allow users to define what empty is because some
+        enumeration types might use an empty value (i.e. empty string) as an
+        enumeration value. This value will be returned when any "empty" value
+        is encountered. If unspecified the default empty value of '' is
+        returned.
+    :param strict: If False, values not included in the enumeration list, but
+        of the same primitive type are acceptable.
+    :param choices: Override choices, otherwise enumeration choices attribute
+        will be used.
+    :param kwargs: Any additional parameters to pass to ChoiceField base class.
     """
 
-    def __init__(self, enum, *, empty_value='', choices=(), **kwargs):
+    strict = True
+    empty_value = ''
+
+    def __init__(
+            self,
+            enum,
+            *,
+            empty_value=_Unspecified,
+            strict=strict,
+            choices=(),
+            **kwargs
+    ):
         self.enum = enum
-        self.empty_value = empty_value
+        self.strict = strict
+        if not self.strict:
+            kwargs.setdefault('widget', NonStrictSelect)
+
         super().__init__(
             choices=choices or getattr(self.enum, 'choices', ()),
             **kwargs
         )
+
+        if empty_value is not _Unspecified:
+            self.empty_values.insert(0, empty_value)
+            self.empty_value = empty_value
+
+        # remove any of our valid enumeration values or symmetric properties
+        # from our empty value list if there exists an equivalency
+        for empty in self.empty_values:
+            for enum_val in self.enum:
+                if empty == enum_val:
+                    # copy the list instead of modifying the class's
+                    self.empty_values = [
+                        empty for empty in self.empty_values
+                        if empty != enum_val
+                    ]
+                    if empty == self.empty_value:
+                        raise ValueError(
+                            f'Enumeration value {repr(enum_val)} is equivalent'
+                            f' to {self.empty_value}, you must specify a '
+                            f'non-conflicting empty_value.'
+                        )
 
     def _coerce_to_value_type(self, value):
         """Coerce the value to the enumerations value type"""
         return type(self.enum.values[0])(value)
 
     def _coerce(self, value):
-        if value == self.empty_value or value in self.empty_values:
+        """
+        Attempt conversion of value to an enumeration value and return it
+        if successful.
+
+        :param value The value to convert
+        :return An enumeration value or the canonical empty value if value is
+            one of our empty_values, or the value itself if this is a
+            non-strict field and the value is of a matching primitive type
+        :raises ValidationError if a valid return value cannot be determined.
+        """
+        if value in self.empty_values:
             return self.empty_value
         if self.enum is not None and not isinstance(value, self.enum):
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):
                 try:
-                    value = self.enum(self._coerce_to_value_type(value))
+                    value = self._coerce_to_value_type(value)
+                    value = self.enum(value)
                 except (TypeError, ValueError) as err:
-                    raise ValidationError(
-                        f'{value} is not a valid {self.enum}.',
-                        code='invalid_choice',
-                        params={'value': value},
-                    ) from err
+                    if self.strict or not isinstance(
+                            value,
+                            type(self.enum.values[0])
+                    ):
+                        raise ValidationError(
+                            f'{value} is not a valid {self.enum}.',
+                            code='invalid_choice',
+                            params={'value': value},
+                        ) from err
         return value
 
+    def widget_attrs(self, widget):
+        attrs = super().widget_attrs(widget)
+        attrs.setdefault('empty_value', self.empty_value)
+        attrs.setdefault('empty_values', self.empty_values)
+        return attrs
+
     def clean(self, value):
+        """
+        Validate the given value and return its "cleaned" value as an
+        appropriate Python object. Raise ValidationError for any errors.
+        """
         return super().clean(self._coerce(value))
 
-    # def prepare_value(self, value):
-    #     return value
-    #
-    # def to_python(self, value):
-    #     return value
-    #
-    # def validate(self, value):
-    #     if value in self.empty_values and self.required:
-    #         raise ValidationError(
-    #           self.error_messages['required'], code='required'
-    #         )
+    def prepare_value(self, value):
+        """Must return the raw enumeration value type"""
+        value = self._coerce(value)
+        return super().prepare_value(
+            value.value
+            if isinstance(value, self.enum)
+            else value
+        )
+
+    def to_python(self, value):
+        """Return the value as its full enumeration object"""
+        return self._coerce(value)
+
+    def valid_value(self, value):
+        """Return false if this value is not valid"""
+        try:
+            self._coerce(value)
+            return True
+        except ValidationError:
+            return False

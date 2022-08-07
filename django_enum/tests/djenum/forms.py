@@ -26,7 +26,7 @@ class EnumTesterForm(ModelForm):
     text = EnumChoiceField(TextEnum)
     dj_int_enum = EnumChoiceField(DJIntEnum)
     dj_text_enum = EnumChoiceField(DJTextEnum)
-    non_strict_int = EnumChoiceField(SmallPosIntEnum)
+    non_strict_int = EnumChoiceField(SmallPosIntEnum, strict=False)
 
     class Meta:
         model = EnumTester
