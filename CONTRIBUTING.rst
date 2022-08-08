@@ -26,8 +26,7 @@ Installation
 ------------
 
 `django-enum` uses Poetry_ for environment, package and dependency
-management. Poetry_ greatly simplifies environment bootstrapping. Once it's
-installed:
+management:
 
 .. code-block::
 
@@ -60,6 +59,7 @@ justified is acceptable:
 
     poetry run isort django_enum
     poetry run pylint django_enum
+    poetry run mypy django_enum
     poetry run doc8 -q doc
     poetry check
     poetry run pip check

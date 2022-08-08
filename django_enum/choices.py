@@ -73,10 +73,10 @@ except (ImportError, ModuleNotFoundError):
                 f'installed.'
             )
 
-    DjangoSymmetricMixin = MissingEnumProperties
+    DjangoSymmetricMixin = MissingEnumProperties  # type: ignore
 
 
-    class DjangoEnumPropertiesMeta(ChoicesMeta):
+    class DjangoEnumPropertiesMeta(ChoicesMeta):  # type: ignore
         """
         Throw error if metaclass is used without enum-properties
 
@@ -89,21 +89,21 @@ except (ImportError, ModuleNotFoundError):
                 f'installed.'
             )
 
-    class TextChoices(
+    class TextChoices(  # type: ignore
         DjangoSymmetricMixin,
         str,
         Choices
     ):
         """Raises ImportError on class definition"""
 
-    class IntegerChoices(
+    class IntegerChoices(  # type: ignore
         DjangoSymmetricMixin,
         int,
         Choices
     ):
         """Raises ImportError on class definition"""
 
-    class FloatChoices(
+    class FloatChoices(  # type: ignore
         DjangoSymmetricMixin,
         float,
         Choices

@@ -1,10 +1,13 @@
 """Support for django-filter"""
+from typing import Tuple, Type
+
+from django.db.models import Field as ModelField
+from django.forms.fields import Field as FormField
 from django_enum.fields import EnumMixin
 from django_enum.forms import EnumChoiceField
 
 try:
-    from django_filters import ChoiceFilter, filterset
-
+    from django_filters import ChoiceFilter, Filter, filterset
 
     class EnumFilter(ChoiceFilter):
         """
@@ -28,7 +31,7 @@ try:
         parameter values from any of the symmetric properties: ?color=Red,
         ?color=ff0000, etc...
         """
-        field_class = EnumChoiceField
+        field_class: FormField = EnumChoiceField
 
         def __init__(self, *, enum, **kwargs):
             self.enum = enum
@@ -42,7 +45,11 @@ try:
         default instead of ``ChoiceFilter``.
         """
         @classmethod
-        def filter_for_lookup(cls, field, lookup_type):
+        def filter_for_lookup(
+                cls,
+                field: ModelField,
+                lookup_type: str
+        ) -> Tuple[Type[Filter], dict]:
             """For EnumFields use the EnumFilter class by default"""
             if isinstance(field, EnumMixin) and getattr(field, 'enum', None):
                 return EnumFilter, {'enum': field.enum}
@@ -51,13 +58,14 @@ try:
 
 except (ImportError, ModuleNotFoundError):
 
-    class MissingDjangoFilters:
+    class _MissingDjangoFilters:
         """Throw error if filter support is used without django-filter"""
+
         def __init__(self, *args, **kwargs):
             raise ImportError(
                 f'{self.__class__.__name__} requires django-filter to be '
                 f'installed.'
             )
 
-    EnumFilter = MissingDjangoFilters
-    FilterSet = MissingDjangoFilters
+    EnumFilter = _MissingDjangoFilters  # type: ignore
+    FilterSet = _MissingDjangoFilters  # type: ignore

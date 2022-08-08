@@ -1,21 +1,50 @@
 """
 Support for Django model fields built from enumeration types.
 """
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
+
 from django.core.exceptions import ValidationError
 from django.db.models import (
     BigIntegerField,
     CharField,
     Choices,
+    Field,
     FloatField,
     IntegerField,
+    Model,
     PositiveBigIntegerField,
     PositiveIntegerField,
     PositiveSmallIntegerField,
     SmallIntegerField,
 )
 
+T = TypeVar('T')
 
-class EnumMixin:
+
+def with_typehint(baseclass: Type[T]) -> Type[T]:
+    """
+    Change inheritance to add Field type hints when . This is just more simple
+    than defining a Protocols - revisit if Django provides Field protocol -
+    should also just be a way to create a Protocol from a class?
+    """
+    if TYPE_CHECKING:
+        return baseclass  # pragma: no cover
+    return object  # type: ignore
+
+
+class EnumMixin(
+    # why can't mypy handle the line below?
+    with_typehint(Field)  # type: ignore
+):
     """
     This mixin class turns any Django database field into an enumeration field.
     It works by overriding validation and pre/post database hooks to validate
@@ -30,23 +59,32 @@ class EnumMixin:
         field type.
     """
 
-    enum = None
-    strict = True
+    enum: Optional[Type[Choices]] = None
+    strict: bool = True
 
-    def _coerce_to_value_type(self, value):
+    def _coerce_to_value_type(self, value: Any) -> Choices:
         """Coerce the value to the enumerations value type"""
         # note if enum type is int and a floating point is passed we could get
         # situations like X.xxx == X - this is acceptable
-        return type(self.enum.values[0])(value)
+        if self.enum:
+            return type(self.enum.values[0])(value)
+        # can't ever reach this - just here to make type checker happy
+        return value  # pragma: no cover
 
-    def __init__(self, *args, enum=None, strict=strict, **kwargs):
+    def __init__(
+            self,
+            *args,
+            enum: Optional[Type[Choices]] = None,
+            strict: bool = strict,
+            **kwargs
+    ):
         self.enum = enum
         self.strict = strict if enum else False
         if self.enum is not None:
             kwargs.setdefault('choices', enum.choices if enum else [])
         super().__init__(*args, **kwargs)
 
-    def _try_coerce(self, value):
+    def _try_coerce(self, value: Any) -> Union[Choices, Any]:
         if self.enum is not None and not isinstance(value, self.enum):
             try:
                 value = self.enum(value)
@@ -61,7 +99,7 @@ class EnumMixin:
                         ) from err
         return value
 
-    def deconstruct(self):
+    def deconstruct(self) -> Tuple[str, str, List, dict]:
         """
         Preserve enum class for migrations. Strict is omitted because
         reconstructed fields are *always* non-strict sense enum is null.
@@ -74,7 +112,7 @@ class EnumMixin:
 
         return name, path, args, kwargs
 
-    def get_prep_value(self, value):
+    def get_prep_value(self, value: Any) -> Any:
         """
         Convert the database field value into the Enum type.
 
@@ -105,10 +143,10 @@ class EnumMixin:
 
     def from_db_value(
             self,
-            value,
+            value: Any,
             expression,  # pylint: disable=W0613
             connection  # pylint: disable=W0613
-    ):
+    ) -> Any:
         """
         Convert the database field value into the Enum type.
 
@@ -118,7 +156,7 @@ class EnumMixin:
             return value
         return self._try_coerce(value)
 
-    def to_python(self, value):
+    def to_python(self, value: Any) -> Union[Choices, Any]:
         """
         Converts the value in the enumeration type.
 
@@ -139,7 +177,7 @@ class EnumMixin:
                 f"'{value}' is not a valid {self.enum.__name__}."
             ) from err
 
-    def validate(self, value, model_instance):
+    def validate(self, value: Any, model_instance: Model):
         """
         Validates the field as part of model clean routines. Runs super class
         validation routines then tries to convert the value to a valid
@@ -231,7 +269,7 @@ class _EnumFieldMetaClass(type):
 
     SUPPORTED_PRIMITIVES = {int, str, float}
 
-    def __new__(mcs, enum):  # pylint: disable=R0911
+    def __new__(mcs, enum: Choices) -> Field:  # pylint: disable=R0911
         """
         Construct a new Django Field class given the Enumeration class. The
         correct Django field class to inherit from is determined based on the
@@ -241,12 +279,13 @@ class _EnumFieldMetaClass(type):
         """
         assert issubclass(enum, Choices), \
             f'{enum} must inherit from {Choices}!'
-        primitive = mcs.SUPPORTED_PRIMITIVES.intersection(set(enum.__mro__))
-        assert len(primitive) == 1, f'{enum} must inherit from exactly one ' \
-                                    f'supported primitive type ' \
-                                    f'{mcs.SUPPORTED_PRIMITIVES}'
+        primitives = mcs.SUPPORTED_PRIMITIVES.intersection(set(enum.__mro__))
+        assert len(primitives) == 1, f'{enum} must inherit from exactly one ' \
+                                     f'supported primitive type ' \
+                                     f'{mcs.SUPPORTED_PRIMITIVES}, ' \
+                                     f'encountered: {primitives}.'
 
-        primitive = list(primitive)[0]
+        primitive = list(primitives)[0]
 
         if primitive is float:
             return EnumFloatField
@@ -271,7 +310,11 @@ class _EnumFieldMetaClass(type):
         return EnumCharField
 
 
-def EnumField(enum, *field_args, **field_kwargs):  # pylint: disable=C0103
+def EnumField(  # pylint: disable=C0103
+        enum: Choices,
+        *field_args,
+        **field_kwargs
+) -> Field:
     """
     Some syntactic sugar that wraps the enum field metaclass so that we can
     cleanly create enums like so:

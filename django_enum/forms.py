@@ -1,7 +1,10 @@
 """Enumeration support for django model forms"""
+from typing import Any, Dict, Iterable, List, Tuple, Type, Union
+
 from django.core.exceptions import ValidationError
+from django.db.models import Choices
 from django.forms.fields import ChoiceField
-from django.forms.widgets import Select
+from django.forms.widgets import Select, Widget
 
 # pylint: disable=R0801
 
@@ -20,12 +23,13 @@ class NonStrictSelect(Select):
     A Select widget for non-strict EnumChoiceFields that includes any existing
     non-conforming value as a choice option.
     """
+    choices: Iterable[Tuple[Any, str]]
 
     def render(self, *args, **kwargs):
         """Before rendering if we're a non strict field and our value is """
-        value = kwargs.get('value')
+        value: Any = kwargs.get('value')
         if value not in self.attrs.get('empty_values', []):
-            self.choices = list(self.choices) + [(value, value)]
+            self.choices = list(self.choices) + [(value, str(value))]
         return super().render(*args, **kwargs)
 
 
@@ -48,16 +52,18 @@ class EnumChoiceField(ChoiceField):
     :param kwargs: Any additional parameters to pass to ChoiceField base class.
     """
 
-    strict = True
-    empty_value = ''
+    enum: Type[Choices]
+    strict: bool = True
+    empty_value: Any = ''
+    empty_values: List[Any]
 
     def __init__(
             self,
-            enum,
+            enum: Type[Choices],
             *,
-            empty_value=_Unspecified,
-            strict=strict,
-            choices=(),
+            empty_value: Any = _Unspecified,
+            strict: bool = strict,
+            choices: Iterable[Tuple[Any, str]] = (),
             **kwargs
     ):
         self.enum = enum
@@ -91,11 +97,11 @@ class EnumChoiceField(ChoiceField):
                             f'non-conflicting empty_value.'
                         )
 
-    def _coerce_to_value_type(self, value):
+    def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
         return type(self.enum.values[0])(value)
 
-    def _coerce(self, value):
+    def _coerce(self, value: Any) -> Union[Choices, Any]:
         """
         Attempt conversion of value to an enumeration value and return it
         if successful.
@@ -127,20 +133,13 @@ class EnumChoiceField(ChoiceField):
                         ) from err
         return value
 
-    def widget_attrs(self, widget):
+    def widget_attrs(self, widget: Widget) -> Dict[Any, Any]:
         attrs = super().widget_attrs(widget)
         attrs.setdefault('empty_value', self.empty_value)
         attrs.setdefault('empty_values', self.empty_values)
         return attrs
 
-    def clean(self, value):
-        """
-        Validate the given value and return its "cleaned" value as an
-        appropriate Python object. Raise ValidationError for any errors.
-        """
-        return super().clean(self._coerce(value))
-
-    def prepare_value(self, value):
+    def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""
         value = self._coerce(value)
         return super().prepare_value(
@@ -149,11 +148,11 @@ class EnumChoiceField(ChoiceField):
             else value
         )
 
-    def to_python(self, value):
+    def to_python(self, value: Any) -> Union[Choices, Any]:
         """Return the value as its full enumeration object"""
         return self._coerce(value)
 
-    def valid_value(self, value):
+    def valid_value(self, value: Any) -> bool:
         """Return false if this value is not valid"""
         try:
             self._coerce(value)
