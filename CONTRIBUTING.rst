@@ -48,10 +48,9 @@ the features added. To build the docs run:
 Static Analysis
 ---------------
 
-`django-enum` uses Pylint_ for python linting. Header imports are also
-standardized using isort_. Static type checking is not done because the code
-simply relies too heavily on metaprogramming for it to be useful. Before any
-PR is accepted the following must be run, and static analysis tools should not
+`django-enum` uses Pylint_ for python linting and mypy_ for static type
+checking. Header imports are also standardized using isort_. Before any PR is
+accepted the following must be run, and static analysis tools should not
 produce any errors or warnings. Disabling certain errors or warnings where
 justified is acceptable:
 
