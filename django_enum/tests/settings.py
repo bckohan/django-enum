@@ -57,6 +57,7 @@ try:
     import enum_properties
     INSTALLED_APPS.insert(0, 'django_enum.tests.enum_prop')
     INSTALLED_APPS.insert(0, 'django_enum.tests.edit_tests')
+    INSTALLED_APPS.insert(0, 'django_enum.tests.examples')
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass
 

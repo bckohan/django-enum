@@ -1,5 +1,0 @@
-.. include:: refs.rst
-
-==========
-Migrations
-==========

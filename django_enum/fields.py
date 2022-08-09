@@ -311,7 +311,7 @@ class _EnumFieldMetaClass(type):
 
 
 def EnumField(  # pylint: disable=C0103
-        enum: Choices,
+        enum: Type[Choices],
         *field_args,
         **field_kwargs
 ) -> Field:

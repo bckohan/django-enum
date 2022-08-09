@@ -78,6 +78,15 @@ class EnumTester(models.Model):
         blank=True
     )
 
+    non_strict_text = EnumField(
+        TextEnum,
+        max_length=12,
+        strict=False,
+        null=False,
+        default='',
+        blank=True
+    )
+
     def get_absolute_url(self):
         return reverse('django_enum_tests_djenum:enum-detail', kwargs={'pk': self.pk})
 

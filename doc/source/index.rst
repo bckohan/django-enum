@@ -51,17 +51,16 @@ accessible as their enumeration type rather than by-value:*
     )
     instance.refresh_from_db()
 
-    instance.txt_enum == MyModel.TextEnum('V1')
-    instance.txt_enum.label == 'Value 1'
+    assert instance.txt_enum == MyModel.TextEnum('V1')
+    assert instance.txt_enum.label == 'Value 1'
 
-    instance.int_enum == MyModel.IntEnum['THREE']
-    instance.int_enum.value == 3
+    assert instance.int_enum == MyModel.IntEnum['THREE']
+    assert instance.int_enum.value == 3
 
 
 `django-enum <https://django-enum.readthedocs.io/en/latest/>`_ also provides
 ``IntegerChoices`` and ``TextChoices`` types that extend from
-`enum-properties <https://pypi.org/project/enum-properties/>`_ which makes
-possible very rich enumeration fields.
+enum-properties_ which makes possible very rich enumeration fields.
 
 .. code:: python
 
@@ -85,12 +84,12 @@ possible very rich enumeration fields.
         color = EnumField(Color)
 
     instance = MyModel.objects.create(color=MyModel.Color('FF0000'))
-    instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
+    assert instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
 
     # save back by any symmetric value
     instance.color = 'FF0000'
     instance.full_clean()
-    instance.color.hex == 'ff0000'
+    assert instance.color.hex == 'ff0000'
     instance.save()
 
 
@@ -121,13 +120,24 @@ Installation
 
     ``django-enum`` *does not* need to be added to ``INSTALLED_APPS``.
 
+.. note::
+
+    ``django-enum`` has several optional dependencies that are not pulled in
+    by default. To utilize the
+    enum-properties_ choice types you must `pip install enum-properties` and
+    to use the ``EnumFilter`` type for
+    `django-filter <https://pypi.org/project/django-filter/>`_ you must
+    `pip install django-filter`.
+
+If features are utilized that require a missing optional dependency an
+exception will be thrown.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
    usage
-   migrations
    examples
    reference
    changelog

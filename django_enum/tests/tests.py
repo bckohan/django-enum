@@ -627,6 +627,7 @@ class TestFormField(EnumTypeMixin, TestCase):
     def test_data(self):
         form = self.FORM_CLASS(data=self.model_params)
         form.full_clean()
+        print(form.errors)
         self.assertTrue(form.is_valid())
         for field, value in self.model_params.items():
             self.assertIsInstance(form[field].value(), self.enum_primitive(field))
@@ -2548,7 +2549,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertTrue(tester._meta.get_field('dj_text_enum').validate('A', tester) is None)
             self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
 
-    class PerformanceTest(TestCase):  # pragma: no cover
+    class PerformanceTest(TestCase):
 
         COUNT = 10000
 
@@ -2696,6 +2697,37 @@ if ENUM_PROPERTIES_INSTALLED:
             # print(f'{enum_time} {choice_time}')
             # tends to be about 1.8x slower
             self.assertTrue((enum_time / choice_time) < 2.5)
+
+
+    class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
+
+        def test_mapboxstyle(self):
+            from django_enum.tests.examples.models import Map
+
+            map_obj = Map.objects.create()
+
+            self.assertTrue(
+                map_obj.style.uri == 'mapbox://styles/mapbox/streets-v11'
+            )
+
+            # uri's are symmetric
+            map_obj.style = 'mapbox://styles/mapbox/light-v10'
+            map_obj.full_clean()
+            self.assertTrue(map_obj.style == Map.MapBoxStyle.LIGHT)
+            self.assertTrue(map_obj.style == 3)
+            self.assertTrue(map_obj.style == 'light')
+
+            # so are labels (also case insensitive)
+            map_obj.style = 'satellite streets'
+            map_obj.full_clean()
+            self.assertTrue(map_obj.style == Map.MapBoxStyle.SATELLITE_STREETS)
+
+            # when used in API calls (coerced to strings) - they "do the right
+            # thing"
+            self.assertTrue(
+                str(map_obj.style) ==
+                'mapbox://styles/mapbox/satellite-streets-v11'
+            )
 
 else:  # pragma: no cover
     pass

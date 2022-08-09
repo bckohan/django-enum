@@ -27,7 +27,7 @@ Choices
    :show-inheritance:
    :private-members:
 
-filters
+Filters
 -------
 
 .. automodule:: django_enum.filters
@@ -37,7 +37,7 @@ filters
    :private-members:
 
 
-forms
+Forms
 -----
 
 .. automodule:: django_enum.forms

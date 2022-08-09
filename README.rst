@@ -82,11 +82,11 @@ accessible as their enumeration type rather than by-value:*
     )
     instance.refresh_from_db()
 
-    instance.txt_enum == MyModel.TextEnum('V1')
-    instance.txt_enum.label == 'Value 1'
+    assert instance.txt_enum == MyModel.TextEnum('V1')
+    assert instance.txt_enum.label == 'Value 1'
 
-    instance.int_enum == MyModel.IntEnum['THREE']
-    instance.int_enum.value == 3
+    assert instance.int_enum == MyModel.IntEnum['THREE']
+    assert instance.int_enum.value == 3
 
 
 `django-enum <https://django-enum.readthedocs.io/en/latest/>`_ also provides
@@ -116,12 +116,17 @@ possible very rich enumeration fields.
         color = EnumField(Color)
 
     instance = MyModel.objects.create(color=MyModel.Color('FF0000'))
-    instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
+    assert instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
 
-    # save back by any symmetric value
+    # direct comparison to any symmetric value also works
+    assert instance.color == 'Red'
+    assert instance.color == 'R'
+    assert instance.color == (1, 0, 0)
+
+    # save by any symmetric value
     instance.color = 'FF0000'
     instance.full_clean()
-    instance.color.hex == 'ff0000'
+    assert instance.color.hex == 'ff0000'
     instance.save()
 
 
