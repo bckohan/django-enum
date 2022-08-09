@@ -86,6 +86,7 @@ still be possible to set the field directly as an ``Enum`` instance:
     assert isinstance(obj.non_strict, str)
     assert not isinstance(obj.non_strict, StrictExample.EnumType)
 
+
 enum-properties
 ###############
 
