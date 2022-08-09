@@ -87,6 +87,14 @@ class EnumTester(models.Model):
         blank=True
     )
 
+    no_coerce = EnumField(
+        SmallPosIntEnum,
+        coerce=False,
+        null=True,
+        default=None,
+        blank=True
+    )
+
     def get_absolute_url(self):
         return reverse('django_enum_tests_djenum:enum-detail', kwargs={'pk': self.pk})
 

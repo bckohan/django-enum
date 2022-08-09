@@ -79,6 +79,22 @@ try:
             default=None,
             blank=True
         )
+        non_strict_text = EnumField(
+            TextEnum,
+            max_length=12,
+            strict=False,
+            null=False,
+            default='',
+            blank=True
+        )
+
+        no_coerce = EnumField(
+            SmallPosIntEnum,
+            coerce=False,
+            null=True,
+            default=None,
+            blank=True
+        )
 
         def get_absolute_url(self):
             return reverse('django_enum_tests_enum_prop:enum-detail', kwargs={'pk': self.pk})
@@ -116,51 +132,19 @@ try:
 
         small_pos_int = models.PositiveSmallIntegerField(choices=SmallPosIntEnum.choices, null=True, default=None, db_index=True, blank=True)
         small_int = models.SmallIntegerField(choices=SmallIntEnum.choices, null=False, default=SmallIntEnum.VAL3, db_index=True, blank=True)
-
         pos_int = models.PositiveIntegerField(choices=PosIntEnum.choices, default=PosIntEnum.VAL3, db_index=True, blank=True)
         int = models.IntegerField(choices=IntEnum.choices, null=True, db_index=True, blank=True)
-
         big_pos_int = models.PositiveBigIntegerField(choices=BigPosIntEnum.choices, null=True, default=None, db_index=True, blank=True)
         big_int = models.BigIntegerField(choices=BigIntEnum.choices, default=BigIntEnum.VAL0, db_index=True, blank=True)
-
         constant = models.FloatField(choices=Constants.choices, null=True, default=None, db_index=True, blank=True)
-
         text = models.CharField(choices=TextEnum.choices, max_length=4, null=True, default=None, db_index=True, blank=True)
 
         # basic choice fields - used to compare behavior
-        int_choice = models.IntegerField(
-            default=1,
-            null=False,
-            blank=True,
-            choices=((1, 'One'), (2, 'Two'), (3, 'Three'))
-        )
-
-        char_choice = models.CharField(
-            max_length=1,
-            default='A',
-            null=False,
-            blank=True,
-            choices=(('A', 'First'), ('B', 'Second'), ('C', 'Third'))
-        )
-
-        int_field = models.IntegerField(
-            default=1,
-            null=False,
-            blank=True
-        )
-
-        float_field = models.FloatField(
-            default=1.5,
-            null=False,
-            blank=True
-        )
-
-        char_field = models.CharField(
-            max_length=1,
-            default='A',
-            null=False,
-            blank=True
-        )
+        int_choice = models.IntegerField(default=1, null=False, blank=True, choices=((1, 'One'), (2, 'Two'), (3, 'Three')))
+        char_choice = models.CharField(max_length=1, default='A', null=False, blank=True, choices=(('A', 'First'), ('B', 'Second'), ('C', 'Third')))
+        int_field = models.IntegerField(default=1, null=False, blank=True)
+        float_field = models.FloatField(default=1.5, null=False, blank=True)
+        char_field = models.CharField(max_length=1, default='A', null=False, blank=True)
         ################################################
 
         dj_int_enum = models.PositiveSmallIntegerField(choices=DJIntEnum.choices, default=DJIntEnum.ONE.value)
@@ -168,6 +152,39 @@ try:
 
         # Non-strict
         non_strict_int = models.PositiveSmallIntegerField(choices=SmallPosIntEnum.choices, null=True, default=None, blank=True)
+        non_strict_text = EnumField(TextEnum, max_length=12, strict=False, null=False, default='', blank=True)
+        no_coerce = EnumField(SmallPosIntEnum, coerce=False, null=True, default=None, blank=True)
+
+        class Meta:
+            ordering = ('id',)
+
+
+    class NoCoercePerfCompare(models.Model):
+
+        small_pos_int = EnumField(SmallPosIntEnum, coerce=False, null=True, default=None, db_index=True, blank=True)
+        small_int = EnumField(SmallIntEnum, coerce=False, null=False, default=SmallIntEnum.VAL3, db_index=True, blank=True)
+        pos_int = EnumField(PosIntEnum, coerce=False, default=PosIntEnum.VAL3, db_index=True, blank=True)
+        int = EnumField(IntEnum, coerce=False, null=True, db_index=True, blank=True)
+        big_pos_int = EnumField(BigPosIntEnum, coerce=False, null=True, default=None, db_index=True, blank=True)
+        big_int = EnumField(BigIntEnum, coerce=False, default=BigIntEnum.VAL0, db_index=True, blank=True)
+        constant = EnumField(Constants, coerce=False, null=True, default=None, db_index=True, blank=True)
+        text = EnumField(TextEnum, coerce=False, null=True, default=None, db_index=True, blank=True)
+
+        # basic choice fields - used to compare behavior
+        int_choice = models.IntegerField(default=1, null=False, blank=True, choices=((1, 'One'), (2, 'Two'), (3, 'Three')))
+        char_choice = models.CharField(max_length=1, default='A', null=False, blank=True, choices=(('A', 'First'), ('B', 'Second'), ('C', 'Third')))
+        int_field = models.IntegerField(default=1, null=False, blank=True)
+        float_field = models.FloatField(default=1.5, null=False, blank=True)
+        char_field = models.CharField(max_length=1, default='A', null=False, blank=True)
+        ################################################
+
+        dj_int_enum = EnumField(DJIntEnum, coerce=False, default=DJIntEnum.ONE)
+        dj_text_enum = EnumField(DJTextEnum, coerce=False, default=DJTextEnum.A)
+
+        # Non-strict
+        non_strict_int = EnumField(SmallPosIntEnum, coerce=False, strict=False, null=True, default=None, blank=True)
+        non_strict_text = EnumField(TextEnum, coerce=False, max_length=12, strict=False, null=False, default='', blank=True)
+        no_coerce = EnumField(SmallPosIntEnum, coerce=False, null=True, default=None, blank=True)
 
         class Meta:
             ordering = ('id',)
