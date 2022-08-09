@@ -100,7 +100,7 @@ possible very rich enumeration fields.
     from django_enum import TextChoices  # use instead of Django's TextChoices
     from django.db import models
 
-    class MyModel(models.Model):
+    class TextChoicesExample(models.Model):
 
         class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
 
@@ -115,8 +115,12 @@ possible very rich enumeration fields.
 
         color = EnumField(Color)
 
-    instance = MyModel.objects.create(color=MyModel.Color('FF0000'))
-    assert instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
+    instance = TextChoicesExample.objects.create(
+        color=TextChoicesExample.Color('FF0000')
+    )
+    assert instance.color == TextChoicesExample.Color('Red')
+    assert instance.color == TextChoicesExample.Color('R')
+    assert instance.color == TextChoicesExample.Color((1, 0, 0))
 
     # direct comparison to any symmetric value also works
     assert instance.color == 'Red'

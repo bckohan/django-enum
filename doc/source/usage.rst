@@ -29,7 +29,7 @@ data where no ``Enum`` type coercion is possible.
 
 .. code-block:: python
 
-    class MyModel(models.Model):
+    class StrictExample(models.Model):
 
         class EnumType(TextChoices):
 
@@ -44,13 +44,13 @@ data where no ``Enum`` type coercion is possible.
             max_length=10
         )
 
-    obj = MyModel()
+    obj = StrictExample()
 
     # set to a valid EnumType value
     obj.non_strict = '1'
     obj.full_clean()
     # when accessed from the db or after clean, will be an EnumType instance
-    assert obj.non_strict is MyModel.EnumType.ONE
+    assert obj.non_strict is StrictExample.EnumType.ONE
 
     # we can also store any string less than or equal to length 10
     obj.non_strict = 'arbitrary'
@@ -59,33 +59,32 @@ data where no ``Enum`` type coercion is possible.
     assert obj.non_strict == 'arbitrary'
 
 
-..
-    ``coerce``
-    ----------
+``coerce``
+----------
 
-    Setting this parameter to ``False`` will turn off the automatic conversion to
-    the field's ``Enum`` type while leaving all validation checks in place. It will
-    still be possible to set the field directly as an ``Enum`` instance:
+Setting this parameter to ``False`` will turn off the automatic conversion to
+the field's ``Enum`` type while leaving all validation checks in place. It will
+still be possible to set the field directly as an ``Enum`` instance:
 
-    .. code-block:: python
+.. code-block:: python
 
-        non_strict = EnumField(
-            EnumType,
-            strict=False,
-            coerce=False,
-            # it might be necessary to override max_length also, otherwise
-            # max_length will be 1
-            max_length=10
-        )
+    non_strict = EnumField(
+        EnumType,
+        strict=False,
+        coerce=False,
+        # it might be necessary to override max_length also, otherwise
+        # max_length will be 1
+        max_length=10
+    )
 
-        # set to a valid EnumType value
-        obj.non_strict = '1'
-        obj.full_clean()
+    # set to a valid EnumType value
+    obj.non_strict = '1'
+    obj.full_clean()
 
-        # when accessed from the db or after clean, will be the primitive value
-        assert obj.non_strict == '1'
-        assert isinstance(obj.non_strict, str)
-
+    # when accessed from the db or after clean, will be the primitive value
+    assert obj.non_strict == '1'
+    assert isinstance(obj.non_strict, str)
+    assert not isinstance(obj.non_strict, StrictExample.EnumType)
 
 enum-properties
 ###############
@@ -108,7 +107,7 @@ values that can be symmetrically mapped back to enumeration values:
     from django_enum import TextChoices  # use instead of Django's TextChoices
     from django.db import models
 
-    class MyModel(models.Model):
+    class TextChoicesExample(models.Model):
 
         class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
 
@@ -123,8 +122,12 @@ values that can be symmetrically mapped back to enumeration values:
 
         color = EnumField(Color)
 
-    instance = MyModel.objects.create(color=MyModel.Color('FF0000'))
-    assert instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
+    instance = TextChoicesExample.objects.create(
+        color=TextChoicesExample.Color('FF0000')
+    )
+    assert instance.color == TextChoicesExample.Color('Red')
+    assert instance.color == TextChoicesExample.Color('R')
+    assert instance.color == TextChoicesExample.Color((1, 0, 0))
 
     # direct comparison to any symmetric value also works
     assert instance.color == 'Red'

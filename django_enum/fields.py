@@ -61,6 +61,7 @@ class EnumMixin(
 
     enum: Optional[Type[Choices]] = None
     strict: bool = True
+    coerce: bool = True
 
     def _coerce_to_value_type(self, value: Any) -> Choices:
         """Coerce the value to the enumerations value type"""
@@ -76,16 +77,22 @@ class EnumMixin(
             *args,
             enum: Optional[Type[Choices]] = None,
             strict: bool = strict,
+            coerce: bool = coerce,
             **kwargs
     ):
         self.enum = enum
         self.strict = strict if enum else False
+        self.coerce = coerce if enum else False
         if self.enum is not None:
             kwargs.setdefault('choices', enum.choices if enum else [])
         super().__init__(*args, **kwargs)
 
-    def _try_coerce(self, value: Any) -> Union[Choices, Any]:
-        if self.enum is not None and not isinstance(value, self.enum):
+    def _try_coerce(self, value: Any, force: bool = False) -> Union[Choices, Any]:
+        if (
+            (self.coerce or force)
+            and self.enum is not None
+            and not isinstance(value, self.enum)
+        ):
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):
@@ -167,7 +174,7 @@ class EnumMixin(
         :raises ValidationError: If the value is not mappable to a valid
             enumeration
         """
-        if self.enum is None or isinstance(value, self.enum) or value is None:
+        if value is None:
             return value
 
         try:
@@ -196,10 +203,10 @@ class EnumMixin(
             if err.code != 'invalid_choice':
                 raise err
         try:
-            self.to_python(value)
-        except ValidationError as err:
+            self._try_coerce(value, force=True)
+        except ValueError as err:
             raise ValidationError(
-                err.message,
+                str(err),
                 code='invalid_choice',
                 params={'value': value}
             ) from err
