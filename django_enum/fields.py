@@ -181,7 +181,8 @@ class EnumMixin(
             return self._try_coerce(value)
         except ValueError as err:
             raise ValidationError(
-                f"'{value}' is not a valid {self.enum.__name__}."
+                f"'{value}' is not a valid "
+                f"{self.enum.__name__ if self.enum else ''}."
             ) from err
 
     def validate(self, value: Any, model_instance: Model):
