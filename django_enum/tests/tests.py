@@ -1154,6 +1154,7 @@ if ENUM_PROPERTIES_INSTALLED:
         PerfCompare,
         SingleEnumPerf,
         SingleFieldPerf,
+        SingleNoCoercePerf
     )
     from enum_properties import EnumProperties, s
 
@@ -2674,12 +2675,19 @@ if ENUM_PROPERTIES_INSTALLED:
                 SingleFieldPerf.objects.create(small_pos_int=0)
             choice_stop = perf_counter()
 
+            no_coerce_start = perf_counter()
+            for idx in range(0, self.COUNT):
+                SingleNoCoercePerf.objects.create(small_pos_int=0)
+            no_coerce_end = perf_counter()
+
             enum_time = enum_stop - enum_start
             choice_time = choice_stop - choice_start
+            no_coerce_time = no_coerce_end - no_coerce_start
 
+            print(f'{enum_time} {choice_time} {no_coerce_time}')
             # Enum tends to be about ~12% slower
             self.assertTrue((enum_time / choice_time) < 1.5)
-            # print(f'{enum_time} {choice_time}')
+            self.assertTrue((no_coerce_time / choice_time) < 1.1)
 
             enum_start = perf_counter()
             for _ in SingleEnumPerf.objects.all():
@@ -2691,12 +2699,21 @@ if ENUM_PROPERTIES_INSTALLED:
                 continue
             choice_stop = perf_counter()
 
+            no_coerce_start = perf_counter()
+            for _ in SingleNoCoercePerf.objects.all():
+                continue
+            no_coerce_end = perf_counter()
+
             enum_time = enum_stop - enum_start
             choice_time = choice_stop - choice_start
+            no_coerce_time = no_coerce_end - no_coerce_start
 
-            # print(f'{enum_time} {choice_time}')
+            print(f'{enum_time} {choice_time} {no_coerce_time}')
             # tends to be about 1.8x slower
             self.assertTrue((enum_time / choice_time) < 2.5)
+
+            # todo how to tighten this? why so much slower still?
+            self.assertTrue((no_coerce_time / choice_time) < 1.7)
 
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?

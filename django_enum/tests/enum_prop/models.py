@@ -182,5 +182,10 @@ try:
 
         small_pos_int = models.PositiveSmallIntegerField(choices=SmallPosIntEnum.choices, null=True, default=None, db_index=True, blank=True)
 
+
+    class SingleNoCoercePerf(models.Model):
+
+        small_pos_int = EnumField(enum=SmallPosIntEnum, coerce=False, null=True, default=None, db_index=True, blank=True)
+
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass
