@@ -12,6 +12,7 @@ from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
 from django_enum import TextChoices
+from django_enum.forms import EnumChoiceField
 from django_enum.tests.djenum.enums import (
     BigIntEnum,
     BigPosIntEnum,

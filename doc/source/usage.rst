@@ -64,7 +64,8 @@ data where no ``Enum`` type coercion is possible.
 
 Setting this parameter to ``False`` will turn off the automatic conversion to
 the field's ``Enum`` type while leaving all validation checks in place. It will
-still be possible to set the field directly as an ``Enum`` instance:
+still be possible to set the field directly as an ``Enum`` instance and to
+filter by ``Enum`` instance or any symmetric value:
 
 .. code-block:: python
 
@@ -154,6 +155,7 @@ Filtering
 #########
 
 
+
 Migrations
 ##########
 
@@ -179,19 +181,13 @@ Performance
 The cost to resolve a raw database value into an ``Enum`` type object is
 non-zero. ``EnumFields`` may not be appropriate for use cases at the edge of
 critical performance boundaries, but for most scenarios the cost of using
-``EnumFields`` will be negligible.
+``EnumFields`` is negligible.
 
 An effort is made to characterize and monitor the performance penalty of
 using ``EnumFields`` over a Django_ native field with choices and integration
 tests assure performance of future releases will not worsen.
 
-For model object creation ``EnumFields`` tend to be about 10% slower than an
-equivalent field with choices and for model object iteration ``EnumFields``
-tend to be about 50% slower.
+.. note::
 
-..
-    .. note::
-
-        The performance penalty can be eliminated by setting ``coerce`` to
-        ``False``.
-
+    The read performance penalty can be eliminated by setting ``coerce`` to
+    ``False``.

@@ -116,11 +116,11 @@ class EnumChoiceField(ChoiceField):
         Attempt conversion of value to an enumeration value and return it
         if successful.
 
-        :param value The value to convert
-        :return An enumeration value or the canonical empty value if value is
+        :param value: The value to convert
+        :raises ValidationError: if a valid return value cannot be determined.
+        :return: An enumeration value or the canonical empty value if value is
             one of our empty_values, or the value itself if this is a
             non-strict field and the value is of a matching primitive type
-        :raises ValidationError if a valid return value cannot be determined.
         """
 
         if value in self.empty_values:
