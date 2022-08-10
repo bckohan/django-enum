@@ -7,6 +7,7 @@ from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import transaction
+from django.db.models import Q
 from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -230,7 +231,9 @@ class TestChoices(EnumTypeMixin, TestCase):
             'text': TextEnum.VALUE2,
             'dj_int_enum': 3,
             'dj_text_enum': DJTextEnum.A,
-            'non_strict_int':  75
+            'non_strict_int':  75,
+            'non_strict_text':  'arbitrary',
+            'no_coerce': SmallPosIntEnum.VAL2
         }
 
     def test_values(self):
@@ -251,15 +254,40 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertEqual(values1['text'], self.TextEnum.VALUE2)
         self.assertEqual(values1['dj_int_enum'], self.DJIntEnum.THREE)
         self.assertEqual(values1['dj_text_enum'], self.DJTextEnum.A)
+
+        self.assertIsInstance(values1['small_pos_int'], self.SmallPosIntEnum)
+        self.assertIsInstance(values1['small_int'], self.SmallIntEnum)
+        self.assertIsInstance(values1['pos_int'], self.PosIntEnum)
+        self.assertIsInstance(values1['int'], self.IntEnum)
+        self.assertIsInstance(values1['big_pos_int'], self.BigPosIntEnum)
+        self.assertIsInstance(values1['big_int'], self.BigIntEnum)
+        self.assertIsInstance(values1['constant'], self.Constants)
+        self.assertIsInstance(values1['text'], self.TextEnum)
+        self.assertIsInstance(values1['dj_int_enum'], self.DJIntEnum)
+        self.assertIsInstance(values1['dj_text_enum'], self.DJTextEnum)
+
         self.assertEqual(values1['non_strict_int'], 75)
+        self.assertEqual(values1['non_strict_text'], 'arbitrary')
+        self.assertEqual(values1['no_coerce'], 2)
+
+        self.assertNotIsInstance(values1['non_strict_int'], self.SmallPosIntEnum)
+        self.assertNotIsInstance(values1['non_strict_text'], self.TextEnum)
+        self.assertNotIsInstance(values1['no_coerce'], self.SmallPosIntEnum)
 
         obj.delete()
 
         obj = self.MODEL_CLASS.objects.create(
-            non_strict_int=self.SmallPosIntEnum.VAL1
+            non_strict_int=self.SmallPosIntEnum.VAL1,
+            non_strict_text=self.TextEnum.VALUE3,
+            no_coerce=self.SmallPosIntEnum.VAL3
         )
         values2 = self.MODEL_CLASS.objects.filter(pk=obj.pk).values().first()
         self.assertEqual(values2['non_strict_int'], self.SmallPosIntEnum.VAL1)
+        self.assertEqual(values2['non_strict_text'], self.TextEnum.VALUE3)
+        self.assertEqual(values2['no_coerce'], self.SmallPosIntEnum.VAL3)
+        self.assertIsInstance(values2['non_strict_int'], self.SmallPosIntEnum)
+        self.assertIsInstance(values2['non_strict_text'], self.TextEnum)
+        self.assertNotIsInstance(values2['no_coerce'], self.SmallPosIntEnum)
 
         self.assertEqual(values2['dj_int_enum'], 1)
         self.assertEqual(values2['dj_text_enum'], 'A')
@@ -271,37 +299,72 @@ class TestChoices(EnumTypeMixin, TestCase):
         Test that non strict fields allow assignment and read of non-enum values.
         """
         values = {
-            self.SmallPosIntEnum.VAL1,
-            self.SmallPosIntEnum.VAL2,
-            self.SmallPosIntEnum.VAL3,
-            10,
-            12,
-            15
+            (self.SmallPosIntEnum.VAL1, self.TextEnum.VALUE1),
+            (self.SmallPosIntEnum.VAL2, self.TextEnum.VALUE2),
+            (self.SmallPosIntEnum.VAL3, self.TextEnum.VALUE3),
+            (10, 'arb'),
+            (12, 'arbitra'),
+            (15, 'A'*12)
         }
-        for value in values:
-            self.MODEL_CLASS.objects.create(non_strict_int=value)
+        for int_val, txt_val in values:
+            self.MODEL_CLASS.objects.create(
+                non_strict_int=int_val,
+                non_strict_text=txt_val
+            )
 
-        for obj in self.MODEL_CLASS.objects.filter(non_strict_int__isnull=False):
-            self.assertTrue(obj.non_strict_int in values)
+        for obj in self.MODEL_CLASS.objects.filter(
+                Q(non_strict_int__isnull=False) & Q(non_strict_text__isnull=False)
+        ):
+            self.assertTrue(obj.non_strict_int in [val[0] for val in values])
+            self.assertTrue(obj.non_strict_text in [val[1] for val in values])
 
         self.assertEqual(
-            self.MODEL_CLASS.objects.filter(non_strict_int=self.SmallPosIntEnum.VAL1).count(), 1
+            self.MODEL_CLASS.objects.filter(
+                non_strict_int=self.SmallPosIntEnum.VAL1,
+                non_strict_text=self.TextEnum.VALUE1
+            ).count(), 1
         )
         self.assertEqual(
-            self.MODEL_CLASS.objects.filter(non_strict_int=self.SmallPosIntEnum.VAL2).count(), 1
+            self.MODEL_CLASS.objects.filter(
+                non_strict_int=self.SmallPosIntEnum.VAL2,
+                non_strict_text=self.TextEnum.VALUE2
+            ).count(), 1
         )
         self.assertEqual(
-            self.MODEL_CLASS.objects.filter(non_strict_int=self.SmallPosIntEnum.VAL3).count(), 1
+            self.MODEL_CLASS.objects.filter(
+                non_strict_int=self.SmallPosIntEnum.VAL3,
+                non_strict_text=self.TextEnum.VALUE3
+            ).count(), 1
         )
         self.assertEqual(
-            self.MODEL_CLASS.objects.filter(non_strict_int=10).count(), 1
+            self.MODEL_CLASS.objects.filter(
+                non_strict_int=10,
+                non_strict_text='arb'
+            ).count(), 1
         )
         self.assertEqual(
-            self.MODEL_CLASS.objects.filter(non_strict_int=12).count(), 1
+            self.MODEL_CLASS.objects.filter(
+                non_strict_int=12,
+                non_strict_text='arbitra'
+            ).count(), 1
         )
         self.assertEqual(
-            self.MODEL_CLASS.objects.filter(non_strict_int=15).count(), 1
+            self.MODEL_CLASS.objects.filter(
+                non_strict_int=15,
+                non_strict_text='A'*12
+            ).count(), 1
         )
+
+    def test_max_length_override(self):
+
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('non_strict_text').max_length, 12)
+        # todo sqlite does not enforce the max_length of a VARCHAR, make this
+        #   test specific to database backends that do
+        # will raise in certain backends
+        # obj = self.MODEL_CLASS.objects.create(
+        #    non_strict_text='A'*13
+        # )
+        # print(len(obj.non_strict_text))
 
     def test_serialization(self):
         tester = self.MODEL_CLASS.objects.create(**self.values_params)
@@ -328,6 +391,13 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertRaises(ValidationError, tester._meta.get_field('constant').validate, 66.6, tester)
         self.assertRaises(ValidationError, tester._meta.get_field('text').validate, '666', tester)
 
+        # coerce=False still validates
+        self.assertRaises(ValidationError, tester._meta.get_field('no_coerce').validate, 666, tester)
+        self.assertRaises(ValidationError, tester._meta.get_field('no_coerce').validate, 'a', tester)
+
+        # non strict fields whose type can't be coerced to the enum's primitive will fail to validate
+        self.assertRaises(ValidationError, tester._meta.get_field('non_strict_int').validate, 'a', tester)
+
         self.assertRaises(ValidationError, tester._meta.get_field('small_pos_int').validate, 'anna', tester)
         self.assertRaises(ValidationError, tester._meta.get_field('small_int').validate, 'maria', tester)
         self.assertRaises(ValidationError, tester._meta.get_field('pos_int').validate, 'montes', tester)
@@ -351,6 +421,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertTrue(tester._meta.get_field('dj_int_enum').validate(1, tester) is None)
         self.assertTrue(tester._meta.get_field('dj_text_enum').validate('A', tester) is None)
         self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
+        self.assertTrue(tester._meta.get_field('non_strict_text').validate('A'*12, tester) is None)
 
         return tester
 
@@ -585,7 +656,9 @@ class TestFormField(EnumTypeMixin, TestCase):
             'text': self.TextEnum.VALUE3,
             'dj_int_enum': 2,
             'dj_text_enum': self.DJTextEnum.B,
-            'non_strict_int': self.SmallPosIntEnum.VAL2
+            'non_strict_int': self.SmallPosIntEnum.VAL2,
+            'non_strict_text': 'arbitrary',
+            'no_coerce': self.SmallPosIntEnum.VAL1
         }
 
     @property
@@ -601,27 +674,34 @@ class TestFormField(EnumTypeMixin, TestCase):
             'text': '143 emma',
             'dj_int_enum': '',
             'dj_text_enum': 'D',
-            'non_strict_int': 'Not an int'
+            'non_strict_int': 'Not an int',
+            'non_strict_text': None,
+            'no_coerce': 4.1
         }
+
+    def verify_field(self, form, field, value):
+        self.assertIsInstance(form[field].value(), self.enum_primitive(field))
+        if self.MODEL_CLASS._meta.get_field(field).strict:
+            self.assertEqual(form[field].value(),
+                             self.enum_type(field)(value).value)
+            if self.MODEL_CLASS._meta.get_field(field).coerce:
+                self.assertIsInstance(
+                    form[field].field.to_python(form[field].value()),
+                    self.enum_type(field)
+                )
+        else:
+            self.assertEqual(form[field].value(), value)
 
     def test_initial(self):
         form = self.FORM_CLASS(initial=self.model_params)
         for field, value in self.model_params.items():
-            self.assertIsInstance(form[field].value(), self.enum_primitive(field))
-            self.assertEqual(form[field].value(), self.enum_type(field)(value).value)
-            self.assertIsInstance(
-                form[field].field.to_python(form[field].value()),
-                self.enum_type(field))
+            self.verify_field(form, field, value)
 
     def test_instance(self):
         instance = self.MODEL_CLASS.objects.create(**self.model_params)
         form = self.FORM_CLASS(instance=instance)
         for field, value in self.model_params.items():
-            self.assertIsInstance(form[field].value(), self.enum_primitive(field))
-            self.assertEqual(form[field].value(), self.enum_type(field)(value).value)
-            self.assertIsInstance(
-                form[field].field.to_python(form[field].value()),
-                self.enum_type(field))
+            self.verify_field(form, field, value)
         instance.delete()
 
     def test_data(self):
@@ -630,9 +710,7 @@ class TestFormField(EnumTypeMixin, TestCase):
         print(form.errors)
         self.assertTrue(form.is_valid())
         for field, value in self.model_params.items():
-            self.assertIsInstance(form[field].value(), self.enum_primitive(field))
-            self.assertEqual(form[field].value(), self.enum_type(field)(value).value)
-            self.assertIsInstance(form[field].field.to_python(form[field].value()), self.enum_type(field))
+            self.verify_field(form, field, value)
 
     def test_error(self):
         for field, bad_value in self.bad_values.items():
@@ -699,6 +777,8 @@ class TestRequests(EnumTypeMixin, TestCase):
     objects = []
     values = {}
 
+    maxDiff = None
+
     def setUp(self):
         self.values = {val: {} for val in self.compared_attributes}
         self.objects = []
@@ -706,6 +786,8 @@ class TestRequests(EnumTypeMixin, TestCase):
         self.objects.append(
             self.MODEL_CLASS.objects.create()
         )
+        self.objects[-1].refresh_from_db()
+
         self.objects.append(
             self.MODEL_CLASS.objects.create(
                 small_pos_int=self.SmallPosIntEnum.VAL1,
@@ -715,9 +797,14 @@ class TestRequests(EnumTypeMixin, TestCase):
                 big_pos_int=self.BigPosIntEnum.VAL1,
                 big_int=self.BigIntEnum.VAL1,
                 constant=self.Constants.PI,
-                text=self.TextEnum.VALUE1
+                text=self.TextEnum.VALUE1,
+                non_strict_int=self.SmallPosIntEnum.VAL1,
+                non_strict_text=self.TextEnum.VALUE1,
+                no_coerce=self.SmallPosIntEnum.VAL1
             )
         )
+        self.objects[-1].refresh_from_db()
+
         for _ in range(0, 2):
             self.objects.append(
                 self.MODEL_CLASS.objects.create(
@@ -728,9 +815,14 @@ class TestRequests(EnumTypeMixin, TestCase):
                     big_pos_int=self.BigPosIntEnum.VAL2,
                     big_int=self.BigIntEnum.VAL2,
                     constant=self.Constants.e,
-                    text=self.TextEnum.VALUE2
+                    text=self.TextEnum.VALUE2,
+                    non_strict_int=self.SmallPosIntEnum.VAL2,
+                    non_strict_text=self.TextEnum.VALUE2,
+                    no_coerce=self.SmallPosIntEnum.VAL2
                 )
             )
+            self.objects[-1].refresh_from_db()
+
         for _ in range(0, 3):
             self.objects.append(
                 self.MODEL_CLASS.objects.create(
@@ -741,9 +833,13 @@ class TestRequests(EnumTypeMixin, TestCase):
                     big_pos_int=self.BigPosIntEnum.VAL3,
                     big_int=self.BigIntEnum.VAL3,
                     constant=self.Constants.GOLDEN_RATIO,
-                    text=self.TextEnum.VALUE3
+                    text=self.TextEnum.VALUE3,
+                    non_strict_int=self.SmallPosIntEnum.VAL3,
+                    non_strict_text=self.TextEnum.VALUE3,
+                    no_coerce=self.SmallPosIntEnum.VAL3
                 )
             )
+            self.objects[-1].refresh_from_db()
 
         for obj in self.objects:
             for attr in self.values.keys():
@@ -766,7 +862,9 @@ class TestRequests(EnumTypeMixin, TestCase):
             'text': self.TextEnum.VALUE2,
             'dj_int_enum': self.DJIntEnum.TWO,
             'dj_text_enum': self.DJTextEnum.C,
-            'non_strict_int': self.SmallPosIntEnum.VAL1
+            'non_strict_int': self.SmallPosIntEnum.VAL1,
+            'non_strict_text': self.TextEnum.VALUE3,
+            'no_coerce': self.SmallPosIntEnum.VAL3
         }
 
     @property
@@ -799,7 +897,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             for param, value in params.items():
                 form_val = added_resp.find(class_=param).find("span", class_="value").text
                 form_val = self.enum_primitive(param)(form_val)
-                if param != 'non_strict_int':
+                if self.MODEL_CLASS._meta.get_field(param).strict:
                     self.assertEqual(
                         self.enum_type(param)(form_val),
                         self.enum_type(param)(value)
@@ -832,6 +930,8 @@ class TestRequests(EnumTypeMixin, TestCase):
             self.verify_form(updated, soup)
 
             for param, value in params.items():
+                if not self.MODEL_CLASS._meta.get_field(param).coerce and self.MODEL_CLASS._meta.get_field(param).strict:
+                    value = self.enum_type(param)(value)
                 self.assertEqual(getattr(updated, param), value)
             updated.delete()
 
@@ -843,9 +943,9 @@ class TestRequests(EnumTypeMixin, TestCase):
             self.assertRaises(self.MODEL_CLASS.DoesNotExist, self.MODEL_CLASS.objects.get, pk=deleted.pk)
 
     @staticmethod
-    def get_enum_val(enum, value):
+    def get_enum_val(enum, value, null=True):
         if value is None or value == '':
-            return None
+            return None if null else ''
         if int in enum.__mro__:
             return enum(int(value))
         if float in enum.__mro__:
@@ -870,7 +970,9 @@ class TestRequests(EnumTypeMixin, TestCase):
                 'text',
                 'dj_int_enum',
                 'dj_text_enum',
-                'non_strict_int'
+                'non_strict_int',
+                'non_strict_text',
+                'no_coerce'
             ]:
                 field = EnumTester._meta.get_field(field)
                 expected = dict(zip([en for en in field.enum], field.enum.labels))  # value -> label
@@ -893,7 +995,17 @@ class TestRequests(EnumTypeMixin, TestCase):
                 if not field.null and not field.blank:
                     self.assertFalse(null_opt, "An unexpected null option is present")  # pragma: no cover
 
-    def verify_form(self, obj, soup):
+    def verify_form(self, obj, soup, non_strict_options=False):
+        """
+        Verify form structure, options and selected values reflect object.
+
+        :param obj: The model object if this is an update form, None if it's a
+            create form
+        :param soup: The html form for the object
+        :param non_strict_options: True if non conforming values are expected
+            in the options lists for non strict fields
+        :return:
+        """
         for field in [
             'small_pos_int',
             'small_int',
@@ -903,10 +1015,21 @@ class TestRequests(EnumTypeMixin, TestCase):
             'big_int',
             'constant',
             'text',
+            'dj_int_enum',
+            'dj_text_enum',
+            'non_strict_int',
+            'non_strict_text',
+            'no_coerce',
         ]:
-            field = EnumTester._meta.get_field(field)
+            field = self.MODEL_CLASS._meta.get_field(field)
             expected = dict(zip([en for en in field.enum],
                                 field.enum.labels))  # value -> label
+
+            if non_strict_options and getattr(obj, field.name) not in expected and getattr(obj, field.name) not in {None, ''}:
+                # add any non-strict values
+                expected[getattr(obj, field.name)] = str(getattr(obj, field.name))
+                self.assertFalse(field.strict)
+
             null_opt = False
             for option in soup.find(
                     'select',
@@ -919,19 +1042,25 @@ class TestRequests(EnumTypeMixin, TestCase):
                     self.assertTrue(field.blank or field.null)
                     null_opt = True
                     if option.has_attr('selected'):
-                        self.assertIsNone(getattr(obj, field.name))
+                        self.assertTrue(getattr(obj, field.name) in {None, ''})
                     else:  # pragma: no cover
                         pass
                     # (coverage error?? the line below gets hit)
                     continue  # pragma: no cover
 
                 try:
-                    value = self.get_enum_val(field.enum, option['value'])
+                    try:
+                        value = self.get_enum_val(field.enum, option['value'])
+                    except ValueError:
+                        self.assertFalse(field.strict)
+                        value = self.enum_primitive(field.name)(option['value'])
                     self.assertEqual(str(expected[value]), option.text)
                     if option.has_attr('selected'):
                         self.assertEqual(getattr(obj, field.name), value)
                     del expected[value]
                 except KeyError:  # pragma: no cover
+                    import pdb
+                    pdb.set_trace()
                     self.fail(
                         f'{field.name} did not expect option {option["value"]}: {option.text}.')
 
@@ -965,7 +1094,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                 )
             )
             soup = Soup(response.content, features='html.parser')
-            self.verify_form(obj, soup)
+            self.verify_form(obj, soup, non_strict_options=form_url=='enum-form-update')
             for option in soup.find(
                 'select',
                 id=f'id_non_strict_int'
@@ -986,7 +1115,9 @@ class TestRequests(EnumTypeMixin, TestCase):
             'text': ['value'],
             'dj_int_enum': ['value'],
             'dj_text_enum': ['value'],
-            'non_strict_int': ['value']
+            'non_strict_int': ['value'],
+            'non_strict_text': ['value'],
+            'no_coerce': ['value']
         }
 
     @property
@@ -1002,7 +1133,9 @@ class TestRequests(EnumTypeMixin, TestCase):
             'text',
             'dj_int_enum',
             'dj_text_enum',
-            'non_strict_int'
+            'non_strict_int',
+            'non_strict_text',
+            'no_coerce'
         ]
 
     def list_to_objects(self, resp_content):
@@ -1013,7 +1146,8 @@ class TestRequests(EnumTypeMixin, TestCase):
                     self.MODEL_CLASS._meta.get_field(attr).enum,
                     obj_div.find(f'p', {'class': attr}).find(
                         'span', class_='value'
-                    ).text
+                    ).text,
+                    null=self.MODEL_CLASS._meta.get_field(attr).null
                 )
                 for attr in self.compared_attributes
             }
@@ -1033,11 +1167,15 @@ class TestRequests(EnumTypeMixin, TestCase):
             client = Client()
             for attr, val_map in self.values.items():
                 for val, objs in val_map.items():
-                    if val is None:
-                        continue  # todo how to query None?
+                    if val in {None, ''}:
+                        # todo how to query None or empty?
+                        continue
                     for prop in self.field_filter_properties[attr]:
                         qry = QueryDict(mutable=True)
-                        prop_vals = getattr(val, prop)
+                        try:
+                            prop_vals = getattr(val, prop)
+                        except AttributeError:
+                            prop_vals = val
                         if not isinstance(prop_vals, (set, list)):
                             prop_vals = [prop_vals]
                         for prop_val in prop_vals:
@@ -1081,7 +1219,9 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
             'text': self.TextEnum.VALUE2,
             'dj_int_enum': 3,
             'dj_text_enum': self.DJTextEnum.A,
-            'non_strict_int': 15
+            'non_strict_int': 15,
+            'non_strict_text': 'arbitrary',
+            'no_coerce': '0'
         }
 
     @property
@@ -1598,21 +1738,25 @@ if ENUM_PROPERTIES_INSTALLED:
                 'small_int': 'Value -32768',
                 'pos_int': 2147483647,
                 'int': -2147483648,
-                'big_pos_int': 'Value 2147483647',
+                'big_pos_int': 'Value 2147483648',
                 'big_int': 'VAL2',
                 'constant': 'φ',
                 'text': 'V TWo',
                 'dj_int_enum': 3,
                 'dj_text_enum': self.DJTextEnum.A,
-                'non_strict_int': 15
+                'non_strict_int': 15,
+                'non_strict_text': 'arbitrary',
+                'no_coerce': 'Value 2'
             }
 
         @property
         def update_params(self):
             return {
                 'non_strict_int': 100,
+                'non_strict_text': self.TextEnum.VALUE3,
                 'constant': 'π',
-                'big_int': -2147483649
+                'big_int': -2147483649,
+                'coerce': 2
             }
 
 
@@ -1635,7 +1779,9 @@ if ENUM_PROPERTIES_INSTALLED:
                 'text': 'none',
                 'dj_int_enum': 2,
                 'dj_text_enum': 'B',
-                'non_strict_int': self.SmallPosIntEnum.VAL2
+                'non_strict_int': 1,
+                'non_strict_text': 'arbitrary',
+                'no_coerce': 'Value 1'
             }
 
         @property
@@ -1651,7 +1797,9 @@ if ENUM_PROPERTIES_INSTALLED:
                 'text': '143 emma',
                 'dj_int_enum': '',
                 'dj_text_enum': 'D',
-                'non_strict_int': 'Not an int'
+                'non_strict_int': 'Not an int',
+                'non_strict_text': 'A'*13,
+                'no_coerce': 'Value 0',
             }
 
     class TestRequestsProps(TestRequests):
@@ -1671,7 +1819,9 @@ if ENUM_PROPERTIES_INSTALLED:
                 'text': self.TextEnum.VALUE2,
                 'dj_int_enum': self.DJIntEnum.TWO,
                 'dj_text_enum': self.DJTextEnum.C,
-                'non_strict_int': self.SmallPosIntEnum.VAL1
+                'non_strict_int': self.SmallPosIntEnum.VAL1,
+                'non_strict_text': self.TextEnum.VALUE2,
+                'no_coerce': self.SmallPosIntEnum.VAL3
             }
 
         @property
@@ -1687,7 +1837,9 @@ if ENUM_PROPERTIES_INSTALLED:
                 'text': 'v two',
                 'dj_int_enum': self.DJIntEnum.TWO,
                 'dj_text_enum': self.DJTextEnum.C,
-                'non_strict_int': 150
+                'non_strict_int': 150,
+                'non_strict_text': 'arbitrary',
+                'no_coerce': 'Value 32767'
             }
 
         @property
@@ -1704,6 +1856,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 'dj_int_enum': ['value'],
                 'dj_text_enum': ['value'],
                 'non_strict_int': ['value', 'name', 'label'],
+                'non_strict_text': ['value', 'name', 'label'],
+                'no_coerce': ['value', 'name', 'label']
             }
 
         if DJANGO_FILTERS_INSTALLED:
@@ -2485,7 +2639,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 'small_int': 'Value -32768',
                 'pos_int': 2147483647,
                 'int': -2147483648,
-                'big_pos_int': 'Value 2147483647',
+                'big_pos_int': 'Value 2147483648',
                 'big_int': 'VAL2',
                 'constant': 'φ',
                 'text': 'V TWo'
@@ -2498,13 +2652,15 @@ if ENUM_PROPERTIES_INSTALLED:
                 'small_int': 'Value -32768',
                 'pos_int': 2147483647,
                 'int': -2147483648,
-                'big_pos_int': 'Value 2147483647',
+                'big_pos_int': 'Value 2147483648',
                 'big_int': 'VAL2',
                 'constant': 'φ',
                 'text': 'V TWo',
                 'dj_int_enum': 3,
                 'dj_text_enum': self.DJTextEnum.A,
-                'non_strict_int': 75
+                'non_strict_int': 75,
+                'non_strict_text':  'arbitrary',
+                'no_coerce': SmallPosIntEnum.VAL2
             }
 
         def test_values(self):
@@ -2516,7 +2672,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(values1['small_int'], 'Value -32768')
             self.assertEqual(values1['pos_int'], 2147483647)
             self.assertEqual(values1['int'], -2147483648)
-            self.assertEqual(values1['big_pos_int'], 'Value 2147483647')
+            self.assertEqual(values1['big_pos_int'], 'Value 2147483648')
             self.assertEqual(values1['big_int'], 'VAL2')
             self.assertEqual(values1['constant'], 'φ')
             self.assertEqual(values1['text'], 'V TWo')
@@ -2542,7 +2698,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertTrue(tester._meta.get_field('small_int').validate('Value -32768', tester) is None)
             self.assertTrue(tester._meta.get_field('pos_int').validate(2147483647, tester) is None)
             self.assertTrue(tester._meta.get_field('int').validate('VALn1', tester) is None)
-            self.assertTrue(tester._meta.get_field('big_pos_int').validate('Value 2147483647', tester) is None)
+            self.assertTrue(tester._meta.get_field('big_pos_int').validate('Value 2147483648', tester) is None)
             self.assertTrue(tester._meta.get_field('big_int').validate(self.BigPosIntEnum.VAL2, tester) is None)
             self.assertTrue(tester._meta.get_field('constant').validate('φ', tester) is None)
             self.assertTrue(tester._meta.get_field('text').validate('default', tester) is None)
@@ -2578,13 +2734,15 @@ if ENUM_PROPERTIES_INSTALLED:
                         small_int='Value -32768',
                         pos_int=2147483647,
                         int=-2147483648,
-                        big_pos_int='Value 2147483647',
+                        big_pos_int='Value 2147483648',
                         big_int='VAL2',
                         constant='φ',
                         text='V TWo',
                         dj_int_enum=3,
                         dj_text_enum=DJTextEnum.A,
-                        non_strict_int=15
+                        non_strict_int=15,
+                        non_strict_text='arbitrary',
+                        no_coerce=SmallPosIntEnum.VAL2
                     )
                 )
             self.create()
@@ -2600,13 +2758,15 @@ if ENUM_PROPERTIES_INSTALLED:
                         small_int=-32768,
                         pos_int=2147483647,
                         int=-2147483648,
-                        big_pos_int=2147483647,
+                        big_pos_int=2147483648,
                         big_int=2,
                         constant=1.61803398874989484820458683436563811,
                         text='V22',
                         dj_int_enum=3,
                         dj_text_enum='A',
-                        non_strict_int=15
+                        non_strict_int=15,
+                        non_strict_text='arbitrary',
+                        no_coerce=2
                     )
                 )
             self.create()
@@ -2626,7 +2786,9 @@ if ENUM_PROPERTIES_INSTALLED:
                         text=TextEnum.VALUE2,
                         dj_int_enum=DJIntEnum.THREE,
                         dj_text_enum=DJTextEnum.A,
-                        non_strict_int=15
+                        non_strict_int=15,
+                        non_strict_text='arbitrary',
+                        no_coerce=SmallPosIntEnum.VAL2
                     )
                 )
             self.create()
@@ -2641,13 +2803,15 @@ if ENUM_PROPERTIES_INSTALLED:
                         small_int=-32768,
                         pos_int=2147483647,
                         int=-2147483648,
-                        big_pos_int=2147483647,
+                        big_pos_int=2147483648,
                         big_int=2,
                         constant=1.61803398874989484820458683436563811,
                         text='V22',
                         dj_int_enum=3,
                         dj_text_enum='A',
-                        non_strict_int=15
+                        non_strict_int=15,
+                        non_strict_text='arbitrary',
+                        no_coerce=2
                     )
                 )
             self.create()
@@ -2660,7 +2824,7 @@ if ENUM_PROPERTIES_INSTALLED:
             # flag if performance degrades signficantly - running about 2x for big lookups
             self.assertTrue((enum_time / choice_time) < 3)
             self.assertTrue((enum_direct_time / choice_time) < 2.5)
-            self.assertTrue((no_coerce_time / choice_time) < 2)
+            self.assertTrue((no_coerce_time / choice_time) < 2.5)
             print(
                 f'(EnumTester) Bulk Create -> '
                 f'EnumField: {enum_time} '
@@ -2731,8 +2895,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 f'ChoiceField: {choice_time}'
             )
             # Enum tends to be about ~12% slower
-            self.assertTrue((enum_time / choice_time) < 1.6)
-            self.assertTrue((no_coerce_time / choice_time) < 1.3)
+            self.assertTrue((enum_time / choice_time) < 1.8)
+            self.assertTrue((no_coerce_time / choice_time) < 1.7)
 
             enum_start = perf_counter()
             for _ in SingleEnumPerf.objects.iterator(chunk_size=self.CHUNK_SIZE):
@@ -2761,8 +2925,6 @@ if ENUM_PROPERTIES_INSTALLED:
             )
             # tends to be about 1.8x slower
             self.assertTrue((enum_time / choice_time) < 2.5)
-
-            # todo how to tighten this? why so much slower still?
             self.assertTrue((no_coerce_time / choice_time) < 2)
 
 

@@ -29,6 +29,8 @@ try:
         dj_int_enum = EnumChoiceField(DJIntEnum)
         dj_text_enum = EnumChoiceField(DJTextEnum)
         non_strict_int = EnumChoiceField(SmallPosIntEnum, strict=False)
+        non_strict_text = EnumChoiceField(TextEnum, strict=False)
+        no_coerce = EnumChoiceField(SmallPosIntEnum)
 
         class Meta:
             model = EnumTester

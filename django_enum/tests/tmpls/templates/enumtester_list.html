@@ -1,21 +1,35 @@
 {% extends "base.html" %}
+{% load test_tags %}
 
 {% block content %}
 <h1>EnumTester Objects</h1>
 {% for object in object_list %}
     <div id="{{object.pk}}" class="enum" data-obj-id="{{ object.pk }}">
         <h2>{{ object.pk }}</h2>
-        <p class="small_pos_int">small_pos_int: <b><span class="value">{{ object.small_pos_int.value }}</span></b> <b><span class="label">{{ object.small_pos_int.label }}</span></b></p>
-        <p class="small_int">small_int: <b><span class="value">{{ object.small_int.value }}</span></b> <b><span class="label">{{ object.small_int.label }}</span></b></p>
-        <p class="pos_int">pos_int: <b><span class="value">{{ object.pos_int.value }}</span></b> <b><span class="label">{{ object.pos_int.label }}</span></b></p>
-        <p class="int">int: <b><span class="value">{{ object.int.value }}</span></b> <b><span class="label">{{ object.int.label }}</span></b></p>
-        <p class="big_pos_int">big_pos_int: <b><span class="value">{{ object.big_pos_int.value }}</span></b> <b><span class="label">{{ object.big_pos_int.label }}</span></b></p>
-        <p class="big_int">big_int: <b><span class="value">{{ object.big_int.value }}</span></b> <b><span class="label">{{ object.big_int.label }}</span></b></p>
-        <p class="constant">constant: <b><span class="value">{{ object.constant.value }}</span></b> <b><span class="label">{{ object.constant.label }}</span></b></p>
-        <p class="text">text: <b><span class="value">{{ object.text.value }}</span></b> <b><span class="label">{{ object.text.label }}</span></b></p>
-        <p class="dj_int_enum">dj_int_enum: <b><span class="value">{{ object.dj_int_enum.value }}</span></b> <b><span class="label">{{ object.dj_int_enum.label }}</span></b></p>
-        <p class="dj_text_enum">dj_text_enum: <b><span class="value">{{ object.dj_text_enum.value }}</span></b> <b><span class="label">{{ object.dj_text_enum.label }}</span></b></p>
-        <p class="non_strict_int">non_strict_int: <b><span class="value">{{ object.non_strict_int.value}}</span></b> <b><span class="label">{{ object.non_strict_int.label }}</span></b></p>
+        <p class="small_pos_int">small_pos_int: <b><span class="value">{{ object.small_pos_int.value|to_str }}</span></b> <b><span class="label">{{ object.small_pos_int.label|to_str }}</span></b></p>
+        <p class="small_int">small_int: <b><span class="value">{{ object.small_int.value|to_str }}</span></b> <b><span class="label">{{ object.small_int.label|to_str }}</span></b></p>
+        <p class="pos_int">pos_int: <b><span class="value">{{ object.pos_int.value|to_str }}</span></b> <b><span class="label">{{ object.pos_int.label|to_str }}</span></b></p>
+        <p class="int">int: <b><span class="value">{{ object.int.value|to_str }}</span></b> <b><span class="label">{{ object.int.label|to_str }}</span></b></p>
+        <p class="big_pos_int">big_pos_int: <b><span class="value">{{ object.big_pos_int.value|to_str }}</span></b> <b><span class="label">{{ object.big_pos_int.label|to_str }}</span></b></p>
+        <p class="big_int">big_int: <b><span class="value">{{ object.big_int.value|to_str }}</span></b> <b><span class="label">{{ object.big_int.label|to_str }}</span></b></p>
+        <p class="constant">constant: <b><span class="value">{{ object.constant.value|to_str }}</span></b> <b><span class="label">{{ object.constant.label|to_str }}</span></b></p>
+        <p class="text">text: <b><span class="value">{{ object.text.value|to_str }}</span></b> <b><span class="label">{{ object.text.label|to_str }}</span></b></p>
+        <p class="dj_int_enum">dj_int_enum: <b><span class="value">{{ object.dj_int_enum.value|to_str }}</span></b> <b><span class="label">{{ object.dj_int_enum.label|to_str }}</span></b></p>
+        <p class="dj_text_enum">dj_text_enum: <b><span class="value">{{ object.dj_text_enum.value|to_str }}</span></b> <b><span class="label">{{ object.dj_text_enum.label|to_str }}</span></b></p>
+
+        {% if object.non_strict_int|is_instance:SmallPosIntEnum %}
+        <p class="non_strict_int">non_strict_int: <b><span class="value">{{ object.non_strict_int.value|to_str}}</span></b> <b><span class="label">{{ object.non_strict_int.label|to_str }}</span></b></p>
+        {% else %}
+        <p class="non_strict_int">non_strict_int: <b><span class="value">{{ object.non_strict_int|to_str}}</span></b> <b><span class="label">{{ object.non_strict_int|to_str }}</span></b></p>
+        {% endif %}
+
+        {% if object.non_strict_text|is_instance:TextEnum %}
+        <p class="non_strict_text">non_strict_text: <b><span class="value">{{ object.non_strict_text.value|to_str}}</span></b> <b><span class="label">{{ object.non_strict_text.label|to_str }}</span></b></p>
+        {% else %}
+        <p class="non_strict_text">non_strict_text: <b><span class="value">{{ object.non_strict_text|to_str}}</span></b> <b><span class="label">{{ object.non_strict_text|to_str }}</span></b></p>
+        {% endif %}
+
+        <p class="no_coerce">no_coerce: <b><span class="value">{{ object.no_coerce|to_str}}</span></b> <b><span class="label">{{ object.no_coerce|to_str }}</span></b></p>
 
         <p>
         <a href="{{update_path}}">Edit</a>

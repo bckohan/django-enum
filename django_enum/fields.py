@@ -97,9 +97,13 @@ class EnumMixin(
                 value = self.enum(value)
             except (TypeError, ValueError):
                 try:
-                    value = self.enum(self._coerce_to_value_type(value))
+                    value = self._coerce_to_value_type(value)
+                    value = self.enum(value)
                 except (TypeError, ValueError) as err:
-                    if self.strict:
+                    if self.strict or not isinstance(
+                            value,
+                            type(self.enum.values[0])
+                    ):
                         raise ValueError(
                             f"'{value}' is not a valid {self.enum.__name__} "
                             f"required by field {self.name}."
@@ -126,7 +130,7 @@ class EnumMixin(
         See get_prep_value_
         """
         if value is not None and self.enum is not None:
-            value = self._try_coerce(value)
+            value = self._try_coerce(value, force=True)
             if isinstance(value, self.enum):
                 value = value.value
         return super().get_prep_value(value)
@@ -139,7 +143,7 @@ class EnumMixin(
         See get_db_prep_value_
         """
         if value is not None and self.enum is not None:
-            value = self._try_coerce(value)
+            value = self._try_coerce(value, force=True)
             if isinstance(value, self.enum):
                 value = value.value
         return super().get_db_prep_value(

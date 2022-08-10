@@ -74,7 +74,7 @@ try:
         VAL0 = 0, 'Value 0'
         VAL1 = 1, 'Value 1'
         VAL2 = 2, 'Value 2'
-        VAL3 = 2147483648, 'Value 2147483647'
+        VAL3 = 2147483648, 'Value 2147483648'
 
 
     class BigIntEnum(IntegerChoices, s('pos'), p('help')):
@@ -82,7 +82,7 @@ try:
         VAL0 = -2147483649, 'Value -2147483649', BigPosIntEnum.VAL0, _('One less than the least regular integer.')
         VAL1 = 1, 'Value 1', BigPosIntEnum.VAL1, _('Something in the middle.')
         VAL2 = 2, 'Value 2', BigPosIntEnum.VAL2, _('Something in the middle.')
-        VAL3 = 2147483648, 'Value 2147483647', BigPosIntEnum.VAL3, _('One more than the greatest regular integer.')
+        VAL3 = 2147483648, 'Value 2147483648', BigPosIntEnum.VAL3, _('One more than the greatest regular integer.')
 
 
     class PrecedenceTest(

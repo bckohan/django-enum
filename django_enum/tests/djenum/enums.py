@@ -73,7 +73,7 @@ class BigPosIntEnum(IntegerChoices):
     VAL0 = 0, 'Value 0'
     VAL1 = 1, 'Value 1'
     VAL2 = 2, 'Value 2'
-    VAL3 = 2147483648, 'Value 2147483647'
+    VAL3 = 2147483648, 'Value 2147483648'
 
 
 class BigIntEnum(IntegerChoices):
@@ -81,4 +81,4 @@ class BigIntEnum(IntegerChoices):
     VAL0 = -2147483649, 'Value -2147483649'
     VAL1 = 1, 'Value 1'
     VAL2 = 2, 'Value 2'
-    VAL3 = 2147483648, 'Value 2147483647'
+    VAL3 = 2147483648, 'Value 2147483648'

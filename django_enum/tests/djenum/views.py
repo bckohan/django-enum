@@ -1,6 +1,7 @@
 from django.urls import reverse
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
+from django_enum.tests.djenum import enums as dj_enums
 from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import EnumTester
 
@@ -8,9 +9,22 @@ from django_enum.tests.djenum.models import EnumTester
 class URLMixin:
 
     NAMESPACE = 'django_enum_tests_djenum'
+    enums = dj_enums
 
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
+        ctx.update({
+            'Constants': self.enums.Constants,
+            'SmallPosIntEnum': self.enums.SmallPosIntEnum,
+            'SmallIntEnum': self.enums.SmallIntEnum,
+            'PosIntEnum': self.enums.PosIntEnum,
+            'IntEnum': self.enums.IntEnum,
+            'BigPosIntEnum': self.enums.BigPosIntEnum,
+            'BigIntEnum': self.enums.BigIntEnum,
+            'TextEnum': self.enums.TextEnum,
+            'DJIntEnum': self.enums.DJIntEnum,
+            'DJTextEnum': self.enums.DJTextEnum,
+        })
         try:
             ctx['update_path'] = reverse(
                 f'{self.NAMESPACE}:enum-update',

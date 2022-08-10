@@ -26,9 +26,17 @@ class NonStrictSelect(Select):
     choices: Iterable[Tuple[Any, str]]
 
     def render(self, *args, **kwargs):
-        """Before rendering if we're a non strict field and our value is """
-        value: Any = kwargs.get('value')
-        if value not in self.attrs.get('empty_values', []):
+        """
+        Before rendering if we're a non-strict field and our value is not
+        one of our choices, we add it as an option.
+        """
+        value: Any = getattr(kwargs.get('value'), 'value', kwargs.get('value'))
+        if (
+            value not in self.attrs.get('empty_values', [])
+            and value not in (
+                choice[0] for choice in self.choices
+            )
+        ):
             self.choices = list(self.choices) + [(value, str(value))]
         return super().render(*args, **kwargs)
 
