@@ -1,10 +1,10 @@
 """Enumeration support for django model forms"""
-from typing import Any, Dict, Iterable, List, Tuple, Type, Union
+from typing import Any, Iterable, List, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
 from django.forms.fields import ChoiceField
-from django.forms.widgets import Select, Widget
+from django.forms.widgets import Select
 
 # pylint: disable=R0801
 
