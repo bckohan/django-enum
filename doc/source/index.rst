@@ -84,14 +84,25 @@ enum-properties_ which makes possible very rich enumeration fields.
         color = EnumField(Color)
 
     instance = MyModel.objects.create(color=MyModel.Color('FF0000'))
-    assert instance.color == MyModel.Color('Red') == MyModel.Color('R') == MyModel.Color((1, 0, 0))
 
-    # save back by any symmetric value
+    assert instance.color == TextChoicesExample.Color('Red')
+    assert instance.color == TextChoicesExample.Color('R')
+    assert instance.color == TextChoicesExample.Color((1, 0, 0))
+
+    # save by any symmetric value or enum type instance
     instance.color = 'FF0000'
     instance.full_clean()
     assert instance.color.hex == 'ff0000'
     instance.save()
 
+    # filtering works by any symmetric value or enum type instance
+    assert TextChoicesExample.objects.filter(
+        color=TextChoicesExample.Color.RED
+    ).first() == instance
+
+    assert TextChoicesExample.objects.filter(color=(1, 0, 0)).first() == instance
+
+    assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
 
 .. note::
 
@@ -125,8 +136,7 @@ Installation
     ``django-enum`` has several optional dependencies that are not pulled in
     by default. To utilize the
     enum-properties_ choice types you must `pip install enum-properties` and
-    to use the ``EnumFilter`` type for
-    `django-filter <https://pypi.org/project/django-filter/>`_ you must
+    to use the ``EnumFilter`` type for django-filter_ you must
     `pip install django-filter`.
 
 If features are utilized that require a missing optional dependency an

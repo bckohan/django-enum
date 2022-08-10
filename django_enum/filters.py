@@ -35,7 +35,11 @@ try:
 
         def __init__(self, *, enum, **kwargs):
             self.enum = enum
-            super().__init__(enum=enum, choices=self.enum.choices, **kwargs)
+            super().__init__(
+                enum=enum,
+                choices=kwargs.pop('choices', self.enum.choices),
+                **kwargs
+            )
 
 
     class FilterSet(filterset.FilterSet):

@@ -2977,8 +2977,50 @@ if ENUM_PROPERTIES_INSTALLED:
             # save by any symmetric value
             instance.color = 'FF0000'
             instance.full_clean()
+
+            # access any property right from the model field
             self.assertTrue(instance.color.hex == 'ff0000')
+
+            # this also works!
+            self.assertTrue(instance.color == 'ff0000')
+
+            # and so does this!
+            self.assertTrue(instance.color == 'FF0000')
+
             instance.save()
+
+            self.assertTrue(
+                TextChoicesExample.objects.filter(
+                    color=TextChoicesExample.Color.RED
+                ).first() == instance
+            )
+
+            self.assertTrue(
+                TextChoicesExample.objects.filter(
+                    color=(1, 0, 0)
+                ).first() == instance
+            )
+
+            self.assertTrue(
+                TextChoicesExample.objects.filter(
+                    color='FF0000'
+                ).first() == instance
+            )
+
+            from django_enum import EnumChoiceField
+            from django.forms import ModelForm
+
+            class TextChoicesExampleForm(ModelForm):
+                color = EnumChoiceField(TextChoicesExample.Color)
+
+                class Meta:
+                    model = TextChoicesExample
+                    fields = '__all__'
+
+            # this is possible
+            form = TextChoicesExampleForm({'color': 'FF0000'})
+            form.save()
+            self.assertTrue(form.instance.color == TextChoicesExample.Color.RED)
 
         def test_strict(self):
             from django_enum.tests.examples.models import StrictExample
@@ -3009,6 +3051,16 @@ if ENUM_PROPERTIES_INSTALLED:
 
             self.assertTrue(instance.int_enum == MyModel.IntEnum['THREE'])
             self.assertTrue(instance.int_enum.value == 3)
+
+            self.assertRaises(
+                ValueError,
+                MyModel.objects.create,
+                txt_enum='AA',
+                int_enum=3
+            )
+
+            instance.txt_enum='AA'
+            self.assertRaises(ValidationError, instance.full_clean)
 
         def test_no_coerce(self):
             from django_enum.tests.examples.models import NoCoerceExample

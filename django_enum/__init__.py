@@ -14,6 +14,10 @@ from django_enum.choices import (
     IntegerChoices,
     TextChoices,
 )
+from django_enum.filters import (
+    FilterSet,
+    EnumFilter
+)
 from django_enum.fields import (
     EnumBigIntegerField,
     EnumCharField,
@@ -41,7 +45,9 @@ __all__ = [
     'IntegerChoices',
     'FloatChoices',
     'DjangoEnumPropertiesMeta',
-    'EnumChoiceField'
+    'EnumChoiceField',
+    'FilterSet',
+    'EnumFilter'
 ]
 
 VERSION = (1, 0, 0)

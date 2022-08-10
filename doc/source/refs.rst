@@ -13,3 +13,4 @@
 .. _full_clean: https://docs.djangoproject.com/en/stable/ref/models/instances/#django.db.models.Model.full_clean
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 .. _enum-properties: https://pypi.org/project/enum-properties
+.. _django-filter: https://pypi.org/project/django-filter

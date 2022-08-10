@@ -4,6 +4,66 @@
 Usage
 =====
 
+``EnumField`` inherits from the appropriate native Django_ field and sets the
+correct choice tuple set based on the enumeration type. This means
+``EnumFields`` are compatible with all modules, utilities and libraries that
+fields defined with a choice tuple are. For example:
+
+.. code:: python
+
+    from django.db import models
+    from django_enum import EnumField
+
+    class MyModel(models.Model):
+
+        class TextEnum(models.TextChoices):
+
+            VALUE0 = 'V0', 'Value 0'
+            VALUE1 = 'V1', 'Value 1'
+            VALUE2 = 'V2', 'Value 2'
+
+        txt_enum = EnumField(TextEnum, null=True, blank=True, default=None)
+
+        txt_choices = models.CharField(
+            max_length=2,
+            choices=MyModel.TextEnum.choices,
+            null=True,
+            blank=True,
+            default=None
+        )
+
+``txt_enum`` and ``txt_choices`` fields are equivalent in all ways with the
+following exceptions:
+
+.. code:: python
+
+    # txt_enum fields, when populated from the db, or after full_clean will be
+    # an instance of the TextEnum type:
+
+    assert isinstance(MyModel.objects.first().txt_enum, MyModel.TextEnum)
+    assert not isinstance(MyModel.objects.first().txt_choices, MyModel.TextEnum)
+
+    # by default EnumFields are more strict, this is possible:
+    MyModel.objects.create(
+        txt_choices='AA'
+    )
+
+    # but this will throw a ValueError (unless strict=False)
+    MyModel.objects.create(
+        txt_enum='AA'
+    )
+
+    # and this will throw a ValidationError
+    MyModel(txt_enum='AA').full_clean()
+
+Any ``ModelForms``, DRF serializers and filters will behave the same way with
+``txt_enum`` and ``txt_choices``. A few types are provided for deeper
+integration with forms and django-filter_ but their usage is optional.
+See :ref:`forms` and :ref:`filtering`.
+
+Very rich enumeration fields that encapsulate much more functionality in a
+simple declarative syntax are possible with ``EnumField``. See
+:ref:`enum_props`.
 
 Parameters
 ##########
@@ -88,6 +148,8 @@ filter by ``Enum`` instance or any symmetric value:
     assert not isinstance(obj.non_strict, StrictExample.EnumType)
 
 
+.. _enum_props:
+
 enum-properties
 ###############
 
@@ -139,22 +201,151 @@ values that can be symmetrically mapped back to enumeration values:
     # save by any symmetric value
     instance.color = 'FF0000'
     instance.full_clean()
+
+    # access any enum property right from the model field
     assert instance.color.hex == 'ff0000'
+
+    # this also works!
+    assert instance.color == 'ff0000'
+
+    # and so does this!
+    assert instance.color == 'FF0000'
+
     instance.save()
 
+    # filtering works by any symmetric value or enum type instance
+    assert TextChoicesExample.objects.filter(
+        color=TextChoicesExample.Color.RED
+    ).first() == instance
+
+    assert TextChoicesExample.objects.filter(color=(1, 0, 0)).first() == instance
+
+    assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
+
 For a real-world example see :ref:`examples`.
+
+
+.. _forms:
 
 Forms
 #####
 
 EnumFields will behave as normal model fields with choices when used in
-Django_'s ModelForms. To enable
+Django_'s ModelForms. For most scenarios this is sufficient. An
+``EnumChoiceField`` type is provided that enables symmetric value resolution
+and will automatically coerce any set value to the underlying enumeration type.
+For example, using our ``TextChoicesExample`` from above:
 
+.. code-block::
+
+    from django_enum import EnumChoiceField
+
+    class TextChoicesExampleForm(ModelForm):
+        color = EnumChoiceField(TextChoicesExample.Color)
+
+        class Meta:
+            model = TextChoicesExample
+            fields = '__all__'
+
+    # save by symmetric values
+    form = TextChoicesExampleForm({'color': 'FF0000'})
+    form.save()
+    assert form.instance.color == TextChoicesExample.Color.RED
+
+    # the form
+    assert isinstance(form.instance.color, TextChoicesExample.Color)
+
+``EnumChoiceField`` also provides extended functionality for non-strict
+``EnumFields``. If our ``color`` field was declared with `strict=False`, we
+would define our form like so:
+
+
+.. code-block::
+
+    from django_enum import EnumChoiceField
+
+    class TextChoicesExampleForm(ModelForm):
+        color = EnumChoiceField(TextChoicesExample.Color, strict=False)
+
+        class Meta:
+            model = TextChoicesExample
+            fields = '__all__'
+
+    # when this form is rendered in a template it will include a selected
+    # option for the value 'Y' that is not part of our Color enumeration.
+    form = TextChoicesExampleForm(
+        instance=TextChoicesExample.objects.create(color='Y')
+    )
+
+.. code-block:: html
+
+    <!-- The above will render the following options: -->
+    <select>
+        <option value='R'>Red</option>
+        <option value='G'>Green</option>
+        <option value='B'>Blue</option>
+
+        <!-- this will not be present with the default field -->
+        <option value='Y' selected>Y</option>
+    </select>
+
+
+.. _filtering:
 
 Filtering
 #########
 
+As shown above, filtering by any value, enumeration type instance or symmetric
+value works with Django_'s ORM. This is not natively true for automatically
+generated ``FilterSets`` from django-filter_. Those filter sets will only be
+filterable by direct enumeration value by default. An ``EnumFilter`` type is
+provided to enable filtering by symmetric property values, but since the
+dependency on django-filter_ is optional, you must first install it:
 
+.. code:: bash
+
+       pip install django-filter
+
+
+.. code-block::
+
+    from django_enum import EnumFilter
+    from django_filters.views import FilterView
+    from django_filters import FilterSet
+
+    class TextChoicesExampleFilterViewSet(FilterView):
+
+        class TextChoicesExampleFilter(FilterSet):
+
+            color = EnumFilter(TextChoicesExample.Color)
+
+            class Meta:
+                model = TextChoicesExample
+                fields = '__all__'
+
+        filterset_class = TextChoicesExampleFilter
+        model = TextChoicesExample
+
+    # now filtering by symmetric value in url parameters works:
+    # e.g.:  /?color=FF0000
+
+An ``EnumFilterSet`` type is also provided that uses ``EnumFilter`` for ``EnumFields``
+by default. So the above is also equivalent to:
+
+.. code-block::
+
+    from django_enum import FilterSet as EnumFilterSet
+    from django_filters.views import FilterView
+
+    class TextChoicesExampleFilterViewSet(FilterView):
+
+        class TextChoicesExampleFilter(EnumFilterSet):
+            class Meta:
+                model = TextChoicesExample
+                fields = '__all__'
+
+        filterset_class = TextChoicesExampleFilter
+        model = TextChoicesExample
 
 Migrations
 ##########
@@ -179,13 +370,13 @@ Performance
 ###########
 
 The cost to resolve a raw database value into an ``Enum`` type object is
-non-zero. ``EnumFields`` may not be appropriate for use cases at the edge of
-critical performance boundaries, but for most scenarios the cost of using
+non-zero. ``EnumFields`` may not be appropriate for use cases at the very edge
+of critical performance targets, but for most scenarios the cost of using
 ``EnumFields`` is negligible.
 
 An effort is made to characterize and monitor the performance penalty of
 using ``EnumFields`` over a Django_ native field with choices and integration
-tests assure performance of future releases will not worsen.
+tests ensure performance of future releases will not worsen.
 
 .. note::
 

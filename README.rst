@@ -130,8 +130,26 @@ possible very rich enumeration fields.
     # save by any symmetric value
     instance.color = 'FF0000'
     instance.full_clean()
+
+    # access any enum property right from the model field
     assert instance.color.hex == 'ff0000'
+
+    # this also works!
+    assert instance.color == 'ff0000'
+
+    # and so does this!
+    assert instance.color == 'FF0000'
+
     instance.save()
+
+    # filtering works by any symmetric value or enum type instance
+    assert TextChoicesExample.objects.filter(
+        color=TextChoicesExample.Color.RED
+    ).first() == instance
+
+    assert TextChoicesExample.objects.filter(color=(1, 0, 0)).first() == instance
+
+    assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
 
 
 .. note::
