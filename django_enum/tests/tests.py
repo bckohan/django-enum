@@ -3007,8 +3007,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 ).first() == instance
             )
 
-            from django_enum import EnumChoiceField
             from django.forms import ModelForm
+            from django_enum import EnumChoiceField
 
             class TextChoicesExampleForm(ModelForm):
                 color = EnumChoiceField(TextChoicesExample.Color)

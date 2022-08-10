@@ -14,10 +14,6 @@ from django_enum.choices import (
     IntegerChoices,
     TextChoices,
 )
-from django_enum.filters import (
-    FilterSet,
-    EnumFilter
-)
 from django_enum.fields import (
     EnumBigIntegerField,
     EnumCharField,
@@ -29,6 +25,7 @@ from django_enum.fields import (
     EnumPositiveSmallIntegerField,
     EnumSmallIntegerField,
 )
+from django_enum.filters import EnumFilter, FilterSet
 from django_enum.forms import EnumChoiceField
 
 __all__ = [
