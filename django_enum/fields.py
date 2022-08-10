@@ -333,15 +333,15 @@ def EnumField(  # pylint: disable=C0103
 
     .. code-block::
 
-    class MyModel(models.Model):
+        class MyModel(models.Model):
 
-        class EnumType(IntegerChoices):
+            class EnumType(IntegerChoices):
 
-            VAL1 = 1, _('Value 1')
-            VAL2 = 2, _('Value 2')
-            VAL3 = 3, _('Value 3')
+                VAL1 = 1, _('Value 1')
+                VAL2 = 2, _('Value 2')
+                VAL3 = 3, _('Value 3')
 
-        field_name = EnumField(EnumType)
+            field_name = EnumField(EnumType)
 
     :param enum: The class of the enumeration.
     :param field_args: Any standard unnamed field arguments for the underlying

@@ -23,6 +23,7 @@ class NonStrictSelect(Select):
     A Select widget for non-strict EnumChoiceFields that includes any existing
     non-conforming value as a choice option.
     """
+
     choices: Iterable[Tuple[Any, str]]
 
     def render(self, *args, **kwargs):
@@ -30,9 +31,10 @@ class NonStrictSelect(Select):
         Before rendering if we're a non-strict field and our value is not
         one of our choices, we add it as an option.
         """
+
         value: Any = getattr(kwargs.get('value'), 'value', kwargs.get('value'))
         if (
-            value not in self.attrs.get('empty_values', [])
+            value not in EnumChoiceField.empty_values
             and value not in (
                 choice[0] for choice in self.choices
             )
@@ -120,6 +122,7 @@ class EnumChoiceField(ChoiceField):
             non-strict field and the value is of a matching primitive type
         :raises ValidationError if a valid return value cannot be determined.
         """
+
         if value in self.empty_values:
             return self.empty_value
         if self.enum is not None and not isinstance(value, self.enum):
@@ -140,12 +143,6 @@ class EnumChoiceField(ChoiceField):
                             params={'value': value},
                         ) from err
         return value
-
-    def widget_attrs(self, widget: Widget) -> Dict[Any, Any]:
-        attrs = super().widget_attrs(widget)
-        attrs.setdefault('empty_value', self.empty_value)
-        attrs.setdefault('empty_values', self.empty_values)
-        return attrs
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""

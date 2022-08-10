@@ -12,7 +12,6 @@ from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
 from django_enum import TextChoices
-from django_enum.forms import EnumChoiceField
 from django_enum.tests.djenum.enums import (
     BigIntEnum,
     BigPosIntEnum,
@@ -1059,10 +1058,10 @@ class TestRequests(EnumTypeMixin, TestCase):
                         self.assertEqual(getattr(obj, field.name), value)
                     del expected[value]
                 except KeyError:  # pragma: no cover
-                    import pdb
-                    pdb.set_trace()
                     self.fail(
-                        f'{field.name} did not expect option {option["value"]}: {option.text}.')
+                        f'{field.name} did not expect option '
+                        f'{option["value"]}: {option.text}.'
+                    )
 
             self.assertEqual(len(expected), 0)
 
