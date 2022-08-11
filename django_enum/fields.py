@@ -328,8 +328,8 @@ def EnumField(  # pylint: disable=C0103
         **field_kwargs
 ) -> Field:
     """
-    Some syntactic sugar that wraps the enum field metaclass so that we can
-    cleanly create enums like so:
+    *This is a function, not a type*. Some syntactic sugar that wraps the enum
+    field metaclass so that we can cleanly create enums like so:
 
     .. code-block::
 
@@ -344,9 +344,9 @@ def EnumField(  # pylint: disable=C0103
             field_name = EnumField(EnumType)
 
     :param enum: The class of the enumeration.
-    :param field_args: Any standard unnamed field arguments for the underlying
+    :param field_args: Any standard unnamed field arguments for the base
         field type.
-    :param field_kwargs: Any standard named field arguments for the underlying
+    :param field_kwargs: Any standard named field arguments for the base
         field type.
     :return: An object of the appropriate enum field type
     """

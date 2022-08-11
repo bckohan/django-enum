@@ -6,7 +6,8 @@ Django Enum
 
 Full and natural support for enumerations_ as Django model fields.
 
-`django-enum <https://django-enum.readthedocs.io/en/latest/>`_ provides a new
+`django-enum <https://django-enum.readthedocs.io/en/latest/>`_ works in concert
+with Django_'s built in ``TextChoices`` and ``IntegerChoices`` to provide a new
 model field type, ``EnumField``, that resolves the correct native Django_ field
 type for the given enumeration based on its value type and range. For example,
 ``IntegerChoices`` that contain values between 0 and 32767 become
@@ -40,8 +41,8 @@ type for the given enumeration based on its value type and range. For example,
         int_enum = EnumField(IntEnum)
 
 
-``EnumField`` *is more than just an alias. The fields are now assignable and
-accessible as their enumeration type rather than by-value:*
+``EnumField`` **is more than just an alias. The fields are now assignable and
+accessible as their enumeration type rather than by-value:**
 
 .. code:: python
 

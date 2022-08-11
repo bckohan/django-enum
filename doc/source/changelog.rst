@@ -11,4 +11,4 @@ v1.0.0
 v0.1.0
 ======
 
-* Legacy django-enum library, old code base located here.
+* Legacy django-enum library maintained by `Jacob Smulloni <https://pypi.org/user/smulloni>`_. Source located `here <https://github.com/smulloni/django-enum-old>`_.
