@@ -779,6 +779,22 @@ class TestRequests(EnumTypeMixin, TestCase):
 
     maxDiff = None
 
+    fields = [
+        'small_pos_int',
+        'small_int',
+        'pos_int',
+        'int',
+        'big_pos_int',
+        'big_int',
+        'constant',
+        'text',
+        'dj_int_enum',
+        'dj_text_enum',
+        'non_strict_int',
+        'non_strict_text',
+        'no_coerce',
+    ]
+
     def setUp(self):
         self.values = {val: {} for val in self.compared_attributes}
         self.objects = []
@@ -873,6 +889,65 @@ class TestRequests(EnumTypeMixin, TestCase):
             **self.post_params,
         }
 
+    def test_drf_read(self):
+        c = Client()
+        response = c.get(reverse(f'{self.NAMESPACE}:enumtester-list'))
+        read_objects = response.json()
+        self.assertEqual(len(read_objects), len(self.objects))
+
+        for idx, obj in enumerate(response.json()):
+            # should be same order
+            self.assertEqual(obj['id'], self.objects[idx].id)
+            for field in self.fields:
+                self.assertEqual(obj[field], getattr(self.objects[idx], field))
+
+    def test_drf_update(self):
+        c = Client()
+        params = self.post_params#_symmetric TODO
+        response = c.put(
+            reverse(
+                f'{self.NAMESPACE}:enumtester-detail',
+                kwargs={'pk': self.objects[0].id}
+            ),
+            params,
+            follow=True,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 200)
+        fetched = c.get(
+            reverse(
+                f'{self.NAMESPACE}:enumtester-detail',
+                kwargs={'pk': self.objects[0].id}
+            ),
+            follow=True
+        ).json()
+
+        obj = self.MODEL_CLASS.objects.get(pk=self.objects[0].id)
+
+        self.assertEqual(fetched['id'], obj.id)
+        for field in self.fields:
+            self.assertEqual(fetched[field], getattr(obj, field))
+            self.assertEqual(params[field], getattr(obj, field))
+
+    def test_drf_post(self):
+        c = Client()
+        params = self.post_params#_symmetric TODO
+        response = c.post(
+            reverse(f'{self.NAMESPACE}:enumtester-list'),
+            params,
+            follow=True,
+            content_type='application/json'
+        )
+        self.assertEqual(response.status_code, 201)
+        created = response.json()
+
+        obj = self.MODEL_CLASS.objects.last()
+
+        self.assertEqual(created['id'], obj.id)
+        for field in self.fields:
+            self.assertEqual(created[field], getattr(obj, field))
+            self.assertEqual(params[field], getattr(obj, field))
+
     def test_add(self):
         """
         Test that add forms work and that EnumField type allows creations
@@ -959,21 +1034,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             response = c.get(reverse(f'{self.NAMESPACE}:{form_url}'))
             soup = Soup(response.content, features='html.parser')
 
-            for field in [
-                'small_pos_int',
-                'small_int',
-                'pos_int',
-                'int',
-                'big_pos_int',
-                'big_int',
-                'constant',
-                'text',
-                'dj_int_enum',
-                'dj_text_enum',
-                'non_strict_int',
-                'non_strict_text',
-                'no_coerce'
-            ]:
+            for field in self.fields:
                 field = EnumTester._meta.get_field(field)
                 expected = dict(zip([en for en in field.enum], field.enum.labels))  # value -> label
                 null_opt = False
@@ -1006,21 +1067,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             in the options lists for non strict fields
         :return:
         """
-        for field in [
-            'small_pos_int',
-            'small_int',
-            'pos_int',
-            'int',
-            'big_pos_int',
-            'big_int',
-            'constant',
-            'text',
-            'dj_int_enum',
-            'dj_text_enum',
-            'non_strict_int',
-            'non_strict_text',
-            'no_coerce',
-        ]:
+        for field in self.fields:
             field = self.MODEL_CLASS._meta.get_field(field)
             expected = dict(zip([en for en in field.enum],
                                 field.enum.labels))  # value -> label

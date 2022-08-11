@@ -1,7 +1,8 @@
 try:
-    from django.urls import path
+    from django.urls import include, path
     from django_enum.tests.enum_prop.models import EnumTester
     from django_enum.tests.enum_prop.views import (
+        DRFView,
         EnumTesterCreateView,
         EnumTesterDeleteView,
         EnumTesterDetailView,
@@ -11,8 +12,12 @@ try:
         EnumTesterListView,
         EnumTesterUpdateView,
     )
+    from rest_framework import routers
 
     app_name = 'django_enum_tests_enum_prop'
+
+    router = routers.DefaultRouter()
+    router.register(r'enumtesters', DRFView)
 
     urlpatterns = [
         path('enum/<int:pk>', EnumTesterDetailView.as_view(), name='enum-detail'),
@@ -22,7 +27,8 @@ try:
         path('enum/<int:pk>/', EnumTesterUpdateView.as_view(), name='enum-update'),
         path('enum/form/<int:pk>/', EnumTesterFormView.as_view(), name='enum-form-update'),
         path('enum/<int:pk>/delete/', EnumTesterDeleteView.as_view(), name='enum-delete'),
-        path('enum/form/<int:pk>/delete/', EnumTesterFormDeleteView.as_view(), name='enum-form-delete')
+        path('enum/form/<int:pk>/delete/', EnumTesterFormDeleteView.as_view(), name='enum-form-delete'),
+        path('drf/', include(router.urls))
     ]
 
     try:

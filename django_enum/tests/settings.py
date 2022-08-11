@@ -44,6 +44,7 @@ MIDDLEWARE = (
 INSTALLED_APPS = [
     'django_enum.tests.djenum',
     'django_enum.tests.tmpls',
+    'rest_framework',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -74,3 +75,9 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 TEST_EDIT_DIR = Path(__file__).parent / 'edit_tests' / 'edits'
 TEST_MIGRATION_DIR = Path(__file__).parent / 'edit_tests' / 'migrations'
+
+REST_FRAMEWORK = {
+    # no auth
+    'DEFAULT_AUTHENTICATION_CLASSES': [],
+    'DEFAULT_PERMISSION_CLASSES': [],
+}

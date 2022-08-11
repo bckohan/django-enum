@@ -5,6 +5,7 @@ try:
     from django_enum.tests.enum_prop import enums as prop_enums
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import EnumTester
+    from rest_framework import serializers, viewsets
 
 
     class EnumTesterDetailView(views.EnumTesterDetailView):
@@ -63,6 +64,18 @@ try:
         model = EnumTester
         NAMESPACE = 'django_enum_tests_enum_prop'
         enums = prop_enums
+
+
+    class EnumTesterSerializer(serializers.ModelSerializer):
+        class Meta:
+            model = EnumTester
+            fields = '__all__'
+
+
+    class DRFView(viewsets.ModelViewSet):
+        queryset = EnumTester.objects.all()
+        serializer_class = EnumTesterSerializer
+
 
     try:
 

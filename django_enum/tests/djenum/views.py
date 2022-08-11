@@ -4,6 +4,7 @@ from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django_enum.tests.djenum import enums as dj_enums
 from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import EnumTester
+from rest_framework import serializers, viewsets
 
 
 class URLMixin:
@@ -94,6 +95,17 @@ class EnumTesterFormDeleteView(URLMixin, DeleteView):
 
     def get_success_url(self):  # pragma: no cover
         return reverse(f'{self.NAMESPACE}:enum-list')
+
+
+class EnumTesterSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EnumTester
+        fields = '__all__'
+
+
+class DRFView(viewsets.ModelViewSet):
+    queryset = EnumTester.objects.all()
+    serializer_class = EnumTesterSerializer
 
 
 try:
