@@ -127,22 +127,23 @@ Installation
 
        pip install django-enum
 
-.. note::
-
-    ``django-enum`` *does not* need to be added to ``INSTALLED_APPS``.
 
 .. note::
 
     ``django-enum`` has several optional dependencies that are not pulled in
     by default. ``EnumFields`` work seamlessly with all Django apps that
-    work with model fields with choices. Optional integrations are provided
-    with several popular libraries to extend this basic functionality. To
-    utilize the `enum-properties <https://pypi.org/project/enum-properties/>`_
-    choice types you must `pip install enum-properties` and to use the
-    ``EnumFilter`` type for
-    `django-filter <https://pypi.org/project/django-filter/>`_ you
-    must `pip install django-filter`. And to use the DRF_ serializer field you
-    must `pip install djangorestframework`.
+    work with model fields with choices without any additional work. Optional
+    integrations are provided with several popular libraries to extend this
+    basic functionality.
+
+Integrations are provided that leverage enum-properties_ to make enumerations
+do more work and to provide extended functionality for django-filter_  and DRF_.
+
+.. code:: bash
+
+    pip install enum-properties
+    pip install django-filter
+    pip install djangorestframework
 
 If features are utilized that require a missing optional dependency an
 exception will be thrown.
