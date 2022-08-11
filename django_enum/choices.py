@@ -90,25 +90,37 @@ except (ImportError, ModuleNotFoundError):
             )
 
     class TextChoices(  # type: ignore
-        DjangoSymmetricMixin,
+        #DjangoSymmetricMixin,
         str,
-        Choices,
-        metaclass=ChoicesMeta
+        Choices
     ):
         """Raises ImportError on class definition"""
+        def __new__(mcs, *args, **kwargs):
+            raise ImportError(
+                f'{mcs.__name__} requires enum-properties to be '
+                f'installed.'
+            )
 
     class IntegerChoices(  # type: ignore
-        DjangoSymmetricMixin,
+        #DjangoSymmetricMixin,
         int,
-        Choices,
-        metaclass=ChoicesMeta
+        Choices
     ):
         """Raises ImportError on class definition"""
+        def __new__(mcs, *args, **kwargs):
+            raise ImportError(
+                f'{mcs.__name__} requires enum-properties to be '
+                f'installed.'
+            )
 
     class FloatChoices(  # type: ignore
-        DjangoSymmetricMixin,
+        #DjangoSymmetricMixin,
         float,
-        Choices,
-        metaclass=ChoicesMeta
+        Choices
     ):
         """Raises ImportError on class definition"""
+        def __new__(mcs, *args, **kwargs):
+            raise ImportError(
+                f'{mcs.__name__} requires enum-properties to be '
+                f'installed.'
+            )
