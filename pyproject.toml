@@ -39,7 +39,7 @@ packages = [
 exclude = ["django_enum/tests"]
 
 [tool.poetry.dependencies]
-python = ">=3.7,<4.0"
+python = ">=3.6,<4.0"
 Django = ">=3.2,<5.0"
 enum-properties = {version = "^1.1.1", optional = true}
 django-filter = {version = "^22.1", optional = true}
