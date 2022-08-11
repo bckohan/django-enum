@@ -48,6 +48,12 @@ jobs:
     - name: Remove enum-properties
       run: |
         poetry run pip uninstall -y enum-properties
+    - name: Install djangorestframework
+      run: |
+        poetry install -E djangorestframework
+    - name: Run Unit Tests w/ djangorestframework
+      run: |
+        poetry run pytest --cov-fail-under=30
     - name: Install django-filters
       run: |
         poetry install -E filters

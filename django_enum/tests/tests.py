@@ -37,6 +37,12 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
     DJANGO_FILTERS_INSTALLED = False
 
 try:
+    import rest_framework
+    DJANGO_RESTFRAMEWORK_INSTALLED = True
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
+    DJANGO_RESTFRAMEWORK_INSTALLED = False
+
+try:
     import enum_properties
     ENUM_PROPERTIES_INSTALLED = True
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
@@ -449,6 +455,24 @@ class TestChoices(EnumTypeMixin, TestCase):
             self.assertTrue('big_int' in ve.message_dict)
             self.assertTrue('constant' in ve.message_dict)
             self.assertTrue('text' in ve.message_dict)
+
+    def do_rest_framework_missing(self):
+        from django_enum.drf import EnumField
+        self.assertRaises(ImportError, EnumField, self.SmallPosIntEnum)
+
+    def test_rest_framework_missing(self):
+        import sys
+        from importlib import reload
+        from unittest.mock import patch
+
+        from django_enum import drf
+        if 'rest_framework.fields' in sys.modules:
+            with patch.dict(sys.modules, {'rest_framework.fields': None}):
+                reload(sys.modules['django_enum.drf'])
+                self.do_rest_framework_missing()
+            reload(sys.modules['django_enum.drf'])
+        else:
+            self.do_rest_framework_missing()  # pragma: no cover
 
     def do_django_filters_missing(self):
         from django_enum.filters import EnumFilter
@@ -889,64 +913,127 @@ class TestRequests(EnumTypeMixin, TestCase):
             **self.post_params,
         }
 
-    def test_drf_read(self):
-        c = Client()
-        response = c.get(reverse(f'{self.NAMESPACE}:enumtester-list'))
-        read_objects = response.json()
-        self.assertEqual(len(read_objects), len(self.objects))
+    if DJANGO_RESTFRAMEWORK_INSTALLED:  # pragma: no cover
+        def test_drf_serializer(self):
 
-        for idx, obj in enumerate(response.json()):
-            # should be same order
-            self.assertEqual(obj['id'], self.objects[idx].id)
+            from django_enum.drf import EnumField
+            from rest_framework import serializers
+
+            class TestSerializer(serializers.ModelSerializer):
+
+                small_pos_int = EnumField(SmallPosIntEnum)
+                small_int = EnumField(SmallIntEnum)
+                pos_int = EnumField(PosIntEnum)
+                int = EnumField(IntEnum)
+                big_pos_int = EnumField(BigPosIntEnum)
+                big_int = EnumField(BigIntEnum)
+                constant = EnumField(Constants)
+                text = EnumField(TextEnum)
+                dj_int_enum = EnumField(DJIntEnum)
+                dj_text_enum = EnumField(DJTextEnum)
+                non_strict_int = EnumField(SmallPosIntEnum, strict=False)
+                non_strict_text = EnumField(
+                    TextEnum,
+                    strict=False,
+                    allow_blank=True
+                )
+                no_coerce = EnumField(SmallPosIntEnum)
+
+                class Meta:
+                    model = EnumTester
+                    fields = '__all__'
+
+            ser = TestSerializer(data=self.post_params)
+            self.assertTrue(ser.is_valid())
+            inst = ser.save()
+            for param, value in self.post_params.items():
+                self.assertEqual(value, getattr(inst, param))
+
+            ser_bad = TestSerializer(
+                data={
+                    **self.post_params,
+                    'small_pos_int': -1,
+                    'constant': 3.14,
+                    'text': 'wrong',
+                    'pos_int': -50
+                }
+            )
+
+            self.assertFalse(ser_bad.is_valid())
+            self.assertTrue('small_pos_int' in ser_bad.errors)
+            self.assertTrue('constant' in ser_bad.errors)
+            self.assertTrue('text' in ser_bad.errors)
+            self.assertTrue('pos_int' in ser_bad.errors)
+
+        def test_drf_read(self):
+            c = Client()
+            response = c.get(reverse(f'{self.NAMESPACE}:enumtester-list'))
+            read_objects = response.json()
+            self.assertEqual(len(read_objects), len(self.objects))
+
+            for idx, obj in enumerate(response.json()):
+                # should be same order
+                self.assertEqual(obj['id'], self.objects[idx].id)
+                for field in self.fields:
+                    self.assertEqual(obj[field], getattr(self.objects[idx], field))
+                    if obj[field] is not None:
+                        self.assertIsInstance(obj[field], self.enum_primitive(field))
+
+        def test_drf_update(self):
+            c = Client()
+            params = self.post_params_symmetric
+            response = c.put(
+                reverse(
+                    f'{self.NAMESPACE}:enumtester-detail',
+                    kwargs={'pk': self.objects[0].id}
+                ),
+                params,
+                follow=True,
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 200)
+            fetched = c.get(
+                reverse(
+                    f'{self.NAMESPACE}:enumtester-detail',
+                    kwargs={'pk': self.objects[0].id}
+                ),
+                follow=True
+            ).json()
+
+            obj = self.MODEL_CLASS.objects.get(pk=self.objects[0].id)
+
+            self.assertEqual(fetched['id'], obj.id)
             for field in self.fields:
-                self.assertEqual(obj[field], getattr(self.objects[idx], field))
+                self.assertEqual(fetched[field], getattr(obj, field))
+                if self.MODEL_CLASS._meta.get_field(field).coerce:
+                    self.assertEqual(params[field], getattr(obj, field))
 
-    def test_drf_update(self):
-        c = Client()
-        params = self.post_params#_symmetric TODO
-        response = c.put(
-            reverse(
-                f'{self.NAMESPACE}:enumtester-detail',
-                kwargs={'pk': self.objects[0].id}
-            ),
-            params,
-            follow=True,
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 200)
-        fetched = c.get(
-            reverse(
-                f'{self.NAMESPACE}:enumtester-detail',
-                kwargs={'pk': self.objects[0].id}
-            ),
-            follow=True
-        ).json()
+        def test_drf_post(self):
+            c = Client()
+            params = {
+                **self.post_params_symmetric,
+                'non_strict_text': '',
+                'text': None
+            }
+            response = c.post(
+                reverse(f'{self.NAMESPACE}:enumtester-list'),
+                params,
+                follow=True,
+                content_type='application/json'
+            )
+            self.assertEqual(response.status_code, 201)
+            created = response.json()
 
-        obj = self.MODEL_CLASS.objects.get(pk=self.objects[0].id)
+            obj = self.MODEL_CLASS.objects.last()
 
-        self.assertEqual(fetched['id'], obj.id)
-        for field in self.fields:
-            self.assertEqual(fetched[field], getattr(obj, field))
-            self.assertEqual(params[field], getattr(obj, field))
+            self.assertEqual(created['id'], obj.id)
+            for field in self.fields:
+                self.assertEqual(created[field], getattr(obj, field))
+                if self.MODEL_CLASS._meta.get_field(field).coerce:
+                    self.assertEqual(params[field], getattr(obj, field))
 
-    def test_drf_post(self):
-        c = Client()
-        params = self.post_params#_symmetric TODO
-        response = c.post(
-            reverse(f'{self.NAMESPACE}:enumtester-list'),
-            params,
-            follow=True,
-            content_type='application/json'
-        )
-        self.assertEqual(response.status_code, 201)
-        created = response.json()
-
-        obj = self.MODEL_CLASS.objects.last()
-
-        self.assertEqual(created['id'], obj.id)
-        for field in self.fields:
-            self.assertEqual(created[field], getattr(obj, field))
-            self.assertEqual(params[field], getattr(obj, field))
+    else:
+        pass  # pragma: no cover
 
     def test_add(self):
         """

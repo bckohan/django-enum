@@ -43,6 +43,7 @@ python = ">=3.7,<4.0"
 Django = ">=3.2,<5.0"
 enum-properties = {version = "^1.1.1", optional = true}
 django-filter = {version = "^22.1", optional = true}
+djangorestframework = {version = "^3.9", optional = true}
 
 [tool.poetry.dev-dependencies]
 pytest = "^7.0"
@@ -65,7 +66,6 @@ coverage = "^6.2"
 beautifulsoup4 = "^4.11.1"
 pytest-django = "^4.5.2"
 django-test-migrations = "^1.2.0"
-djangorestframework = "^3.13.1"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -73,6 +73,7 @@ build-backend = "poetry.core.masonry.api"
 
 
 [tool.poetry.extras]
-all = ["django-filter", "enum-properties"]
+all = ["django-filter", "enum-properties", "djangorestframework"]
 properties = ["enum-properties"]
 filters = ["django-filter"]
+djangorestframework = ["djangorestframework"]
