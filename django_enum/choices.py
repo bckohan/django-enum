@@ -83,29 +83,32 @@ except (ImportError, ModuleNotFoundError):
         Needs to be strict subclass of same metaclass as Enum to make it to
         the ImportError.
         """
-        def __new__(mcs, *args, **kwargs):  # pylint: disable=W0231
+        def __init__(self, *args, **kwargs):  # pylint: disable=W0231
             raise ImportError(
-                f'{mcs.__name__} requires enum-properties to be '
+                f'{self.__class__.__name__} requires enum-properties to be '
                 f'installed.'
             )
 
     class TextChoices(  # type: ignore
         DjangoSymmetricMixin,
         str,
-        Choices
+        Choices,
+        metaclass=ChoicesMeta
     ):
         """Raises ImportError on class definition"""
 
     class IntegerChoices(  # type: ignore
         DjangoSymmetricMixin,
         int,
-        Choices
+        Choices,
+        metaclass=ChoicesMeta
     ):
         """Raises ImportError on class definition"""
 
     class FloatChoices(  # type: ignore
         DjangoSymmetricMixin,
         float,
-        Choices
+        Choices,
+        metaclass=ChoicesMeta
     ):
         """Raises ImportError on class definition"""
