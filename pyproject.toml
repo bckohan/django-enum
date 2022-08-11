@@ -42,7 +42,7 @@ exclude = ["django_enum/tests"]
 python = ">=3.6,<4.0"
 Django = ">=3.2,<5.0"
 enum-properties = {version = "^1.1.1", optional = true}
-django-filter = {version = "^22.1", optional = true}
+django-filter = {version = "^21", optional = true}
 djangorestframework = {version = "^3.9", optional = true}
 
 [tool.poetry.dev-dependencies]
