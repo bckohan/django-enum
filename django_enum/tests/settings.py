@@ -44,7 +44,6 @@ MIDDLEWARE = (
 INSTALLED_APPS = [
     'django_enum.tests.djenum',
     'django_enum.tests.tmpls',
-    'rest_framework',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',
@@ -53,6 +52,12 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
 ]
+
+try:
+    import rest_framework
+    INSTALLED_APPS.insert(0, 'rest_framework')
+except (ImportError, ModuleNotFoundError):
+    pass
 
 try:
     import enum_properties
