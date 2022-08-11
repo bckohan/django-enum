@@ -30,7 +30,7 @@
 .. _enumerations: https://docs.python.org/3/library/enum.html#enum.Enum
 .. _ValueError: https://docs.python.org/3/library/exceptions.html#ValueError
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
-
+.. _DRF: https://www.django-rest-framework.org
 
 Django Enum
 ###########
@@ -182,11 +182,15 @@ Installation
 .. note::
 
     ``django-enum`` has several optional dependencies that are not pulled in
-    by default. To utilize the
-    `enum-properties <https://pypi.org/project/enum-properties/>`_ choice types
-    you must `pip install enum-properties` and to use the ``EnumFilter`` type
-    for `django-filter <https://pypi.org/project/django-filter/>`_ you
-    must `pip install django-filter`.
+    by default. ``EnumFields`` work seamlessly with all Django apps that
+    work with model fields with choices. Optional integrations are provided
+    with several popular libraries to extend this basic functionality. To
+    utilize the `enum-properties <https://pypi.org/project/enum-properties/>`_
+    choice types you must `pip install enum-properties` and to use the
+    ``EnumFilter`` type for
+    `django-filter <https://pypi.org/project/django-filter/>`_ you
+    must `pip install django-filter`. And to use the DRF_ serializer field you
+    must `pip install djangorestframework`.
 
 If features are utilized that require a missing optional dependency an
 exception will be thrown.

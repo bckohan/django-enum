@@ -290,6 +290,37 @@ would define our form like so:
     </select>
 
 
+.. _rest_framework:
+
+Django Rest Framework
+#####################
+
+By default DRF_ ``ModelSerializer`` will use a ``ChoiceField`` to represent an
+``EnumField``. This works great, but it will not accept symmetric enumeration
+values. A serializer field ``EnumField`` is provided that will. The dependency
+on DRF_ is optional so to use the provided serializer field you must install
+DRF_:
+
+.. code:: bash
+
+    pip install djangorestframework
+
+.. code-block::
+
+    from django_enum.drf import EnumField
+    from rest_framework import serializers
+
+    class ExampleSerializer(serializers.Serializer):
+
+        color = EnumField(TextChoicesExample.Color)
+
+    ser = ExampleSerializer(data={'color': (1, 0, 0)})
+    assert ser.is_valid()
+
+The serializer ``EnumField`` accepts any arguments that ``ChoiceField``. It
+also accepts the ``strict`` parameter that behaves the same as the model
+field's ``strict`` parameter.
+
 .. _filtering:
 
 Filtering

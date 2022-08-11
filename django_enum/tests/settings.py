@@ -56,7 +56,7 @@ INSTALLED_APPS = [
 try:
     import rest_framework
     INSTALLED_APPS.insert(0, 'rest_framework')
-except (ImportError, ModuleNotFoundError):
+except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass
 
 try:

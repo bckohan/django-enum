@@ -45,3 +45,14 @@ Forms
    :undoc-members:
    :show-inheritance:
    :private-members:
+
+
+Serializer Fields
+-----------------
+
+.. automodule:: django_enum.drf
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+

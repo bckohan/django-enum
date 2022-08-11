@@ -14,3 +14,5 @@
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 .. _enum-properties: https://pypi.org/project/enum-properties
 .. _django-filter: https://pypi.org/project/django-filter
+.. _DRF: https://www.django-rest-framework.org
+
