@@ -317,9 +317,9 @@ DRF_:
     ser = ExampleSerializer(data={'color': (1, 0, 0)})
     assert ser.is_valid()
 
-The serializer ``EnumField`` accepts any arguments that ``ChoiceField``. It
-also accepts the ``strict`` parameter that behaves the same as the model
-field's ``strict`` parameter.
+The serializer ``EnumField`` accepts any arguments that ``ChoiceField`` does.
+It also accepts the ``strict`` parameter which behaves the same way as it does
+on the model field.
 
 .. _filtering:
 
