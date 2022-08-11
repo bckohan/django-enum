@@ -83,9 +83,9 @@ except (ImportError, ModuleNotFoundError):
         Needs to be strict subclass of same metaclass as Enum to make it to
         the ImportError.
         """
-        def __init__(cls, *args, **kwargs):  # pylint: disable=W0231
+        def __new__(mcs, *args, **kwargs):  # pylint: disable=W0231
             raise ImportError(
-                f'{cls.__class__.__name__} requires enum-properties to be '
+                f'{mcs.__name__} requires enum-properties to be '
                 f'installed.'
             )
 
