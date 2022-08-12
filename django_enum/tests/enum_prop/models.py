@@ -20,13 +20,13 @@ try:
     class EnumTester(models.Model):
 
         small_pos_int = EnumField(SmallPosIntEnum, null=True, default=None, db_index=True, blank=True)
-        small_int = EnumField(SmallIntEnum, null=False, default=SmallIntEnum.VAL3, db_index=True, blank=True)
+        small_int = EnumField(SmallIntEnum, null=False, default='Value 32767', db_index=True, blank=True)
 
-        pos_int = EnumField(PosIntEnum, default=PosIntEnum.VAL3, db_index=True, blank=True)
+        pos_int = EnumField(PosIntEnum, default=2147483647, db_index=True, blank=True)
         int = EnumField(IntEnum, null=True, db_index=True, blank=True)
 
         big_pos_int = EnumField(BigPosIntEnum, null=True, default=None, db_index=True, blank=True)
-        big_int = EnumField(BigIntEnum, default=BigIntEnum.VAL0, db_index=True, blank=True)
+        big_int = EnumField(BigIntEnum, default=BigPosIntEnum.VAL0, db_index=True, blank=True)
 
         constant = EnumField(Constants, null=True, default=None, db_index=True, blank=True)
 
@@ -76,7 +76,7 @@ try:
             SmallPosIntEnum,
             strict=False,
             null=True,
-            default=None,
+            default=5,
             blank=True
         )
         non_strict_text = EnumField(

@@ -176,11 +176,101 @@ class TestChoices(EnumTypeMixin, TestCase):
             'text': self.TextEnum.VALUE2
         }
 
+    def test_defaults(self):
+        from django.db.models import NOT_PROVIDED
+
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('small_pos_int').get_default(),
+            None
+        )
+
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('small_int').get_default(),
+            self.enum_type('small_int').VAL3
+        )
+        self.assertIsInstance(
+            self.MODEL_CLASS._meta.get_field('small_int').get_default(),
+            self.enum_type('small_int')
+        )
+
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('pos_int').get_default(),
+            self.enum_type('pos_int').VAL3
+        )
+        self.assertIsInstance(
+            self.MODEL_CLASS._meta.get_field('pos_int').get_default(),
+            self.enum_type('pos_int')
+        )
+
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('int').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('big_pos_int').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('big_int').get_default(),
+            self.enum_type('big_int').VAL0
+        )
+        self.assertIsInstance(
+            self.MODEL_CLASS._meta.get_field('big_int').get_default(),
+            self.enum_type('big_int')
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('constant').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('text').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('dj_int_enum').get_default(),
+            self.enum_type('dj_int_enum').ONE
+        )
+        self.assertIsInstance(
+            self.MODEL_CLASS._meta.get_field('dj_int_enum').get_default(),
+            self.enum_type('dj_int_enum')
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('dj_text_enum').get_default(),
+            self.enum_type('dj_text_enum').A
+        )
+        self.assertIsInstance(
+            self.MODEL_CLASS._meta.get_field('dj_text_enum').get_default(),
+            self.enum_type('dj_text_enum')
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('non_strict_int').get_default(),
+            5
+        )
+        self.assertIsInstance(
+            self.MODEL_CLASS._meta.get_field('non_strict_int').get_default(),
+            self.enum_primitive('non_strict_int')
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('non_strict_text').get_default(),
+            ''
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('no_coerce').get_default(),
+            None
+        )
+
     def test_basic_save(self):
         self.MODEL_CLASS.objects.all().delete()
         self.MODEL_CLASS.objects.create(**self.create_params)
-        for param, value in self.create_params.items():
-            self.assertEqual(self.MODEL_CLASS.objects.filter(**{param: value}).count(), 1)
+        for param in self.fields:
+            value = self.create_params.get(
+                param,
+                self.MODEL_CLASS._meta.get_field(param).get_default()
+            )
+            self.assertEqual(
+                self.MODEL_CLASS.objects.filter(**{param: value}).count(),
+                1
+            )
         self.MODEL_CLASS.objects.all().delete()
 
     def test_to_python_deferred_attribute(self):
@@ -943,6 +1033,13 @@ class TestRequests(EnumTypeMixin, TestCase):
             )
             self.objects[-1].refresh_from_db()
 
+        self.objects.append(
+            self.MODEL_CLASS.objects.create(
+                non_strict_int=88,
+                non_strict_text='arbitrary'
+            )
+        )
+
         for obj in self.objects:
             for attr in self.values.keys():
                 self.values[attr].setdefault(getattr(obj, attr), [])
@@ -1166,15 +1263,23 @@ class TestRequests(EnumTypeMixin, TestCase):
             c.delete(reverse(f'{self.NAMESPACE}:{form_url}', kwargs={'pk': deleted.pk}))
             self.assertRaises(self.MODEL_CLASS.DoesNotExist, self.MODEL_CLASS.objects.get, pk=deleted.pk)
 
-    @staticmethod
-    def get_enum_val(enum, value, null=True):
-        if value is None or value == '':
-            return None if null else ''
-        if int in enum.__mro__:
-            return enum(int(value))
-        if float in enum.__mro__:
-            return enum(float(value))
-        return enum(value)
+    def get_enum_val(self, enum, value, null=True, coerce=True, strict=True):
+        try:
+            if coerce:
+                if value is None or value == '':
+                    return None if null else ''
+                if int in enum.__mro__:
+                    return enum(int(value))
+                if float in enum.__mro__:
+                    return enum(float(value))
+                return enum(value)
+        except ValueError as err:
+            if strict:
+                raise err
+
+        if value not in {None, ''}:
+            return type(enum.values[0])(value)
+        return None if null else ''
 
     def test_add_form(self):
         c = Client()
@@ -1185,7 +1290,7 @@ class TestRequests(EnumTypeMixin, TestCase):
 
             for field in self.fields:
                 field = EnumTester._meta.get_field(field)
-                expected = dict(zip([en for en in field.enum], field.enum.labels))  # value -> label
+                expected = dict(zip([en if field.coerce else en.value for en in field.enum], field.enum.labels))  # value -> label
                 null_opt = False
                 for option in soup.find('select', id=f'id_{field.name}').find_all('option'):
                     if (option['value'] is None or option['value'] == '') and option.text.count('-') >= 2:
@@ -1194,7 +1299,13 @@ class TestRequests(EnumTypeMixin, TestCase):
                         continue
 
                     try:
-                        value = self.get_enum_val(field.enum, option['value'])
+                        value = self.get_enum_val(
+                            field.enum,
+                            option['value'],
+                            null=field.null,
+                            coerce=field.coerce,
+                            strict=field.strict
+                        )
                         self.assertEqual(str(expected[value]), option.text)
                         del expected[value]
                     except KeyError:  # pragma: no cover
@@ -1218,10 +1329,13 @@ class TestRequests(EnumTypeMixin, TestCase):
         """
         for field in self.fields:
             field = self.MODEL_CLASS._meta.get_field(field)
-            expected = dict(zip([en for en in field.enum],
+            expected = dict(zip([en if field.coerce else en.value for en in field.enum],
                                 field.enum.labels))  # value -> label
 
-            if non_strict_options and getattr(obj, field.name) not in expected and getattr(obj, field.name) not in {None, ''}:
+            if (non_strict_options and
+                not any([getattr(obj, field.name) == exp for exp in expected])
+                and getattr(obj, field.name) not in {None, ''}
+            ):
                 # add any non-strict values
                 expected[getattr(obj, field.name)] = str(getattr(obj, field.name))
                 self.assertFalse(field.strict)
@@ -1246,7 +1360,13 @@ class TestRequests(EnumTypeMixin, TestCase):
 
                 try:
                     try:
-                        value = self.get_enum_val(field.enum, option['value'])
+                        value = self.get_enum_val(
+                            field.enum,
+                            option['value'],
+                            null=field.null,
+                            coerce=field.coerce,
+                            strict=field.strict
+                        )
                     except ValueError:
                         self.assertFalse(field.strict)
                         value = self.enum_primitive(field.name)(option['value'])
@@ -1275,7 +1395,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             for obj in self.objects:
                 response = client.get(reverse(f'{self.NAMESPACE}:{form_url}', kwargs={'pk': obj.pk}))
                 soup = Soup(response.content, features='html.parser')
-                self.verify_form(obj, soup)
+                self.verify_form(obj, soup, non_strict_options=form_url == 'enum-form-update')
 
     def test_non_strict_select(self):
         client = Client()
@@ -1343,7 +1463,9 @@ class TestRequests(EnumTypeMixin, TestCase):
                     obj_div.find(f'p', {'class': attr}).find(
                         'span', class_='value'
                     ).text,
-                    null=self.MODEL_CLASS._meta.get_field(attr).null
+                    null=self.MODEL_CLASS._meta.get_field(attr).null,
+                    coerce=self.MODEL_CLASS._meta.get_field(attr).coerce,
+                    strict=self.MODEL_CLASS._meta.get_field(attr).strict
                 )
                 for attr in self.compared_attributes
             }
@@ -2223,6 +2345,37 @@ if ENUM_PROPERTIES_INSTALLED:
                     settings.TEST_MIGRATION_DIR / '0005_add_int_enum.py')
             )
 
+        def test_makemigrate_7(self):
+            from django.conf import settings
+            set_models(7)
+            self.assertFalse(
+                os.path.isfile(
+                    settings.TEST_MIGRATION_DIR / '0006_set_default.py')
+            )
+
+            call_command('makemigrations', name='set_default')
+
+            # should not exist!
+            self.assertTrue(
+                os.path.isfile(
+                    settings.TEST_MIGRATION_DIR / '0006_set_default.py')
+            )
+
+        def test_makemigrate_8(self):
+            from django.conf import settings
+            set_models(8)
+            self.assertFalse(
+                os.path.isfile(
+                    settings.TEST_MIGRATION_DIR / '0007_change_default.py')
+            )
+
+            call_command('makemigrations', name='change_default')
+
+            # should not exist!
+            self.assertTrue(
+                os.path.isfile(
+                    settings.TEST_MIGRATION_DIR / '0007_change_default.py')
+            )
 
     class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
 
@@ -2813,6 +2966,47 @@ if ENUM_PROPERTIES_INSTALLED:
             )
 
             MigrationTester.objects.all().delete()
+
+
+    class TestChangeDefaultIndirectlyMigration(
+        ResetModelsMixin,
+        MigratorTestCase
+    ):
+
+        migrate_from = ('django_enum_tests_edit_tests', '0006_set_default')
+        migrate_to = ('django_enum_tests_edit_tests', '0007_change_default')
+
+        @classmethod
+        def setUpClass(cls):
+            set_models(6)
+            super().setUpClass()
+
+        def prepare(self):
+
+            MigrationTester = self.old_state.apps.get_model(
+                'django_enum_tests_edit_tests',
+                'MigrationTester'
+            )
+
+            MigrationTester.objects.create()
+
+        def test_0007_change_default(self):
+            from django.core.exceptions import FieldDoesNotExist, FieldError
+
+            MigrationTesterNew = self.new_state.apps.get_model(
+                'django_enum_tests_edit_tests',
+                'MigrationTester'
+            )
+
+            self.assertEqual(
+                MigrationTesterNew.objects.first().color,
+                'K'
+            )
+
+            self.assertEqual(
+                MigrationTesterNew.objects.create().color,
+                'B'
+            )
 
 
     def test_migration_test_marker_tag():

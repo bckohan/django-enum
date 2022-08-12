@@ -108,7 +108,16 @@ class EnumMixin(
             kwargs.setdefault('choices', enum.choices if enum else [])
         super().__init__(*args, **kwargs)
 
-    def _try_coerce(self, value: Any, force: bool = False) -> Union[Choices, Any]:
+    def _try_coerce(
+            self,
+            value: Any,
+            force: bool = False
+    ) -> Union[Choices, Any]:
+        """
+        Attempt coercion of value to enumeration type instance, if unsuccessful
+        and non-strict, coercion to enum's primitive type will be done,
+        otherwise a ValueError is raised.
+        """
         if (
             (self.coerce or force)
             and self.enum is not None
@@ -133,14 +142,32 @@ class EnumMixin(
 
     def deconstruct(self) -> Tuple[str, str, List, dict]:
         """
-        Preserve enum class for migrations. Strict is omitted because
-        reconstructed fields are *always* non-strict sense enum is null.
+        Preserve field migrations. Strict and coerce are omitted because
+        reconstructed fields are *always* non-strict and coerce is always
+        False.
+
+        .. warning::
+
+            Do not add enum to kwargs! It is important that migration files not
+            reference enum classes that might be removed from the code base in
+            the future as this would break older migration files! We simply use
+            the choices tuple, which is plain old data and entirely sufficient
+            to de/reconstruct our field.
 
         See deconstruct_
         """
         name, path, args, kwargs = super().deconstruct()
         if self.enum is not None:
             kwargs['choices'] = self.enum.choices
+
+        if 'default' in kwargs:
+            # ensure default in deconstructed fields is always the primitive
+            # value type
+            kwargs['default'] = getattr(
+                self.get_default(),
+                'value',
+                self.get_default()
+            )
 
         return name, path, args, kwargs
 
@@ -210,6 +237,15 @@ class EnumMixin(
                 f"{self.enum.__name__ if self.enum else ''}."
             ) from err
 
+    def get_default(self) -> Any:
+        """Wrap get_default in an enum type coercion attempt"""
+        if self.has_default():
+            try:
+                return self.to_python(super().get_default())
+            except ValidationError:
+                return super().get_default()
+        return super().get_default()
+
     def validate(self, value: Any, model_instance: Model):
         """
         Validates the field as part of model clean routines. Runs super class
@@ -236,6 +272,9 @@ class EnumMixin(
                 code='invalid_choice',
                 params={'value': value}
             ) from err
+
+    # def formfield(self, form_class=None, choices_form_class=None, **kwargs):
+    #    pass
 
 
 class EnumCharField(EnumMixin, CharField):
@@ -302,7 +341,10 @@ class _EnumFieldMetaClass(type):
 
     SUPPORTED_PRIMITIVES = {int, str, float}
 
-    def __new__(mcs, enum: Choices) -> Field:  # pylint: disable=R0911
+    def __new__(  # pylint: disable=R0911
+            mcs,
+            enum: Type[Choices]
+    ) -> Type[EnumMixin]:
         """
         Construct a new Django Field class given the Enumeration class. The
         correct Django field class to inherit from is determined based on the
@@ -347,7 +389,7 @@ def EnumField(  # pylint: disable=C0103
         enum: Type[Choices],
         *field_args,
         **field_kwargs
-) -> Field:
+) -> EnumMixin:
     """
     *This is a function, not a type*. Some syntactic sugar that wraps the enum
     field metaclass so that we can cleanly create enums like so:

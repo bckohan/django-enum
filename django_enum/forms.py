@@ -120,7 +120,6 @@ class EnumChoiceField(ChoiceField):
             one of our empty_values, or the value itself if this is a
             non-strict field and the value is of a matching primitive type
         """
-
         if value in self.empty_values:
             return self.empty_value
         if (
