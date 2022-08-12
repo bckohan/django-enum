@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup as Soup
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
-from django.db import transaction
+from django.db import connection, transaction
 from django.db.models import Q
 from django.http import QueryDict
 from django.test import Client, TestCase
@@ -79,6 +79,22 @@ class EnumTypeMixin:
     Since most of this code is identical, we use this mixin to resolve the correct
     type at the specific test in question.
     """
+
+    fields = [
+        'small_pos_int',
+        'small_int',
+        'pos_int',
+        'int',
+        'big_pos_int',
+        'big_int',
+        'constant',
+        'text',
+        'dj_int_enum',
+        'dj_text_enum',
+        'non_strict_int',
+        'non_strict_text',
+        'no_coerce',
+    ]
 
     @property
     def SmallPosIntEnum(self):
@@ -166,6 +182,53 @@ class TestChoices(EnumTypeMixin, TestCase):
         for param, value in self.create_params.items():
             self.assertEqual(self.MODEL_CLASS.objects.filter(**{param: value}).count(), 1)
         self.MODEL_CLASS.objects.all().delete()
+
+    def test_to_python_deferred_attribute(self):
+        obj = self.MODEL_CLASS.objects.create(**self.create_params)
+        with self.assertNumQueries(1):
+            obj2 = self.MODEL_CLASS.objects.only('id').get(pk=obj.pk)
+
+        for field in [
+            field.name for field in self.MODEL_CLASS._meta.fields
+            if field.name != 'id'
+        ]:
+            # each of these should result in a db query
+            with self.assertNumQueries(1):
+                self.assertEqual(
+                    getattr(obj, field),
+                    getattr(obj2, field)
+                )
+
+            with self.assertNumQueries(2):
+                self.assertEqual(
+                    getattr(
+                        self.MODEL_CLASS.objects.defer(field).get(pk=obj.pk),
+                        field
+                    ),
+                    getattr(obj, field),
+                )
+
+        # test that all coerced fields are coerced to the Enum type on
+        # assignment - this also tests symmetric value assignment in the
+        # derived class
+        set_tester = self.MODEL_CLASS()
+        for field, value in self.values_params.items():
+            setattr(set_tester, field, getattr(value, 'value', value))
+            if self.MODEL_CLASS._meta.get_field(field).coerce:
+                try:
+                    self.assertIsInstance(getattr(set_tester, field), self.enum_type(field))
+                except AssertionError:
+                    self.assertFalse(self.MODEL_CLASS._meta.get_field(field).strict)
+                    self.assertIsInstance(getattr(set_tester, field), self.enum_primitive(field))
+            else:
+                self.assertNotIsInstance(getattr(set_tester, field), self.enum_type(field))
+                self.assertIsInstance(getattr(set_tester, field), self.enum_primitive(field))
+
+        # extra verification - save and make sure values are expected
+        set_tester.save()
+        set_tester.refresh_from_db()
+        for field, value in self.values_params.items():
+            self.assertEqual(getattr(set_tester, field), value)
 
     def test_integer_choices(self):
         self.do_test_integer_choices()
@@ -731,7 +794,6 @@ class TestFormField(EnumTypeMixin, TestCase):
     def test_data(self):
         form = self.FORM_CLASS(data=self.model_params)
         form.full_clean()
-        print(form.errors)
         self.assertTrue(form.is_valid())
         for field, value in self.model_params.items():
             self.verify_field(form, field, value)
@@ -3075,14 +3137,12 @@ if ENUM_PROPERTIES_INSTALLED:
 
             # uri's are symmetric
             map_obj.style = 'mapbox://styles/mapbox/light-v10'
-            map_obj.full_clean()
             self.assertTrue(map_obj.style == Map.MapBoxStyle.LIGHT)
             self.assertTrue(map_obj.style == 3)
             self.assertTrue(map_obj.style == 'light')
 
             # so are labels (also case insensitive)
             map_obj.style = 'satellite streets'
-            map_obj.full_clean()
             self.assertTrue(map_obj.style == Map.MapBoxStyle.SATELLITE_STREETS)
 
             # when used in API calls (coerced to strings) - they "do the right
@@ -3110,7 +3170,6 @@ if ENUM_PROPERTIES_INSTALLED:
 
             # save by any symmetric value
             instance.color = 'FF0000'
-            instance.full_clean()
 
             # access any property right from the model field
             self.assertTrue(instance.color.hex == 'ff0000')
@@ -3162,8 +3221,7 @@ if ENUM_PROPERTIES_INSTALLED:
 
             # set to a valid EnumType value
             obj.non_strict = '1'
-            obj.full_clean()
-            # when accessed from the db or after clean, will be an EnumType instance
+            # when accessed will be an EnumType instance
             self.assertTrue(obj.non_strict is StrictExample.EnumType.ONE)
 
             # we can also store any string less than or equal to length 10
@@ -3178,7 +3236,6 @@ if ENUM_PROPERTIES_INSTALLED:
                 txt_enum=MyModel.TextEnum.VALUE1,
                 int_enum=3  # by-value assignment also works
             )
-            instance.refresh_from_db()
 
             self.assertTrue(instance.txt_enum == MyModel.TextEnum('V1'))
             self.assertTrue(instance.txt_enum.label == 'Value 1')
@@ -3193,7 +3250,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 int_enum=3
             )
 
-            instance.txt_enum='AA'
+            instance.txt_enum = 'AA'
             self.assertRaises(ValidationError, instance.full_clean)
 
         def test_no_coerce(self):

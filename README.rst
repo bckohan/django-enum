@@ -80,7 +80,6 @@ accessible as their enumeration type rather than by-value:**
         txt_enum=MyModel.TextEnum.VALUE1,
         int_enum=3  # by-value assignment also works
     )
-    instance.refresh_from_db()
 
     assert instance.txt_enum == MyModel.TextEnum('V1')
     assert instance.txt_enum.label == 'Value 1'
@@ -129,7 +128,6 @@ possible very rich enumeration fields.
 
     # save by any symmetric value
     instance.color = 'FF0000'
-    instance.full_clean()
 
     # access any enum property right from the model field
     assert instance.color.hex == 'ff0000'

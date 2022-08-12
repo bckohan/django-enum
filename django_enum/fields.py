@@ -26,19 +26,38 @@ from django.db.models import (
     PositiveSmallIntegerField,
     SmallIntegerField,
 )
+from django.db.models.query_utils import DeferredAttribute
 
 T = TypeVar('T')  # pylint: disable=C0103
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
     """
-    Change inheritance to add Field type hints when . This is just more simple
-    than defining a Protocols - revisit if Django provides Field protocol -
-    should also just be a way to create a Protocol from a class?
+    Change inheritance to add Field type hints when type checking is running.
+    This is just more simple than defining a Protocol - revisit if Django
+    provides Field protocol - should also just be a way to create a Protocol
+    from a class?
+
+    This is icky but it works - revisit in future.
     """
     if TYPE_CHECKING:
         return baseclass  # pragma: no cover
     return object  # type: ignore
+
+
+class ToPythonDeferredAttribute(DeferredAttribute):
+    """
+    Extend DeferredAttribute descriptor to run a field's to_python method on a
+    value anytime it is set on the model. This is used to ensure a EnumFields
+    on models are always of their Enum type.
+    """
+
+    def __set__(self, instance: Model, value: Any):
+        try:
+            instance.__dict__[self.field.name] = self.field.to_python(value)
+        except ValidationError:
+            # Django core fields allow assignment of any value, we do the same
+            instance.__dict__[self.field.name] = value
 
 
 class EnumMixin(
@@ -62,6 +81,8 @@ class EnumMixin(
     enum: Optional[Type[Choices]] = None
     strict: bool = True
     coerce: bool = True
+
+    descriptor_class = ToPythonDeferredAttribute
 
     def _coerce_to_value_type(self, value: Any) -> Choices:
         """Coerce the value to the enumerations value type"""
@@ -92,7 +113,7 @@ class EnumMixin(
             (self.coerce or force)
             and self.enum is not None
             and not isinstance(value, self.enum)
-        ): # pylint: disable=R0801
+        ):
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):

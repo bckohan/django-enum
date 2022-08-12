@@ -6,7 +6,6 @@ from django.db.models import Choices
 from django.forms.fields import ChoiceField
 from django.forms.widgets import Select
 
-
 __all__ = ['NonStrictSelect', 'EnumChoiceField']
 
 

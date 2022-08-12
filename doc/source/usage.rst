@@ -37,8 +37,8 @@ following exceptions:
 
 .. code:: python
 
-    # txt_enum fields, when populated from the db, or after full_clean will be
-    # an instance of the TextEnum type:
+    # txt_enum fields will always be an instance of the TextEnum type, unless
+    # set to a value that is not part of the enumeration
 
     assert isinstance(MyModel.objects.first().txt_enum, MyModel.TextEnum)
     assert not isinstance(MyModel.objects.first().txt_choices, MyModel.TextEnum)
@@ -108,8 +108,7 @@ data where no ``Enum`` type coercion is possible.
 
     # set to a valid EnumType value
     obj.non_strict = '1'
-    obj.full_clean()
-    # when accessed from the db or after clean, will be an EnumType instance
+    # when accessed will be an EnumType instance
     assert obj.non_strict is StrictExample.EnumType.ONE
 
     # we can also store any string less than or equal to length 10
@@ -140,9 +139,8 @@ filter by ``Enum`` instance or any symmetric value:
 
     # set to a valid EnumType value
     obj.non_strict = '1'
-    obj.full_clean()
 
-    # when accessed from the db or after clean, will be the primitive value
+    # when accessed will be the primitive value
     assert obj.non_strict == '1'
     assert isinstance(obj.non_strict, str)
     assert not isinstance(obj.non_strict, StrictExample.EnumType)
@@ -200,7 +198,6 @@ values that can be symmetrically mapped back to enumeration values:
 
     # save by any symmetric value
     instance.color = 'FF0000'
-    instance.full_clean()
 
     # access any enum property right from the model field
     assert instance.color.hex == 'ff0000'
