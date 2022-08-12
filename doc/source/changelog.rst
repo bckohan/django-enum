@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+v1.0.1
+======
+
+* Fix dependency issue - allow python 3.6
+
+
 v1.0.0
 ======
 

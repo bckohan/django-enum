@@ -1,10 +1,12 @@
 """Support for django-filter"""
+
 from typing import Tuple, Type
 
 from django.db.models import Field as ModelField
 from django.forms.fields import Field as FormField
 from django_enum.fields import EnumMixin
 from django_enum.forms import EnumChoiceField
+
 
 try:
     from django_filters import ChoiceFilter, Filter, filterset

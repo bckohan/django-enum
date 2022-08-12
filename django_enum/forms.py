@@ -6,7 +6,6 @@ from django.db.models import Choices
 from django.forms.fields import ChoiceField
 from django.forms.widgets import Select
 
-# pylint: disable=R0801
 
 __all__ = ['NonStrictSelect', 'EnumChoiceField']
 
@@ -125,7 +124,10 @@ class EnumChoiceField(ChoiceField):
 
         if value in self.empty_values:
             return self.empty_value
-        if self.enum is not None and not isinstance(value, self.enum):
+        if (
+            self.enum is not None and
+            not isinstance(value, self.enum)  # pylint: disable=R0801
+        ):
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):

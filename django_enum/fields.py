@@ -27,7 +27,7 @@ from django.db.models import (
     SmallIntegerField,
 )
 
-T = TypeVar('T')
+T = TypeVar('T')  # pylint: disable=C0103
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
@@ -92,7 +92,7 @@ class EnumMixin(
             (self.coerce or force)
             and self.enum is not None
             and not isinstance(value, self.enum)
-        ):
+        ): # pylint: disable=R0801
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):
