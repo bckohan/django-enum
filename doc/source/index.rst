@@ -6,12 +6,23 @@ Django Enum
 
 Full and natural support for enumerations_ as Django model fields.
 
-`django-enum <https://django-enum.readthedocs.io/en/latest/>`_ works in concert
-with Django_'s built in ``TextChoices`` and ``IntegerChoices`` to provide a new
-model field type, ``EnumField``, that resolves the correct native Django_ field
-type for the given enumeration based on its value type and range. For example,
-``IntegerChoices`` that contain values between 0 and 32767 become
-`PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
+Many packages aim to ease usage of Python enumerations as model fields. Most
+were made obsolete when Django provided ``TextChoices`` and ``IntegerChoices``
+types. The motivation for django-enum was to:
+
+* Always automatically coerce fields to instances of the Enum type.
+* Allow strict adherence to Enum values to be disabled.
+* Handle migrations appropriately. (See `migrations <https://django-enum.readthedocs.io/en/latest/usage.html#migrations>`_)
+* Integrate as fully as possible with Django_'s existing level of enum support.
+* Integrate with enum-properties_ to enable richer enumeration types.
+* Represent enum fields with the smallest possible column type.
+* Be as simple and light-weight an extension to core Django as possible.
+
+django-enum works in concert with Django_'s built in ``TextChoices`` and
+``IntegerChoices`` to provide a new model field type, ``EnumField``, that
+resolves the correct native Django_ field type for the given enumeration based
+on its value type and range. For example, ``IntegerChoices`` that contain
+values between 0 and 32767 become `PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
 
 .. code:: python
 
@@ -68,7 +79,7 @@ enum-properties_ which makes possible very rich enumeration fields.
     from django_enum import TextChoices  # use instead of Django's TextChoices
     from django.db import models
 
-    class MyModel(models.Model):
+    class TextChoicesExample(models.Model):
 
         class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
 
@@ -83,15 +94,30 @@ enum-properties_ which makes possible very rich enumeration fields.
 
         color = EnumField(Color)
 
-    instance = MyModel.objects.create(color=MyModel.Color('FF0000'))
-
+    instance = TextChoicesExample.objects.create(
+        color=TextChoicesExample.Color('FF0000')
+    )
     assert instance.color == TextChoicesExample.Color('Red')
     assert instance.color == TextChoicesExample.Color('R')
     assert instance.color == TextChoicesExample.Color((1, 0, 0))
 
-    # save by any symmetric value or enum type instance
+    # direct comparison to any symmetric value also works
+    assert instance.color == 'Red'
+    assert instance.color == 'R'
+    assert instance.color == (1, 0, 0)
+
+    # save by any symmetric value
     instance.color = 'FF0000'
+
+    # access any enum property right from the model field
     assert instance.color.hex == 'ff0000'
+
+    # this also works!
+    assert instance.color == 'ff0000'
+
+    # and so does this!
+    assert instance.color == 'FF0000'
+
     instance.save()
 
     # filtering works by any symmetric value or enum type instance
