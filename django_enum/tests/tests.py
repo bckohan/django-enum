@@ -952,7 +952,7 @@ class TestFormField(EnumTypeMixin, TestCase):
         ]:
             try:
                 enum_field.clean(bad_value)
-            except ValidationError:
+            except ValidationError:  # pragma: no cover
                 self.fail(f'non-strict choice field for {enum_field.enum} raised ValidationError on {bad_value} during clean')
 
     def test_non_strict_field(self):
@@ -1303,7 +1303,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                     return enum(float(value))
                 return enum(value)
         except ValueError as err:
-            if strict:
+            if strict:  # pragma: no cover
                 raise err
 
         if value not in {None, ''}:
@@ -1367,7 +1367,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                             coerce=field.coerce,
                             strict=field.strict
                         )
-                    except ValueError:
+                    except ValueError:   # pragma: no cover
                         self.assertFalse(field.strict)
                         value = self.enum_primitive(field.name)(option['value'])
                     self.assertEqual(str(expected[value]), option.text)
@@ -1393,8 +1393,8 @@ class TestRequests(EnumTypeMixin, TestCase):
                 self.assertFalse(
                     null_opt,
                     f"An unexpected null option is present on {field.name}"
-                )  # pragma: no cover
-            elif field.blank:
+                )
+            elif field.blank:  # pragma: no cover
                 self.assertTrue(
                     null_opt,
                     f"Expected a null option on field {field.name}, but none was present."
@@ -1489,7 +1489,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                 reverse(f'{self.NAMESPACE}:enum-filter')
             )
 
-        def do_test_django_filter(self, url):
+        def do_test_django_filter(self, url, skip_non_strict=True):
             """
             Exhaustively test query parameter permutations based on data
             created in setUp
@@ -1497,6 +1497,12 @@ class TestRequests(EnumTypeMixin, TestCase):
             client = Client()
             for attr, val_map in self.values.items():
                 for val, objs in val_map.items():
+                    if (
+                        skip_non_strict and not
+                        self.MODEL_CLASS._meta.get_field(attr).strict and not
+                        any([val == en for en in self.MODEL_CLASS._meta.get_field(attr).enum])
+                    ):
+                        continue
                     if val in {None, ''}:
                         # todo how to query None or empty?
                         continue
@@ -2180,7 +2186,8 @@ if ENUM_PROPERTIES_INSTALLED:
         if DJANGO_FILTERS_INSTALLED:
             def test_django_filter(self):
                 self.do_test_django_filter(
-                    reverse(f'{self.NAMESPACE}:enum-filter-symmetric')
+                    reverse(f'{self.NAMESPACE}:enum-filter-symmetric'),
+                    skip_non_strict=False
                 )
         else:
             pass  # pragma: no cover

@@ -53,6 +53,8 @@ class EnumChoiceField(TypedChoiceField):
         enumeration value. This value will be returned when any "empty" value
         is encountered. If unspecified the default empty value of '' is
         returned.
+    :param empty_values: Override the list of what are considered to be empty
+        values.
     :param strict: If False, values not included in the enumeration list, but
         of the same primitive type are acceptable.
     :param choices: Override choices, otherwise enumeration choices attribute
@@ -114,6 +116,7 @@ class EnumChoiceField(TypedChoiceField):
             *,
             empty_value: Any = _Unspecified,
             strict: bool = strict_,
+            empty_values: List[Any] = TypedChoiceField.empty_values,
             choices: Iterable[Tuple[Any, str]] = (),
             **kwargs
     ):
@@ -121,7 +124,7 @@ class EnumChoiceField(TypedChoiceField):
         if not self.strict:
             kwargs.setdefault('widget', NonStrictSelect)
 
-        self.empty_values = kwargs.pop('empty_values', self.empty_values)
+        self.empty_values = empty_values
 
         super().__init__(
             choices=choices or getattr(self.enum, 'choices', choices),

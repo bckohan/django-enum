@@ -7,9 +7,9 @@ from django.forms.fields import Field as FormField
 from django_enum.forms import EnumChoiceField
 
 try:
-    from django_filters import ChoiceFilter, Filter, filterset
+    from django_filters import Filter, TypedChoiceFilter, filterset
 
-    class EnumFilter(ChoiceFilter):
+    class EnumFilter(TypedChoiceFilter):
         """
         Use this filter class instead of ``ChoiceFilter`` to get filters to
         accept Enum labels and symmetric properties.
@@ -30,17 +30,23 @@ try:
         values: ?color=R, ?color=G, ?color=B. ``EnumFilter`` will accept query
         parameter values from any of the symmetric properties: ?color=Red,
         ?color=ff0000, etc...
+
+        :param enum: The class of the enumeration containing the values to
+            filter on
+        :param strict: If False (default), values not in the enumeration will
+            be searchable.
+        :param kwargs: Any additional arguments for base classes
         """
         field_class: FormField = EnumChoiceField
 
-        def __init__(self, *, enum, **kwargs):
+        def __init__(self, *, enum, strict=False, **kwargs):
             self.enum = enum
             super().__init__(
                 enum=enum,
                 choices=kwargs.pop('choices', self.enum.choices),
+                strict=strict,
                 **kwargs
             )
-
 
     class FilterSet(filterset.FilterSet):
         """
@@ -56,7 +62,10 @@ try:
         ) -> Tuple[Type[Filter], dict]:
             """For EnumFields use the EnumFilter class by default"""
             if hasattr(field, 'enum') and hasattr(field.enum, 'choices'):
-                return EnumFilter, {'enum': field.enum}
+                return EnumFilter, {
+                    'enum': field.enum,
+                    'strict': getattr(field, 'strict', False)
+                }
             return super().filter_for_lookup(field, lookup_type)
 
 
