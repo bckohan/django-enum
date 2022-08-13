@@ -4,9 +4,6 @@ from django_enum.tests.djenum.views import (
     EnumTesterCreateView,
     EnumTesterDeleteView,
     EnumTesterDetailView,
-    EnumTesterFormCreateView,
-    EnumTesterFormDeleteView,
-    EnumTesterFormView,
     EnumTesterListView,
     EnumTesterUpdateView,
 )
@@ -18,11 +15,8 @@ urlpatterns = [
     path('enum/<int:pk>', EnumTesterDetailView.as_view(), name='enum-detail'),
     path('enum/list/', EnumTesterListView.as_view(), name='enum-list'),
     path('enum/add/', EnumTesterCreateView.as_view(), name='enum-add'),
-    path('enum/form/add/', EnumTesterFormCreateView.as_view(), name='enum-form-add'),
     path('enum/<int:pk>/', EnumTesterUpdateView.as_view(), name='enum-update'),
-    path('enum/form/<int:pk>/', EnumTesterFormView.as_view(), name='enum-form-update'),
-    path('enum/<int:pk>/delete/', EnumTesterDeleteView.as_view(), name='enum-delete'),
-    path('enum/form/<int:pk>/delete/', EnumTesterFormDeleteView.as_view(), name='enum-form-delete')
+    path('enum/<int:pk>/delete/', EnumTesterDeleteView.as_view(), name='enum-delete')
 ]
 
 

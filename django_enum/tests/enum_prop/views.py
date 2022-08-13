@@ -1,5 +1,6 @@
 try:
     from django.urls import reverse, reverse_lazy
+    from django.views.generic import CreateView, DeleteView, UpdateView
     from django_enum.filters import FilterSet as EnumFilterSet
     from django_enum.tests.djenum import views
     from django_enum.tests.enum_prop import enums as prop_enums
@@ -31,50 +32,35 @@ try:
         enums = prop_enums
 
 
-    class EnumTesterCreateView(views.EnumTesterCreateView):
+    class EnumTesterCreateView(views.URLMixin, CreateView):
         model = EnumTester
+        template_name = 'enumtester_form.html'
         NAMESPACE = 'django_enum_tests_enum_prop'
         enums = prop_enums
+        form_class = EnumTesterForm
 
 
-    class EnumTesterUpdateView(views.EnumTesterUpdateView):
+    class EnumTesterUpdateView(views.URLMixin, UpdateView):
         model = EnumTester
+        template_name = 'enumtester_form.html'
         NAMESPACE = 'django_enum_tests_enum_prop'
         enums = prop_enums
+        form_class = EnumTesterForm
 
         def get_success_url(self):  # pragma: no cover
             return reverse(f'{self.NAMESPACE}:enum-update',
                            kwargs={'pk': self.object.pk})
 
 
-    class EnumTesterFormView(views.EnumTesterFormView):
-        form_class = EnumTesterForm
-        model = EnumTester
+    class EnumTesterDeleteView(views.URLMixin, DeleteView):
         NAMESPACE = 'django_enum_tests_enum_prop'
+        model = EnumTester
+        template_name = 'enumtester_form.html'
         enums = prop_enums
+        form_class = EnumTesterForm
 
         def get_success_url(self):  # pragma: no cover
-            return reverse(f'{self.NAMESPACE}:enum-update',
-                           kwargs={'pk': self.object.pk})
-
-    class EnumTesterFormCreateView(views.EnumTesterFormCreateView):
-        form_class = EnumTesterForm
-        model = EnumTester
-        NAMESPACE = 'django_enum_tests_enum_prop'
-        enums = prop_enums
-
-
-    class EnumTesterDeleteView(views.EnumTesterDeleteView):
-        model = EnumTester
-        NAMESPACE = 'django_enum_tests_enum_prop'
-        enums = prop_enums
-
-
-    class EnumTesterFormDeleteView(views.EnumTesterFormDeleteView):
-        form_class = EnumTesterForm
-        model = EnumTester
-        NAMESPACE = 'django_enum_tests_enum_prop'
-        enums = prop_enums
+            return reverse(f'{self.NAMESPACE}:enum-list')
 
 
     try:

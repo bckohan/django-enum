@@ -100,3 +100,14 @@ class EnumTester(models.Model):
 
     class Meta:
         ordering = ('id',)
+
+
+class BadDefault(models.Model):
+
+    # Non-strict
+    non_strict_int = EnumField(
+        SmallPosIntEnum,
+        null=True,
+        default=5,
+        blank=True
+    )

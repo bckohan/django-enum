@@ -27,6 +27,7 @@ from django.db.models import (
     SmallIntegerField,
 )
 from django.db.models.query_utils import DeferredAttribute
+from django_enum.forms import EnumChoiceField, NonStrictSelect
 
 T = TypeVar('T')  # pylint: disable=C0103
 
@@ -55,7 +56,7 @@ class ToPythonDeferredAttribute(DeferredAttribute):
     def __set__(self, instance: Model, value: Any):
         try:
             instance.__dict__[self.field.name] = self.field.to_python(value)
-        except ValidationError:
+        except (ValidationError, ValueError):
             # Django core fields allow assignment of any value, we do the same
             instance.__dict__[self.field.name] = value
 
@@ -131,8 +132,8 @@ class EnumMixin(
                     value = self.enum(value)
                 except (TypeError, ValueError) as err:
                     if self.strict or not isinstance(
-                            value,
-                            type(self.enum.values[0])
+                        value,
+                        type(self.enum.values[0])
                     ):
                         raise ValueError(
                             f"'{value}' is not a valid {self.enum.__name__} "
@@ -273,8 +274,25 @@ class EnumMixin(
                 params={'value': value}
             ) from err
 
-    # def formfield(self, form_class=None, choices_form_class=None, **kwargs):
-    #    pass
+    def formfield(self, form_class=None, choices_form_class=None, **kwargs):
+
+        # super().formfield deletes anything unrecognized from kwargs that
+        #   we try to pass in. Very annoying because we have to
+        #   un-encapsulate some of this initialization logic, this makes our
+        #   EnumChoiceField pretty ugly!
+
+        if not self.strict:
+            kwargs.setdefault('widget', NonStrictSelect)
+
+        form_field = super().formfield(
+            form_class=form_class,
+            choices_form_class=choices_form_class or EnumChoiceField,
+            **kwargs
+        )
+
+        form_field.enum = self.enum
+        form_field.strict = self.strict
+        return form_field
 
 
 class EnumCharField(EnumMixin, CharField):

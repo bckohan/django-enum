@@ -1,5 +1,6 @@
 """Support for django rest framework symmetric serialization"""
 
+__all__ = ['EnumField']
 
 try:
     from typing import Any, Type, Union

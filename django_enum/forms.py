@@ -1,9 +1,9 @@
 """Enumeration support for django model forms"""
-from typing import Any, Iterable, List, Tuple, Type, Union
+from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
-from django.forms.fields import ChoiceField
+from django.forms.fields import TypedChoiceField
 from django.forms.widgets import Select
 
 __all__ = ['NonStrictSelect', 'EnumChoiceField']
@@ -41,7 +41,7 @@ class NonStrictSelect(Select):
         return super().render(*args, **kwargs)
 
 
-class EnumChoiceField(ChoiceField):
+class EnumChoiceField(TypedChoiceField):
     """
     The default ``ChoiceField`` will only accept the base enumeration values.
     Use this field on forms to accept any value mappable to an enumeration
@@ -60,34 +60,34 @@ class EnumChoiceField(ChoiceField):
     :param kwargs: Any additional parameters to pass to ChoiceField base class.
     """
 
-    enum: Type[Choices]
-    strict: bool = True
+    enum_: Optional[Type[Choices]] = None
+    strict_: bool = True
     empty_value: Any = ''
     empty_values: List[Any]
+    choices: Iterable[Tuple[Any, Any]]
 
-    def __init__(
-            self,
-            enum: Type[Choices],
-            *,
-            empty_value: Any = _Unspecified,
-            strict: bool = strict,
-            choices: Iterable[Tuple[Any, str]] = (),
-            **kwargs
-    ):
-        self.enum = enum
-        self.strict = strict
-        if not self.strict:
-            kwargs.setdefault('widget', NonStrictSelect)
+    @property
+    def strict(self):
+        """strict fields allow non-enumeration values"""
+        return self.strict_
 
-        super().__init__(
-            choices=choices or getattr(self.enum, 'choices', ()),
-            **kwargs
+    @strict.setter
+    def strict(self, strict):
+        self.strict_ = strict
+
+    @property
+    def enum(self):
+        """the class of the enumeration"""
+        return self.enum_
+
+    @enum.setter
+    def enum(self, enum):
+        self.enum_ = enum
+        self.choices = self.choices or getattr(
+            self.enum,
+            'choices',
+            self.choices
         )
-
-        if empty_value is not _Unspecified:
-            self.empty_values.insert(0, empty_value)
-            self.empty_value = empty_value
-
         # remove any of our valid enumeration values or symmetric properties
         # from our empty value list if there exists an equivalency
         for empty in self.empty_values:
@@ -99,20 +99,59 @@ class EnumChoiceField(ChoiceField):
                         if empty != enum_val
                     ]
                     if empty == self.empty_value:
-                        raise ValueError(
-                            f'Enumeration value {repr(enum_val)} is equivalent'
-                            f' to {self.empty_value}, you must specify a '
-                            f'non-conflicting empty_value.'
-                        )
+                        if self.empty_values:
+                            self.empty_value = self.empty_values[0]
+                        else:
+                            raise ValueError(
+                                f'Enumeration value {repr(enum_val)} is'
+                                f'equivalent to {self.empty_value}, you must '
+                                f'specify a non-conflicting empty_value.'
+                            )
+
+    def __init__(
+            self,
+            enum: Optional[Type[Choices]] = None,
+            *,
+            empty_value: Any = _Unspecified,
+            strict: bool = strict_,
+            choices: Iterable[Tuple[Any, str]] = (),
+            **kwargs
+    ):
+        self.strict = strict
+        if not self.strict:
+            kwargs.setdefault('widget', NonStrictSelect)
+
+        self.empty_values = kwargs.pop('empty_values', self.empty_values)
+
+        super().__init__(
+            choices=choices or getattr(self.enum, 'choices', choices),
+            coerce=kwargs.pop('coerce', self.coerce),
+            **kwargs
+        )
+
+        if empty_value is not _Unspecified:
+            if empty_value not in self.empty_values:
+                self.empty_values.insert(0, empty_value)
+            self.empty_value = empty_value
+
+        if enum:
+            self.enum = enum
 
     def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
         return type(self.enum.values[0])(value)
 
-    def _coerce(self, value: Any) -> Union[Choices, Any]:
+    def coerce(  # pylint: disable=E0202
+            self, value: Any
+    ) -> Union[Choices, Any]:
         """
         Attempt conversion of value to an enumeration value and return it
         if successful.
+
+        .. note::
+
+            When used to represent a model field, by default the model field's
+            to_python method will be substituted for this method.
 
         :param value: The value to convert
         :raises ValidationError: if a valid return value cannot be determined.
@@ -120,8 +159,6 @@ class EnumChoiceField(ChoiceField):
             one of our empty_values, or the value itself if this is a
             non-strict field and the value is of a matching primitive type
         """
-        if value in self.empty_values:
-            return self.empty_value
         if (
             self.enum is not None and
             not isinstance(value, self.enum)  # pylint: disable=R0801
@@ -134,8 +171,8 @@ class EnumChoiceField(ChoiceField):
                     value = self.enum(value)
                 except (TypeError, ValueError) as err:
                     if self.strict or not isinstance(
-                            value,
-                            type(self.enum.values[0])
+                        value,
+                        type(self.enum.values[0])
                     ):
                         raise ValidationError(
                             f'{value} is not a valid {self.enum}.',

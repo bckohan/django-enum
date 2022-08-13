@@ -28,9 +28,14 @@
     {% endif %}
 
     <p class="no_coerce">no_coerce: <b><span class="value">{{ object.no_coerce|to_str }}</span></b> <b><span class="label">{{ object.no_coerce|to_str }}</span></b></p>
+
     <p>
-    <a href="{{update_path}}">Edit</a>
-    <a href="{{delete_path}}">Delete</a>
+    {% if update_path %}
+    <a href="{% url update_path pk=object.pk %}">Edit</a>
+    {% endif %}
+    {% if delete_path %}
+    <a href="{% url delete_path pk=object.pk %}">Delete</a>
+    {% endif %}
     </p>
     </div>
 {% endblock %}

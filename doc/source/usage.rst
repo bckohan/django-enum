@@ -227,42 +227,28 @@ For a real-world example see :ref:`examples`.
 Forms
 #####
 
-EnumFields will behave as normal model fields with choices when used in
-Django_'s ModelForms. For most scenarios this is sufficient. An
-``EnumChoiceField`` type is provided that enables symmetric value resolution
+An ``EnumChoiceField`` type is provided that enables symmetric value resolution
 and will automatically coerce any set value to the underlying enumeration type.
-For example, using our ``TextChoicesExample`` from above:
+Django_'s ``ModelForms`` will use this form field type to represent
+``EnumFields`` by default. For most scenarios this is sufficient. The
+``EnumChoiceField`` can also be explicitly used. For example, using our
+``TextChoicesExample`` from above - if ``color`` was declared with
+`strict=False`, we could add additional choices to our form field like so:
 
 .. code-block::
 
     from django_enum import EnumChoiceField
 
     class TextChoicesExampleForm(ModelForm):
-        color = EnumChoiceField(TextChoicesExample.Color)
 
-        class Meta:
-            model = TextChoicesExample
-            fields = '__all__'
-
-    # save by symmetric values
-    form = TextChoicesExampleForm({'color': 'FF0000'})
-    form.save()
-    assert form.instance.color == TextChoicesExample.Color.RED
-
-    # the form
-    assert isinstance(form.instance.color, TextChoicesExample.Color)
-
-``EnumChoiceField`` also provides extended functionality for non-strict
-``EnumFields``. If our ``color`` field was declared with `strict=False`, we
-would define our form like so:
-
-
-.. code-block::
-
-    from django_enum import EnumChoiceField
-
-    class TextChoicesExampleForm(ModelForm):
-        color = EnumChoiceField(TextChoicesExample.Color, strict=False)
+        color = EnumChoiceField(
+            TextChoicesExample.Color,
+            strict=False,
+            choices=[
+                ('P', 'Purple'),
+                ('O', 'Orange'),
+            ] + TextChoicesExample.Color.choices
+        )
 
         class Meta:
             model = TextChoicesExample
@@ -270,19 +256,32 @@ would define our form like so:
 
     # when this form is rendered in a template it will include a selected
     # option for the value 'Y' that is not part of our Color enumeration.
+    # since our field is not strict, we can set it to a value not in our
+    # enum or choice tuple.
     form = TextChoicesExampleForm(
         instance=TextChoicesExample.objects.create(color='Y')
     )
+
 
 .. code-block:: html
 
     <!-- The above will render the following options: -->
     <select>
+
+        <!-- our extended choices -->
+        <option value='P'>Purple</option>
+        <option value='O'>Orange</option>
+
+        <!-- choices from our enum -->
         <option value='R'>Red</option>
         <option value='G'>Green</option>
         <option value='B'>Blue</option>
 
-        <!-- this will not be present with the default field -->
+        <!--
+        non-strict fields that have data that is not a valid enum value and is
+        not present in the form field's choices tuple will have that value
+        rendered as the selected option.
+        -->
         <option value='Y' selected>Y</option>
     </select>
 
