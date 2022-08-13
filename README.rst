@@ -30,8 +30,8 @@
 .. _enumerations: https://docs.python.org/3/library/enum.html#enum.Enum
 .. _ValueError: https://docs.python.org/3/library/exceptions.html#ValueError
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
-.. _enum-properties: <https://pypi.org/project/enum-properties/>
-.. _django-enum: <https://django-enum.readthedocs.io/en/latest/>:
+.. _enum-properties: https://pypi.org/project/enum-properties
+.. _django-enum: https://django-enum.readthedocs.io/en/latest
 
 Django Enum
 ###########
