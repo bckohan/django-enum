@@ -30,18 +30,31 @@
 .. _enumerations: https://docs.python.org/3/library/enum.html#enum.Enum
 .. _ValueError: https://docs.python.org/3/library/exceptions.html#ValueError
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
+.. _enum-properties: <https://pypi.org/project/enum-properties/>
+.. _django-enum: <https://django-enum.readthedocs.io/en/latest/>:
 
 Django Enum
 ###########
 
 Full and natural support for enumerations_ as Django model fields.
 
-`django-enum <https://django-enum.readthedocs.io/en/latest/>`_ works in concert
-with Django_'s built in ``TextChoices`` and ``IntegerChoices`` to provide a new
-model field type, ``EnumField``, that resolves the correct native Django_ field
-type for the given enumeration based on its value type and range. For example,
-``IntegerChoices`` that contain values between 0 and 32767 become
-`PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
+Many packages aim to ease usage of Python enumerations as model fields. Most
+were made obsolete when Django provided ``TextChoices`` and ``IntegerChoices``
+types. The motivation for django-enum_ was to:
+
+* Always automatically coerce fields to instances of the Enum type.
+* Allow strict adherence to Enum values to be disabled.
+* Handle migrations appropriately. (See `migrations <https://django-enum.readthedocs.io/en/latest/usage.html#migrations>`_)
+* Integrate as fully as possible with Django_'s existing level of enum support.
+* Integrate with enum-properties_ to enable richer enumeration types.
+* Represent enum fields with the smallest possible column type.
+* Be as simple and light-weight an extension to core Django as possible.
+
+django-enum_ works in concert with Django_'s built in ``TextChoices`` and
+``IntegerChoices`` to provide a new model field type, ``EnumField``, that
+resolves the correct native Django_ field type for the given enumeration based
+on its value type and range. For example, ``IntegerChoices`` that contain
+values between 0 and 32767 become `PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
 
 .. code:: python
 
