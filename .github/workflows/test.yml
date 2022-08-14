@@ -11,6 +11,7 @@ jobs:
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
           - 'Django~=4.0.0' # April 2023
+          - 'Django~=4.1.0' # December 2023
         exclude:
           - python-version: '3.7'
             django-version: 'Django~=4.0.0'
