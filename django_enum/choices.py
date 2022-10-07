@@ -7,6 +7,7 @@ from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
+import enum
 
 try:
     from enum_properties import EnumPropertiesMeta, SymmetricMixin
@@ -60,6 +61,18 @@ try:
         """
         A floating point enumeration type that accepts enum-properties
         property lists.
+        """
+
+
+    class IntegerFlagChoices(
+        DjangoSymmetricMixin,
+        enum.IntFlag,
+        Choices,
+        metaclass=DjangoEnumPropertiesMeta
+    ):
+        """
+        An integer flag enumeration type that accepts enum-properties property
+        lists.
         """
 
 except (ImportError, ModuleNotFoundError):

@@ -3,7 +3,7 @@ try:
     from django.db.models import IntegerChoices as DjangoIntegerChoices
     from django.db.models import TextChoices as DjangoTextChoices
     from django.utils.translation import gettext as _
-    from django_enum import FloatChoices, IntegerChoices, TextChoices
+    from django_enum import FloatChoices, IntegerChoices, TextChoices, IntegerFlagChoices
     from enum_properties import p, s
 
 
@@ -96,6 +96,43 @@ try:
         P2 = 1, 'Precedence 2', 2, 0.2, _('Second'), {'0.3', 'Third', 2}
         P3 = 2, 'Precedence 3', '1', 0.3, _('Third'), [0.2, 'Second', 3]
         P4 = 3, 'Precedence 4', 0, 0.4, _('Fourth'), {0.1, 'First', 4}
+
+
+    class CarrierFrequency(IntegerFlagChoices, p('mhz')):
+
+        L1   = 1, 1575.420
+        L2   = 2, 1227.600
+        L5   = 4, 1176.450
+
+        G1   = 8, 1602.000
+        G2  = 16, 1246.000
+
+        E1  = 32, 1575.420
+        E6  = 64, 1278.750
+        E5  = 128, 1191.795
+        E5a = 256, 1176.450
+        E5b = 512, 1207.140
+
+        B1 = 1024, 1561.100
+        B2 = 2048, 1207.140
+        B3 = 4096, 1268.520
+
+
+    class GNSSConstellation(
+        IntegerFlagChoices,
+        s('country'),
+        p('satellites'),
+        p('frequencies')
+    ):
+
+        _symmetric_builtins_ = [s('label', case_fold=True)]
+
+        GPS     = 1,  'USA',    31,  CarrierFrequency.L1 | CarrierFrequency.L2 | CarrierFrequency.L5
+        GLONASS = 2,  'Russia', 24,  CarrierFrequency.G1 | CarrierFrequency.G2
+        GALILEO = 4,  'EU',     30,  CarrierFrequency.E1 | CarrierFrequency.E5 | CarrierFrequency.E5a | CarrierFrequency.E5b | CarrierFrequency.E6
+        BEIDOU  = 8,  'China',  30,  CarrierFrequency.B1 | CarrierFrequency.B2 | CarrierFrequency.B3
+        QZSS    = 16, 'Japan',   7,  CarrierFrequency.L1 | CarrierFrequency.L2 | CarrierFrequency.L5
+
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass

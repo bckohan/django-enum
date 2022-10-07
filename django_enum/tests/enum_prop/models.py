@@ -13,6 +13,7 @@ try:
         SmallIntEnum,
         SmallPosIntEnum,
         TextEnum,
+        GNSSConstellation
     )
     from enum_properties import s
 
@@ -93,6 +94,14 @@ try:
             coerce=False,
             null=True,
             default=None,
+            blank=True
+        )
+
+        # flags
+        gnss = EnumField(
+            GNSSConstellation,
+            null=False,
+            default=(GNSSConstellation.GPS | GNSSConstellation.GLONASS),
             blank=True
         )
 

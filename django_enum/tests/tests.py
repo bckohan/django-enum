@@ -3103,6 +3103,23 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertTrue(tester._meta.get_field('dj_text_enum').validate('A', tester) is None)
             self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
 
+
+    class FlagTests(TestCase):
+
+        def test_flag_enum(self):
+
+            from django_enum.tests.enum_prop.enums import (
+                GNSSConstellation,
+                CarrierFrequency
+            )
+
+            self.assertEqual(GNSSConstellation.GPS, GNSSConstellation('gps'))
+            self.assertEqual(GNSSConstellation.GLONASS, GNSSConstellation('GLONASS'))
+            self.assertEqual(GNSSConstellation.GALILEO, GNSSConstellation('galileo'))
+            self.assertEqual(GNSSConstellation.BEIDOU, GNSSConstellation('BeiDou'))
+            self.assertEqual(GNSSConstellation.QZSS, GNSSConstellation('qzss'))
+
+
     class PerformanceTest(TestCase):
         """
         We intentionally test bulk operations performance because thats what
