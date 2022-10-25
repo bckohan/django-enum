@@ -13,7 +13,7 @@ from django_enum.choices import (
     FloatChoices,
     IntegerChoices,
     TextChoices,
-    IntegerFlagChoices
+    FlagChoices
 )
 from django_enum.fields import (
     EnumBigIntegerField,
@@ -41,7 +41,7 @@ __all__ = [
     'EnumPositiveBigIntegerField',
     'TextChoices',
     'IntegerChoices',
-    'IntegerFlagChoices',
+    'FlagChoices',
     'FloatChoices',
     'DjangoEnumPropertiesMeta',
     'EnumChoiceField',

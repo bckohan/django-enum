@@ -64,7 +64,8 @@ try:
         """
 
 
-    class IntegerFlagChoices(
+    # mult inheritance type hint bug
+    class FlagChoices(  # type: ignore
         DjangoSymmetricMixin,
         enum.IntFlag,
         Choices,
@@ -121,6 +122,13 @@ except (ImportError, ModuleNotFoundError):
     class FloatChoices(  # type: ignore
         DjangoSymmetricMixin,
         float,
+        Choices
+    ):
+        """Raises ImportError on class definition"""
+
+    class FlagChoices(  # type: ignore
+        DjangoSymmetricMixin,
+        enum.IntFlag,
         Choices
     ):
         """Raises ImportError on class definition"""
