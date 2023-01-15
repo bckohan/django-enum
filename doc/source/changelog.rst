@@ -5,6 +5,11 @@ Change Log
 v1.1.1
 ======
 
+* Fixed `Broken on Django4.1/Python 3.11. <https://github.com/bckohan/django-enum/issues/17>`_
+
+v1.1.0
+======
+
 * Fixed `django-filter intergration for non-strict values does not work. <https://github.com/bckohan/django-enum/issues/6>`_
 * Implemented `Set EnumChoiceField to the default form field type. <https://github.com/bckohan/django-enum/issues/5>`_
 * Implemented `Coerce default values to Enum types. <https://github.com/bckohan/django-enum/issues/4>`_
