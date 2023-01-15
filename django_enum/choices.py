@@ -69,7 +69,7 @@ except (ImportError, ModuleNotFoundError):
     class MissingEnumProperties(Enum):
         """Throw error if choice types are used without enum-properties"""
 
-        def __init__(self, *args, **kwargs):
+        def __init__(self, *args, **kwargs):  # pylint: disable=W0231
             raise ImportError(
                 f'{self.__class__.__name__} requires enum-properties to be '
                 f'installed.'

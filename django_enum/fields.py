@@ -304,7 +304,7 @@ class EnumCharField(EnumMixin, CharField):
         choices = kwargs.get('choices', enum.choices if enum else [])
         kwargs.setdefault(
             'max_length',
-            max([len(choice[0]) for choice in choices])
+            max((len(choice[0]) for choice in choices))
         )
         super().__init__(*args, enum=enum, **kwargs)
 
