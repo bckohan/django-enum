@@ -63,8 +63,10 @@ try:
         """
 
 except (ImportError, ModuleNotFoundError):
+    from enum import Enum
 
-    class MissingEnumProperties:
+    # 3.11 - extend from Enum so base type check does not throw type error
+    class MissingEnumProperties(Enum):
         """Throw error if choice types are used without enum-properties"""
 
         def __init__(self, *args, **kwargs):
