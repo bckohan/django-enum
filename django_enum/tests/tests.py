@@ -405,7 +405,7 @@ class TestChoices(EnumTypeMixin, TestCase):
             'no_coerce': SmallPosIntEnum.VAL2
         }
 
-    def test_values(self):
+    def do_test_values(self):
         """
         tests that queryset values returns Enumeration instances for enum
         fields
@@ -462,6 +462,9 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertEqual(values2['dj_text_enum'], 'A')
 
         return values1, values2
+
+    def test_values(self):
+        self.do_test_values()
 
     def test_non_strict(self):
         """
@@ -549,7 +552,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         for param, value in self.values_params.items():
             self.assertEqual(getattr(tester, param), value)
 
-    def test_validate(self):
+    def do_test_validate(self):
         tester = self.MODEL_CLASS.objects.create()
         self.assertRaises(ValidationError, tester._meta.get_field('small_pos_int').validate, 666, tester)
         self.assertRaises(ValidationError, tester._meta.get_field('small_int').validate, 666, tester)
@@ -593,6 +596,9 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertTrue(tester._meta.get_field('non_strict_text').validate('A'*12, tester) is None)
 
         return tester
+
+    def test_validate(self):
+        self.do_test_validate()
 
     def test_clean(self):
 
@@ -3061,7 +3067,7 @@ if ENUM_PROPERTIES_INSTALLED:
 
         def test_values(self):
             from django.db.models.fields import NOT_PROVIDED
-            values1, values2 = super().test_values()
+            values1, values2 = super().do_test_values()
 
             # also test equality symmetry
             self.assertEqual(values1['small_pos_int'], 'Value 2')
@@ -3089,7 +3095,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 self.assertEqual(values2[field], default)
 
         def test_validate(self):
-            tester = super().test_validate()
+            tester = super().do_test_validate()
 
             self.assertTrue(tester._meta.get_field('small_int').validate('Value -32768', tester) is None)
             self.assertTrue(tester._meta.get_field('pos_int').validate(2147483647, tester) is None)
