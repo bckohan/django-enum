@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+v1.1.2
+======
+
+* Fixed `LICENSE packaged into source dir. <https://github.com/bckohan/django-enum/issues/23>`_
+
 v1.1.1
 ======
 
