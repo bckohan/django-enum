@@ -10,7 +10,11 @@ from django.db.models.enums import ChoicesMeta
 import enum
 
 try:
-    from enum_properties import EnumPropertiesMeta, SymmetricMixin
+    from enum_properties import (
+        EnumPropertiesMeta,
+        SymmetricMixin,
+        DecomposeMixin
+    )
 
 
     class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesMeta):
@@ -66,6 +70,7 @@ try:
 
     # mult inheritance type hint bug
     class FlagChoices(  # type: ignore
+        DecomposeMixin,
         DjangoSymmetricMixin,
         enum.IntFlag,
         Choices,
@@ -75,6 +80,9 @@ try:
         An integer flag enumeration type that accepts enum-properties property
         lists.
         """
+        def __str__(self):
+            return str(self.value)
+
 
 except (ImportError, ModuleNotFoundError):
     from enum import Enum

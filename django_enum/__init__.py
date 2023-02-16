@@ -27,7 +27,12 @@ from django_enum.fields import (
     EnumSmallIntegerField,
 )
 from django_enum.filters import EnumFilter, FilterSet
-from django_enum.forms import EnumChoiceField
+from django_enum.forms import (
+    EnumChoiceField,
+    EnumFlagField,
+    NonStrictSelect,
+    NonStrictSelectMultiple
+)
 
 __all__ = [
     'EnumField',
@@ -45,11 +50,14 @@ __all__ = [
     'FloatChoices',
     'DjangoEnumPropertiesMeta',
     'EnumChoiceField',
+    'EnumFlagField',
     'FilterSet',
-    'EnumFilter'
+    'EnumFilter',
+    'NonStrictSelect',
+    'NonStrictSelectMultiple'
 ]
 
-VERSION = (1, 1, 2)
+VERSION = (1, 2, 0)
 
 __title__ = 'Django Enum'
 __version__ = '.'.join(str(i) for i in VERSION)

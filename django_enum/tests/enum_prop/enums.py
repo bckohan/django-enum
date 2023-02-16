@@ -3,7 +3,12 @@ try:
     from django.db.models import IntegerChoices as DjangoIntegerChoices
     from django.db.models import TextChoices as DjangoTextChoices
     from django.utils.translation import gettext as _
-    from django_enum import FloatChoices, IntegerChoices, TextChoices, IntegerFlagChoices
+    from django_enum import (
+        FloatChoices,
+        IntegerChoices,
+        TextChoices,
+        FlagChoices
+    )
     from enum_properties import p, s
 
 
@@ -98,7 +103,7 @@ try:
         P4 = 3, 'Precedence 4', 0, 0.4, _('Fourth'), {0.1, 'First', 4}
 
 
-    class CarrierFrequency(IntegerFlagChoices, p('mhz')):
+    class CarrierFrequency(FlagChoices, p('mhz')):
 
         L1   = 1, 1575.420
         L2   = 2, 1227.600
@@ -119,7 +124,7 @@ try:
 
 
     class GNSSConstellation(
-        IntegerFlagChoices,
+        FlagChoices,
         s('country'),
         p('satellites'),
         p('frequencies')
@@ -132,7 +137,6 @@ try:
         GALILEO = 4,  'EU',     30,  CarrierFrequency.E1 | CarrierFrequency.E5 | CarrierFrequency.E5a | CarrierFrequency.E5b | CarrierFrequency.E6
         BEIDOU  = 8,  'China',  30,  CarrierFrequency.B1 | CarrierFrequency.B2 | CarrierFrequency.B3
         QZSS    = 16, 'Japan',   7,  CarrierFrequency.L1 | CarrierFrequency.L2 | CarrierFrequency.L5
-
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass

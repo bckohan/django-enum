@@ -1,6 +1,7 @@
 """
 Support for Django model fields built from enumeration types.
 """
+import enum
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -27,7 +28,13 @@ from django.db.models import (
     SmallIntegerField,
 )
 from django.db.models.query_utils import DeferredAttribute
-from django_enum.forms import EnumChoiceField, NonStrictSelect
+from django_enum.forms import (
+    EnumChoiceField,
+    EnumFlagField,
+    NonStrictSelect,
+    FlagSelectMultiple,
+    NonStrictSelectMultiple
+)
 
 T = TypeVar('T')  # pylint: disable=C0103
 
@@ -281,18 +288,38 @@ class EnumMixin(
         #   un-encapsulate some of this initialization logic, this makes our
         #   EnumChoiceField pretty ugly!
 
+        is_multi = issubclass(self.enum, enum.Flag)
+        if is_multi and self.enum:
+            kwargs['empty_value'] = self.enum(0)
+            # todo why fail? - does this fail for single select too?
+            #kwargs['show_hidden_initial'] = True
+
         if not self.strict:
-            kwargs.setdefault('widget', NonStrictSelect)
+            kwargs.setdefault(
+                'widget',
+                NonStrictSelectMultiple if is_multi else NonStrictSelect
+            )
+        elif is_multi:
+            kwargs.setdefault('widget', FlagSelectMultiple)
 
         form_field = super().formfield(
             form_class=form_class,
-            choices_form_class=choices_form_class or EnumChoiceField,
+            choices_form_class=(
+                choices_form_class or
+                EnumFlagField if is_multi else EnumChoiceField
+            ),
             **kwargs
         )
 
+        # we can't pass these in kwargs because formfield() strips them out
         form_field.enum = self.enum
         form_field.strict = self.strict
         return form_field
+
+    def get_choices(self, **kwargs):
+        if self.enum and issubclass(self.enum, enum.Flag):
+            kwargs['blank_choice'] = [(self.enum(0), '---------')]
+        return super().get_choices(**kwargs)
 
 
 class EnumCharField(EnumMixin, CharField):
