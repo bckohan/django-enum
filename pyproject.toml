@@ -47,7 +47,7 @@ djangorestframework = {version = "^3.9", optional = true}
 pytest = "^7.0"
 Sphinx = "^5.0.2"
 sphinx-rtd-theme = "^1.0.0"
-mypy = "^0.971"
+mypy = ">=0.971,<1.1"
 isort = "^5.6.4"
 doc8 = "^0.11.0"
 darglint = "^1.5.7"
