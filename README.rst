@@ -106,7 +106,7 @@ accessible as their enumeration type rather than by-value:**
 `enum-properties <https://pypi.org/project/enum-properties/>`_ which makes
 possible very rich enumeration fields.
 
-```pip install enum-properties```
+``?> pip install enum-properties``
 
 .. code:: python
 
