@@ -23,6 +23,10 @@ class _Unspecified:
 
 
 class NonStrictMixin:
+    """
+    Mixin to add non-strict behavior to a widget, this makes sure the set value
+    appears as a choice if it is not one of the enumeration choices.
+    """
 
     choices: Iterable[Tuple[Any, str]]
 
@@ -40,7 +44,7 @@ class NonStrictMixin:
             )
         ):
             self.choices = list(self.choices) + [(value, str(value))]
-        return super().render(*args, **kwargs)
+        return super().render(*args, **kwargs)  # type: ignore
 
 
 class NonStrictSelect(NonStrictMixin, Select):
@@ -51,7 +55,9 @@ class NonStrictSelect(NonStrictMixin, Select):
 
 
 class FlagSelectMultiple(SelectMultiple):
-    pass
+    """
+    A SelectMultiple widget for EnumFlagFields.
+    """
 
 
 class NonStrictSelectMultiple(NonStrictMixin, SelectMultiple):
@@ -102,7 +108,7 @@ class ChoiceFieldMixin:
 
         self.empty_values = empty_values
 
-        super().__init__(
+        super().__init__(  # type: ignore
             choices=choices or getattr(self.enum, 'choices', choices),
             coerce=kwargs.pop('coerce', self.coerce),
             **kwargs
@@ -164,8 +170,8 @@ class ChoiceFieldMixin:
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""
-        value = self._coerce(value)
-        return super().prepare_value(
+        value = self._coerce(value)  # type: ignore
+        return super().prepare_value(  # type: ignore
             value.value
             if isinstance(value, self.enum)
             else value
@@ -173,12 +179,12 @@ class ChoiceFieldMixin:
 
     def to_python(self, value: Any) -> Union[Choices, Any]:
         """Return the value as its full enumeration object"""
-        return self._coerce(value)
+        return self._coerce(value)  # type: ignore
 
     def valid_value(self, value: Any) -> bool:
         """Return false if this value is not valid"""
         try:
-            self._coerce(value)
+            self._coerce(value)  # type: ignore
             return True
         except ValidationError:
             return False

@@ -10,10 +10,10 @@ r"""
 """
 from django_enum.choices import (
     DjangoEnumPropertiesMeta,
+    FlagChoices,
     FloatChoices,
     IntegerChoices,
     TextChoices,
-    FlagChoices
 )
 from django_enum.fields import (
     EnumBigIntegerField,
@@ -31,7 +31,7 @@ from django_enum.forms import (
     EnumChoiceField,
     EnumFlagField,
     NonStrictSelect,
-    NonStrictSelectMultiple
+    NonStrictSelectMultiple,
 )
 
 __all__ = [

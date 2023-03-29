@@ -15,6 +15,17 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql',
+#         'NAME': 'django_enum_test',
+#         'USER': 'postgres',
+#         'PASSWORD': '',
+#         'HOST': '',
+#         'PORT': '',
+#     }
+# }
+
 ROOT_URLCONF = 'django_enum.tests.urls'
 
 TEMPLATES = [

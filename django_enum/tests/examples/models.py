@@ -1,5 +1,5 @@
 from django.db import models
-from django_enum import EnumField, IntegerChoices, TextChoices, FlagChoices
+from django_enum import EnumField, FlagChoices, IntegerChoices, TextChoices
 from enum_properties import p, s
 
 

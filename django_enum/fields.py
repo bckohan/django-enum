@@ -1,7 +1,7 @@
 """
 Support for Django model fields built from enumeration types.
 """
-import enum
+from enum import Flag
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,6 +16,7 @@ from typing import (
 from django.core.exceptions import ValidationError
 from django.db.models import (
     BigIntegerField,
+    BinaryField,
     CharField,
     Choices,
     Field,
@@ -26,19 +27,17 @@ from django.db.models import (
     PositiveIntegerField,
     PositiveSmallIntegerField,
     SmallIntegerField,
-    BinaryField,
 )
 from django.db.models.query_utils import DeferredAttribute
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from django_enum.forms import (
     EnumChoiceField,
     EnumFlagField,
-    NonStrictSelect,
     FlagSelectMultiple,
-    NonStrictSelectMultiple
+    NonStrictSelect,
+    NonStrictSelectMultiple,
 )
-from django.utils.functional import cached_property
-from django.utils.translation import gettext_lazy as _
-
 
 T = TypeVar('T')  # pylint: disable=C0103
 
@@ -256,6 +255,8 @@ class EnumMixin(
                 return self.to_python(super().get_default())
             except ValidationError:
                 return super().get_default()
+        elif self.enum and issubclass(self.enum, Flag):
+            return 0
         return super().get_default()
 
     def validate(self, value: Any, model_instance: Model):
@@ -292,10 +293,10 @@ class EnumMixin(
         #   un-encapsulate some of this initialization logic, this makes our
         #   EnumChoiceField pretty ugly!
 
-        is_multi = issubclass(self.enum, enum.Flag)
+        is_multi = self.enum and issubclass(self.enum, Flag)
         if is_multi and self.enum:
             kwargs['empty_value'] = self.enum(0)
-            # todo why fail? - does this fail for single select too?
+            # why fail? - does this fail for single select too?
             #kwargs['show_hidden_initial'] = True
 
         if not self.strict:
@@ -320,8 +321,8 @@ class EnumMixin(
         form_field.strict = self.strict
         return form_field
 
-    def get_choices(self, **kwargs):
-        if self.enum and issubclass(self.enum, enum.Flag):
+    def get_choices(self, **kwargs):  # pylint: disable=W0221
+        if self.enum and issubclass(self.enum, Flag):
             kwargs['blank_choice'] = [(self.enum(0), '---------')]
         return super().get_choices(**kwargs)
 
@@ -401,17 +402,10 @@ class EnumBitField(EnumMixin, BinaryField):
     @cached_property
     def signed(self):
         """True if the enum has negative values"""
-        for val in self.enum:
+        for val in self.enum or []:
             if val.value < 0:
                 return True
         return False
-
-    def get_default(self) -> Any:
-        """For blank default values if we're a Flag we use 0 (no flags)"""
-        default = super().get_default()
-        if default == b'' and issubclass(self.enum, enum.Flag):
-            return 0
-        return default
 
     def get_prep_value(self, value: Any) -> Any:
         """
@@ -420,17 +414,16 @@ class EnumBitField(EnumMixin, BinaryField):
 
         See get_prep_value_
         """
-        if isinstance(value, bytes) or value is None:
+        if value is None or isinstance(value, (bytes, memoryview, bytearray)):
             return value
-        if value is not None and self.enum is not None:
-            value = self._try_coerce(value, force=True)
-            if isinstance(value, self.enum):
-                value = value.value
-            value = value.to_bytes(
-                (value.bit_length() + 7) // 8,
-                byteorder='big',
-                signed=self.signed
-            )
+
+        value = self._try_coerce(value, force=True)
+        value = getattr(value, 'value', value)
+        value = value.to_bytes(
+            (value.bit_length() + 7) // 8,
+            byteorder='big',
+            signed=self.signed
+        )
         return BinaryField.get_prep_value(self, value)
 
     def get_db_prep_value(self, value, connection, prepared=False):
@@ -440,17 +433,16 @@ class EnumBitField(EnumMixin, BinaryField):
 
         See get_db_prep_value_
         """
-        if isinstance(value, bytes) or value is None:
+        if value is None or isinstance(value, (bytes, memoryview, bytearray)):
             return value
-        if value is not None and self.enum is not None:
-            value = self._try_coerce(value, force=True)
-            if isinstance(value, self.enum):
-                value = value.value
-            value = value.to_bytes(
-                (value.bit_length() + 7) // 8,
-                byteorder='big',
-                signed=self.signed
-            )
+
+        value = self._try_coerce(value, force=True)
+        value = getattr(value, 'value', value)
+        value = value.to_bytes(
+            (value.bit_length() + 7) // 8,
+            byteorder='big',
+            signed=self.signed
+        )
         return BinaryField.get_db_prep_value(
             self,
             value,

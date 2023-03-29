@@ -3,17 +3,18 @@ Support for symmetrical property enumeration types derived from Django choice
 types. These choices types are drop in replacements for the Django
 IntegerChoices and TextChoices.
 """
+import enum
+
 from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
-import enum
 
 try:
     from enum_properties import (
+        DecomposeMixin,
         EnumPropertiesMeta,
         SymmetricMixin,
-        DecomposeMixin
     )
 
 

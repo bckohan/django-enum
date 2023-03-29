@@ -4,10 +4,10 @@ try:
     from django.db.models import TextChoices as DjangoTextChoices
     from django.utils.translation import gettext as _
     from django_enum import (
+        FlagChoices,
         FloatChoices,
         IntegerChoices,
         TextChoices,
-        FlagChoices
     )
     from enum_properties import p, s
 

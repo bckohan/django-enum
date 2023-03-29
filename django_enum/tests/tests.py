@@ -7,7 +7,7 @@ from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import connection, transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
@@ -1622,18 +1622,19 @@ if ENUM_PROPERTIES_INSTALLED:
         Constants,
         DJIntEnum,
         DJTextEnum,
+        GNSSConstellation,
         IntEnum,
+        LargeBitField,
+        LargeNegativeField,
         PosIntEnum,
         PrecedenceTest,
         SmallIntEnum,
         SmallPosIntEnum,
         TextEnum,
-        GNSSConstellation,
-        LargeBitField,
-        LargeNegativeField
     )
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
+        BitFieldModel,
         EnumTester,
         MyModel,
         NoCoercePerfCompare,
@@ -1641,7 +1642,6 @@ if ENUM_PROPERTIES_INSTALLED:
         SingleEnumPerf,
         SingleFieldPerf,
         SingleNoCoercePerf,
-        BitFieldModel
     )
     from enum_properties import EnumProperties, s
 
@@ -2002,10 +2002,7 @@ if ENUM_PROPERTIES_INSTALLED:
             tester = BitFieldModel.objects.create(
                 bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS
             )
-            from django.db.models import (
-                PositiveSmallIntegerField,
-                BinaryField,
-            )
+            from django.db.models import BinaryField, PositiveSmallIntegerField
             self.assertIsInstance(tester._meta.get_field('bit_field_small'), PositiveSmallIntegerField)
             self.assertIsInstance(tester._meta.get_field('bit_field_large'), BinaryField)
             self.assertIsInstance(tester._meta.get_field('bit_field_large_neg'), BinaryField)
@@ -2014,6 +2011,90 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(tester.bit_field_large, None)
             self.assertEqual(tester.bit_field_large_neg, LargeNegativeField.NEG_ONE)
             self.assertEqual(tester.no_default, LargeBitField(0))
+
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_large__isnull=True).count(),
+                1
+            )
+            tester.bit_field_large = LargeBitField.ONE | LargeBitField.TWO
+            tester.save()
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_large__isnull=True).count(),
+                0
+            )
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_large=LargeBitField.ONE | LargeBitField.TWO).count(),
+                1
+            )
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_large=LargeBitField.ONE).count(),
+                0
+            )
+
+            # todo this breaks on sqlite, integer overflow - what about other backends?
+            # BitFieldModel.objects.filter(bit_field_large=LargeBitField.ONE | LargeBitField.TWO).update(bit_field_large=F('bit_field_large').bitand(~LargeBitField.TWO))
+            BitFieldModel.objects.filter(
+                bit_field_large=LargeBitField.ONE | LargeBitField.TWO).update(
+                bit_field_large=LargeBitField.ONE & ~LargeBitField.TWO
+            )
+
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_large=LargeBitField.ONE).count(),
+                1
+            )
+
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS).count(),
+                1
+            )
+
+            BitFieldModel.objects.filter(
+                bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS
+                ).update(bit_field_small=F('bit_field_small').bitand(~GNSSConstellation.GLONASS)
+            )
+
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS).count(),
+                0
+            )
+
+            self.assertEqual(
+                BitFieldModel.objects.filter(bit_field_small=GNSSConstellation.GPS).count(),
+                1
+            )
+
+            tester2 = BitFieldModel.objects.create(
+                bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS,
+                bit_field_large=LargeBitField.ONE | LargeBitField.TWO,
+                bit_field_large_neg=None
+            )
+
+            qry1 = BitFieldModel.objects.filter().extra(where=[f'bit_field_small & {GNSSConstellation.GPS.value} = {GNSSConstellation.GPS.value}'])
+            self.assertEqual(qry1.count(), 2)
+
+            qry2 = BitFieldModel.objects.filter().extra(where=[f'bit_field_small & {GNSSConstellation.GLONASS.value} = {GNSSConstellation.GLONASS.value}'])
+            self.assertEqual(qry2.count(), 1)
+
+            # qry1 = BitFieldModel.objects.filter().extra(where=[f'bit_field_large & {LargeBitField.ONE.value} = {LargeBitField.ONE.value}'])
+            # self.assertEqual(qry1.count(), 2)
+            #
+            # qry2 = BitFieldModel.objects.filter().extra(where=[f'bit_field_large & {LargeBitField.TWO.value} = {LargeBitField.TWO.value}'])
+            # self.assertEqual(qry2.count(), 1)
+
+            tester3 = BitFieldModel.objects.create()
+
+            values = [row for row in BitFieldModel.objects.all().values_list(
+                'bit_field_small', 'bit_field_large', 'bit_field_large_neg', 'no_default'
+            )]
+            self.assertEqual(
+                values, [
+                    (GNSSConstellation.GPS, LargeBitField.ONE, LargeNegativeField.NEG_ONE, LargeBitField(0)),
+                    (GNSSConstellation.GPS | GNSSConstellation.GLONASS, LargeBitField.ONE | LargeBitField.TWO, None, LargeBitField(0)),
+                    (GNSSConstellation(0), None, LargeNegativeField.NEG_ONE, LargeBitField(0))
+                ]
+            )
+
+            BitFieldModel.objects.all().delete()
 
 
     class TestEnumQueriesProps(TestEnumQueries):
@@ -3137,8 +3218,8 @@ if ENUM_PROPERTIES_INSTALLED:
         def test_flag_enum(self):
 
             from django_enum.tests.enum_prop.enums import (
+                CarrierFrequency,
                 GNSSConstellation,
-                CarrierFrequency
             )
 
             self.assertEqual(GNSSConstellation.GPS, GNSSConstellation('gps'))

@@ -8,14 +8,14 @@ try:
         Constants,
         DJIntEnum,
         DJTextEnum,
+        GNSSConstellation,
         IntEnum,
+        LargeBitField,
+        LargeNegativeField,
         PosIntEnum,
         SmallIntEnum,
         SmallPosIntEnum,
         TextEnum,
-        GNSSConstellation,
-        LargeBitField,
-        LargeNegativeField
     )
     from enum_properties import s
 
@@ -44,7 +44,7 @@ try:
         )
 
         char_choice = models.CharField(
-            max_length=1,
+            max_length=50,
             default='A',
             null=False,
             blank=True,
@@ -227,7 +227,8 @@ try:
         )
         bit_field_large_neg = EnumField(
             LargeNegativeField,
-            default=LargeNegativeField.NEG_ONE
+            default=LargeNegativeField.NEG_ONE,
+            null=True
         )
         no_default = EnumField(LargeBitField)
 
