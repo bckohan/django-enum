@@ -1628,6 +1628,9 @@ if ENUM_PROPERTIES_INSTALLED:
         SmallIntEnum,
         SmallPosIntEnum,
         TextEnum,
+        GNSSConstellation,
+        LargeBitField,
+        LargeNegativeField
     )
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
@@ -1638,6 +1641,7 @@ if ENUM_PROPERTIES_INSTALLED:
         SingleEnumPerf,
         SingleFieldPerf,
         SingleNoCoercePerf,
+        BitFieldModel
     )
     from enum_properties import EnumProperties, s
 
@@ -1992,6 +1996,24 @@ if ENUM_PROPERTIES_INSTALLED:
 
     class TestFieldTypeResolutionProps(TestFieldTypeResolution):
         MODEL_CLASS = EnumTester
+
+        def test_large_bitfields(self):
+
+            tester = BitFieldModel.objects.create(
+                bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS
+            )
+            from django.db.models import (
+                PositiveSmallIntegerField,
+                BinaryField,
+            )
+            self.assertIsInstance(tester._meta.get_field('bit_field_small'), PositiveSmallIntegerField)
+            self.assertIsInstance(tester._meta.get_field('bit_field_large'), BinaryField)
+            self.assertIsInstance(tester._meta.get_field('bit_field_large_neg'), BinaryField)
+
+            self.assertEqual(tester.bit_field_small, GNSSConstellation.GPS | GNSSConstellation.GLONASS)
+            self.assertEqual(tester.bit_field_large, None)
+            self.assertEqual(tester.bit_field_large_neg, LargeNegativeField.NEG_ONE)
+            self.assertEqual(tester.no_default, LargeBitField(0))
 
 
     class TestEnumQueriesProps(TestEnumQueries):

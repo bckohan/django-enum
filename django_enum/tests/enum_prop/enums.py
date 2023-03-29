@@ -138,5 +138,15 @@ try:
         BEIDOU  = 8,  'China',  30,  CarrierFrequency.B1 | CarrierFrequency.B2 | CarrierFrequency.B3
         QZSS    = 16, 'Japan',   7,  CarrierFrequency.L1 | CarrierFrequency.L2 | CarrierFrequency.L5
 
+    class LargeBitField(FlagChoices):
+
+        ONE = 2**0, 'One'
+        TWO = 2**128, 'Two'
+
+    class LargeNegativeField(IntegerChoices):
+
+        NEG_ONE = -2**128, 'Negative One'
+        ZERO = 0, 'Zero'
+
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass

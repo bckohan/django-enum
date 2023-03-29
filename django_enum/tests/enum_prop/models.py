@@ -13,7 +13,9 @@ try:
         SmallIntEnum,
         SmallPosIntEnum,
         TextEnum,
-        GNSSConstellation
+        GNSSConstellation,
+        LargeBitField,
+        LargeNegativeField
     )
     from enum_properties import s
 
@@ -212,6 +214,23 @@ try:
     class SingleNoCoercePerf(models.Model):
 
         small_pos_int = EnumField(enum=SmallPosIntEnum, coerce=False, null=True, default=None, db_index=True, blank=True)
+
+
+    class BitFieldModel(models.Model):
+
+        bit_field_small = EnumField(GNSSConstellation)
+        bit_field_large = EnumField(
+            LargeBitField,
+            null=True,
+            default=None,
+            blank=True
+        )
+        bit_field_large_neg = EnumField(
+            LargeNegativeField,
+            default=LargeNegativeField.NEG_ONE
+        )
+        no_default = EnumField(LargeBitField)
+
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass

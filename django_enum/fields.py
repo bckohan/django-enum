@@ -26,6 +26,7 @@ from django.db.models import (
     PositiveIntegerField,
     PositiveSmallIntegerField,
     SmallIntegerField,
+    BinaryField,
 )
 from django.db.models.query_utils import DeferredAttribute
 from django_enum.forms import (
@@ -35,6 +36,9 @@ from django_enum.forms import (
     FlagSelectMultiple,
     NonStrictSelectMultiple
 )
+from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
+
 
 T = TypeVar('T')  # pylint: disable=C0103
 
@@ -382,6 +386,98 @@ class EnumPositiveBigIntegerField(EnumMixin, PositiveBigIntegerField):
     """
 
 
+class EnumBitField(EnumMixin, BinaryField):
+    """
+    A database field supporting enumerations with integer values that require
+    more than 64 bits. This field only works for Enums that inherit from int.
+    This field stores enum values in big endian byte order.
+    """
+
+    description = _('A bit field wider than the standard word size.')
+
+    def __init__(self, *args, editable=True, **kwargs):
+        super().__init__(*args, editable=editable, **kwargs)
+
+    @cached_property
+    def signed(self):
+        """True if the enum has negative values"""
+        for val in self.enum:
+            if val.value < 0:
+                return True
+        return False
+
+    def get_default(self) -> Any:
+        """For blank default values if we're a Flag we use 0 (no flags)"""
+        default = super().get_default()
+        if default == b'' and issubclass(self.enum, enum.Flag):
+            return 0
+        return default
+
+    def get_prep_value(self, value: Any) -> Any:
+        """
+        Convert the database field value into the Enum type then convert that
+        enum value into the smallest number of bytes that can hold it.
+
+        See get_prep_value_
+        """
+        if isinstance(value, bytes) or value is None:
+            return value
+        if value is not None and self.enum is not None:
+            value = self._try_coerce(value, force=True)
+            if isinstance(value, self.enum):
+                value = value.value
+            value = value.to_bytes(
+                (value.bit_length() + 7) // 8,
+                byteorder='big',
+                signed=self.signed
+            )
+        return BinaryField.get_prep_value(self, value)
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        """
+        Convert the field value into the Enum type and then pull its value
+        out.
+
+        See get_db_prep_value_
+        """
+        if isinstance(value, bytes) or value is None:
+            return value
+        if value is not None and self.enum is not None:
+            value = self._try_coerce(value, force=True)
+            if isinstance(value, self.enum):
+                value = value.value
+            value = value.to_bytes(
+                (value.bit_length() + 7) // 8,
+                byteorder='big',
+                signed=self.signed
+            )
+        return BinaryField.get_db_prep_value(
+            self,
+            value,
+            connection,
+            prepared
+        )
+
+    def from_db_value(
+            self,
+            value: Any,
+            expression,  # pylint: disable=W0613
+            connection  # pylint: disable=W0613
+    ) -> Any:
+        """
+        Convert the database field value into the Enum type.
+
+        See from_db_value_
+        """
+        if value is None:  # pragma: no cover
+            return value
+        return super().from_db_value(
+            int.from_bytes(value, byteorder='big', signed=self.signed),
+            expression,
+            connection
+        )
+
+
 class _EnumFieldMetaClass(type):
 
     SUPPORTED_PRIMITIVES = {int, str, float}
@@ -415,12 +511,19 @@ class _EnumFieldMetaClass(type):
             min_value = min(values)
             max_value = max(values)
             if min_value < 0:
+                if (
+                    min_value < -9223372036854775808 or
+                    max_value > 9223372036854775807
+                ):
+                    return EnumBitField
                 if min_value < -2147483648 or max_value > 2147483647:
                     return EnumBigIntegerField
                 if min_value < -32768 or max_value > 32767:
                     return EnumIntegerField
                 return EnumSmallIntegerField
 
+            if max_value > 9223372036854775807:
+                return EnumBitField
             if max_value > 2147483647:
                 return EnumPositiveBigIntegerField
             if max_value > 32767:
