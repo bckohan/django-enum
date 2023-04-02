@@ -393,6 +393,65 @@ with choices.
 enumeration types. The fields will be the primitive enumeration values as they
 are with any field with choices.
 
+Flag Enumerations
+#################
+
+Flag enumerations are supported and will render as multi select form fields
+by default. For example:
+
+
+.. code-block::
+
+    from django_enum import FlagChoices
+    from django.db import models
+
+    class MyModel(models.Model):
+
+        class GNSSConstellation(FlagChoices):
+
+            GPS     = 2**0
+            GLONASS = 2**1
+            GALILEO = 2**2
+            BEIDOU  = 2**3
+            QZSS    = 2**4
+
+        constellation = EnumField(GNSSConstellation)
+
+    obj = MyModel.objects.create(
+        constellation=GNSSConstellation.GPS | GNSSConstellation.GLONASS
+    )
+
+    assert GNSSConstellation.GPS in obj.constellation
+    assert GNSSConstellation.GLONASS in obj.constellation
+
+
+Seamless API support for filtering by bitwise operations is expected in a
+future release, but can be done manually now in a number of ways:
+
+.. code-block::
+
+    # get all models that have GLONASS enabled
+    MyModel.objects.extra(
+        where=[
+            f'constellation & {GNSSConstellation.GLONASS.value} = {GNSSConstellation.GLONASS.value}'
+        ]
+    )
+
+
+Flags with more than 64 flags
+-----------------------------
+
+Flag enumerations of arbitrary size are supported, however if the enum has more
+than 64 flags it will be stored as a `BinaryField <https://docs.djangoproject.com/en/stable/ref/models/fields/#binaryfield>`_.
+
+.. warning::
+
+    This feature is experimental. Filtering behavior is undefined for
+    bitwise operations. Most RDBMS systems do not support bitwise operations on
+    binary fields. Future work may involve exploring support for this as a
+    Postgres extension.
+
+
 Performance
 ###########
 

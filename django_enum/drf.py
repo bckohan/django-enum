@@ -59,7 +59,9 @@ try:
                             self.fail('invalid_choice', input=data)
             return data
 
-        def to_representation(self, value: Any) -> Any:
+        def to_representation(  # pylint: disable=R0201
+                self, value: Any
+        ) -> Any:
             """
             Transform the *outgoing* enum value into its primitive value.
             """

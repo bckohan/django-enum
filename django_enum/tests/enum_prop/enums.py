@@ -146,7 +146,7 @@ try:
     class LargeNegativeField(IntegerChoices):
 
         NEG_ONE = -2**128, 'Negative One'
-        ZERO = 0, 'Zero'
+        ZERO = -1, 'ZERO'
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass

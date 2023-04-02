@@ -1,3 +1,5 @@
+from enum import IntFlag
+
 from django.db import models
 from django.urls import reverse
 from django_enum import EnumField

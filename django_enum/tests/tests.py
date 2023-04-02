@@ -2016,6 +2016,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 BitFieldModel.objects.filter(bit_field_large__isnull=True).count(),
                 1
             )
+            import pdb
+            pdb.set_trace()
             tester.bit_field_large = LargeBitField.ONE | LargeBitField.TWO
             tester.save()
             self.assertEqual(
@@ -2069,10 +2071,10 @@ if ENUM_PROPERTIES_INSTALLED:
                 bit_field_large_neg=None
             )
 
-            qry1 = BitFieldModel.objects.filter().extra(where=[f'bit_field_small & {GNSSConstellation.GPS.value} = {GNSSConstellation.GPS.value}'])
+            qry1 = BitFieldModel.objects.extra(where=[f'bit_field_small & {GNSSConstellation.GPS.value} = {GNSSConstellation.GPS.value}'])
             self.assertEqual(qry1.count(), 2)
 
-            qry2 = BitFieldModel.objects.filter().extra(where=[f'bit_field_small & {GNSSConstellation.GLONASS.value} = {GNSSConstellation.GLONASS.value}'])
+            qry2 = BitFieldModel.objects.extra(where=[f'bit_field_small & {GNSSConstellation.GLONASS.value} = {GNSSConstellation.GLONASS.value}'])
             self.assertEqual(qry2.count(), 1)
 
             # qry1 = BitFieldModel.objects.filter().extra(where=[f'bit_field_large & {LargeBitField.ONE.value} = {LargeBitField.ONE.value}'])
@@ -2093,6 +2095,9 @@ if ENUM_PROPERTIES_INSTALLED:
                     (GNSSConstellation(0), None, LargeNegativeField.NEG_ONE, LargeBitField(0))
                 ]
             )
+
+            self.assertTrue(GNSSConstellation.GPS in tester2.bit_field_small)
+            self.assertTrue(GNSSConstellation.GLONASS in tester2.bit_field_small)
 
             BitFieldModel.objects.all().delete()
 
