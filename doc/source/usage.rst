@@ -69,12 +69,14 @@ simple declarative syntax are possible with ``EnumField``. See
 External Enum Types
 ###################
 
-Externally defined, that is ``Enum`` classes defined externally to your code
-base or enum classes that otherwise do not inherit from Django's Choices type,
-are supported. When no choices are present on an ``Enum`` type, ``EnumField``
-will attempt to use the ``label`` member on each enumeration value if it is
-present, otherwise the labels will be based off the enumeration name. Choices
-can also be overridden at the ``EnumField`` declaration.
+``Enum`` classes defined externally to your code base or enum classes that
+otherwise do not inherit from Django's ``Choices`` type, are supported. When no
+choices are present on an ``Enum`` type, ``EnumField`` will attempt to use the
+``label`` member on each enumeration value if it is present, otherwise the
+labels will be based off the enumeration name. Choices can also be overridden
+at the ``EnumField`` declaration.
+
+In short, ``EnumField`` should work with any subclass of ``Enum``.
 
 .. code:: python
 
@@ -93,6 +95,17 @@ can also be overridden at the ``EnumField`` declaration.
         txt_enum = EnumField(TextEnum)
 
 The above code will produce a choices set like ``[('V0', 'VALUE0'), ...]``.
+
+.. warning::
+
+    One nice feature of Django's ``Choices`` type is that it disables
+    ``auto()`` on ``Enum`` fields. ``auto()`` can be dangerous because the
+    values assigned depend on the order of declaration. This means that if the
+    order changes existing database values will no longer align with the
+    enumeration values. When using ``Enums`` where control over the values is
+    not certain it is a good idea to add integration tests that look for value
+    changes.
+
 
 Parameters
 ##########

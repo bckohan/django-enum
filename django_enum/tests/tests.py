@@ -1262,24 +1262,24 @@ class TestRequests(EnumTypeMixin, TestCase):
 
             class TestSerializer(serializers.ModelSerializer):
 
-                small_pos_int = EnumField(SmallPosIntEnum)
-                small_int = EnumField(SmallIntEnum)
-                pos_int = EnumField(PosIntEnum)
-                int = EnumField(IntEnum)
-                big_pos_int = EnumField(BigPosIntEnum)
-                big_int = EnumField(BigIntEnum)
-                constant = EnumField(Constants)
-                text = EnumField(TextEnum)
-                extern = EnumField(ExternEnum)
-                dj_int_enum = EnumField(DJIntEnum)
-                dj_text_enum = EnumField(DJTextEnum)
-                non_strict_int = EnumField(SmallPosIntEnum, strict=False)
+                small_pos_int = EnumField(self.SmallPosIntEnum)
+                small_int = EnumField(self.SmallIntEnum)
+                pos_int = EnumField(self.PosIntEnum)
+                int = EnumField(self.IntEnum)
+                big_pos_int = EnumField(self.BigPosIntEnum)
+                big_int = EnumField(self.BigIntEnum)
+                constant = EnumField(self.Constants)
+                text = EnumField(self.TextEnum)
+                extern = EnumField(self.ExternEnum)
+                dj_int_enum = EnumField(self.DJIntEnum)
+                dj_text_enum = EnumField(self.DJTextEnum)
+                non_strict_int = EnumField(self.SmallPosIntEnum, strict=False)
                 non_strict_text = EnumField(
-                    TextEnum,
+                    self.TextEnum,
                     strict=False,
                     allow_blank=True
                 )
-                no_coerce = EnumField(SmallPosIntEnum)
+                no_coerce = EnumField(self.SmallPosIntEnum)
 
                 class Meta:
                     model = EnumTester
