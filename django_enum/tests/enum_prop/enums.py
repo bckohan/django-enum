@@ -4,7 +4,7 @@ try:
     from django.db.models import TextChoices as DjangoTextChoices
     from django.utils.translation import gettext as _
     from django_enum import FloatChoices, IntegerChoices, TextChoices
-    from enum_properties import p, s
+    from enum_properties import IntEnumProperties, p, s
 
 
     class DJIntEnum(DjangoIntegerChoices):
@@ -96,6 +96,20 @@ try:
         P2 = 1, 'Precedence 2', 2, 0.2, _('Second'), {'0.3', 'Third', 2}
         P3 = 2, 'Precedence 3', '1', 0.3, _('Third'), [0.2, 'Second', 3]
         P4 = 3, 'Precedence 4', 0, 0.4, _('Fourth'), {0.1, 'First', 4}
+
+
+    class ExternEnum(IntEnumProperties, s('label', case_fold=True)):
+        """
+        Tests that externally defined (i.e. not deriving from choices enums
+        are supported.
+        """
+        ONE   = 1, 'One'
+        TWO   = 2, 'Two'
+        THREE = 3, 'Three'
+
+        def __str__(self):
+            return self.label
+
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass

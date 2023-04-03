@@ -4,6 +4,7 @@ from typing import Tuple, Type
 
 from django.db.models import Field as ModelField
 from django.forms.fields import Field as FormField
+from django_enum.choices import choices
 from django_enum.forms import EnumChoiceField
 
 try:
@@ -43,7 +44,7 @@ try:
             self.enum = enum
             super().__init__(
                 enum=enum,
-                choices=kwargs.pop('choices', self.enum.choices),
+                choices=kwargs.pop('choices', choices(self.enum)),
                 strict=strict,
                 **kwargs
             )
@@ -61,7 +62,7 @@ try:
                 lookup_type: str
         ) -> Tuple[Type[Filter], dict]:
             """For EnumFields use the EnumFilter class by default"""
-            if hasattr(field, 'enum') and hasattr(field.enum, 'choices'):
+            if hasattr(field, 'enum'):
                 return EnumFilter, {
                     'enum': field.enum,
                     'strict': getattr(field, 'strict', False)

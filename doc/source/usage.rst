@@ -65,6 +65,35 @@ Very rich enumeration fields that encapsulate much more functionality in a
 simple declarative syntax are possible with ``EnumField``. See
 :ref:`enum_props`.
 
+
+External Enum Types
+###################
+
+Externally defined, that is ``Enum`` classes defined externally to your code
+base or enum classes that otherwise do not inherit from Django's Choices type,
+are supported. When no choices are present on an ``Enum`` type, ``EnumField``
+will attempt to use the ``label`` member on each enumeration value if it is
+present, otherwise the labels will be based off the enumeration name. Choices
+can also be overridden at the ``EnumField`` declaration.
+
+.. code:: python
+
+    from enum import Enum
+    from django.db import models
+    from django_enum import EnumField
+
+    class MyModel(models.Model):
+
+        class TextEnum(str, Enum)
+
+            VALUE0 = 'V0'
+            VALUE1 = 'V1'
+            VALUE2 = 'V2'
+
+        txt_enum = EnumField(TextEnum)
+
+The above code will produce a choices set like ``[('V0', 'VALUE0'), ...]``.
+
 Parameters
 ##########
 

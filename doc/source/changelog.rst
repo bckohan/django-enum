@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+v1.2.0
+======
+
+* Fixed `Compat for enums not deriving from Django's choices. <https://github.com/bckohan/django-enum/issues/34>`_
+
+
 v1.1.2
 ======
 

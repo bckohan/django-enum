@@ -43,6 +43,7 @@ was to:
 
 * Always automatically coerce fields to instances of the Enum type.
 * Allow strict adherence to Enum values to be disabled.
+* Be compatible with Enum classes that do not derive from Django's Choices.
 * Handle migrations appropriately. (See `migrations <https://django-enum.readthedocs.io/en/latest/usage.html#migrations>`_)
 * Integrate as fully as possible with Django_'s existing level of enum support.
 * Integrate with `enum-properties <https://pypi.org/project/enum-properties/>`_ to enable richer enumeration types.

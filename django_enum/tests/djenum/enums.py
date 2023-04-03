@@ -1,3 +1,5 @@
+from enum import IntEnum
+
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import Choices
 
@@ -26,6 +28,19 @@ class TextEnum(TextChoices):
     VALUE2 = 'V22', 'Value2'
     VALUE3 = 'V333', 'Value3'
     DEFAULT = 'D', 'Default'
+
+
+class ExternEnum(IntEnum):
+    """
+    Tests that externally defined (i.e. not deriving from choices enums
+    are supported.
+    """
+    ONE   = 1
+    TWO   = 2
+    THREE = 3
+
+    def __str__(self):
+        return self.name
 
 
 class Constants(FloatChoices):

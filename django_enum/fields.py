@@ -1,6 +1,7 @@
 """
 Support for Django model fields built from enumeration types.
 """
+from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -16,7 +17,6 @@ from django.core.exceptions import ValidationError
 from django.db.models import (
     BigIntegerField,
     CharField,
-    Choices,
     Field,
     FloatField,
     IntegerField,
@@ -27,6 +27,7 @@ from django.db.models import (
     SmallIntegerField,
 )
 from django.db.models.query_utils import DeferredAttribute
+from django_enum.choices import choices, values
 from django_enum.forms import EnumChoiceField, NonStrictSelect
 
 T = TypeVar('T')  # pylint: disable=C0103
@@ -79,25 +80,25 @@ class EnumMixin(
         field type.
     """
 
-    enum: Optional[Type[Choices]] = None
+    enum: Optional[Type[Enum]] = None
     strict: bool = True
     coerce: bool = True
 
     descriptor_class = ToPythonDeferredAttribute
 
-    def _coerce_to_value_type(self, value: Any) -> Choices:
+    def _coerce_to_value_type(self, value: Any) -> Enum:
         """Coerce the value to the enumerations value type"""
         # note if enum type is int and a floating point is passed we could get
         # situations like X.xxx == X - this is acceptable
         if self.enum:
-            return type(self.enum.values[0])(value)
+            return type(values(self.enum)[0])(value)
         # can't ever reach this - just here to make type checker happy
         return value  # pragma: no cover
 
     def __init__(
             self,
             *args,
-            enum: Optional[Type[Choices]] = None,
+            enum: Optional[Type[Enum]] = None,
             strict: bool = strict,
             coerce: bool = coerce,
             **kwargs
@@ -106,14 +107,14 @@ class EnumMixin(
         self.strict = strict if enum else False
         self.coerce = coerce if enum else False
         if self.enum is not None:
-            kwargs.setdefault('choices', enum.choices if enum else [])
+            kwargs.setdefault('choices', choices(enum))
         super().__init__(*args, **kwargs)
 
     def _try_coerce(
             self,
             value: Any,
             force: bool = False
-    ) -> Union[Choices, Any]:
+    ) -> Union[Enum, Any]:
         """
         Attempt coercion of value to enumeration type instance, if unsuccessful
         and non-strict, coercion to enum's primitive type will be done,
@@ -130,15 +131,18 @@ class EnumMixin(
                 try:
                     value = self._coerce_to_value_type(value)
                     value = self.enum(value)
-                except (TypeError, ValueError) as err:
-                    if self.strict or not isinstance(
-                        value,
-                        type(self.enum.values[0])
-                    ):
-                        raise ValueError(
-                            f"'{value}' is not a valid {self.enum.__name__} "
-                            f"required by field {self.name}."
-                        ) from err
+                except (TypeError, ValueError):
+                    try:
+                        value = self.enum[value]
+                    except KeyError as err:
+                        if self.strict or not isinstance(
+                            value,
+                            type(values(self.enum)[0])
+                        ):
+                            raise ValueError(
+                                f"'{value}' is not a valid {self.enum.__name__} "
+                                f"required by field {self.name}."
+                            ) from err
         return value
 
     def deconstruct(self) -> Tuple[str, str, List, dict]:
@@ -159,7 +163,7 @@ class EnumMixin(
         """
         name, path, args, kwargs = super().deconstruct()
         if self.enum is not None:
-            kwargs['choices'] = self.enum.choices
+            kwargs['choices'] = choices(self.enum)
 
         if 'default' in kwargs:
             # ensure default in deconstructed fields is always the primitive
@@ -216,7 +220,7 @@ class EnumMixin(
             return value
         return self._try_coerce(value)
 
-    def to_python(self, value: Any) -> Union[Choices, Any]:
+    def to_python(self, value: Any) -> Union[Enum, Any]:
         """
         Converts the value in the enumeration type.
 
@@ -301,10 +305,12 @@ class EnumCharField(EnumMixin, CharField):
     """
 
     def __init__(self, *args, enum=None, **kwargs):
-        choices = kwargs.get('choices', enum.choices if enum else [])
         kwargs.setdefault(
             'max_length',
-            max((len(choice[0]) for choice in choices))
+            max((
+                len(choice[0])
+                for choice in kwargs.get('choices', choices(enum))
+            ))
         )
         super().__init__(*args, enum=enum, **kwargs)
 
@@ -361,7 +367,7 @@ class _EnumFieldMetaClass(type):
 
     def __new__(  # pylint: disable=R0911
             mcs,
-            enum: Type[Choices]
+            enum: Type[Enum]
     ) -> Type[EnumMixin]:
         """
         Construct a new Django Field class given the Enumeration class. The
@@ -370,23 +376,21 @@ class _EnumFieldMetaClass(type):
 
         :param enum: The class of the Enumeration to build a field class for
         """
-        assert issubclass(enum, Choices), \
-            f'{enum} must inherit from {Choices}!'
         primitives = mcs.SUPPORTED_PRIMITIVES.intersection(set(enum.__mro__))
-        assert len(primitives) == 1, f'{enum} must inherit from exactly one ' \
-                                     f'supported primitive type ' \
-                                     f'{mcs.SUPPORTED_PRIMITIVES}, ' \
-                                     f'encountered: {primitives}.'
-
-        primitive = list(primitives)[0]
+        primitive = (
+            list(primitives)[0] if primitives else type(values(enum)[0])
+        )
+        assert primitive in mcs.SUPPORTED_PRIMITIVES, \
+            f'Enum {enum} has values of an unnsupported primitive type: ' \
+            f'{primitive}'
 
         if primitive is float:
             return EnumFloatField
 
         if primitive is int:
-            values = [define.value for define in enum]
-            min_value = min(values)
-            max_value = max(values)
+            vals = [define.value for define in enum]
+            min_value = min(vals)
+            max_value = max(vals)
             if min_value < 0:
                 if min_value < -2147483648 or max_value > 2147483647:
                     return EnumBigIntegerField
@@ -404,7 +408,7 @@ class _EnumFieldMetaClass(type):
 
 
 def EnumField(  # pylint: disable=C0103
-        enum: Type[Choices],
+        enum: Type[Enum],
         *field_args,
         **field_kwargs
 ) -> EnumMixin:

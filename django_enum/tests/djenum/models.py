@@ -7,6 +7,7 @@ from django_enum.tests.djenum.enums import (
     Constants,
     DJIntEnum,
     DJTextEnum,
+    ExternEnum,
     IntEnum,
     PosIntEnum,
     SmallIntEnum,
@@ -29,6 +30,8 @@ class EnumTester(models.Model):
     constant = EnumField(Constants, null=True, default=None, db_index=True, blank=True)
 
     text = EnumField(TextEnum, null=True, default=None, db_index=True, blank=True)
+
+    extern = EnumField(ExternEnum, null=True, default=None, db_index=True, blank=True)
 
     # basic choice fields - used to compare behavior
     int_choice = models.IntegerField(
