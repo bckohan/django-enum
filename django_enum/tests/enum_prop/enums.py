@@ -107,9 +107,6 @@ try:
         TWO   = 2, 'Two'
         THREE = 3, 'Three'
 
-        def __str__(self):
-            return self.label
-
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass
