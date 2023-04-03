@@ -69,14 +69,14 @@ simple declarative syntax are possible with ``EnumField``. See
 External Enum Types
 ###################
 
-``Enum`` classes defined externally to your code base or enum classes that
-otherwise do not inherit from Django's ``Choices`` type, are supported. When no
-choices are present on an ``Enum`` type, ``EnumField`` will attempt to use the
+Enum_ classes defined externally to your code base or enum classes that
+otherwise do not inherit from Django's Choices_ type, are supported. When no
+choices are present on an Enum_ type, ``EnumField`` will attempt to use the
 ``label`` member on each enumeration value if it is present, otherwise the
 labels will be based off the enumeration name. Choices can also be overridden
 at the ``EnumField`` declaration.
 
-In short, ``EnumField`` should work with any subclass of ``Enum``.
+In short, ``EnumField`` should work with any subclass of Enum_.
 
 .. code:: python
 
@@ -98,8 +98,8 @@ The above code will produce a choices set like ``[('V0', 'VALUE0'), ...]``.
 
 .. warning::
 
-    One nice feature of Django's ``Choices`` type is that it disables
-    ``auto()`` on ``Enum`` fields. ``auto()`` can be dangerous because the
+    One nice feature of Django's Choices_ type is that it disables
+    ``auto()`` on Enum_ fields. ``auto()`` can be dangerous because the
     values assigned depend on the order of declaration. This means that if the
     order changes existing database values will no longer align with the
     enumeration values. When using ``Enums`` where control over the values is
@@ -121,13 +121,13 @@ The following ``EnumField`` specific parameters are available:
 
 By default all ``EnumFields`` are ``strict``. This means a ``ValidationError``
 will be thrown anytime full_clean is run on a model and a value is set for the
-field that can not be coerced to its native ``Enum`` type. To allow the field
-to store values that are not present in the fields ``Enum`` type we can pass
+field that can not be coerced to its native Enum_ type. To allow the field
+to store values that are not present in the fields Enum_ type we can pass
 `strict=False`.
 
 Non-strict fields that have values outside of the enumeration will be instances
-of the enumeration where a valid ``Enum`` value is present and the plain old
-data where no ``Enum`` type coercion is possible.
+of the enumeration where a valid Enum_ value is present and the plain old
+data where no Enum_ type coercion is possible.
 
 .. code-block:: python
 
@@ -164,9 +164,9 @@ data where no ``Enum`` type coercion is possible.
 ----------
 
 Setting this parameter to ``False`` will turn off the automatic conversion to
-the field's ``Enum`` type while leaving all validation checks in place. It will
-still be possible to set the field directly as an ``Enum`` instance and to
-filter by ``Enum`` instance or any symmetric value:
+the field's Enum_ type while leaving all validation checks in place. It will
+still be possible to set the field directly as an Enum_ instance and to
+filter by Enum_ instance or any symmetric value:
 
 .. code-block:: python
 
@@ -193,7 +193,7 @@ filter by ``Enum`` instance or any symmetric value:
 enum-properties
 ###############
 
-``TextChoices`` and ``IntegerChoices`` types are provided that extend Django_'s
+TextChoices_ and IntegerChoices_ types are provided that extend Django_'s
 native choice types with support for enum-properties_. The dependency on
 enum-properties_ is optional, so to utilize these classes you must separately
 install enum-properties_:
@@ -426,7 +426,7 @@ Migrations
     work with the primitive values instead*.
 
 The deconstructed ``EnumFields`` only include the choices tuple in the
-migration files. This is because ``Enum`` classes may come and go or be
+migration files. This is because Enum_ classes may come and go or be
 altered but the earlier migration files must still work. Simply treat any
 custom migration routines as if they were operating on a normal model field
 with choices.
@@ -438,7 +438,7 @@ are with any field with choices.
 Performance
 ###########
 
-The cost to resolve a raw database value into an ``Enum`` type object is
+The cost to resolve a raw database value into an Enum_ type object is
 non-zero. ``EnumFields`` may not be appropriate for use cases at the very edge
 of critical performance targets, but for most scenarios the cost of using
 ``EnumFields`` is negligible.

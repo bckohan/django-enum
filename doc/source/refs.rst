@@ -15,4 +15,8 @@
 .. _enum-properties: https://pypi.org/project/enum-properties
 .. _django-filter: https://pypi.org/project/django-filter
 .. _DRF: https://www.django-rest-framework.org
+.. _Choices: https://docs.djangoproject.com/en/4.1/ref/models/fields/#enumeration-types
+.. _TextChoices: https://docs.djangoproject.com/en/4.1/ref/models/fields/#enumeration-types
+.. _IntegerChoices: https://docs.djangoproject.com/en/4.1/ref/models/fields/#enumeration-types
+
 

@@ -7,7 +7,7 @@ Django Enum
 Full and natural support for enumerations_ as Django model fields.
 
 Many packages aim to ease usage of Python enumerations as model fields. Most
-were made obsolete when Django provided ``TextChoices`` and ``IntegerChoices``
+were made obsolete when Django provided TextChoices_ and IntegerChoices_
 types. The motivation for django-enum was to:
 
 * Always automatically coerce fields to instances of the Enum type.
@@ -19,10 +19,10 @@ types. The motivation for django-enum was to:
 * Represent enum fields with the smallest possible column type.
 * Be as simple and light-weight an extension to core Django as possible.
 
-django-enum works in concert with Django_'s built in ``TextChoices`` and
-``IntegerChoices`` to provide a new model field type, ``EnumField``, that
+django-enum works in concert with Django_'s built in TextChoices_ and
+IntegerChoices_ to provide a new model field type, ``EnumField``, that
 resolves the correct native Django_ field type for the given enumeration based
-on its value type and range. For example, ``IntegerChoices`` that contain
+on its value type and range. For example, IntegerChoices_ that contain
 values between 0 and 32767 become `PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
 
 .. code:: python
@@ -71,7 +71,7 @@ accessible as their enumeration type rather than by-value:**
 
 
 `django-enum <https://django-enum.readthedocs.io/en/latest/>`_ also provides
-``IntegerChoices`` and ``TextChoices`` types that extend from
+IntegerChoices_ and TextChoices_ types that extend from
 enum-properties_ which makes possible very rich enumeration fields.
 
 .. code:: python
