@@ -10,6 +10,7 @@ try:
         Constants,
         DJIntEnum,
         DJTextEnum,
+        ExternEnum,
         IntEnum,
         PosIntEnum,
         SmallIntEnum,
@@ -78,6 +79,7 @@ try:
             big_int = EnumField(BigIntEnum)
             constant = EnumField(Constants, allow_null=True)
             text = EnumField(TextEnum, allow_null=True)
+            extern = EnumField(ExternEnum, allow_null=True)
             dj_int_enum = EnumField(DJIntEnum)
             dj_text_enum = EnumField(DJTextEnum)
             non_strict_int = EnumField(SmallPosIntEnum, strict=False, allow_null=True)

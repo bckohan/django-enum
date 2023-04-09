@@ -9,7 +9,7 @@ try:
         IntegerChoices,
         TextChoices,
     )
-    from enum_properties import p, s
+    from enum_properties import IntEnumProperties, p, s
 
 
     class DJIntEnum(DjangoIntegerChoices):
@@ -147,6 +147,15 @@ try:
 
         NEG_ONE = -2**128, 'Negative One'
         ZERO = -1, 'ZERO'
+
+    class ExternEnum(IntEnumProperties, s('label', case_fold=True)):
+        """
+        Tests that externally defined (i.e. not deriving from choices enums
+        are supported.
+        """
+        ONE   = 1, 'One'
+        TWO   = 2, 'Two'
+        THREE = 3, 'Three'
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass

@@ -21,6 +21,7 @@ class URLMixin:
             'BigPosIntEnum': self.enums.BigPosIntEnum,
             'BigIntEnum': self.enums.BigIntEnum,
             'TextEnum': self.enums.TextEnum,
+            'ExternEnum': self.enums.ExternEnum,
             'DJIntEnum': self.enums.DJIntEnum,
             'DJTextEnum': self.enums.DJTextEnum,
             'NAMESPACE': self.NAMESPACE,

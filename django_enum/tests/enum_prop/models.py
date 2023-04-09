@@ -8,6 +8,7 @@ try:
         Constants,
         DJIntEnum,
         DJTextEnum,
+        ExternEnum,
         GNSSConstellation,
         IntEnum,
         LargeBitField,
@@ -34,6 +35,8 @@ try:
         constant = EnumField(Constants, null=True, default=None, db_index=True, blank=True)
 
         text = EnumField(TextEnum, null=True, default=None, db_index=True, blank=True)
+
+        extern = EnumField(ExternEnum, null=True, default=None, db_index=True, blank=True)
 
         # basic choice fields - used to compare behavior
         int_choice = models.IntegerField(

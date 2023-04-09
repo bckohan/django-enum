@@ -3,9 +3,10 @@
 __all__ = ['EnumField']
 
 try:
+    from enum import Enum
     from typing import Any, Type, Union
 
-    from django.db.models import Choices
+    from django_enum.choices import choices, values
     from rest_framework.fields import ChoiceField
 
     class EnumField(ChoiceField):
@@ -23,21 +24,21 @@ try:
             will be passed up to the base classes.
         """
 
-        enum: Type[Choices]
+        enum: Type[Enum]
         strict: bool = True
 
         def __init__(
                 self,
-                enum: Type[Choices],
+                enum: Type[Enum],
                 strict: bool = strict,
                 **kwargs
         ):
             self.enum = enum
             self.strict = strict
-            self.choices = kwargs.pop('choices', enum.choices)
+            self.choices = kwargs.pop('choices', choices(enum))
             super().__init__(choices=self.choices, **kwargs)
 
-        def to_internal_value(self, data: Any) -> Union[Choices, Any]:
+        def to_internal_value(self, data: Any) -> Union[Enum, Any]:
             """
             Transform the *incoming* primitive data into an enum instance.
             """
@@ -49,12 +50,12 @@ try:
                     data = self.enum(data)
                 except (TypeError, ValueError):
                     try:
-                        data = type(self.enum.values[0])(data)
+                        data = type(values(self.enum)[0])(data)
                         data = self.enum(data)
                     except (TypeError, ValueError):
                         if self.strict or not isinstance(
                             data,
-                            type(self.enum.values[0])
+                            type(values(self.enum)[0])
                         ):
                             self.fail('invalid_choice', input=data)
             return data

@@ -2,6 +2,17 @@
 Change Log
 ==========
 
+v1.2.1
+======
+
+* Fixed `Document that with version 1.4 of enum-properties label is no longer overridable for Choices <https://github.com/bckohan/django-enum/issues/37>`_
+
+v1.2.0
+======
+
+* Implemented `Compat for enums not deriving from Django's choices. <https://github.com/bckohan/django-enum/issues/34>`_
+
+
 v1.1.2
 ======
 

@@ -1,3 +1,4 @@
+import enum
 import os
 from pathlib import Path
 from time import perf_counter
@@ -11,20 +12,23 @@ from django.db.models import F, Q
 from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
+from django.utils.functional import classproperty
 from django_enum import TextChoices
+from django_enum.choices import choices, labels, names, values
 from django_enum.forms import EnumChoiceField  # dont remove this
-from django_enum.tests.djenum.enums import (
-    BigIntEnum,
-    BigPosIntEnum,
-    Constants,
-    DJIntEnum,
-    DJTextEnum,
-    IntEnum,
-    PosIntEnum,
-    SmallIntEnum,
-    SmallPosIntEnum,
-    TextEnum,
-)
+# from django_enum.tests.djenum.enums import (
+#     BigIntEnum,
+#     BigPosIntEnum,
+#     Constants,
+#     DJIntEnum,
+#     DJTextEnum,
+#     IntEnum,
+#     PosIntEnum,
+#     SmallIntEnum,
+#     SmallPosIntEnum,
+#     TextEnum,
+#     ExternEnum
+# )
 from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import BadDefault, EnumTester
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
@@ -89,6 +93,7 @@ class EnumTypeMixin:
         'big_int',
         'constant',
         'text',
+        'extern',
         'dj_int_enum',
         'dj_text_enum',
         'non_strict_int',
@@ -129,6 +134,10 @@ class EnumTypeMixin:
         return self.MODEL_CLASS._meta.get_field('text').enum
 
     @property
+    def ExternEnum(self):
+        return self.MODEL_CLASS._meta.get_field('extern').enum
+
+    @property
     def DJIntEnum(self):
         return self.MODEL_CLASS._meta.get_field('dj_int_enum').enum
 
@@ -144,7 +153,7 @@ class EnumTypeMixin:
         if enum_type in {
             self.SmallPosIntEnum, self.SmallIntEnum, self.IntEnum,
             self.PosIntEnum, self.BigIntEnum, self.BigPosIntEnum,
-            self.DJIntEnum
+            self.DJIntEnum, self.ExternEnum
         }:
             return int
         elif enum_type is self.Constants:
@@ -153,6 +162,119 @@ class EnumTypeMixin:
             return str
         else:  # pragma: no cover
             raise RuntimeError(f'Missing enum type primitive for {enum_type}')
+
+
+class TestEnumCompat(TestCase):
+    """ Test that django_enum allows non-choice derived enums to be used """
+
+    from django.db.models import IntegerChoices as DJIntegerChoices
+
+    class NormalIntEnum(enum.IntEnum):
+        VAL1 = 1
+        VAL2 = 2
+
+    class IntEnumWithLabels(enum.IntEnum):
+
+        __empty__ = 0
+
+        VAL1 = 1
+        VAL2 = 2
+
+        @property
+        def label(self):
+            return {
+                self.VAL1: 'Label 1',
+                self.VAL2: 'Label 2',
+            }.get(self)
+
+    class ChoicesIntEnum(DJIntegerChoices):
+
+        __empty__ = 0
+
+        VAL1 = 1, 'Label 1'
+        VAL2 = 2, 'Label 2'
+
+    class EnumWithChoicesProperty(enum.Enum):
+        VAL1 = 1
+        VAL2 = 2
+
+        @classproperty
+        def choices(self):
+            return [(self.VAL1.value, 'Label 1'), (self.VAL2.value, 'Label 2')]
+
+    def test_choices(self):
+
+        self.assertEqual(
+            choices(TestEnumCompat.NormalIntEnum),
+            [(1, 'VAL1'), (2, 'VAL2')]
+        )
+        self.assertEqual(
+            choices(TestEnumCompat.IntEnumWithLabels),
+            TestEnumCompat.ChoicesIntEnum.choices
+        )
+        self.assertEqual(
+            choices(TestEnumCompat.EnumWithChoicesProperty),
+            [(1, 'Label 1'), (2, 'Label 2')]
+        )
+        self.assertEqual(
+            choices(None),
+            []
+        )
+
+    def test_labels(self):
+        self.assertEqual(
+            labels(TestEnumCompat.NormalIntEnum),
+            ['VAL1', 'VAL2']
+        )
+        self.assertEqual(
+            labels(TestEnumCompat.IntEnumWithLabels),
+            TestEnumCompat.ChoicesIntEnum.labels
+        )
+        self.assertEqual(
+            labels(TestEnumCompat.EnumWithChoicesProperty),
+            ['Label 1', 'Label 2']
+        )
+        self.assertEqual(
+            labels(None),
+            []
+        )
+
+    def test_values(self):
+        self.assertEqual(
+            values(TestEnumCompat.NormalIntEnum),
+            [1, 2]
+        )
+        self.assertEqual(
+            values(TestEnumCompat.IntEnumWithLabels),
+            TestEnumCompat.ChoicesIntEnum.values
+        )
+        self.assertEqual(
+            values(TestEnumCompat.EnumWithChoicesProperty),
+            [1, 2]
+        )
+        self.assertEqual(
+            values(None),
+            []
+        )
+
+
+    def test_names(self):
+        self.assertEqual(
+            names(TestEnumCompat.NormalIntEnum),
+            ['VAL1', 'VAL2']
+        )
+        self.assertEqual(
+            names(TestEnumCompat.IntEnumWithLabels),
+            TestEnumCompat.ChoicesIntEnum.names
+        )
+        self.assertEqual(
+            names(TestEnumCompat.EnumWithChoicesProperty),
+            ['VAL1', 'VAL2']
+        )
+        self.assertEqual(
+            names(None),
+            []
+        )
 
 
 class TestChoices(EnumTypeMixin, TestCase):
@@ -173,7 +295,8 @@ class TestChoices(EnumTypeMixin, TestCase):
             'big_pos_int': self.BigPosIntEnum.VAL3,
             'big_int': self.BigIntEnum.VAL2,
             'constant': self.Constants.GOLDEN_RATIO,
-            'text': self.TextEnum.VALUE2
+            'text': self.TextEnum.VALUE2,
+            'extern': self.ExternEnum.THREE,
         }
 
     def test_defaults(self):
@@ -224,6 +347,10 @@ class TestChoices(EnumTypeMixin, TestCase):
         )
         self.assertEqual(
             self.MODEL_CLASS._meta.get_field('text').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('extern').get_default(),
             None
         )
         self.assertEqual(
@@ -390,19 +517,20 @@ class TestChoices(EnumTypeMixin, TestCase):
     @property
     def values_params(self):
         return {
-            'small_pos_int': SmallPosIntEnum.VAL2,
-            'small_int': SmallIntEnum.VALn1,
-            'pos_int': PosIntEnum.VAL3,
-            'int': IntEnum.VALn1,
-            'big_pos_int': BigPosIntEnum.VAL3,
-            'big_int': BigIntEnum.VAL2,
-            'constant': Constants.GOLDEN_RATIO,
-            'text': TextEnum.VALUE2,
+            'small_pos_int': self.SmallPosIntEnum.VAL2,
+            'small_int': self.SmallIntEnum.VALn1,
+            'pos_int': self.PosIntEnum.VAL3,
+            'int': self.IntEnum.VALn1,
+            'big_pos_int': self.BigPosIntEnum.VAL3,
+            'big_int': self.BigIntEnum.VAL2,
+            'constant': self.Constants.GOLDEN_RATIO,
+            'text': self.TextEnum.VALUE2,
+            'extern': self.ExternEnum.TWO,
             'dj_int_enum': 3,
-            'dj_text_enum': DJTextEnum.A,
+            'dj_text_enum': self.DJTextEnum.A,
             'non_strict_int':  75,
             'non_strict_text':  'arbitrary',
-            'no_coerce': SmallPosIntEnum.VAL2
+            'no_coerce': self.SmallPosIntEnum.VAL2
         }
 
     def do_test_values(self):
@@ -421,6 +549,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertEqual(values1['big_int'], self.BigIntEnum.VAL2)
         self.assertEqual(values1['constant'], self.Constants.GOLDEN_RATIO)
         self.assertEqual(values1['text'], self.TextEnum.VALUE2)
+        self.assertEqual(values1['extern'], self.ExternEnum.TWO)
         self.assertEqual(values1['dj_int_enum'], self.DJIntEnum.THREE)
         self.assertEqual(values1['dj_text_enum'], self.DJTextEnum.A)
 
@@ -540,7 +669,7 @@ class TestChoices(EnumTypeMixin, TestCase):
 
     def test_serialization(self):
         tester = self.MODEL_CLASS.objects.create(**self.values_params)
-
+        from django.core.serializers import json
         serialized = serializers.serialize('json', self.MODEL_CLASS.objects.all())
 
         tester.delete()
@@ -562,6 +691,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertRaises(ValidationError, tester._meta.get_field('big_int').validate, 666, tester)
         self.assertRaises(ValidationError, tester._meta.get_field('constant').validate, 66.6, tester)
         self.assertRaises(ValidationError, tester._meta.get_field('text').validate, '666', tester)
+        self.assertRaises(ValidationError, tester._meta.get_field('extern').validate, 6, tester)
 
         # coerce=False still validates
         self.assertRaises(ValidationError, tester._meta.get_field('no_coerce').validate, 666, tester)
@@ -611,6 +741,7 @@ class TestChoices(EnumTypeMixin, TestCase):
             big_int=666,
             constant=66.6,
             text='666',
+            extern=6
         )
         try:
             tester.full_clean()
@@ -624,6 +755,7 @@ class TestChoices(EnumTypeMixin, TestCase):
             self.assertTrue('big_int' in ve.message_dict)
             self.assertTrue('constant' in ve.message_dict)
             self.assertTrue('text' in ve.message_dict)
+            self.assertTrue('extern' in ve.message_dict)
 
     def do_rest_framework_missing(self):
         from django_enum.drf import EnumField
@@ -754,7 +886,7 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
 
         self.assertIsInstance(tester._meta.get_field('small_int'), SmallIntegerField)
         self.assertEqual(tester.small_int, tester._meta.get_field('small_int').default)
-        self.assertEqual(tester.small_int, SmallIntEnum.VAL3)
+        self.assertEqual(tester.small_int, self.SmallIntEnum.VAL3)
         self.assertIsInstance(tester._meta.get_field('small_pos_int'), PositiveSmallIntegerField)
         self.assertIsNone(tester.small_pos_int)
         self.assertIsInstance(tester._meta.get_field('int'), IntegerField)
@@ -762,11 +894,11 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
 
         self.assertIsInstance(tester._meta.get_field('pos_int'), PositiveIntegerField)
         self.assertEqual(tester.pos_int, tester._meta.get_field('pos_int').default)
-        self.assertEqual(tester.pos_int, PosIntEnum.VAL3)
+        self.assertEqual(tester.pos_int, self.PosIntEnum.VAL3)
 
         self.assertIsInstance(tester._meta.get_field('big_int'), BigIntegerField)
         self.assertEqual(tester.big_int, tester._meta.get_field('big_int').default)
-        self.assertEqual(tester.big_int, BigIntEnum.VAL0)
+        self.assertEqual(tester.big_int, self.BigIntEnum.VAL0)
 
         self.assertIsInstance(tester._meta.get_field('big_pos_int'), PositiveBigIntegerField)
         self.assertIsNone(tester.big_pos_int)
@@ -777,6 +909,9 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsInstance(tester._meta.get_field('text'), CharField)
         self.assertEqual(tester._meta.get_field('text').max_length, 4)
         self.assertIsNone(tester.text)
+
+        self.assertIsInstance(tester._meta.get_field('extern'), PositiveSmallIntegerField)
+        self.assertIsNone(tester.extern)
 
 
 class TestEnumQueries(EnumTypeMixin, TestCase):
@@ -794,7 +929,8 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
             big_pos_int=self.BigPosIntEnum.VAL3,
             big_int=self.BigIntEnum.VAL2,
             constant=self.Constants.GOLDEN_RATIO,
-            text=self.TextEnum.VALUE2
+            text=self.TextEnum.VALUE2,
+            extern=self.ExternEnum.ONE
         )
         self.MODEL_CLASS.objects.create(
             small_pos_int=self.SmallPosIntEnum.VAL2,
@@ -804,7 +940,8 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
             big_pos_int=self.BigPosIntEnum.VAL3,
             big_int=self.BigIntEnum.VAL2,
             constant=self.Constants.GOLDEN_RATIO,
-            text=self.TextEnum.VALUE2
+            text=self.TextEnum.VALUE2,
+            extern=self.ExternEnum.ONE
         )
 
         self.MODEL_CLASS.objects.create()
@@ -823,10 +960,13 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
 
         self.assertEqual(self.MODEL_CLASS.objects.filter(text=self.TextEnum.VALUE2).count(), 2)
 
+        self.assertEqual(self.MODEL_CLASS.objects.filter(extern=self.ExternEnum.ONE).count(), 2)
+        self.assertEqual(self.MODEL_CLASS.objects.filter(extern=self.ExternEnum.TWO).count(), 0)
+
         self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, int_field='a')
         self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, float_field='a')
-        self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, constant='PI')
-        self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, big_pos_int='VAL3')
+        self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, constant='Pi')
+        self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, big_pos_int='Val3')
         self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, big_pos_int=type('WrongType')())
 
 
@@ -847,6 +987,7 @@ class TestFormField(EnumTypeMixin, TestCase):
             'big_int': self.BigIntEnum.VAL0,
             'constant': 2.71828,
             'text': self.TextEnum.VALUE3,
+            'extern': self.ExternEnum.THREE,
             'dj_int_enum': 2,
             'dj_text_enum': self.DJTextEnum.B,
             'non_strict_int': self.SmallPosIntEnum.VAL2,
@@ -865,6 +1006,7 @@ class TestFormField(EnumTypeMixin, TestCase):
             'big_int': '-12',
             'constant': 2.7,
             'text': '143 emma',
+            'extern': 6,
             'dj_int_enum': '',
             'dj_text_enum': 'D',
             'non_strict_int': 'Not an int',
@@ -930,31 +1072,33 @@ class TestFormField(EnumTypeMixin, TestCase):
     def test_field_validation(self):
         for enum_field, bad_value in [
             (EnumChoiceField(self.SmallPosIntEnum), 4.1),
-            (EnumChoiceField(SmallIntEnum), 123123123),
-            (EnumChoiceField(PosIntEnum), -1),
-            (EnumChoiceField(IntEnum), '63'),
-            (EnumChoiceField(BigPosIntEnum), None),
-            (EnumChoiceField(BigIntEnum), ''),
-            (EnumChoiceField(Constants), 'y'),
-            (EnumChoiceField(TextEnum), 42),
-            (EnumChoiceField(DJIntEnum), '5.3'),
-            (EnumChoiceField(DJTextEnum), 12),
-            (EnumChoiceField(SmallPosIntEnum, strict=False), 'not an int')
+            (EnumChoiceField(self.SmallIntEnum), 123123123),
+            (EnumChoiceField(self.PosIntEnum), -1),
+            (EnumChoiceField(self.IntEnum), '63'),
+            (EnumChoiceField(self.BigPosIntEnum), None),
+            (EnumChoiceField(self.BigIntEnum), ''),
+            (EnumChoiceField(self.Constants), 'y'),
+            (EnumChoiceField(self.TextEnum), 42),
+            (EnumChoiceField(self.ExternEnum), 0),
+            (EnumChoiceField(self.DJIntEnum), '5.3'),
+            (EnumChoiceField(self.DJTextEnum), 12),
+            (EnumChoiceField(self.SmallPosIntEnum, strict=False), 'not an int')
         ]:
             self.assertRaises(ValidationError, enum_field.validate, bad_value)
 
         for enum_field, bad_value in [
             (EnumChoiceField(self.SmallPosIntEnum, strict=False), 4),
-            (EnumChoiceField(SmallIntEnum, strict=False), 123123123),
-            (EnumChoiceField(PosIntEnum, strict=False), -1),
-            (EnumChoiceField(IntEnum, strict=False), '63'),
-            (EnumChoiceField(BigPosIntEnum, strict=False), 18),
-            (EnumChoiceField(BigIntEnum, strict=False), '-8'),
-            (EnumChoiceField(Constants, strict=False), '1.976'),
-            (EnumChoiceField(TextEnum, strict=False), 42),
-            (EnumChoiceField(DJIntEnum, strict=False), '5'),
-            (EnumChoiceField(DJTextEnum, strict=False), 12),
-            (EnumChoiceField(SmallPosIntEnum, strict=False), '12')
+            (EnumChoiceField(self.SmallIntEnum, strict=False), 123123123),
+            (EnumChoiceField(self.PosIntEnum, strict=False), -1),
+            (EnumChoiceField(self.IntEnum, strict=False), '63'),
+            (EnumChoiceField(self.BigPosIntEnum, strict=False), 18),
+            (EnumChoiceField(self.BigIntEnum, strict=False), '-8'),
+            (EnumChoiceField(self.Constants, strict=False), '1.976'),
+            (EnumChoiceField(self.TextEnum, strict=False), 42),
+            (EnumChoiceField(self.ExternEnum, strict=False), 0),
+            (EnumChoiceField(self.DJIntEnum, strict=False), '5'),
+            (EnumChoiceField(self.DJTextEnum, strict=False), 12),
+            (EnumChoiceField(self.SmallPosIntEnum, strict=False), '12')
         ]:
             try:
                 enum_field.clean(bad_value)
@@ -1003,6 +1147,7 @@ class TestRequests(EnumTypeMixin, TestCase):
         'big_int',
         'constant',
         'text',
+        'extern',
         'dj_int_enum',
         'dj_text_enum',
         'non_strict_int',
@@ -1029,6 +1174,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                 big_int=self.BigIntEnum.VAL1,
                 constant=self.Constants.PI,
                 text=self.TextEnum.VALUE1,
+                extern=self.ExternEnum.ONE,
                 non_strict_int=self.SmallPosIntEnum.VAL1,
                 non_strict_text=self.TextEnum.VALUE1,
                 no_coerce=self.SmallPosIntEnum.VAL1
@@ -1047,6 +1193,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                     big_int=self.BigIntEnum.VAL2,
                     constant=self.Constants.e,
                     text=self.TextEnum.VALUE2,
+                    extern=self.ExternEnum.TWO,
                     non_strict_int=self.SmallPosIntEnum.VAL2,
                     non_strict_text=self.TextEnum.VALUE2,
                     no_coerce=self.SmallPosIntEnum.VAL2
@@ -1065,6 +1212,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                     big_int=self.BigIntEnum.VAL3,
                     constant=self.Constants.GOLDEN_RATIO,
                     text=self.TextEnum.VALUE3,
+                    extern=self.ExternEnum.THREE,
                     non_strict_int=self.SmallPosIntEnum.VAL3,
                     non_strict_text=self.TextEnum.VALUE3,
                     no_coerce=self.SmallPosIntEnum.VAL3
@@ -1098,6 +1246,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             'big_int': self.BigIntEnum.VAL2,
             'constant': self.Constants.GOLDEN_RATIO,
             'text': self.TextEnum.VALUE2,
+            'extern': self.ExternEnum.TWO,
             'dj_int_enum': self.DJIntEnum.TWO,
             'dj_text_enum': self.DJTextEnum.C,
             'non_strict_int': self.SmallPosIntEnum.VAL1,
@@ -1119,23 +1268,24 @@ class TestRequests(EnumTypeMixin, TestCase):
 
             class TestSerializer(serializers.ModelSerializer):
 
-                small_pos_int = EnumField(SmallPosIntEnum)
-                small_int = EnumField(SmallIntEnum)
-                pos_int = EnumField(PosIntEnum)
-                int = EnumField(IntEnum)
-                big_pos_int = EnumField(BigPosIntEnum)
-                big_int = EnumField(BigIntEnum)
-                constant = EnumField(Constants)
-                text = EnumField(TextEnum)
-                dj_int_enum = EnumField(DJIntEnum)
-                dj_text_enum = EnumField(DJTextEnum)
-                non_strict_int = EnumField(SmallPosIntEnum, strict=False)
+                small_pos_int = EnumField(self.SmallPosIntEnum)
+                small_int = EnumField(self.SmallIntEnum)
+                pos_int = EnumField(self.PosIntEnum)
+                int = EnumField(self.IntEnum)
+                big_pos_int = EnumField(self.BigPosIntEnum)
+                big_int = EnumField(self.BigIntEnum)
+                constant = EnumField(self.Constants)
+                text = EnumField(self.TextEnum)
+                extern = EnumField(self.ExternEnum)
+                dj_int_enum = EnumField(self.DJIntEnum)
+                dj_text_enum = EnumField(self.DJTextEnum)
+                non_strict_int = EnumField(self.SmallPosIntEnum, strict=False)
                 non_strict_text = EnumField(
-                    TextEnum,
+                    self.TextEnum,
                     strict=False,
                     allow_blank=True
                 )
-                no_coerce = EnumField(SmallPosIntEnum)
+                no_coerce = EnumField(self.SmallPosIntEnum)
 
                 class Meta:
                     model = EnumTester
@@ -1153,6 +1303,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                     'small_pos_int': -1,
                     'constant': 3.14,
                     'text': 'wrong',
+                    'extern': 0,
                     'pos_int': -50
                 }
             )
@@ -1161,6 +1312,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             self.assertTrue('small_pos_int' in ser_bad.errors)
             self.assertTrue('constant' in ser_bad.errors)
             self.assertTrue('text' in ser_bad.errors)
+            self.assertTrue('extern' in ser_bad.errors)
             self.assertTrue('pos_int' in ser_bad.errors)
 
         def test_drf_read(self):
@@ -1313,7 +1465,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                 raise err
 
         if value not in {None, ''}:
-            return type(enum.values[0])(value)
+            return type(values(enum)[0])(value)
         return None if null else ''
 
     def test_add_form(self):
@@ -1336,7 +1488,7 @@ class TestRequests(EnumTypeMixin, TestCase):
         for field in self.fields:
             field = self.MODEL_CLASS._meta.get_field(field)
             expected = dict(zip([en if field.coerce else en.value for en in field.enum],
-                                field.enum.labels))  # value -> label
+                                labels(field.enum)))  # value -> label
 
             if (
                 not any([getattr(obj, field.name) == exp for exp in expected])
@@ -1447,6 +1599,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             'big_int': ['value'],
             'constant': ['value'],
             'text': ['value'],
+            'extern': ['value'],
             'dj_int_enum': ['value'],
             'dj_text_enum': ['value'],
             'non_strict_int': ['value'],
@@ -1465,6 +1618,7 @@ class TestRequests(EnumTypeMixin, TestCase):
             'big_int',
             'constant',
             'text',
+            'extern',
             'dj_int_enum',
             'dj_text_enum',
             'non_strict_int',
@@ -1559,6 +1713,7 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
             'big_int': self.BigIntEnum.VAL2,
             'constant': self.Constants.GOLDEN_RATIO,
             'text': self.TextEnum.VALUE2,
+            'extern': self.ExternEnum.TWO,
             'dj_int_enum': 3,
             'dj_text_enum': self.DJTextEnum.A,
             'non_strict_int': 15,
@@ -1622,6 +1777,7 @@ if ENUM_PROPERTIES_INSTALLED:
         Constants,
         DJIntEnum,
         DJTextEnum,
+        ExternEnum,
         GNSSConstellation,
         IntEnum,
         LargeBitField,
@@ -1838,7 +1994,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 big_pos_int=BigPosIntEnum.VAL3,
                 big_int=BigIntEnum.VAL2,
                 constant=Constants.GOLDEN_RATIO,
-                text=TextEnum.VALUE2
+                text=TextEnum.VALUE2,
+                extern=ExternEnum.ONE
             )
 
             self.assertEqual(tester.small_pos_int, SmallPosIntEnum.VAL2)
@@ -1849,6 +2006,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(tester.big_int, BigIntEnum.VAL2)
             self.assertEqual(tester.constant, Constants.GOLDEN_RATIO)
             self.assertEqual(tester.text, TextEnum.VALUE2)
+            self.assertEqual(tester.extern, ExternEnum.ONE)
 
             tester.small_pos_int = SmallPosIntEnum.VAL1
             tester.small_int = SmallIntEnum.VAL2
@@ -1858,6 +2016,7 @@ if ENUM_PROPERTIES_INSTALLED:
             tester.big_int = BigIntEnum.VAL1
             tester.constant = Constants.PI
             tester.text = TextEnum.VALUE3
+            tester.extern = ExternEnum.TWO
 
             tester.save()
 
@@ -1869,6 +2028,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(tester.big_int, BigIntEnum.VAL1)
             self.assertEqual(tester.constant, Constants.PI)
             self.assertEqual(tester.text, TextEnum.VALUE3)
+            self.assertEqual(tester.extern, ExternEnum.TWO)
 
             tester.refresh_from_db()
 
@@ -1880,6 +2040,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(tester.big_int, BigIntEnum.VAL1)
             self.assertEqual(tester.constant, Constants.PI)
             self.assertEqual(tester.text, TextEnum.VALUE3)
+            self.assertEqual(tester.extern, ExternEnum.TWO)
 
             tester.small_pos_int = '32767'
             tester.small_int = -32768
@@ -1889,6 +2050,7 @@ if ENUM_PROPERTIES_INSTALLED:
             tester.big_int = -2147483649
             tester.constant = '2.71828'
             tester.text = 'D'
+            tester.extern = 'Three'
 
             tester.save()
             tester.refresh_from_db()
@@ -1901,6 +2063,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(tester.big_int, -2147483649)
             self.assertEqual(tester.constant, 2.71828)
             self.assertEqual(tester.text, 'D')
+            self.assertEqual(tester.extern, ExternEnum.THREE)
 
             with transaction.atomic():
                 tester.text = 'not valid'
@@ -2132,6 +2295,9 @@ if ENUM_PROPERTIES_INSTALLED:
             for alias in TextEnum.VALUE2.aliases:
                 self.assertEqual(self.MODEL_CLASS.objects.filter(text=alias).count(), 2)
 
+            self.assertEqual(self.MODEL_CLASS.objects.filter(extern='One').count(), 2)
+            self.assertEqual(self.MODEL_CLASS.objects.filter(extern='Two').count(), 0)
+
             self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, int_field='a')
             self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, float_field='a')
             self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, constant='p')
@@ -2197,6 +2363,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_int': 'VAL2',
                 'constant': 'φ',
                 'text': 'V TWo',
+                'extern': 'One',
                 'dj_int_enum': 3,
                 'dj_text_enum': self.DJTextEnum.A,
                 'non_strict_int': 15,
@@ -2232,6 +2399,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_int': self.BigPosIntEnum.VAL2,
                 'constant': 'π',
                 'text': 'none',
+                'extern': 'three',
                 'dj_int_enum': 2,
                 'dj_text_enum': 'B',
                 'non_strict_int': 1,
@@ -2254,6 +2422,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_int': self.BigIntEnum.VAL2,
                 'constant': self.Constants.GOLDEN_RATIO,
                 'text': self.TextEnum.VALUE2,
+                'extern': self.ExternEnum.TWO,
                 'dj_int_enum': self.DJIntEnum.TWO,
                 'dj_text_enum': self.DJTextEnum.C,
                 'non_strict_int': self.SmallPosIntEnum.VAL1,
@@ -2272,6 +2441,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_int': self.BigPosIntEnum.VAL2,
                 'constant': 'φ',
                 'text': 'v two',
+                'extern': 'two',
                 'dj_int_enum': self.DJIntEnum.TWO,
                 'dj_text_enum': self.DJTextEnum.C,
                 'non_strict_int': 150,
@@ -2290,6 +2460,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_int': ['value', 'name', 'label', 'pos'],
                 'constant': ['value', 'name', 'label', 'symbol'],
                 'text': ['value', 'name', 'label', 'aliases'],
+                'extern': ['value', 'name', 'label'],
                 'dj_int_enum': ['value'],
                 'dj_text_enum': ['value'],
                 'non_strict_int': ['value', 'name', 'label'],
@@ -3152,7 +3323,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_pos_int': 'Value 2147483648',
                 'big_int': 'VAL2',
                 'constant': 'φ',
-                'text': 'V TWo'
+                'text': 'V TWo',
+                'extern': 'two'
             }
 
         @property
@@ -3166,11 +3338,12 @@ if ENUM_PROPERTIES_INSTALLED:
                 'big_int': 'VAL2',
                 'constant': 'φ',
                 'text': 'V TWo',
+                'extern': 'two',
                 'dj_int_enum': 3,
                 'dj_text_enum': self.DJTextEnum.A,
                 'non_strict_int': 75,
                 'non_strict_text':  'arbitrary',
-                'no_coerce': SmallPosIntEnum.VAL2
+                'no_coerce': self.SmallPosIntEnum.VAL2
             }
 
         def test_values(self):
@@ -3186,6 +3359,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(values1['big_int'], 'VAL2')
             self.assertEqual(values1['constant'], 'φ')
             self.assertEqual(values1['text'], 'V TWo')
+            self.assertEqual(values1['extern'], 'Two')
 
             for field in [
                 'small_pos_int',
@@ -3600,3 +3774,4 @@ if ENUM_PROPERTIES_INSTALLED:
 
 else:  # pragma: no cover
     pass
+

@@ -1,10 +1,17 @@
 """Enumeration support for django model forms"""
+from enum import Enum
 from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
-from django.forms.fields import TypedChoiceField, TypedMultipleChoiceField
+from django.forms.fields import (
+    Field,
+    TypedChoiceField,
+    TypedMultipleChoiceField,
+)
 from django.forms.widgets import Select, SelectMultiple
+from django_enum.choices import choices as get_choices
+from django_enum.choices import values
 
 __all__ = [
     'NonStrictSelect',
@@ -86,7 +93,7 @@ class ChoiceFieldMixin:
     :param kwargs: Any additional parameters to pass to ChoiceField base class.
     """
 
-    enum_: Optional[Type[Choices]] = None
+    enum_: Optional[Type[Enum]] = None
     strict_: bool = True
     empty_value: Any = ''
     empty_values: List[Any]
@@ -139,11 +146,7 @@ class ChoiceFieldMixin:
     @enum.setter
     def enum(self, enum):
         self.enum_ = enum
-        self.choices = self.choices or getattr(
-            self.enum,
-            'choices',
-            self.choices
-        )
+        self.choices = self.choices or get_choices(self.enum)
         # remove any of our valid enumeration values or symmetric properties
         # from our empty value list if there exists an equivalency
         for empty in self.empty_values:
@@ -166,7 +169,7 @@ class ChoiceFieldMixin:
 
     def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
-        return type(self.enum.values[0])(value)
+        return type(values(self.enum)[0])(value)
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""
@@ -191,7 +194,7 @@ class ChoiceFieldMixin:
 
     def coerce(  # pylint: disable=E0202
             self, value: Any
-    ) -> Union[Choices, Any]:
+    ) -> Union[Enum, Any]:
         """
         Attempt conversion of value to an enumeration value and return it
         if successful.
@@ -217,16 +220,19 @@ class ChoiceFieldMixin:
                 try:
                     value = self._coerce_to_value_type(value)
                     value = self.enum(value)
-                except (TypeError, ValueError) as err:
-                    if self.strict or not isinstance(
-                        value,
-                        type(self.enum.values[0])
-                    ):
-                        raise ValidationError(
-                            f'{value} is not a valid {self.enum}.',
-                            code='invalid_choice',
-                            params={'value': value},
-                        ) from err
+                except (TypeError, ValueError):
+                    try:
+                        value = self.enum[value]
+                    except KeyError as err:
+                        if self.strict or not isinstance(
+                            value,
+                            type(values(self.enum)[0])
+                        ):
+                            raise ValidationError(
+                                f'{value} is not a valid {self.enum}.',
+                                code='invalid_choice',
+                                params={'value': value},
+                            ) from err
         return value
 
 
@@ -276,3 +282,27 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
             choices=choices,
             **kwargs
         )
+
+    def to_python(self, value: Any) -> Union[Enum, Any]:
+        """Return the value as its full enumeration object"""
+        return self._coerce(value)
+
+    def valid_value(self, value: Any) -> bool:
+        """Return false if this value is not valid"""
+        try:
+            self._coerce(value)
+            return True
+        except ValidationError:
+            return False
+
+    def validate(self, value):
+        """Validate that the input is in self.choices."""
+        # there is a bug in choice field where it passes 0 values, we skip over
+        # its implementation and call the parent class's validate
+        Field.validate(self, value)
+        if value not in self.empty_values and not self.valid_value(value):
+            raise ValidationError(
+                self.error_messages['invalid_choice'],
+                code='invalid_choice',
+                params={'value': value},
+            )
