@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django_enum.tests.djenum.models import EnumTester, AdminDisplayBug35
+from django_enum.tests.djenum.models import AdminDisplayBug35, EnumTester
 
 admin.site.register(EnumTester)
 
