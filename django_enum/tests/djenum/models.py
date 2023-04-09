@@ -114,3 +114,19 @@ class BadDefault(models.Model):
         default=5,
         blank=True
     )
+
+
+class AdminDisplayBug35(models.Model):
+
+    text_enum = EnumField(
+        DJTextEnum,
+        null=True,
+        default=None
+    )
+
+    int_enum = EnumField(
+        DJIntEnum,
+        null=True,
+        default=None
+    )
+

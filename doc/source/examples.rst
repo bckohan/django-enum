@@ -21,7 +21,7 @@ versioned and that when used as a parameter in the mapbox API they are in a URI
 format that is overly verbose for a human friendly user interface.
 
 Each mapbox style enumeration is therefore composed of 4 primary properties. A
-name slug used in the URI, a human friendly label for the style, a version
+a human friendly label for the style, a name slug used in the URI, a version
 number for the style and the full URI specification of the style. We might
 implement our style enumeration like so:
 
@@ -36,23 +36,22 @@ implement our style enumeration like so:
         class MapBoxStyle(
             IntegerChoices,
             s('slug', case_fold=True),
-            s('label', case_fold=True),
             p('version')
         ):
             """
             https://docs.mapbox.com/api/maps/styles/
             """
-            _symmetric_builtins_ = ['name', 'uri']
+            _symmetric_builtins_ = ['name', 'uri', 'label']
 
-            # name             value    slug                 label           version
-            STREETS           =  1,   'streets',           'Streets',           11
-            OUTDOORS          =  2,   'outdoors',          'Outdoors',          11
-            LIGHT             =  3,   'light',             'Light',             10
-            DARK              =  4,   'dark',              'Dark',              10
-            SATELLITE         =  5,   'satellite',         'Satellite',          9
-            SATELLITE_STREETS =  6,   'satellite-streets', 'Satellite Streets', 11
-            NAVIGATION_DAY    =  7,   'navigation-day',    'Navigation Day',     1
-            NAVIGATION_NIGHT  =  8,   'navigation-night',  'Navigation Night',   1
+            # name             value    label                 slug         version
+            STREETS           =  1,   'Streets',            'streets',           11
+            OUTDOORS          =  2,   'Outdoors',           'outdoors',          11
+            LIGHT             =  3,   'Light',              'light',             10
+            DARK              =  4,   'Dark',               'dark',              10
+            SATELLITE         =  5,   'Satellite',          'satellite',          9
+            SATELLITE_STREETS =  6,   'Satellite Streets',  'satellite-streets', 11
+            NAVIGATION_DAY    =  7,   'Navigation Day',     'navigation-day',     1
+            NAVIGATION_NIGHT  =  8,   'Navigation Night',   'navigation-night',   1
 
             @property
             def uri(self):
@@ -65,8 +64,10 @@ implement our style enumeration like so:
 
 
 We've used a small integer as the value of the enumeration to save storage
-space. We've also added a symmetric case insensitive slug and human friendly
-label for each style and a non-symmetric version property.
+space. We've also added a symmetric case insensitive slug and a non-symmetric
+version property. We do not need to specify the label property because we're
+inheriting from Django's Choices type which provides a ``label`` property as
+the second element in the value tuple.
 
 The version numbers will increment over time, but we're only concerned with the
 most recent versions, so we'll increment their values in this enumeration as

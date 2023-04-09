@@ -47,7 +47,7 @@ __all__ = [
     'EnumFilter'
 ]
 
-VERSION = (1, 2, 0)
+VERSION = (1, 2, 1)
 
 __title__ = 'Django Enum'
 __version__ = '.'.join(str(i) for i in VERSION)
