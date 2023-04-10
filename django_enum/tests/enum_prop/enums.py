@@ -1,7 +1,5 @@
 try:
 
-    from enum import KEEP
-
     from django.db.models import IntegerChoices as DjangoIntegerChoices
     from django.db.models import TextChoices as DjangoTextChoices
     from django.utils.translation import gettext as _
