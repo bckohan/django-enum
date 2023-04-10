@@ -235,6 +235,18 @@ class ChoiceFieldMixin:
                             ) from err
         return value
 
+    def validate(self, value):
+        """Validate that the input is in self.choices."""
+        # there is a bug in choice field where it passes 0 values, we skip over
+        # its implementation and call the parent class's validate
+        Field.validate(self, value)
+        if value not in self.empty_values and not self.valid_value(value):
+            raise ValidationError(
+                self.error_messages['invalid_choice'],  # type: ignore
+                code='invalid_choice',
+                params={'value': value},
+            )
+
 
 class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):
     """
@@ -282,27 +294,3 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
             choices=choices,
             **kwargs
         )
-
-    def to_python(self, value: Any) -> Union[Enum, Any]:
-        """Return the value as its full enumeration object"""
-        return self._coerce(value)
-
-    def valid_value(self, value: Any) -> bool:
-        """Return false if this value is not valid"""
-        try:
-            self._coerce(value)
-            return True
-        except ValidationError:
-            return False
-
-    def validate(self, value):
-        """Validate that the input is in self.choices."""
-        # there is a bug in choice field where it passes 0 values, we skip over
-        # its implementation and call the parent class's validate
-        Field.validate(self, value)
-        if value not in self.empty_values and not self.valid_value(value):
-            raise ValidationError(
-                self.error_messages['invalid_choice'],
-                code='invalid_choice',
-                params={'value': value},
-            )

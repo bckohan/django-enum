@@ -147,15 +147,12 @@ try:
         DecomposeMixin,
         DjangoSymmetricMixin,
         IntFlag,
-        Choices,
         metaclass=DjangoEnumPropertiesMeta
     ):
         """
         An integer flag enumeration type that accepts enum-properties property
         lists.
         """
-        def __str__(self):
-            return str(self.value)
 
 
 except (ImportError, ModuleNotFoundError):
