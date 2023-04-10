@@ -48,6 +48,7 @@ was to:
 * Integrate as fully as possible with Django_'s existing level of enum support.
 * Integrate with `enum-properties <https://pypi.org/project/enum-properties/>`_ to enable richer enumeration types.
 * Represent enum fields with the smallest possible column type.
+* Provide full bitfield functionality using standard Python Flag enumerations.
 * Be as simple and light-weight an extension to core Django as possible.
 
 `django-enum <https://django-enum.readthedocs.io/en/latest/>`_ works in concert
