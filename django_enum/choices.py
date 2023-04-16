@@ -12,7 +12,9 @@ from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
 
 try:  # pragma: no cover
-    from enum import KEEP  # pylint: disable=C0412
+    from enum import (  # type: ignore # pylint: disable=C0412
+        KEEP
+    )
 except ImportError:  # pragma: no cover
     KEEP = None
 
