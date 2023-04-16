@@ -11,6 +11,11 @@ from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
 
+try:  # pragma: no cover
+    from enum import KEEP  # pylint: disable=C0412
+except ImportError:  # pragma: no cover
+    KEEP = None
+
 
 def choices(enum: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
     """
@@ -141,12 +146,6 @@ try:
         property lists.
         """
 
-    try:  # pragma: no cover
-        from enum import KEEP  # pylint: disable=C0412
-        boundary = {'boundary': KEEP}
-    except ImportError:  # pragma: no cover
-        boundary = {}
-
     # mult inheritance type hint bug
     class FlagChoices(  # type: ignore
         DecomposeMixin,
@@ -156,7 +155,7 @@ try:
         metaclass=DjangoEnumPropertiesMeta,
         # default boundary argument gets lost in the inheritance when choices
         # is included if it is not explicitly specified
-        **boundary
+        **({'boundary': KEEP} if KEEP is not None else {})
     ):
         """
         An integer flag enumeration type that accepts enum-properties property
