@@ -10,7 +10,7 @@ jobs:
       DATABASE: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_USER: postgres
-      POSTGRES_HOST: postgres
+      POSTGRES_HOST: localhost
       POSTGRES_PORT: 5432
     strategy:
       matrix:
