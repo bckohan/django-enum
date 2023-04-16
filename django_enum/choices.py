@@ -4,7 +4,6 @@ types. These choices types are drop in replacements for the Django
 IntegerChoices and TextChoices.
 """
 from enum import Enum, IntFlag
-from sys import version_info
 from typing import Any, List, Optional, Tuple, Type
 
 from django.db.models import Choices
@@ -142,10 +141,11 @@ try:
         property lists.
         """
 
-    boundary = {}
-    if version_info >= (3, 11):  # pragma: no cover
+    try:  # pragma: no cover
         from enum import KEEP  # pylint: disable=C0412
         boundary = {'boundary': KEEP}
+    except ImportError:  # pragma: no cover
+        boundary = {}
 
     # mult inheritance type hint bug
     class FlagChoices(  # type: ignore
