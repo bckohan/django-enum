@@ -2120,9 +2120,14 @@ if ENUM_PROPERTIES_INSTALLED:
                     "empty_value set."
                 )
 
+            # version 1.5.0 of enum_properties changed the default symmetricity
+            # of none values.
+            from enum_properties import VERSION
+            match_none = {} if VERSION < (1, 5, 0) else {'match_none': True}
+            
             class EmptyEqEnum2(
                 TextChoices,
-                s('prop', case_fold=True, match_none=True)
+                s('prop', case_fold=True, **match_none)
             ):
 
                 A = 'A', [None, '', ()]
