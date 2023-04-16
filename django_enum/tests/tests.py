@@ -2120,7 +2120,10 @@ if ENUM_PROPERTIES_INSTALLED:
                     "empty_value set."
                 )
 
-            class EmptyEqEnum2(TextChoices, s('prop', case_fold=True)):
+            class EmptyEqEnum2(
+                TextChoices,
+                s('prop', case_fold=True, match_none=True)
+            ):
 
                 A = 'A', [None, '', ()]
                 B = 'B', 'ok'
