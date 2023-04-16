@@ -1,5 +1,5 @@
-from pathlib import Path
 import os
+from pathlib import Path
 
 SECRET_KEY = 'psst'
 SITE_ID = 1
