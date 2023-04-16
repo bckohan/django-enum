@@ -15,14 +15,14 @@ jobs:
     strategy:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
-        postgres-version: ['10', 'latest']
+        postgres-version: ['12', 'latest']
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
           - 'Django~=4.1.0' # December 2023
           - 'Django~=4.2.0' # LTS April 2026
         exclude:
-          - postgres-version: '10'
+          - postgres-version: '12'
             psycopg-version: 'psycopg3'
           - django-version: 'Django~=4.1.0'
             psycopg-version: 'psycopg3'
@@ -33,9 +33,9 @@ jobs:
           - django-version: 'Django~=3.2.0'
             postgres-version: 'latest'
           - django-version: 'Django~=4.1.0'
-            postgres-version: '10'
+            postgres-version: '12'
           - django-version: 'Django~=4.2.0'
-            postgres-version: '10'
+            postgres-version: '12'
           - python-version: '3.7'
             django-version: 'Django~=4.2.0'
           - python-version: '3.11'
