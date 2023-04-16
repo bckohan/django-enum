@@ -149,9 +149,18 @@ class EnumMixin(
                             type(values(self.enum)[0])
                         ):
                             raise ValueError(
-                                f"'{value}' is not a valid {self.enum.__name__} "
-                                f"required by field {self.name}."
+                                f"'{value}' is not a valid "
+                                f"{self.enum.__name__} required by field "
+                                f"{self.name}."
                             ) from err
+        elif not self.coerce:
+            try:
+                return self._coerce_to_value_type(value)
+            except (TypeError, ValueError) as err:
+                raise ValueError(
+                    f"'{value}' is not a valid {type(values(self.enum)[0])} "
+                    f"required by field {self.name}."
+                ) from err
         return value
 
     def deconstruct(self) -> Tuple[str, str, List, dict]:
