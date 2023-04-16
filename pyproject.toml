@@ -68,7 +68,19 @@ importlib-metadata = [
     { version = "<5.0", markers = "python_version <= '3.7'" },
     { version = ">=5.0", markers = "python_version > '3.7'" },
 ]
-psycopg2 = "^2.9.5"
+
+[tool.poetry.group.psycopg2]
+optional = true
+
+[tool.poetry.group.psycopg3]
+optional = true
+
+[tool.poetry.group.psycopg2.dependencies]
+psycopg2 = "^2.5.4"
+
+[tool.poetry.group.psycopg3.dependencies]
+psycopg = "^3.1.8"
+
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

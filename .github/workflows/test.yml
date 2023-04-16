@@ -6,24 +6,58 @@ jobs:
   core-test:
     runs-on: ubuntu-latest
     # Service containers to run with `container-job`
+    env:
+      DATABASE: postgres
     strategy:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        postgres-version: ['9.6', 'latest']
+        psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
           - 'Django~=4.1.0' # December 2023
           - 'Django~=4.2.0' # LTS April 2026
         exclude:
+          - postgres-version: '9.6'
+            psycopg-version: 'psycopg3'
+          - django-version: 'Django~=4.1.0'
+            psycopg-version: 'psycopg3'
+          - django-version: 'Django~=3.2.0'
+            psycopg-version: 'psycopg3'
           - python-version: '3.7'
             django-version: 'Django~=4.1.0'
+          - django-version: 'Django~=3.2.0'
+            postgres-version: 'latest'
+          - django-version: 'Django~=4.1.0'
+            postgres-version: '9.6'
+          - django-version: 'Django~=4.2.0'
+            postgres-version: '9.6'
           - python-version: '3.7'
             django-version: 'Django~=4.2.0'
           - python-version: '3.11'
             django-version: 'Django~=3.2.0'
 
+    # Service containers to run with `runner-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres:${{ matrix.postgres-version }}
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
+
     steps:
     - uses: actions/checkout@v3
-    - uses: actions/setup-node@v3
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
@@ -38,7 +72,7 @@ jobs:
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install --upgrade pip
-        poetry install
+        poetry install --with ${{ matrix.psycopg-version }}
         poetry run pip install -U "${{ matrix.django-version }}"
     - name: No Optional Dependency Unit Tests
       run: |
@@ -84,8 +118,8 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
-
-#  postgres-min:
+#
+#  sqlite:
 #
 #    runs-on: ubuntu-latest
 #    # Service containers to run with `container-job`
@@ -104,24 +138,7 @@ jobs:
 #            django-version: 'Django~=4.2.0'
 #            postgres-version: 'latest'
 #
-#    # Service containers to run with `runner-job`
-#    services:
-#      # Label used to access the service container
-#      postgres:
-#        # Docker Hub image
-#        image: postgres:${{ matrix.postgres-version }}
-#        # Provide the password for postgres
-#        env:
-#          POSTGRES_PASSWORD: postgres
-#        # Set health checks to wait until postgres has started
-#        options: >-
-#          --health-cmd pg_isready
-#          --health-interval 10s
-#          --health-timeout 5s
-#          --health-retries 5
-#        ports:
-#          # Maps tcp port 5432 on service container to the host
-#          - 5432:5432
+#
 #
 #    steps:
 #      - uses: actions/checkout@v2

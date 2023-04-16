@@ -147,6 +147,8 @@ try:
         DecomposeMixin,
         DjangoSymmetricMixin,
         IntFlag,
+        # Choices, todo adding this creates a bug, leaving it out creates a
+        #  different one on 4.2
         metaclass=DjangoEnumPropertiesMeta
     ):
         """

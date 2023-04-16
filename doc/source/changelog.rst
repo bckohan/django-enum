@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+v1.3.0
+======
+
+* Fixed `When coerce is false, to_python does not convert to the Enum's primitive type <https://github.com/bckohan/django-enum/issues/39>`_
+
+
 v1.2.1
 ======
 

@@ -1,30 +1,40 @@
 from pathlib import Path
+import os
 
 SECRET_KEY = 'psst'
 SITE_ID = 1
 USE_TZ = False
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'test.db',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
-    }
-}
+database = os.environ.get('DATABASE', 'postgres')
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql',
-#         'NAME': 'django_enum_test',
-#         'USER': 'postgres',
-#         'PASSWORD': '',
-#         'HOST': '',
-#         'PORT': '',
-#     }
-# }
+if database == 'sqlite':  # pragma: no cover
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': 'test.db',
+            'USER': '',
+            'PASSWORD': '',
+            'HOST': '',
+            'PORT': '',
+        }
+    }
+elif database == 'postgres':  # pragma: no cover
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': 'postgres',
+            'USER': 'postgres',
+            'PASSWORD': os.environ.get('POSTGRES_PASSWORD', ''),
+            'HOST': '',
+            'PORT': '',
+        }
+    }
+# elif database == 'mysql':  # pragma: no cover
+#     pass
+# elif database == 'mariadb':  # pragma: no cover
+#     pass
+# elif database == 'oracle':  # pragma: no cover
+#     pass
 
 ROOT_URLCONF = 'django_enum.tests.urls'
 

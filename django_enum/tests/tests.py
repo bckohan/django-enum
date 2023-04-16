@@ -3174,13 +3174,13 @@ if ENUM_PROPERTIES_INSTALLED:
             MigrationTesterNew.objects.filter(color='B').update(int_enum='C')
 
             self.assertEqual(
-                MigrationTesterNew.objects.filter(int_enum=0).count(), 0)
+                MigrationTesterNew.objects.filter(int_enum='0').count(), 0)
             self.assertEqual(
-                MigrationTesterNew.objects.filter(int_enum=1).count(), 0)
+                MigrationTesterNew.objects.filter(int_enum='1').count(), 0)
             self.assertEqual(
-                MigrationTesterNew.objects.filter(int_enum=2).count(), 0)
+                MigrationTesterNew.objects.filter(int_enum='2').count(), 0)
             self.assertEqual(
-                MigrationTesterNew.objects.filter(int_enum=3).count(), 0)
+                MigrationTesterNew.objects.filter(int_enum='3').count(), 0)
 
             self.assertEqual(
                 MigrationTesterNew.objects.filter(int_enum='A').count(), 1)
