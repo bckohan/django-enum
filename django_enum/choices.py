@@ -10,6 +10,7 @@ from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
+from sys import version_info
 
 
 def choices(enum: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
@@ -141,15 +142,21 @@ try:
         property lists.
         """
 
+    boundary = {}
+    if version_info >= (3, 11):  # pragma: no cover
+        from enum import KEEP
+        boundary = {'boundary': KEEP}
 
     # mult inheritance type hint bug
     class FlagChoices(  # type: ignore
         DecomposeMixin,
         DjangoSymmetricMixin,
         IntFlag,
-        # Choices, todo adding this creates a bug, leaving it out creates a
-        #  different one on 4.2
-        metaclass=DjangoEnumPropertiesMeta
+        Choices,
+        metaclass=DjangoEnumPropertiesMeta,
+        # default boundary argument gets lost in the inheritance when choices
+        # is included if it is not explicitly specified
+        **boundary
     ):
         """
         An integer flag enumeration type that accepts enum-properties property
