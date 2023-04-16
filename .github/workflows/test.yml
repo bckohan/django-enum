@@ -8,6 +8,7 @@ jobs:
     # Service containers to run with `container-job`
     env:
       DATABASE: postgres
+      POSTGRES_PASSWORD: postgres
     strategy:
       matrix:
         python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
@@ -43,9 +44,9 @@ jobs:
       postgres:
         # Docker Hub image
         image: postgres:${{ matrix.postgres-version }}
-#        # Provide the password for postgres
-#        env:
-#          POSTGRES_PASSWORD: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
         # Set health checks to wait until postgres has started
         options: >-
           --health-cmd pg_isready
