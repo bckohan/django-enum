@@ -81,6 +81,9 @@ psycopg2 = "^2.5.4"
 [tool.poetry.group.psycopg3.dependencies]
 psycopg = "^3.1.8"
 
+[tool.poetry.group.mysql.dependencies]
+mysqlclient = "^1.4.0"
+PyMySQL = "^1.0.0"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

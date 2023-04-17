@@ -29,8 +29,19 @@ elif database == 'postgres':  # pragma: no cover
             'PORT': os.environ.get('POSTGRES_PORT', ''),
         }
     }
-# elif database == 'mysql':  # pragma: no cover
-#     pass
+elif database == 'mysql':  # pragma: no cover
+    import pymysql
+    pymysql.install_as_MySQLdb()
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            'NAME': os.environ.get('MYSQL_DB', 'test'),
+            'USER': os.environ.get('MYSQL_USER', 'root'),
+            'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
+            'HOST': os.environ.get('MYSQL_HOST', ''),
+            'PORT': os.environ.get('MYSQL_PORT', ''),
+        }
+    }
 # elif database == 'mariadb':  # pragma: no cover
 #     pass
 # elif database == 'oracle':  # pragma: no cover
