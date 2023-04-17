@@ -126,50 +126,43 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         file: ./coverage.xml
-#
-#  sqlite:
-#
-#    runs-on: ubuntu-latest
-#    # Service containers to run with `container-job`
-#    strategy:
-#      matrix:
-#        python-version: [ '3.7', '3.11']
-#        django-version:
-#          - 'Django~=3.2.0' # LTS April 2024
-#          - 'Django~=4.2.0' # LTS April 2026
-#        postgres-version: ['10', 'latest']
-#        exclude:
-#          - python-version: '3.7'
-#            django-version: 'Django~=4.2.0'
-#            postgres-version: '10'
-#          - python-version: '3.7'
-#            django-version: 'Django~=4.2.0'
-#            postgres-version: 'latest'
-#
-#
-#
-#    steps:
-#      - uses: actions/checkout@v2
-#      - uses: actions/setup-node@v2
-#      - name: Set up Python ${{ matrix.python-version }}
-#        uses: actions/setup-python@v2
-#        with:
-#          python-version: ${{ matrix.python-version }}
-#
-#      - name: Install Poetry
-#        uses: snok/install-poetry@v1
-#        with:
-#          virtualenvs-create: true
-#          virtualenvs-in-project: true
-#      - name: Install Basic Dependencies
-#        run: |
-#          poetry config virtualenvs.in-project true
-#          poetry run pip install --upgrade pip
-#          poetry install
-#          poetry run pip install -U "${{ matrix.django-version }}"
-#      - name: Install all deps
-#        run: |
-#          poetry install -E all
-#      - name: Run Full Unit Tests
-#        run: |
-#          poetry run pytest
+
+  sqlite:
+
+    runs-on: ubuntu-latest
+    env:
+      DATABASE: sqlite
+    strategy:
+      matrix:
+        python-version: [ '3.7', '3.11']
+        django-version:
+          - 'Django~=3.2.0' # LTS April 2024
+          - 'Django~=4.2.0' # LTS April 2026
+        exclude:
+          - python-version: '3.7'
+            django-version: 'Django~=4.2.0'
+          - python-version: '3.11'
+            django-version: 'Django~=3.2.0'
+
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v2
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          virtualenvs-create: true
+          virtualenvs-in-project: true
+      - name: Install Dependencies
+        run: |
+          poetry config virtualenvs.in-project true
+          poetry run pip install --upgrade pip
+          poetry install -E all
+          poetry run pip install -U "${{ matrix.django-version }}"
+      - name: Run Full Unit Tests
+        run: |
+          poetry run pytest
