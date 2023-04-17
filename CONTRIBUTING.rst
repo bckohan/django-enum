@@ -119,7 +119,7 @@ containers.
 
 Additional dependency groups will need to be installed for some RDBMS:
 
-.. code-block::bash
+.. code-block::
 
     # for postgres using psycopg3
     poetry install -E all --with psycopg3
