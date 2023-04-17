@@ -3,7 +3,7 @@ Support for symmetrical property enumeration types derived from Django choice
 types. These choices types are drop in replacements for the Django
 IntegerChoices and TextChoices.
 """
-from enum import Enum, IntFlag
+import enum
 from typing import Any, List, Optional, Tuple, Type
 
 from django.db.models import Choices
@@ -11,15 +11,11 @@ from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
 
-try:  # pragma: no cover
-    from enum import (  # type: ignore # pylint: disable=C0412
-        KEEP
-    )
-except ImportError:  # pragma: no cover
-    KEEP = None
+
+DEFAULT_BOUNDARY = getattr(enum, 'KEEP', None)
 
 
-def choices(enum: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
+def choices(enum_cls: Optional[Type[enum.Enum]]) -> List[Tuple[Any, str]]:
     """
     Get the Django choices for an enumeration type. If the enum type has a
     choices attribute, it will be used. Otherwise, the choices will be derived
@@ -29,42 +25,45 @@ def choices(enum: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
     This is used for compat with enums that do not inherit from Django's
     Choices type.
 
-    :param enum: The enumeration type
+    :param enum_cls: The enumeration type
     :return: A list of (value, label) pairs
     """
     return getattr(
-        enum,
+        enum_cls,
         'choices', [
-            *([(None, enum.__empty__)] if hasattr(enum, '__empty__') else []),
+            *(
+                [(None, enum_cls.__empty__)]
+                if hasattr(enum_cls, '__empty__') else []
+            ),
             *[
                 (
                     member.value,
                     getattr(member, 'label', getattr(member, 'name'))
                 )
-                for member in enum
+                for member in enum_cls
             ]
         ]
-    ) if enum else []
+    ) if enum_cls else []
 
 
-def names(enum: Optional[Type[Enum]]) -> List[Any]:
+def names(enum_cls: Optional[Type[enum.Enum]]) -> List[Any]:
     """
     Return a list of names to use for the enumeration type. This is used
     for compat with enums that do not inherit from Django's Choices type.
 
-    :param enum: The enumeration type
+    :param enum_cls: The enumeration type
     :return: A list of labels
     """
     return getattr(
-        enum,
+        enum_cls,
         'names', [
-            *(['__empty__'] if hasattr(enum, '__empty__') else []),
-            *[member.name for member in enum]
+            *(['__empty__'] if hasattr(enum_cls, '__empty__') else []),
+            *[member.name for member in enum_cls]
         ]
-    ) if enum else []
+    ) if enum_cls else []
 
 
-def labels(enum: Optional[Type[Enum]]) -> List[Any]:
+def labels(enum_cls: Optional[Type[enum.Enum]]) -> List[Any]:
     """
     Return a list of labels to use for the enumeration type. See choices.
 
@@ -74,20 +73,28 @@ def labels(enum: Optional[Type[Enum]]) -> List[Any]:
     :param enum: The enumeration type
     :return: A list of labels
     """
-    return getattr(enum, 'labels', [label for _, label in choices(enum)])
+    return getattr(
+        enum_cls,
+        'labels',
+        [label for _, label in choices(enum_cls)]
+    )
 
 
-def values(enum: Optional[Type[Enum]]) -> List[Any]:
+def values(enum_cls: Optional[Type[enum.Enum]]) -> List[Any]:
     """
     Return a list of the values of an enumeration type.
 
     This is used for compat with enums that do not inherit from Django's
     Choices type.
 
-    :param enum: The enumeration type
+    :param enum_cls: The enumeration type
     :return: A list of values
     """
-    return getattr(enum, 'values', [value for value, _ in choices(enum)])
+    return getattr(
+        enum_cls,
+        'values',
+        [value for value, _ in choices(enum_cls)]
+    )
 
 
 try:
@@ -152,12 +159,16 @@ try:
     class FlagChoices(  # type: ignore
         DecomposeMixin,
         DjangoSymmetricMixin,
-        IntFlag,
+        enum.IntFlag,
         Choices,
         metaclass=DjangoEnumPropertiesMeta,
         # default boundary argument gets lost in the inheritance when choices
         # is included if it is not explicitly specified
-        **({'boundary': KEEP} if KEEP is not None else {})
+        **(
+            {'boundary': DEFAULT_BOUNDARY}
+            if DEFAULT_BOUNDARY is not None
+            else {}
+        )
     ):
         """
         An integer flag enumeration type that accepts enum-properties property
@@ -168,7 +179,7 @@ try:
 except (ImportError, ModuleNotFoundError):
 
     # 3.11 - extend from Enum so base type check does not throw type error
-    class MissingEnumProperties(Enum):
+    class MissingEnumProperties(enum.Enum):
         """Throw error if choice types are used without enum-properties"""
 
         def __init__(self, *args, **kwargs):  # pylint: disable=W0231
@@ -216,7 +227,7 @@ except (ImportError, ModuleNotFoundError):
 
     class FlagChoices(  # type: ignore
         DjangoSymmetricMixin,
-        IntFlag,
+        enum.IntFlag,
         Choices
     ):
         """Raises ImportError on class definition"""
