@@ -69,12 +69,6 @@ importlib-metadata = [
     { version = ">=5.0", markers = "python_version > '3.7'" },
 ]
 
-[tool.poetry.group.psycopg2]
-optional = true
-
-[tool.poetry.group.psycopg3]
-optional = true
-
 [tool.poetry.group.psycopg2.dependencies]
 psycopg2 = "^2.5.4"
 
@@ -83,6 +77,9 @@ psycopg = "^3.1.8"
 
 [tool.poetry.group.mysql.dependencies]
 mysqlclient = ">=1.4.0"
+
+[tool.poetry.group.oracle.dependencies]
+cx-Oracle = '>=6.0.0'
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

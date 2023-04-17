@@ -221,12 +221,18 @@ Like with Django, Postgres is the preferred database for support. The full
 test suite and static analysis is run against all combinations of currently
 supported versions of Django, Python, and Postgres as well as psycopg3 and
 psycopg2. The other RDBMS supported by Django are also tested including SQLite,
-MySQL, MariaDB and Oracle. For these RDBMS, tests are run against the minimum
-and maximum supported version combinations to maximize coverage breadth. For
-example, as of the release of Django 4.2.0 the following combinations of
-Python, Django and MySQL are tested:
+MySQL, MariaDB and Oracle. For these RDBMS (with the exception of Oracle),
+tests are run against the minimum and maximum supported version combinations to
+maximize coverage breadth. For example, as of the release of Django 4.2.0 the
+following combinations of Python, Django and MySQL are tested:
 
 .. code::
 
     Python 3.7, Django 3.2, MySQL 5.7, mysqlclient 1.4.0
     Python 3.11, Django 4.2, MySQL 8.0, mysqlclient 2.1.1
+
+.. note::
+
+    For Oracle, only the latest version of the free database is tested against
+    the minimum and maximum supported versions of Python, Django and the
+    cx-Oracle driver.

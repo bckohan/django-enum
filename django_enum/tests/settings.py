@@ -56,10 +56,10 @@ elif database == 'oracle':  # pragma: no cover
         'default': {
             'ENGINE': 'django.db.backends.oracle',
             'NAME': os.environ.get('ORACLE_DATABASE', 'test'),
-            'USER': os.environ.get('ORACLE_USER', 'root'),
-            'PASSWORD': os.environ.get('ORACLE_PASSWORD', ''),
-            'HOST': os.environ.get('ORACLE_HOST', ''),
-            'PORT': os.environ.get('ORACLE_PORT', ''),
+            'USER': os.environ.get('ORACLE_USER', 'system'),
+            'PASSWORD': os.environ.get('ORACLE_PASSWORD', 'password'),
+            'HOST': os.environ.get('ORACLE_HOST', 'localhost'),
+            'PORT': os.environ.get('ORACLE_PORT', 1521),
         }
     }
 
