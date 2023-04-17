@@ -175,18 +175,23 @@ jobs:
       matrix:
         python-version: [ '3.7', '3.11']
         mysql-version: ['5.7', 'latest']
+        mysqlclient-version: ['==1.4.0', '']
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
           - 'Django~=4.2.0' # LTS April 2026
         exclude:
           - python-version: '3.7'
             django-version: 'Django~=4.2.0'
-          - python-version: '3.11'
-            django-version: 'Django~=3.2.0'
           - python-version: '3.7'
             mysql-version: 'latest'
+          - python-version: '3.7'
+            mysqlclient-version: ''
+          - python-version: '3.11'
+            django-version: 'Django~=3.2.0'
           - python-version: '3.11'
             mysql-version: '5.7'
+          - python-version: '3.11'
+            mysqlclient-version: '==1.4.0'
 
     services:
       mysql:
@@ -225,6 +230,7 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
           poetry run pip install -U "${{ matrix.django-version }}"
+          poetry run pip install -U mysqlclient"${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         run: |
           poetry run pytest --cov-fail-under=95
@@ -236,6 +242,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ '3.7', '3.11']
+        mysqlclient-version: ['==1.4.0', '']
         mariadb-version: ['10.2', 'latest']
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
@@ -243,12 +250,16 @@ jobs:
         exclude:
           - python-version: '3.7'
             django-version: 'Django~=4.2.0'
+          - python-version: '3.7'
+            mysql-version: 'latest'
+          - python-version: '3.7'
+            mysqlclient-version: ''
           - python-version: '3.11'
             django-version: 'Django~=3.2.0'
-          - python-version: '3.7'
-            mariadb-version: 'latest'
           - python-version: '3.11'
-            mariadb-version: '10.2'
+            mysql-version: '5.7'
+          - python-version: '3.11'
+            mysqlclient-version: '==1.4.0'
 
     services:
       mysql:
@@ -287,6 +298,7 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
           poetry run pip install -U "${{ matrix.django-version }}"
+          poetry run pip install -U mysqlclient"${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         run: |
           poetry run pytest --cov-fail-under=95

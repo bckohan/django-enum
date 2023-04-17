@@ -30,7 +30,7 @@ management:
 
 .. code-block::
 
-    poetry install -E all
+    poetry install -E all --with psycopg3
 
 Documentation
 -------------
@@ -94,3 +94,41 @@ test_properties_and_symmetry test you would do:
     poetry run pytest django_enum/tests/tests.py::TestDjangoEnums
     poetry run pytest django_enum/tests/tests.py::TestDjangoEnums::test_properties_and_symmetry
 
+
+RDBMS
+-----
+
+By default, the tests will run against postgresql so in order to run the tests
+you will need to have a postgresql server running that is accessible to the
+default postgres user with no password. The test suite can be run against any
+RDBMS supported by Django. Just set the DATABASE environment variable to one
+of:
+
+  * postgres
+  * sqlite
+  * mysql
+  * mariadb
+  * oracle
+
+The settings for each RDBMS can be found in django_enum/tests/settings.py. The
+database settings can be altered via environment variables that are referenced
+therein. The default settings are designed to work out of the box with the
+official docker images for each RDBMS. Reference the github actions workflow
+for an example of how to run the tests against each RDBMS using docker
+containers.
+
+Additional dependency groups will need to be installed for some RDBMS:
+
+.. code-block::bash
+
+    # for postgres using psycopg3
+    poetry install -E all --with psycopg3
+
+    # for postgres using psycopg2
+    poetry install -E all --with psycopg2
+
+    # for mysql or mariadb
+    poetry install -E all --with mysql
+
+    # for oracle
+    poetry install -E all --with oracle
