@@ -30,8 +30,8 @@ elif database == 'postgres':  # pragma: no cover
         }
     }
 elif database == 'mysql':  # pragma: no cover
-    import pymysql
-    pymysql.install_as_MySQLdb()
+    # import pymysql
+    # pymysql.install_as_MySQLdb()
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",

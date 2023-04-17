@@ -134,6 +134,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ '3.7', '3.11']
+        mysqlclient-version: ['^1.0.3']
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
           - 'Django~=4.2.0' # LTS April 2026
