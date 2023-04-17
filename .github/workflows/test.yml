@@ -348,6 +348,12 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
+      - name: Install Oracle Client
+        run: |
+          sudo apt install alien libaio1
+          sudo alien -i oracle-instantclient-basic-21.9.0.0.0-1.el8.x86_64.rpm
+          sudo sh -c  'echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
+          sudo ldconfig
       - name: Install Dependencies
         run: |
           poetry config virtualenvs.in-project true
