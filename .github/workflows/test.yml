@@ -350,8 +350,9 @@ jobs:
           virtualenvs-in-project: true
       - name: Install Oracle Client
         run: |
+          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/219000/oracle-instantclient-basiclite-21.9.0.0.0-1.el8.x86_64.rpm
           sudo apt install alien libaio1
-          sudo alien -i oracle-instantclient-basic-21.9.0.0.0-1.el8.x86_64.rpm
+          sudo alien -i oracle-client.rpm
           sudo sh -c  'echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
           sudo ldconfig
       - name: Install Dependencies
