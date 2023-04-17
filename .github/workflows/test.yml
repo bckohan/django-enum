@@ -171,7 +171,8 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE: mysql
-      MYSQL_PASSWORD: password
+      MYSQL_PASSWORD: root
+      MYSQL_DATABASE: test
       MYSQL_USER: root
       MYSQL_HOST: localhost
       MYSQL_PORT: 3306
@@ -198,7 +199,7 @@ jobs:
         image: mysql:${{ matrix.mysql-version }}
         # Provide the password for mysql
         env:
-          MYSQL_ROOT_PASSWORD: password
+          MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: test
         # Set health checks to wait until mysql has started
         options: >-
