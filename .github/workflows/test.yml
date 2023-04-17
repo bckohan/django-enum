@@ -171,11 +171,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE: mysql
-      MYSQL_PASSWORD: root
-      MYSQL_DATABASE: test
-      MYSQL_USER: root
-      MYSQL_HOST: localhost
-      MYSQL_PORT: 3306
     strategy:
       matrix:
         python-version: [ '3.7', '3.11']
@@ -238,11 +233,6 @@ jobs:
     runs-on: ubuntu-latest
     env:
       DATABASE: mariadb
-      MARIADB_PASSWORD: root
-      MARIADB_DATABASE: test
-      MARIADB_USER: root
-      MARIADB_HOST: localhost
-      MARIADB_PORT: 3306
     strategy:
       matrix:
         python-version: [ '3.7', '3.11']

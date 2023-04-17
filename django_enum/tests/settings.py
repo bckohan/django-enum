@@ -30,16 +30,14 @@ elif database == 'postgres':  # pragma: no cover
         }
     }
 elif database == 'mysql':  # pragma: no cover
-    # import pymysql
-    # pymysql.install_as_MySQLdb()
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
             'NAME': os.environ.get('MYSQL_DATABASE', 'test'),
             'USER': os.environ.get('MYSQL_USER', 'root'),
-            'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
-            'HOST': os.environ.get('MYSQL_HOST', ''),
-            'PORT': os.environ.get('MYSQL_PORT', ''),
+            'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'root'),
+            'HOST': os.environ.get('MYSQL_HOST', '127.0.0.1'),
+            'PORT': os.environ.get('MYSQL_PORT', 3306),
         }
     }
 elif database == 'mariadb':  # pragma: no cover
@@ -48,9 +46,9 @@ elif database == 'mariadb':  # pragma: no cover
             "ENGINE": "django.db.backends.mysql",
             'NAME': os.environ.get('MARIADB_DATABASE', 'test'),
             'USER': os.environ.get('MARIADB_USER', 'root'),
-            'PASSWORD': os.environ.get('MARIADB_PASSWORD', ''),
-            'HOST': os.environ.get('MARIADB_HOST', ''),
-            'PORT': os.environ.get('MARIADB_PORT', ''),
+            'PASSWORD': os.environ.get('MARIADB_PASSWORD', 'root'),
+            'HOST': os.environ.get('MARIADB_HOST', '127.0.0.1'),
+            'PORT': os.environ.get('MARIADB_PORT', 3306),
         }
     }
 elif database == 'oracle':  # pragma: no cover
