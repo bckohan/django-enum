@@ -35,17 +35,35 @@ elif database == 'mysql':  # pragma: no cover
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
-            'NAME': os.environ.get('MYSQL_DB', 'test'),
+            'NAME': os.environ.get('MYSQL_DATABASE', 'test'),
             'USER': os.environ.get('MYSQL_USER', 'root'),
             'PASSWORD': os.environ.get('MYSQL_PASSWORD', ''),
             'HOST': os.environ.get('MYSQL_HOST', ''),
             'PORT': os.environ.get('MYSQL_PORT', ''),
         }
     }
-# elif database == 'mariadb':  # pragma: no cover
-#     pass
-# elif database == 'oracle':  # pragma: no cover
-#     pass
+elif database == 'mariadb':  # pragma: no cover
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.mysql",
+            'NAME': os.environ.get('MARIADB_DATABASE', 'test'),
+            'USER': os.environ.get('MARIADB_USER', 'root'),
+            'PASSWORD': os.environ.get('MARIADB_PASSWORD', ''),
+            'HOST': os.environ.get('MARIADB_HOST', ''),
+            'PORT': os.environ.get('MARIADB_PORT', ''),
+        }
+    }
+elif database == 'oracle':  # pragma: no cover
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.oracle',
+            'NAME': os.environ.get('ORACLE_DATABASE', 'test'),
+            'USER': os.environ.get('ORACLE_USER', 'root'),
+            'PASSWORD': os.environ.get('ORACLE_PASSWORD', ''),
+            'HOST': os.environ.get('ORACLE_HOST', ''),
+            'PORT': os.environ.get('ORACLE_PORT', ''),
+        }
+    }
 
 ROOT_URLCONF = 'django_enum.tests.urls'
 
