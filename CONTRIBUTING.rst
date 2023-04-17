@@ -101,7 +101,7 @@ RDBMS
 By default, the tests will run against postgresql so in order to run the tests
 you will need to have a postgresql server running that is accessible to the
 default postgres user with no password. The test suite can be run against any
-RDBMS supported by Django. Just set the DATABASE environment variable to one
+RDBMS supported by Django. Just set the RDBMS environment variable to one
 of:
 
   * postgres

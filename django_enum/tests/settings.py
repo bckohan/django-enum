@@ -5,9 +5,9 @@ SECRET_KEY = 'psst'
 SITE_ID = 1
 USE_TZ = False
 
-database = os.environ.get('DATABASE', 'postgres')
+rdbms = os.environ.get('RDBMS', 'postgres')
 
-if database == 'sqlite':  # pragma: no cover
+if rdbms == 'sqlite':  # pragma: no cover
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -18,7 +18,7 @@ if database == 'sqlite':  # pragma: no cover
             'PORT': '',
         }
     }
-elif database == 'postgres':  # pragma: no cover
+elif rdbms == 'postgres':  # pragma: no cover
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -29,7 +29,7 @@ elif database == 'postgres':  # pragma: no cover
             'PORT': os.environ.get('POSTGRES_PORT', ''),
         }
     }
-elif database == 'mysql':  # pragma: no cover
+elif rdbms == 'mysql':  # pragma: no cover
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
@@ -40,7 +40,7 @@ elif database == 'mysql':  # pragma: no cover
             'PORT': os.environ.get('MYSQL_PORT', 3306),
         }
     }
-elif database == 'mariadb':  # pragma: no cover
+elif rdbms == 'mariadb':  # pragma: no cover
     DATABASES = {
         "default": {
             "ENGINE": "django.db.backends.mysql",
@@ -51,11 +51,11 @@ elif database == 'mariadb':  # pragma: no cover
             'PORT': os.environ.get('MARIADB_PORT', 3306),
         }
     }
-elif database == 'oracle':  # pragma: no cover
+elif rdbms == 'oracle':  # pragma: no cover
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.oracle',
-            'NAME': os.environ.get('ORACLE_DATABASE', 'test'),
+            'NAME': os.environ.get('ORACLE_DATABASE', 'FREEPDB1'),
             'USER': os.environ.get('ORACLE_USER', 'system'),
             'PASSWORD': os.environ.get('ORACLE_PASSWORD', 'password'),
             'HOST': os.environ.get('ORACLE_HOST', 'localhost'),
