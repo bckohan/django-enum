@@ -55,11 +55,11 @@ elif rdbms == 'oracle':  # pragma: no cover
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.oracle',
-            'NAME': os.environ.get('ORACLE_DATABASE', 'FREEPDB1'),
+            'NAME': f'{os.environ.get("ORACLE_HOST", "localhost")}:'
+                    f'{os.environ.get("ORACLE_PORT", 1521)}/'
+                    f'{os.environ.get("ORACLE_DATABASE", "FREEPDB1")}',
             'USER': os.environ.get('ORACLE_USER', 'system'),
-            'PASSWORD': os.environ.get('ORACLE_PASSWORD', 'password'),
-            'HOST': os.environ.get('ORACLE_HOST', 'localhost'),
-            'PORT': os.environ.get('ORACLE_PORT', 1521),
+            'PASSWORD': os.environ.get('ORACLE_PASSWORD', 'password')
         }
     }
 
