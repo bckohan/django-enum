@@ -165,4 +165,4 @@ jobs:
           poetry run pip install -U "${{ matrix.django-version }}"
       - name: Run Full Unit Tests
         run: |
-          poetry run pytest
+          poetry run pytest --cov-fail-under=95
