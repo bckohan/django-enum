@@ -269,7 +269,9 @@ class EnumMixin(
         See from_db_value_
         """
         value = getattr(super(), 'from_db_value', lambda v: v)(value)
-        if not self.empty_strings_allowed and self.null and value is '':
+        # oracle returns '' for null values sometimes ?? even though empty
+        # strings are converted to nulls in Oracle ??
+        if not self.empty_strings_allowed and self.null and value == '':
             value = None
         try:
             return self._try_coerce(value)
