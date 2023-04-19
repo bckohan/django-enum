@@ -98,19 +98,29 @@ class EnumMixin(
 
     # use properties to disable setters
     @property
-    def enum(self):
+    def enum(self) -> Type[Enum]:
+        """The enumeration type"""
         return self._enum_
 
     @property
-    def strict(self):
+    def strict(self) -> bool:
+        """True if the field requires values to be valid enumeration values"""
         return self._strict_
 
     @property
-    def coerce(self):
+    def coerce(self) -> bool:
+        """
+        False if the field should not coerce values to the enumeration
+        type
+        """
         return self._coerce_
 
     @property
-    def primitive(self):
+    def primitive(self) -> Optional[Type]:
+        """
+        The most appropriate primitive non-Enumeration type that can represent
+        all enumeration values.
+        """
         return self._primitive_
 
     def _coerce_to_value_type(self, value: Any) -> Optional[Enum]:
@@ -258,6 +268,7 @@ class EnumMixin(
 
         See from_db_value_
         """
+        value = getattr(super, 'from_db_value', lambda v: v)(value)
         try:
             return self._try_coerce(value)
         except (ValueError, TypeError):
@@ -673,19 +684,19 @@ def EnumField(  # pylint: disable=C0103
             f'EnumField is unable to determine the primitive type for {enum}. '
             f'consider providing one explicitly using the primitive argument.'
         )
-    else:
-        # make sure all enumeration values are symmetrically coercible to
-        # the primitive, if they are not this could cause some strange behavior
-        for value in values(enum):
-            if value is None:
-                continue
-            try:
-                assert type(value)(primitive(value)) == value
-            except (TypeError, ValueError, AssertionError) as coerce_error:
-                raise ValueError(
-                    f'Not all {enum} values are symmetrically coercible to '
-                    f'primitive type {primitive}'
-                ) from coerce_error
+
+    # make sure all enumeration values are symmetrically coercible to
+    # the primitive, if they are not this could cause some strange behavior
+    for value in values(enum):
+        if value is None:
+            continue
+        try:
+            assert type(value)(primitive(value)) == value
+        except (TypeError, ValueError, AssertionError) as coerce_error:
+            raise ValueError(
+                f'Not all {enum} values are symmetrically coercible to '
+                f'primitive type {primitive}'
+            ) from coerce_error
 
     return _EnumFieldMetaClass(enum, primitive)(
         enum=enum,

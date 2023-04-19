@@ -12,7 +12,6 @@ from django.forms.fields import (
 from django.forms.widgets import Select, SelectMultiple
 from django_enum.choices import choices as get_choices
 
-
 __all__ = [
     'NonStrictSelect',
     'NonStrictSelectMultiple',

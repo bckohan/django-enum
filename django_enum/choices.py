@@ -11,7 +11,6 @@ from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
 
-
 DEFAULT_BOUNDARY = getattr(enum, 'KEEP', None)
 
 

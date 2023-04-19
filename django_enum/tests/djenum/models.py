@@ -1,6 +1,8 @@
+import enum
 from enum import IntFlag
 
 from django.db import models
+from django.db.models import TextChoices
 from django.urls import reverse
 from django_enum import EnumField
 from django_enum.tests.djenum.enums import (
@@ -16,8 +18,6 @@ from django_enum.tests.djenum.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
-from django.db.models import TextChoices
-import enum
 
 
 class EnumTester(models.Model):
