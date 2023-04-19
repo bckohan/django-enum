@@ -33,7 +33,7 @@ class EnumTester(models.Model):
 
     constant = EnumField(Constants, null=True, default=None, db_index=True, blank=True)
 
-    text = EnumField(TextEnum, null=True, default=None, db_index=True, blank=True)
+    text = EnumField(TextEnum, null=True, default=None, db_index=True, blank=False)
 
     extern = EnumField(ExternEnum, null=True, default=None, db_index=True, blank=True)
 
