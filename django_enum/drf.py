@@ -6,7 +6,7 @@ try:
     from enum import Enum
     from typing import Any, Type, Union
 
-    from django_enum.choices import choices, values
+    from django_enum.choices import choices
     from django_enum.fields import determine_primitive
     from rest_framework.fields import ChoiceField
 

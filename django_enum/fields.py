@@ -42,6 +42,60 @@ from django_enum.forms import (
 T = TypeVar('T')  # pylint: disable=C0103
 
 
+def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
+    """
+    Determine the python type most appropriate to represent all values of the
+    enumeration class. The primitive type determination algorithm is thus:
+
+        * Determine the types of all the values in the enumeration
+        * Determine the first supported primitive type in the enumeration class
+          inheritance tree
+        * If there is only one value type, use its type as the primitive
+        * If there are multiple value types and they are all subclasses of
+          the class primitive type, use the class primitive type. If there is
+          no class primitive type use the first supported primitive type that
+          all values are symmetrically coercible to. If there is no such type,
+          return None
+
+    By definition all values of the enumeration with the exception of None
+    may be coerced to the primitive type and vice-versa.
+
+    :param enum: The enumeration class to determine the primitive type for
+    :return: A python type or None if no primitive type could be determined
+    """
+    primitive = None
+    if enum:
+        for prim in enum.__mro__:
+            if primitive:
+                break
+            for supported in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
+                if issubclass(prim, supported):
+                    primitive = supported
+                    break
+        value_types = set()
+        for value in values(enum):
+            if value is not None:
+                value_types.add(type(value))
+
+        value_types = list(value_types)
+        if len(value_types) > 1 and primitive is None:
+            for candidate in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
+                works = True
+                for value in values(enum):
+                    if value is None:
+                        continue
+                    try:
+                        # test symmetric coercibility
+                        works &= type(value)(candidate(value)) == value
+                    except (TypeError, ValueError):
+                        works = False
+                if works:
+                    return candidate
+        elif value_types:
+            return value_types[0]
+    return primitive
+
+
 def with_typehint(baseclass: Type[T]) -> Type[T]:
     """
     Change inheritance to add Field type hints when type checking is running.
@@ -268,7 +322,7 @@ class EnumMixin(
 
         See from_db_value_
         """
-        value = getattr(super, 'from_db_value', lambda v: v)(value)
+        value = getattr(super(), 'from_db_value', lambda v: v)(value)
         try:
             return self._try_coerce(value)
         except (ValueError, TypeError):
@@ -582,60 +636,6 @@ class _EnumFieldMetaClass(type):
             f'EnumField does not support enumerations of primitive type '
             f'{primitive}'
         )
-
-
-def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
-    """
-    Determine the python type most appropriate to represent all values of the
-    enumeration class. The primitive type determination algorithm is thus:
-
-        * Determine the types of all the values in the enumeration
-        * Determine the first supported primitive type in the enumeration class
-          inheritance tree
-        * If there is only one value type, use its type as the primitive
-        * If there are multiple value types and they are all subclasses of
-          the class primitive type, use the class primitive type. If there is
-          no class primitive type use the first supported primitive type that
-          all values are symmetrically coercible to. If there is no such type,
-          return None
-
-    By definition all values of the enumeration with the exception of None
-    may be coerced to the primitive type and vice-versa.
-
-    :param enum: The enumeration class to determine the primitive type for
-    :return: A python type or None if no primitive type could be determined
-    """
-    primitive = None
-    if enum:
-        for prim in enum.__mro__:
-            if primitive:
-                break
-            for supported in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
-                if issubclass(prim, supported):
-                    primitive = supported
-                    break
-        value_types = set()
-        for value in values(enum):
-            if value is not None:
-                value_types.add(type(value))
-
-        value_types = list(value_types)
-        if len(value_types) > 1 and primitive is None:
-            for candidate in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
-                works = True
-                for value in values(enum):
-                    if value is None:
-                        continue
-                    try:
-                        # test symmetric coercibility
-                        works &= type(value)(candidate(value)) == value
-                    except (TypeError, ValueError):
-                        works = False
-                if works:
-                    return candidate
-        elif value_types:
-            return value_types[0]
-    return primitive
 
 
 def EnumField(  # pylint: disable=C0103

@@ -142,6 +142,10 @@ class ChoiceFieldMixin:
 
     @property
     def primitive(self):
+        """
+        The most appropriate primitive non-Enumeration type that can represent
+        all enumeration values.
+        """
         return self._primitive_
 
     @primitive.setter
