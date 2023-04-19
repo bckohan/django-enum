@@ -7,6 +7,7 @@ try:
     from typing import Any, Type, Union
 
     from django_enum.choices import choices, values
+    from django_enum.fields import determine_primitive
     from rest_framework.fields import ChoiceField
 
     class EnumField(ChoiceField):
@@ -25,6 +26,7 @@ try:
         """
 
         enum: Type[Enum]
+        primitive: Type[Any]
         strict: bool = True
 
         def __init__(
@@ -34,6 +36,7 @@ try:
                 **kwargs
         ):
             self.enum = enum
+            self.primitive = determine_primitive(enum)
             self.strict = strict
             self.choices = kwargs.pop('choices', choices(enum))
             super().__init__(choices=self.choices, **kwargs)
@@ -49,14 +52,13 @@ try:
                 try:
                     data = self.enum(data)
                 except (TypeError, ValueError):
+                    if not self.primitive:
+                        raise
                     try:
-                        data = type(values(self.enum)[0])(data)
+                        data = self.primitive(data)
                         data = self.enum(data)
                     except (TypeError, ValueError):
-                        if self.strict or not isinstance(
-                            data,
-                            type(values(self.enum)[0])
-                        ):
+                        if self.strict or not isinstance(data, self.primitive):
                             self.fail('invalid_choice', input=data)
             return data
 

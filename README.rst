@@ -41,12 +41,14 @@ were made obsolete when Django provided ``TextChoices`` and ``IntegerChoices``
 types. The motivation for `django-enum <https://django-enum.readthedocs.io/en/latest/>`_
 was to:
 
+* Work with any Python PEP 435 Enum including those that do or do not derive
+  from Django's TextChoices and IntegerChoices.
 * Always automatically coerce fields to instances of the Enum type.
 * Allow strict adherence to Enum values to be disabled.
-* Be compatible with Enum classes that do not derive from Django's Choices.
 * Handle migrations appropriately. (See `migrations <https://django-enum.readthedocs.io/en/latest/usage.html#migrations>`_)
 * Integrate as fully as possible with Django_'s existing level of enum support.
-* Integrate with `enum-properties <https://pypi.org/project/enum-properties/>`_ to enable richer enumeration types.
+* Integrate with `enum-properties <https://pypi.org/project/enum-properties/>`_
+  to enable richer enumeration types.
 * Represent enum fields with the smallest possible column type.
 * Provide full bitfield functionality using standard Python Flag enumerations.
 * Be as simple and light-weight an extension to core Django as possible.

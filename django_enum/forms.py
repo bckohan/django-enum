@@ -11,7 +11,7 @@ from django.forms.fields import (
 )
 from django.forms.widgets import Select, SelectMultiple
 from django_enum.choices import choices as get_choices
-from django_enum.choices import values
+
 
 __all__ = [
     'NonStrictSelect',
@@ -93,23 +93,26 @@ class ChoiceFieldMixin:
     :param kwargs: Any additional parameters to pass to ChoiceField base class.
     """
 
-    enum_: Optional[Type[Enum]] = None
-    strict_: bool = True
+    _enum_: Optional[Type[Enum]] = None
+    _primitive_: Optional[Type] = None
+    _strict_: bool = True
     empty_value: Any = ''
     empty_values: List[Any]
     choices: Iterable[Tuple[Any, Any]]
 
     def __init__(
             self,
-            enum: Optional[Type[Choices]] = None,
+            enum: Optional[Type[Choices]] = _enum_,
+            primitive: Optional[Type] = _primitive_,
             *,
             empty_value: Any = _Unspecified,
-            strict: bool = strict_,
+            strict: bool = _strict_,
             empty_values: List[Any] = TypedChoiceField.empty_values,
             choices: Iterable[Tuple[Any, str]] = (),
             **kwargs
     ):
-        self.strict = strict
+        self._strict_ = strict
+        self._primitive_ = primitive
         if not self.strict:
             kwargs.setdefault('widget', NonStrictSelect)
 
@@ -132,44 +135,54 @@ class ChoiceFieldMixin:
     @property
     def strict(self):
         """strict fields allow non-enumeration values"""
-        return self.strict_
+        return self._strict_
 
     @strict.setter
     def strict(self, strict):
-        self.strict_ = strict
+        self._strict_ = strict
+
+    @property
+    def primitive(self):
+        return self._primitive_
+
+    @primitive.setter
+    def primitive(self, primitive):
+        self._primitive_ = primitive
 
     @property
     def enum(self):
         """the class of the enumeration"""
-        return self.enum_
+        return self._enum_
 
     @enum.setter
     def enum(self, enum):
-        self.enum_ = enum
+        from django_enum.fields import determine_primitive
+        self._enum_ = enum
+        self._primitive_ = self._primitive_ or determine_primitive(enum)
         self.choices = self.choices or get_choices(self.enum)
         # remove any of our valid enumeration values or symmetric properties
         # from our empty value list if there exists an equivalency
         for empty in self.empty_values:
-            for enum_val in self.enum:
-                if empty == enum_val:
+            for _enum_val in self.enum:
+                if empty == _enum_val:
                     # copy the list instead of modifying the class's
                     self.empty_values = [
                         empty for empty in self.empty_values
-                        if empty != enum_val
+                        if empty != _enum_val
                     ]
                     if empty == self.empty_value:
                         if self.empty_values:
                             self.empty_value = self.empty_values[0]
                         else:
                             raise ValueError(
-                                f'Enumeration value {repr(enum_val)} is'
+                                f'Enumeration value {repr(_enum_val)} is'
                                 f'equivalent to {self.empty_value}, you must '
                                 f'specify a non-conflicting empty_value.'
                             )
 
     def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
-        return type(values(self.enum)[0])(value)
+        return self.primitive(value)
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""
@@ -226,7 +239,7 @@ class ChoiceFieldMixin:
                     except KeyError as err:
                         if self.strict or not isinstance(
                             value,
-                            type(values(self.enum)[0])
+                            self.primitive
                         ):
                             raise ValidationError(
                                 f'{value} is not a valid {self.enum}.',
@@ -278,7 +291,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
             enum: Optional[Type[Choices]] = None,
             *,
             empty_value: Any = _Unspecified,
-            strict: bool = ChoiceFieldMixin.strict_,
+            strict: bool = ChoiceFieldMixin._strict_,
             empty_values: List[Any] = TypedChoiceField.empty_values,
             choices: Iterable[Tuple[Any, str]] = (),
             **kwargs

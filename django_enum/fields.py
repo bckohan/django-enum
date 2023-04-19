@@ -89,34 +89,54 @@ class EnumMixin(
         field type.
     """
 
-    enum: Optional[Type[Enum]] = None
-    strict: bool = True
-    coerce: bool = True
+    _enum_: Optional[Type[Enum]] = None
+    _strict_: bool = True
+    _coerce_: bool = True
+    _primitive_: Any
 
     descriptor_class = ToPythonDeferredAttribute
 
-    def _coerce_to_value_type(self, value: Any) -> Enum:
+    # use properties to disable setters
+    @property
+    def enum(self):
+        return self._enum_
+
+    @property
+    def strict(self):
+        return self._strict_
+
+    @property
+    def coerce(self):
+        return self._coerce_
+
+    @property
+    def primitive(self):
+        return self._primitive_
+
+    def _coerce_to_value_type(self, value: Any) -> Optional[Enum]:
         """Coerce the value to the enumerations value type"""
         # note if enum type is int and a floating point is passed we could get
         # situations like X.xxx == X - this is acceptable
-        if self.enum:
-            return type(values(self.enum)[0])(value)
-        # can't ever reach this - just here to make type checker happy
-        return value  # pragma: no cover
+        if value is not None and self.enum:
+            return self.primitive(value)
+        return value
 
     def __init__(
             self,
             *args,
             enum: Optional[Type[Enum]] = None,
-            strict: bool = strict,
-            coerce: bool = coerce,
+            primitive: Optional[Type] = None,
+            strict: bool = _strict_,
+            coerce: bool = _coerce_,
             **kwargs
     ):
-        self.enum = enum
-        self.strict = strict if enum else False
-        self.coerce = coerce if enum else False
+        self._enum_ = enum
+        self._primitive_ = primitive
+        self._strict_ = strict if enum else False
+        self._coerce_ = coerce if enum else False
         if self.enum is not None:
             kwargs.setdefault('choices', choices(enum))
+
         super().__init__(*args, **kwargs)
 
     def _try_coerce(
@@ -146,7 +166,7 @@ class EnumMixin(
                     except KeyError as err:
                         if self.strict or not isinstance(
                             value,
-                            type(values(self.enum)[0])
+                            self.primitive
                         ):
                             raise ValueError(
                                 f"'{value}' is not a valid "
@@ -158,7 +178,7 @@ class EnumMixin(
                 return self._coerce_to_value_type(value)
             except (TypeError, ValueError) as err:
                 raise ValueError(
-                    f"'{value}' is not a valid {type(values(self.enum)[0])} "
+                    f"'{value}' is not a valid {self.primitive} "
                     f"required by field {self.name}."
                 ) from err
         return value
@@ -331,6 +351,7 @@ class EnumMixin(
         # we can't pass these in kwargs because formfield() strips them out
         form_field.enum = self.enum
         form_field.strict = self.strict
+        form_field.primitive = self.primitive
         return form_field
 
     def get_choices(self, **kwargs):  # pylint: disable=W0221
@@ -490,7 +511,8 @@ class _EnumFieldMetaClass(type):
 
     def __new__(  # pylint: disable=R0911
             mcs,
-            enum: Type[Enum]
+            enum: Type[Enum],
+            primitive: Type
     ) -> Type[EnumMixin]:
         """
         Construct a new Django Field class given the Enumeration class. The
@@ -498,22 +520,15 @@ class _EnumFieldMetaClass(type):
         primitive type seen in the Enumeration class's inheritance tree.
 
         :param enum: The class of the Enumeration to build a field class for
+        :param primitive: The primitive type to use to determine the Django
+            field class to inherit from
         """
-        primitives = mcs.SUPPORTED_PRIMITIVES.intersection(set(enum.__mro__))
-        primitive = (
-            list(primitives)[0] if primitives else type(values(enum)[0])
-        )
-        assert primitive in mcs.SUPPORTED_PRIMITIVES, \
-            f'Enum {enum} has values of an unnsupported primitive type: ' \
-            f'{primitive}'
-
-        if primitive is float:
+        if issubclass(primitive, float):
             return EnumFloatField
 
-        if primitive is int:
-            vals = [define.value for define in enum]
-            min_value = min(vals)
-            max_value = max(vals)
+        if issubclass(primitive, int):
+            min_value = min((val for val in values(enum) if val is not None))
+            max_value = max((val for val in values(enum) if val is not None))
             if min_value < 0:
                 if (
                     min_value < -9223372036854775808 or
@@ -534,12 +549,82 @@ class _EnumFieldMetaClass(type):
                 return EnumPositiveIntegerField
             return EnumPositiveSmallIntegerField
 
-        return EnumCharField
+        if issubclass(primitive, str):
+            return EnumCharField
+
+        # if issubclass(primitive, datetime):
+        #     return EnumDateTimeField
+        #
+        # if issubclass(primitive, date):
+        #     return EnumDateField
+        #
+        # if issubclass(primitive, timedelta):
+        #     return EnumDurationField
+
+        raise NotImplementedError(
+            f'EnumField does not support enumerations of primitive type '
+            f'{primitive}'
+        )
+
+
+def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
+    """
+    Determine the python type most appropriate to represent all values of the
+    enumeration class. The primitive type determination algorithm is thus:
+
+        * Determine the types of all the values in the enumeration
+        * Determine the first supported primitive type in the enumeration class
+          inheritance tree
+        * If there is only one value type, use its type as the primitive
+        * If there are multiple value types and they are all subclasses of
+          the class primitive type, use the class primitive type. If there is
+          no class primitive type use the first supported primitive type that
+          all values are symmetrically coercible to. If there is no such type,
+          return None
+
+    By definition all values of the enumeration with the exception of None
+    may be coerced to the primitive type and vice-versa.
+
+    :param enum: The enumeration class to determine the primitive type for
+    :return: A python type or None if no primitive type could be determined
+    """
+    primitive = None
+    if enum:
+        for prim in enum.__mro__:
+            if primitive:
+                break
+            for supported in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
+                if issubclass(prim, supported):
+                    primitive = supported
+                    break
+        value_types = set()
+        for value in values(enum):
+            if value is not None:
+                value_types.add(type(value))
+
+        value_types = list(value_types)
+        if len(value_types) > 1 and primitive is None:
+            for candidate in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
+                works = True
+                for value in values(enum):
+                    if value is None:
+                        continue
+                    try:
+                        # test symmetric coercibility
+                        works &= type(value)(candidate(value)) == value
+                    except (TypeError, ValueError):
+                        works = False
+                if works:
+                    return candidate
+        elif value_types:
+            return value_types[0]
+    return primitive
 
 
 def EnumField(  # pylint: disable=C0103
         enum: Type[Enum],
         *field_args,
+        primitive: Optional[Type] = None,
         **field_kwargs
 ) -> EnumMixin:
     """
@@ -561,8 +646,44 @@ def EnumField(  # pylint: disable=C0103
     :param enum: The class of the enumeration.
     :param field_args: Any standard unnamed field arguments for the base
         field type.
+    :param primitive: Override the primitive type of the enumeration. By
+        default this primitive type is determined by the types of the
+        enumeration values and the Enumeration class inheritance tree. It
+        is almost always unnecessary to override this value. The primitive type
+        is used to determine which Django field type the EnumField will
+        inherit from and will be used to coerce the enumeration values to a
+        python type other than the enumeration class. All enumeration values
+        with the exception of None must be symmetrically coercible to the
+        primitive type.
     :param field_kwargs: Any standard named field arguments for the base
         field type.
     :return: An object of the appropriate enum field type
     """
-    return _EnumFieldMetaClass(enum)(enum=enum, *field_args, **field_kwargs)
+    # determine the primitive type of the enumeration class and perform some
+    # sanity checks
+    primitive = primitive or determine_primitive(enum)
+    if primitive is None:
+        raise ValueError(
+            f'EnumField is unable to determine the primitive type for {enum}. '
+            f'consider providing one explicitly using the primitive argument.'
+        )
+    else:
+        # make sure all enumeration values are symmetrically coercible to
+        # the primitive, if they are not this could cause some strange behavior
+        for value in values(enum):
+            if value is None:
+                continue
+            try:
+                assert type(value)(primitive(value)) == value
+            except (TypeError, ValueError, AssertionError) as coerce_error:
+                raise ValueError(
+                    f'Not all {enum} values are symmetrically coercible to '
+                    f'primitive type {primitive}'
+                ) from coerce_error
+
+    return _EnumFieldMetaClass(enum, primitive)(
+        enum=enum,
+        primitive=primitive,
+        *field_args,
+        **field_kwargs
+    )

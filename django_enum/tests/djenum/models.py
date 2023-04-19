@@ -16,6 +16,8 @@ from django_enum.tests.djenum.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
+from django.db.models import TextChoices
+import enum
 
 
 class EnumTester(models.Model):
@@ -132,3 +134,19 @@ class AdminDisplayBug35(models.Model):
         default=None
     )
 
+
+class EmptyEnumValueTester(models.Model):
+
+    class BlankTextEnum(TextChoices):
+        VALUE1 = '', 'Value1'
+        VALUE2 = 'V22', 'Value2'
+
+    class NoneIntEnum(enum.Enum):
+        VALUE1 = None
+        VALUE2 = 2
+
+    blank_text_enum = EnumField(BlankTextEnum, default='')
+    none_int_enum = EnumField(NoneIntEnum, null=True, default=None)
+
+    # should not be possible to store NoneIntEnum.VALUE1
+    none_int_enum_non_null = EnumField(NoneIntEnum, null=False)

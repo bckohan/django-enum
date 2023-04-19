@@ -913,6 +913,12 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsNone(tester.extern)
 
 
+class TestEmptyEnumValues(TestCase):
+
+    def test_none_enum_values(self):
+        pass
+
+
 class TestEnumQueries(EnumTypeMixin, TestCase):
 
     MODEL_CLASS = EnumTester
@@ -2111,14 +2117,24 @@ if ENUM_PROPERTIES_INSTALLED:
                 A = 'A', 'ok'
                 B = 'B', 'none'
 
-            try:
-                form_field = EnumChoiceField(enum=EmptyEqEnum)
-                self.assertTrue(None not in form_field.empty_values)
-            except Exception:  # pragma: no cover
-                self.fail(
-                    "EnumChoiceField() raised value error with alternative"
-                    "empty_value set."
-                )
+            form_field = EnumChoiceField(enum=EmptyEqEnum)
+            self.assertTrue(None in form_field.empty_values)
+
+            class EmptyEqEnum(TextChoices, s('prop', case_fold=True)):
+
+                A = 'A', 'ok'
+                B = 'B', None
+
+            form_field = EnumChoiceField(enum=EmptyEqEnum)
+            self.assertTrue(None in form_field.empty_values)
+
+            class EmptyEqEnum(TextChoices, s('prop', match_none=True)):
+
+                A = 'A', 'ok'
+                B = 'B', None
+
+            form_field = EnumChoiceField(enum=EmptyEqEnum)
+            self.assertTrue(None not in form_field.empty_values)
 
             # version 1.5.0 of enum_properties changed the default symmetricity
             # of none values.
