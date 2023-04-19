@@ -10,7 +10,8 @@ from django.forms.fields import (
     TypedMultipleChoiceField,
 )
 from django.forms.widgets import Select, SelectMultiple
-from django_enum.choices import choices as get_choices
+from django_enum.utils import choices as get_choices
+from django_enum.utils import determine_primitive
 
 __all__ = [
     'NonStrictSelect',
@@ -159,7 +160,6 @@ class ChoiceFieldMixin:
 
     @enum.setter
     def enum(self, enum):
-        from django_enum.fields import determine_primitive
         self._enum_ = enum
         self._primitive_ = self._primitive_ or determine_primitive(enum)
         self.choices = self.choices or get_choices(self.enum)
@@ -185,7 +185,7 @@ class ChoiceFieldMixin:
 
     def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
-        return self.primitive(value)
+        return self.primitive(value)   # pylint: disable=E1102
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""

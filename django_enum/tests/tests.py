@@ -13,7 +13,6 @@ from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import TextChoices
-from django_enum.choices import choices, labels, names, values
 from django_enum.forms import EnumChoiceField  # dont remove this
 # from django_enum.tests.djenum.enums import (
 #     BigIntEnum,
@@ -30,6 +29,7 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import BadDefault, EnumTester
+from django_enum.utils import choices, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 

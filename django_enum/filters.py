@@ -4,8 +4,8 @@ from typing import Tuple, Type
 
 from django.db.models import Field as ModelField
 from django.forms.fields import Field as FormField
-from django_enum.choices import choices
 from django_enum.forms import EnumChoiceField
+from django_enum.utils import choices
 
 try:
     from django_filters import Filter, TypedChoiceFilter, filterset

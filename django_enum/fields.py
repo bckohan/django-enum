@@ -30,7 +30,6 @@ from django.db.models import (
 from django.db.models.query_utils import DeferredAttribute
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-from django_enum.choices import choices, values
 from django_enum.forms import (
     EnumChoiceField,
     EnumFlagField,
@@ -38,62 +37,9 @@ from django_enum.forms import (
     NonStrictSelect,
     NonStrictSelectMultiple,
 )
+from django_enum.utils import choices, determine_primitive, values
 
 T = TypeVar('T')  # pylint: disable=C0103
-
-
-def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
-    """
-    Determine the python type most appropriate to represent all values of the
-    enumeration class. The primitive type determination algorithm is thus:
-
-        * Determine the types of all the values in the enumeration
-        * Determine the first supported primitive type in the enumeration class
-          inheritance tree
-        * If there is only one value type, use its type as the primitive
-        * If there are multiple value types and they are all subclasses of
-          the class primitive type, use the class primitive type. If there is
-          no class primitive type use the first supported primitive type that
-          all values are symmetrically coercible to. If there is no such type,
-          return None
-
-    By definition all values of the enumeration with the exception of None
-    may be coerced to the primitive type and vice-versa.
-
-    :param enum: The enumeration class to determine the primitive type for
-    :return: A python type or None if no primitive type could be determined
-    """
-    primitive = None
-    if enum:
-        for prim in enum.__mro__:
-            if primitive:
-                break
-            for supported in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
-                if issubclass(prim, supported):
-                    primitive = supported
-                    break
-        value_types = set()
-        for value in values(enum):
-            if value is not None:
-                value_types.add(type(value))
-
-        value_types = list(value_types)
-        if len(value_types) > 1 and primitive is None:
-            for candidate in _EnumFieldMetaClass.SUPPORTED_PRIMITIVES:
-                works = True
-                for value in values(enum):
-                    if value is None:
-                        continue
-                    try:
-                        # test symmetric coercibility
-                        works &= type(value)(candidate(value)) == value
-                    except (TypeError, ValueError):
-                        works = False
-                if works:
-                    return candidate
-        elif value_types:
-            return value_types[0]
-    return primitive
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
@@ -152,17 +98,17 @@ class EnumMixin(
 
     # use properties to disable setters
     @property
-    def enum(self) -> Type[Enum]:
+    def enum(self):
         """The enumeration type"""
         return self._enum_
 
     @property
-    def strict(self) -> bool:
+    def strict(self):
         """True if the field requires values to be valid enumeration values"""
         return self._strict_
 
     @property
-    def coerce(self) -> bool:
+    def coerce(self):
         """
         False if the field should not coerce values to the enumeration
         type
@@ -170,7 +116,7 @@ class EnumMixin(
         return self._coerce_
 
     @property
-    def primitive(self) -> Optional[Type]:
+    def primitive(self):
         """
         The most appropriate primitive non-Enumeration type that can represent
         all enumeration values.
@@ -182,7 +128,7 @@ class EnumMixin(
         # note if enum type is int and a floating point is passed we could get
         # situations like X.xxx == X - this is acceptable
         if value is not None and self.enum:
-            return self.primitive(value)
+            return self.primitive(value)  # pylint: disable=E1102
         return value
 
     def __init__(
@@ -219,11 +165,11 @@ class EnumMixin(
             and not isinstance(value, self.enum)
         ):
             try:
-                value = self.enum(value)
+                value = self.enum(value)  # pylint: disable=E1102
             except (TypeError, ValueError):
                 try:
                     value = self._coerce_to_value_type(value)
-                    value = self.enum(value)
+                    value = self.enum(value)  # pylint: disable=E1102
                 except (TypeError, ValueError):
                     try:
                         value = self.enum[value]
@@ -398,7 +344,7 @@ class EnumMixin(
 
         is_multi = self.enum and issubclass(self.enum, Flag)
         if is_multi and self.enum:
-            kwargs['empty_value'] = self.enum(0)
+            kwargs['empty_value'] = self.enum(0)  # pylint: disable=E1102
             # why fail? - does this fail for single select too?
             #kwargs['show_hidden_initial'] = True
 
@@ -427,7 +373,9 @@ class EnumMixin(
 
     def get_choices(self, **kwargs):  # pylint: disable=W0221
         if self.enum and issubclass(self.enum, Flag):
-            kwargs['blank_choice'] = [(self.enum(0), '---------')]
+            kwargs['blank_choice'] = [
+                (self.enum(0), '---------')  # pylint: disable=E1102
+            ]
         return super().get_choices(**kwargs)
 
 
@@ -577,8 +525,6 @@ class EnumBitField(EnumMixin, BinaryField):
 
 
 class _EnumFieldMetaClass(type):
-
-    SUPPORTED_PRIMITIVES = {int, str, float}
 
     def __new__(  # pylint: disable=R0911
             mcs,

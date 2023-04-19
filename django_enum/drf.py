@@ -6,8 +6,7 @@ try:
     from enum import Enum
     from typing import Any, Type, Union
 
-    from django_enum.choices import choices
-    from django_enum.fields import determine_primitive
+    from django_enum.utils import choices, determine_primitive
     from rest_framework.fields import ChoiceField
 
     class EnumField(ChoiceField):
@@ -36,7 +35,9 @@ try:
                 **kwargs
         ):
             self.enum = enum
-            self.primitive = determine_primitive(enum)
+            self.primitive = determine_primitive(enum)  # type: ignore
+            assert self.primitive is not None, \
+                f'Unable to determine primitive type for {Enum}'
             self.strict = strict
             self.choices = kwargs.pop('choices', choices(enum))
             super().__init__(choices=self.choices, **kwargs)
