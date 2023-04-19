@@ -220,10 +220,14 @@ class EnumMixin(
 
         See get_prep_value_
         """
-        if value is not None and self.enum is not None:
-            value = self._try_coerce(value, force=True)
-            if isinstance(value, self.enum):
-                value = value.value
+        if self.enum:
+            try:
+                value = self._try_coerce(value, force=True)
+                if isinstance(value, self.enum):
+                    value = value.value
+            except (ValueError, TypeError):
+                if value is not None:
+                    raise
         return super().get_prep_value(value)
 
     def get_db_prep_value(self, value, connection, prepared=False):
@@ -233,15 +237,15 @@ class EnumMixin(
 
         See get_db_prep_value_
         """
-        if value is not None and self.enum is not None:
-            value = self._try_coerce(value, force=True)
-            if isinstance(value, self.enum):
-                value = value.value
-        return super().get_db_prep_value(
-            value,
-            connection,
-            prepared
-        )
+        if self.enum:
+            try:
+                value = self._try_coerce(value, force=True)
+                if isinstance(value, self.enum):
+                    value = value.value
+            except (ValueError, TypeError):
+                if value is not None:
+                    raise
+        return super().get_db_prep_value(value, connection, prepared)
 
     def from_db_value(
             self,
@@ -254,9 +258,12 @@ class EnumMixin(
 
         See from_db_value_
         """
-        if value is None:  # pragma: no cover
-            return value
-        return self._try_coerce(value)
+        try:
+            return self._try_coerce(value)
+        except (ValueError, TypeError):
+            if value is None:
+                return value
+            raise
 
     def to_python(self, value: Any) -> Union[Enum, Any]:
         """
@@ -269,12 +276,11 @@ class EnumMixin(
         :raises ValidationError: If the value is not mappable to a valid
             enumeration
         """
-        if value is None:
-            return value
-
         try:
             return self._try_coerce(value)
-        except ValueError as err:
+        except (ValueError, TypeError) as err:
+            if value is None:
+                return value
             raise ValidationError(
                 f"'{value}' is not a valid "
                 f"{self.enum.__name__ if self.enum else ''}."
