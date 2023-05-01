@@ -12,7 +12,7 @@ from django.http import QueryDict
 from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils.functional import classproperty
-from django_enum import TextChoices
+from django_enum import EnumField, TextChoices
 from django_enum.forms import EnumChoiceField  # dont remove this
 # from django_enum.tests.djenum.enums import (
 #     BigIntEnum,
@@ -255,7 +255,6 @@ class TestEnumCompat(TestCase):
             values(None),
             []
         )
-
 
     def test_names(self):
         self.assertEqual(
@@ -871,7 +870,6 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         """
         Test that the Enum metaclass picks the correct database field type for each enum.
         """
-        tester = self.MODEL_CLASS.objects.create()
         from django.db.models import (
             BigIntegerField,
             CharField,
@@ -882,24 +880,38 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
             PositiveSmallIntegerField,
             SmallIntegerField,
         )
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_int'), SmallIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_pos_int'), PositiveSmallIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('pos_int'), PositiveIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('big_int'), BigIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('big_pos_int'), PositiveBigIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('extern'), PositiveSmallIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('text'), CharField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('constant'), FloatField)
 
-        self.assertIsInstance(tester._meta.get_field('small_int'), SmallIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_int'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_pos_int'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('pos_int'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('big_int'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('big_pos_int'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('extern'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('text'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('constant'), EnumField)
+
+        tester = self.MODEL_CLASS.objects.create()
+
         self.assertEqual(tester.small_int, tester._meta.get_field('small_int').default)
         self.assertEqual(tester.small_int, self.SmallIntEnum.VAL3)
-        self.assertIsInstance(tester._meta.get_field('small_pos_int'), PositiveSmallIntegerField)
         self.assertIsNone(tester.small_pos_int)
         self.assertIsInstance(tester._meta.get_field('int'), IntegerField)
         self.assertIsNone(tester.int)
 
-        self.assertIsInstance(tester._meta.get_field('pos_int'), PositiveIntegerField)
         self.assertEqual(tester.pos_int, tester._meta.get_field('pos_int').default)
         self.assertEqual(tester.pos_int, self.PosIntEnum.VAL3)
 
-        self.assertIsInstance(tester._meta.get_field('big_int'), BigIntegerField)
         self.assertEqual(tester.big_int, tester._meta.get_field('big_int').default)
         self.assertEqual(tester.big_int, self.BigIntEnum.VAL0)
 
-        self.assertIsInstance(tester._meta.get_field('big_pos_int'), PositiveBigIntegerField)
         self.assertIsNone(tester.big_pos_int)
 
         self.assertIsInstance(tester._meta.get_field('constant'), FloatField)
@@ -909,7 +921,6 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertEqual(tester._meta.get_field('text').max_length, 4)
         self.assertIsNone(tester.text)
 
-        self.assertIsInstance(tester._meta.get_field('extern'), PositiveSmallIntegerField)
         self.assertIsNone(tester.extern)
 
 
@@ -2254,7 +2265,7 @@ if ENUM_PROPERTIES_INSTALLED:
             #
             # qry2 = BitFieldModel.objects.extra(where=[f'bit_field_small & {GNSSConstellation.GLONASS.value} = {GNSSConstellation.GLONASS.value}'])
             # self.assertEqual(qry2.count(), 1)
-            # 
+            #
             # # qry1 = BitFieldModel.objects.filter().extra(where=[f'bit_field_large & {LargeBitField.ONE.value} = {LargeBitField.ONE.value}'])
             # # self.assertEqual(qry1.count(), 2)
             # #

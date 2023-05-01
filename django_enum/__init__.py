@@ -57,7 +57,7 @@ __all__ = [
     'NonStrictSelectMultiple'
 ]
 
-VERSION = (1, 3, 0)
+VERSION = (2, 0, 0)
 
 __title__ = 'Django Enum'
 __version__ = '.'.join(str(i) for i in VERSION)

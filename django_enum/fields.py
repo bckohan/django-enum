@@ -71,9 +71,182 @@ class ToPythonDeferredAttribute(DeferredAttribute):
             instance.__dict__[self.field.name] = value
 
 
-class EnumMixin(
-    # why can't mypy handle the line below?
-    with_typehint(Field)  # type: ignore
+class EnumFieldFactory(type):
+    """
+    Metaclass for EnumField that allows us to dynamically create a EnumFields
+    based on their python Enum class types.
+    """
+
+    def __call__(  # pylint: disable=C0103, R0912
+            cls,
+            enum: Optional[Type[Enum]] = None,
+            primitive: Optional[Type] = None,
+            bit_length: Optional[int] = None,
+            **field_kwargs
+    ) -> 'EnumField':
+        """
+        Construct a new Django Field class object given the Enumeration class.
+        The correct Django field class to inherit from is determined based on
+        the primitive type given or determined from the Enumeration class's
+        inheritance tree and value types. This dynamic class creation allows us
+        to use a single EnumField() initialization call for all enumeration
+        types. For example:
+
+        .. code-block::
+
+            class MyModel(models.Model):
+
+                class EnumType(IntegerChoices):
+
+                    VAL1 = 1, _('Value 1')
+                    VAL2 = 2, _('Value 2')
+                    VAL3 = 3, _('Value 3')
+
+                class EnumTypeChar(TextChoices):
+
+                    VAL1 = 'V1', _('Value 1')
+                    VAL2 = 'V2', _('Value 2')
+
+                i_field = EnumField(EnumType)
+                c_field = EnumField(EnumTypeChar)
+
+            assert isinstance(MyModel._meta.get_field('i_field'), IntegerField)
+            assert isinstance(MyModel._meta.get_field('c_field'), CharField)
+
+            assert isinstance(MyModel._meta.get_field('i_field'), EnumField)
+            assert isinstance(MyModel._meta.get_field('c_field'), EnumField)
+
+        :param enum: The class of the enumeration.
+        :param primitive: Override the primitive type of the enumeration. By
+            default this primitive type is determined by the types of the
+            enumeration values and the Enumeration class inheritance tree. It
+            is almost always unnecessary to override this value. The primitive
+            type is used to determine which Django field type the EnumField
+            will inherit from and will be used to coerce the enumeration values
+            to a python type other than the enumeration class. All enumeration
+            values with the exception of None must be symmetrically coercible
+            to the primitive type.
+        :param bit_length: For enumerations of primitive type Integer. Override
+            the default bit length of the enumeration. This field determines
+            the size of the integer column in the database and by default is
+            determined by the minimum and maximum values of the enumeration. It
+            may be necessary to override this value for flag enumerations that
+            use KEEP boundary behavior to store extra information in higher
+            bits.
+        :param field_kwargs: Any standard named field arguments for the base
+            field type.
+        :return: An object of the appropriate enum field type
+        """
+        # determine the primitive type of the enumeration class and perform
+        # some sanity checks
+        if cls is not EnumField:
+            if bit_length is not None:
+                field_kwargs['bit_length'] = bit_length
+            return type.__call__(
+                cls,
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+        if enum is None:
+            raise ValueError(
+                'EnumField must be initialized with an `enum` argument that '
+                'specifies the python Enum class.'
+            )
+        primitive = primitive or determine_primitive(enum)
+        if primitive is None:
+            raise ValueError(
+                f'EnumField is unable to determine the primitive type for '
+                f'{enum}. consider providing one explicitly using the '
+                f'primitive argument.'
+            )
+
+        # make sure all enumeration values are symmetrically coercible to
+        # the primitive, if they are not this could cause some strange behavior
+        for value in values(enum):
+            if value is None:
+                continue
+            try:
+                assert type(value)(primitive(value)) == value
+            except (TypeError, ValueError, AssertionError) as coerce_error:
+                raise ValueError(
+                    f'Not all {enum} values are symmetrically coercible to '
+                    f'primitive type {primitive}'
+                ) from coerce_error
+
+        if issubclass(primitive, float):
+            return EnumFloatField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+
+        if issubclass(primitive, int):
+            min_value = min((val for val in values(enum) if val is not None))
+            max_value = max((val for val in values(enum) if val is not None))
+            min_bits = (min_value.bit_length(), max_value.bit_length())
+
+            if bit_length is not None:
+                assert min_bits <= (bit_length, bit_length), \
+                    f'bit_length {bit_length} is too small to store all ' \
+                    f'values of {enum}'
+                min_bits = (bit_length, bit_length)
+            else:
+                bit_length = max(min_bits)
+
+            field_cls: Type[EnumField]
+            if min_value < 0:
+                if min_bits <= (16, 15):
+                    field_cls = EnumSmallIntegerField
+                elif min_bits <= (32, 31):
+                    field_cls = EnumIntegerField
+                elif min_bits <= (64, 63):
+                    field_cls = EnumBigIntegerField
+                else:
+                    field_cls = EnumBitField
+            else:
+                if min_bits[1] >= 64:
+                    field_cls = EnumBitField
+                elif min_bits[1] >= 32:
+                    field_cls = EnumPositiveBigIntegerField
+                elif min_bits[1] >= 16:
+                    field_cls = EnumPositiveIntegerField
+                else:
+                    field_cls = EnumPositiveSmallIntegerField
+
+            return field_cls(
+                enum=enum,
+                primitive=primitive,
+                bit_length=bit_length,
+                **field_kwargs
+            )
+
+        if issubclass(primitive, str):
+            return EnumCharField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+
+        # if issubclass(primitive, datetime):
+        #     return EnumDateTimeField
+        #
+        # if issubclass(primitive, date):
+        #     return EnumDateField
+        #
+        # if issubclass(primitive, timedelta):
+        #     return EnumDurationField
+
+        raise NotImplementedError(
+            f'EnumField does not support enumerations of primitive type '
+            f'{primitive}'
+        )
+
+
+class EnumField(
+    # why can't mypy handle the dynamic base class below?
+    with_typehint(Field),  # type: ignore
+    metaclass=EnumFieldFactory
 ):
     """
     This mixin class turns any Django database field into an enumeration field.
@@ -119,7 +292,14 @@ class EnumMixin(
     def primitive(self):
         """
         The most appropriate primitive non-Enumeration type that can represent
-        all enumeration values.
+        all enumeration values. Deriving classes should return their canonical
+        primitive type if this type is None. The reason for this is that the
+        primitive type of an enumeration might be a derived class of the
+        canonical primitive type (e.g. str or int), but this primitive type
+        will not always be available - for instance in migration code.
+        Migration code should only ever deal with the most basic python types
+        to reduce the dependency footprint on externally defined code - in all
+        but the weirdest cases this will work.
         """
         return self._primitive_
 
@@ -133,9 +313,8 @@ class EnumMixin(
 
     def __init__(
             self,
-            *args,
             enum: Optional[Type[Enum]] = None,
-            primitive: Optional[Type] = None,
+            primitive: Optional[Type[Any]] = None,
             strict: bool = _strict_,
             coerce: bool = _coerce_,
             **kwargs
@@ -147,7 +326,7 @@ class EnumMixin(
         if self.enum is not None:
             kwargs.setdefault('choices', choices(enum))
 
-        super().__init__(*args, **kwargs)
+        super().__init__(**kwargs)
 
     def _try_coerce(
             self,
@@ -387,12 +566,21 @@ class EnumMixin(
         return super().get_choices(**kwargs)
 
 
-class EnumCharField(EnumMixin, CharField):
+class EnumCharField(EnumField, CharField):
     """
     A database field supporting enumerations with character values.
     """
 
-    def __init__(self, *args, enum=None, **kwargs):
+    @property
+    def primitive(self):
+        return EnumField.primitive.fget(self) or str  # type: ignore
+
+    def __init__(
+        self,
+        enum: Optional[Type[Enum]] = None,
+        primitive: Optional[Type[Any]] = None,
+        **kwargs
+    ):
         kwargs.setdefault(
             'max_length',
             max((
@@ -400,56 +588,92 @@ class EnumCharField(EnumMixin, CharField):
                 for choice in kwargs.get('choices', choices(enum))
             ))
         )
-        super().__init__(*args, enum=enum, **kwargs)
+        super().__init__(enum=enum, primitive=primitive, **kwargs)
 
 
-class EnumFloatField(EnumMixin, FloatField):
+class EnumFloatField(EnumField, FloatField):
     """A database field supporting enumerations with floating point values"""
 
+    @property
+    def primitive(self):
+        return EnumField.primitive.fget(self) or float  # type: ignore
 
-class EnumSmallIntegerField(EnumMixin, SmallIntegerField):
+
+class IntEnumField(EnumField):
+    """
+    A mixin containing common implementation details for for database field
+    supporting enumerations with integer values.
+    """
+    @property
+    def bit_length(self):
+        """
+        The minimum number of bits required to represent all primitive values
+        of the enumeration
+        """
+        return self._bit_length_
+
+    @property
+    def primitive(self):
+        """
+        The common primitive type of the enumeration values. This will always
+        be int or a subclass of int.
+        """
+        return EnumField.primitive.fget(self) or int  # type: ignore
+
+    def __init__(
+            self,
+            enum: Optional[Type[Enum]] = None,
+            primitive: Optional[Type[Any]] = None,
+            bit_length: Optional[int] = None,
+            **kwargs
+    ):
+        self._bit_length_ = bit_length
+        super().__init__(enum=enum, primitive=primitive, **kwargs)
+
+
+class EnumSmallIntegerField(IntEnumField, SmallIntegerField):
     """
     A database field supporting enumerations with integer values that fit into
     2 bytes or fewer
     """
 
 
-class EnumPositiveSmallIntegerField(EnumMixin, PositiveSmallIntegerField):
+class EnumPositiveSmallIntegerField(IntEnumField, PositiveSmallIntegerField):
     """
     A database field supporting enumerations with positive (but signed) integer
     values that fit into 2 bytes or fewer
     """
 
 
-class EnumIntegerField(EnumMixin, IntegerField):
+class EnumIntegerField(IntEnumField, IntegerField):
     """
     A database field supporting enumerations with integer values that fit into
     32 bytes or fewer
     """
 
 
-class EnumPositiveIntegerField(EnumMixin, PositiveIntegerField):
+class EnumPositiveIntegerField(IntEnumField, PositiveIntegerField):
     """
     A database field supporting enumerations with positive (but signed) integer
     values that fit into 32 bytes or fewer
     """
 
 
-class EnumBigIntegerField(EnumMixin, BigIntegerField):
+class EnumBigIntegerField(IntEnumField, BigIntegerField):
     """
     A database field supporting enumerations with integer values that fit into
     64 bytes or fewer
     """
 
 
-class EnumPositiveBigIntegerField(EnumMixin, PositiveBigIntegerField):
+class EnumPositiveBigIntegerField(IntEnumField, PositiveBigIntegerField):
     """
     A database field supporting enumerations with positive (but signed) integer
     values that fit into 64 bytes or fewer
     """
 
 
-class EnumBitField(EnumMixin, BinaryField):
+class EnumBitField(EnumField, BinaryField):
     """
     A database field supporting enumerations with integer values that require
     more than 64 bits. This field only works for Enums that inherit from int.
@@ -458,8 +682,37 @@ class EnumBitField(EnumMixin, BinaryField):
 
     description = _('A bit field wider than the standard word size.')
 
-    def __init__(self, *args, editable=True, **kwargs):
-        super().__init__(*args, editable=editable, **kwargs)
+    @property
+    def bit_length(self):
+        """
+        The minimum number of bits required to represent all primitive values
+        of the enumeration.
+        """
+        return self._bit_length_
+
+    @property
+    def primitive(self):
+        """
+        The common primitive type of the enumeration values. This will always
+        be bytes or memoryview or bytearray or a subclass thereof.
+        """
+        return EnumField.primitive.fget(self) or bytes  # type: ignore
+
+    def __init__(
+        self,
+        enum: Optional[Type[Enum]] = None,
+        primitive: Optional[Type[Any]] = None,
+        bit_length: Optional[Type[Any]] = None,
+        editable=True,
+        **kwargs
+    ):
+        self._bit_length_ = bit_length
+        super().__init__(
+            enum=enum,
+            primitive=primitive,
+            editable=editable,
+            **kwargs
+        )
 
     @cached_property
     def signed(self):
@@ -530,131 +783,3 @@ class EnumBitField(EnumMixin, BinaryField):
             expression,
             connection
         )
-
-
-class _EnumFieldMetaClass(type):
-
-    def __new__(  # pylint: disable=R0911
-            mcs,
-            enum: Type[Enum],
-            primitive: Type
-    ) -> Type[EnumMixin]:
-        """
-        Construct a new Django Field class given the Enumeration class. The
-        correct Django field class to inherit from is determined based on the
-        primitive type seen in the Enumeration class's inheritance tree.
-
-        :param enum: The class of the Enumeration to build a field class for
-        :param primitive: The primitive type to use to determine the Django
-            field class to inherit from
-        """
-        if issubclass(primitive, float):
-            return EnumFloatField
-
-        if issubclass(primitive, int):
-            min_value = min((val for val in values(enum) if val is not None))
-            max_value = max((val for val in values(enum) if val is not None))
-            if min_value < 0:
-                if (
-                    min_value < -9223372036854775808 or
-                    max_value > 9223372036854775807
-                ):
-                    return EnumBitField
-                if min_value < -2147483648 or max_value > 2147483647:
-                    return EnumBigIntegerField
-                if min_value < -32768 or max_value > 32767:
-                    return EnumIntegerField
-                return EnumSmallIntegerField
-
-            if max_value > 9223372036854775807:
-                return EnumBitField
-            if max_value > 2147483647:
-                return EnumPositiveBigIntegerField
-            if max_value > 32767:
-                return EnumPositiveIntegerField
-            return EnumPositiveSmallIntegerField
-
-        if issubclass(primitive, str):
-            return EnumCharField
-
-        # if issubclass(primitive, datetime):
-        #     return EnumDateTimeField
-        #
-        # if issubclass(primitive, date):
-        #     return EnumDateField
-        #
-        # if issubclass(primitive, timedelta):
-        #     return EnumDurationField
-
-        raise NotImplementedError(
-            f'EnumField does not support enumerations of primitive type '
-            f'{primitive}'
-        )
-
-
-def EnumField(  # pylint: disable=C0103
-        enum: Type[Enum],
-        *field_args,
-        primitive: Optional[Type] = None,
-        **field_kwargs
-) -> EnumMixin:
-    """
-    *This is a function, not a type*. Some syntactic sugar that wraps the enum
-    field metaclass so that we can cleanly create enums like so:
-
-    .. code-block::
-
-        class MyModel(models.Model):
-
-            class EnumType(IntegerChoices):
-
-                VAL1 = 1, _('Value 1')
-                VAL2 = 2, _('Value 2')
-                VAL3 = 3, _('Value 3')
-
-            field_name = EnumField(EnumType)
-
-    :param enum: The class of the enumeration.
-    :param field_args: Any standard unnamed field arguments for the base
-        field type.
-    :param primitive: Override the primitive type of the enumeration. By
-        default this primitive type is determined by the types of the
-        enumeration values and the Enumeration class inheritance tree. It
-        is almost always unnecessary to override this value. The primitive type
-        is used to determine which Django field type the EnumField will
-        inherit from and will be used to coerce the enumeration values to a
-        python type other than the enumeration class. All enumeration values
-        with the exception of None must be symmetrically coercible to the
-        primitive type.
-    :param field_kwargs: Any standard named field arguments for the base
-        field type.
-    :return: An object of the appropriate enum field type
-    """
-    # determine the primitive type of the enumeration class and perform some
-    # sanity checks
-    primitive = primitive or determine_primitive(enum)
-    if primitive is None:
-        raise ValueError(
-            f'EnumField is unable to determine the primitive type for {enum}. '
-            f'consider providing one explicitly using the primitive argument.'
-        )
-
-    # make sure all enumeration values are symmetrically coercible to
-    # the primitive, if they are not this could cause some strange behavior
-    for value in values(enum):
-        if value is None:
-            continue
-        try:
-            assert type(value)(primitive(value)) == value
-        except (TypeError, ValueError, AssertionError) as coerce_error:
-            raise ValueError(
-                f'Not all {enum} values are symmetrically coercible to '
-                f'primitive type {primitive}'
-            ) from coerce_error
-
-    return _EnumFieldMetaClass(enum, primitive)(
-        enum=enum,
-        primitive=primitive,
-        *field_args,
-        **field_kwargs
-    )
