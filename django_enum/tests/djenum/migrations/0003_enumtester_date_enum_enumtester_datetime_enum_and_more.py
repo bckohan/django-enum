@@ -2,8 +2,9 @@
 
 import datetime
 from decimal import Decimal
-from django.db import migrations
+
 import django_enum.fields
+from django.db import migrations
 
 
 class Migration(migrations.Migration):

@@ -16,6 +16,7 @@ from typing import (
 )
 
 from django.core.exceptions import ValidationError
+from django.core.validators import DecimalValidator
 from django.db.models import (
     BigIntegerField,
     BinaryField,
@@ -35,6 +36,7 @@ from django.db.models import (
     TimeField,
 )
 from django.db.models.query_utils import DeferredAttribute
+from django.utils.deconstruct import deconstructible
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_enum.forms import (
@@ -45,8 +47,6 @@ from django_enum.forms import (
     NonStrictSelectMultiple,
 )
 from django_enum.utils import choices, determine_primitive, values
-from django.core.validators import DecimalValidator
-from django.utils.deconstruct import deconstructible
 
 T = TypeVar('T')  # pylint: disable=C0103
 

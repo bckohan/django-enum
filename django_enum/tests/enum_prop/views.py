@@ -67,8 +67,8 @@ try:
     try:
 
         from django_enum.drf import EnumField
-        from rest_framework import serializers, viewsets
         from django_enum.drf import EnumField as DRFEnumField
+        from rest_framework import serializers, viewsets
 
         class EnumTesterSerializer(serializers.ModelSerializer):
 

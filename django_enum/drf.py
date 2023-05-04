@@ -6,8 +6,8 @@ try:
     from enum import Enum
     from typing import Any, Type, Union
 
-    from django_enum.utils import choices, determine_primitive
     from django_enum import EnumField as EnumModelField
+    from django_enum.utils import choices, determine_primitive
     from rest_framework.fields import ChoiceField
     from rest_framework.serializers import ClassLookupDict
     from rest_framework.utils.field_mapping import get_field_kwargs

@@ -9,19 +9,19 @@ from django_enum.tests.djenum.enums import (
     BigIntEnum,
     BigPosIntEnum,
     Constants,
+    DateEnum,
+    DateTimeEnum,
+    DecimalEnum,
     DJIntEnum,
     DJTextEnum,
+    DurationEnum,
     ExternEnum,
     IntEnum,
     PosIntEnum,
     SmallIntEnum,
     SmallPosIntEnum,
     TextEnum,
-    DateEnum,
-    DateTimeEnum,
     TimeEnum,
-    DurationEnum,
-    DecimalEnum
 )
 
 

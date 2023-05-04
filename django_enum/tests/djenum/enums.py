@@ -1,9 +1,9 @@
-from enum import IntEnum, Enum
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
+from enum import Enum, IntEnum
 
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import Choices
-from datetime import date, datetime, time, timedelta
-from decimal import Decimal
 
 
 class FloatChoices(float, Choices):
