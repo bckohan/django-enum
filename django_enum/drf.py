@@ -1,13 +1,17 @@
 """Support for django rest framework symmetric serialization"""
 
-__all__ = ['EnumField']
+__all__ = ['EnumField', 'EnumFieldMixin']
 
 try:
     from enum import Enum
     from typing import Any, Type, Union
 
     from django_enum.utils import choices, determine_primitive
+    from django_enum import EnumField as EnumModelField
     from rest_framework.fields import ChoiceField
+    from rest_framework.serializers import ClassLookupDict
+    from rest_framework.utils.field_mapping import get_field_kwargs
+
 
     class EnumField(ChoiceField):
         """
@@ -37,7 +41,7 @@ try:
             self.enum = enum
             self.primitive = determine_primitive(enum)  # type: ignore
             assert self.primitive is not None, \
-                f'Unable to determine primitive type for {Enum}'
+                f'Unable to determine primitive type for {enum}'
             self.strict = strict
             self.choices = kwargs.pop('choices', choices(enum))
             super().__init__(choices=self.choices, **kwargs)
@@ -70,6 +74,54 @@ try:
             Transform the *outgoing* enum value into its primitive value.
             """
             return getattr(value, 'value', value)
+
+
+    class EnumFieldMixin:
+        """
+        A mixin for ModelSerializers that adds auto-magic support for
+        EnumFields.
+        """
+
+        def build_standard_field(self, field_name, model_field):
+            """
+            The default implementation of build_standard_field will set any
+            field with choices to a ChoiceField. This will override that for
+            EnumFields and add enum and strict arguments to the field's kwargs.
+
+            To use this mixin, include it before ModelSerializer in your
+            serializer's class hierarchy:
+
+            ..code-block:: python
+
+                from django_enum.drf import EnumFieldMixin
+                from rest_framework.serializers import ModelSerializer
+
+                class MySerializer(EnumFieldMixin, ModelSerializer):
+
+                    class Meta:
+                        model = MyModel
+                        fields = '__all__'
+
+
+            :param field_name: The name of the field on the serializer
+            :param model_field: The Field instance on the model
+            :return: A 2-tuple, the first element is the field class, the
+                second is the kwargs for the field
+            """
+            try:
+                field_class = ClassLookupDict({EnumModelField: EnumField})[
+                    model_field
+                ]
+                return field_class, {
+                    'enum': model_field.enum,
+                    'strict': model_field.strict,
+                    **super().build_standard_field(
+                        field_name,
+                        model_field
+                    )[1],
+                }
+            except KeyError:
+                return super().build_standard_field(field_name, model_field)
 
 
 except (ImportError, ModuleNotFoundError):

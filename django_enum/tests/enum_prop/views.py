@@ -68,8 +68,15 @@ try:
 
         from django_enum.drf import EnumField
         from rest_framework import serializers, viewsets
+        from django_enum.drf import EnumField as DRFEnumField
 
         class EnumTesterSerializer(serializers.ModelSerializer):
+
+            # todo not working?
+            # serializer_field_mapping = {
+            #     **serializers.ModelSerializer.serializer_field_mapping,
+            #     EnumField: DRFEnumField
+            # }
 
             small_pos_int = EnumField(SmallPosIntEnum, allow_null=True)
             small_int = EnumField(SmallIntEnum)

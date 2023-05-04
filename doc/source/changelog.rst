@@ -4,6 +4,8 @@ Change Log
 
 v2.0.0
 ======
+
+* Implemented `Add support for date, datetime and timedelta enumeration types. <https://github.com/bckohan/django-enum/issues/43>`_
 * Implemented `EnumField's should inherit from common base titled EnumField <https://github.com/bckohan/django-enum/issues/46>`_
 * Implemented `Provide parameter to override integer range on EnumField. <https://github.com/bckohan/django-enum/issues/38>`_
 * Implemented `Add all official supported Django RDBMS backends to CI <https://github.com/bckohan/django-enum/issues/33>`_

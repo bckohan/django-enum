@@ -1,7 +1,9 @@
-from enum import IntEnum
+from enum import IntEnum, Enum
 
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import Choices
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
 
 class FloatChoices(float, Choices):
@@ -97,3 +99,40 @@ class BigIntEnum(IntegerChoices):
     VAL1 = 1, 'Value 1'
     VAL2 = 2, 'Value 2'
     VAL3 = 2147483648, 'Value 2147483648'
+
+
+class DateEnum(Enum):
+
+    BRIAN = date(1984, 8, 7)
+    EMMA = date(1989, 7, 27)
+    HUGO = date(2016, 9, 9)
+
+
+class DateTimeEnum(Enum):
+
+    ST_HELENS = datetime(1980, 5, 18, 8, 32, 0)
+    PINATUBO = datetime(1991, 6, 15, 20, 9, 0)
+    KATRINA = datetime(2005, 8, 29, 5, 10, 0)
+
+
+class TimeEnum(Enum):
+
+    COB = time(17, 0, 0)
+    LUNCH = time(12, 30, 0)
+    MORNING = time(9, 0, 0)
+
+
+class DurationEnum(Enum):
+
+    DAY = timedelta(days=1)
+    WEEK = timedelta(weeks=1)
+    FORTNIGHT = timedelta(weeks=2)
+
+
+class DecimalEnum(Enum):
+
+    ONE   = Decimal('0.99')
+    TWO   = Decimal('0.999')
+    THREE = Decimal('0.9999')
+    FOUR  = Decimal('99.9999')
+    FIVE  = Decimal('999')

@@ -3,6 +3,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 from django_enum.tests.djenum import enums as dj_enums
 from django_enum.tests.djenum.models import EnumTester
+from django_enum import EnumField
 
 
 class URLMixin:
@@ -67,8 +68,10 @@ class EnumTesterDeleteView(URLMixin, DeleteView):
 
 try:
     from rest_framework import serializers, viewsets
+    from django_enum.drf import EnumFieldMixin
 
-    class EnumTesterSerializer(serializers.ModelSerializer):
+    class EnumTesterSerializer(EnumFieldMixin, serializers.ModelSerializer):
+
         class Meta:
             model = EnumTester
             fields = '__all__'

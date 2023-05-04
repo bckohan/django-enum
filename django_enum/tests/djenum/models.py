@@ -17,6 +17,11 @@ from django_enum.tests.djenum.enums import (
     SmallIntEnum,
     SmallPosIntEnum,
     TextEnum,
+    DateEnum,
+    DateTimeEnum,
+    TimeEnum,
+    DurationEnum,
+    DecimalEnum
 )
 
 
@@ -100,6 +105,52 @@ class EnumTester(models.Model):
         null=True,
         default=None,
         blank=True
+    )
+
+    # exotics
+    date_enum = EnumField(
+        DateEnum,
+        null=False,
+        default=DateEnum.EMMA,
+        blank=True,
+        choices=[
+            (DateEnum.EMMA, 'Emma'),
+            (DateEnum.BRIAN, 'Brian'),
+            (DateEnum.HUGO, 'Hugo')
+        ]
+    )
+    datetime_enum = EnumField(
+        DateTimeEnum,
+        null=True,
+        default=None,
+        blank=True
+    )
+    time_enum = EnumField(
+        TimeEnum,
+        null=True,
+        default=None,
+        blank=True
+    )
+
+    duration_enum = EnumField(
+        DurationEnum,
+        null=True,
+        default=None,
+        blank=True
+    )
+
+    decimal_enum = EnumField(
+        DecimalEnum,
+        null=False,
+        default=DecimalEnum.THREE.value,
+        blank=True,
+        choices=[
+            (DecimalEnum.ONE, 'One'),
+            (DecimalEnum.TWO, 'Two'),
+            (DecimalEnum.THREE, 'Three'),
+            (DecimalEnum.FOUR, 'Four'),
+            (DecimalEnum.FIVE, 'Five')
+        ]
     )
 
     def get_absolute_url(self):

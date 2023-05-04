@@ -1,6 +1,8 @@
 """
 Support for Django model fields built from enumeration types.
 """
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from enum import Enum, Flag
 from typing import (
     TYPE_CHECKING,
@@ -18,6 +20,10 @@ from django.db.models import (
     BigIntegerField,
     BinaryField,
     CharField,
+    DateField,
+    DateTimeField,
+    DecimalField,
+    DurationField,
     Field,
     FloatField,
     IntegerField,
@@ -26,6 +32,7 @@ from django.db.models import (
     PositiveIntegerField,
     PositiveSmallIntegerField,
     SmallIntegerField,
+    TimeField,
 )
 from django.db.models.query_utils import DeferredAttribute
 from django.utils.functional import cached_property
@@ -38,8 +45,36 @@ from django_enum.forms import (
     NonStrictSelectMultiple,
 )
 from django_enum.utils import choices, determine_primitive, values
+from django.core.validators import DecimalValidator
+from django.utils.deconstruct import deconstructible
 
 T = TypeVar('T')  # pylint: disable=C0103
+
+
+@deconstructible
+class EnumValidatorAdapter:
+    """
+    A wrapper for validators that expect a primitive type that enables them
+    to receive an Enumeration value instead. Some automatically added field
+    validators must be wrapped.
+    """
+
+    wrapped: Type
+
+    def __init__(self, wrapped):
+        self.wrapped = wrapped
+
+    def __call__(self, value):
+        return self.wrapped(value.value if isinstance(value, Enum) else value)
+
+    def __eq__(self, other):
+        return self.wrapped == other
+
+    def __repr__(self):
+        return repr(self.wrapped)
+
+    def __str__(self):
+        return str(self.wrapped)
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
@@ -77,7 +112,7 @@ class EnumFieldFactory(type):
     based on their python Enum class types.
     """
 
-    def __call__(  # pylint: disable=C0103, R0912
+    def __call__(  # pylint: disable=C0103, R0912, R0911
             cls,
             enum: Optional[Type[Enum]] = None,
             primitive: Optional[Type] = None,
@@ -164,7 +199,7 @@ class EnumFieldFactory(type):
         # make sure all enumeration values are symmetrically coercible to
         # the primitive, if they are not this could cause some strange behavior
         for value in values(enum):
-            if value is None:
+            if value is None or type(value) is primitive:
                 continue
             try:
                 assert type(value)(primitive(value)) == value
@@ -173,13 +208,6 @@ class EnumFieldFactory(type):
                     f'Not all {enum} values are symmetrically coercible to '
                     f'primitive type {primitive}'
                 ) from coerce_error
-
-        if issubclass(primitive, float):
-            return EnumFloatField(
-                enum=enum,
-                primitive=primitive,
-                **field_kwargs
-            )
 
         if issubclass(primitive, int):
             min_value = min((val for val in values(enum) if val is not None))
@@ -221,6 +249,13 @@ class EnumFieldFactory(type):
                 **field_kwargs
             )
 
+        if issubclass(primitive, float):
+            return EnumFloatField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+
         if issubclass(primitive, str):
             return EnumCharField(
                 enum=enum,
@@ -228,14 +263,40 @@ class EnumFieldFactory(type):
                 **field_kwargs
             )
 
-        # if issubclass(primitive, datetime):
-        #     return EnumDateTimeField
-        #
-        # if issubclass(primitive, date):
-        #     return EnumDateField
-        #
-        # if issubclass(primitive, timedelta):
-        #     return EnumDurationField
+        if issubclass(primitive, datetime):
+            return EnumDateTimeField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+
+        if issubclass(primitive, date):
+            return EnumDateField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+
+        if issubclass(primitive, timedelta):
+            return EnumDurationField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+
+        if issubclass(primitive, time):
+            return EnumTimeField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
+
+        if issubclass(primitive, Decimal):
+            return EnumDecimalField(
+                enum=enum,
+                primitive=primitive,
+                **field_kwargs
+            )
 
         raise NotImplementedError(
             f'EnumField does not support enumerations of primitive type '
@@ -409,6 +470,7 @@ class EnumField(
 
         See get_prep_value_
         """
+        value = Field.get_prep_value(self, value)
         if self.enum:
             try:
                 value = self._try_coerce(value, force=True)
@@ -417,7 +479,7 @@ class EnumField(
             except (ValueError, TypeError):
                 if value is not None:
                     raise
-        return super().get_prep_value(value)
+        return value
 
     def get_db_prep_value(self, value, connection, prepared=False):
         """
@@ -426,15 +488,9 @@ class EnumField(
 
         See get_db_prep_value_
         """
-        if self.enum:
-            try:
-                value = self._try_coerce(value, force=True)
-                if isinstance(value, self.enum):
-                    value = value.value
-            except (ValueError, TypeError):
-                if value is not None:
-                    raise
-        return super().get_db_prep_value(value, connection, prepared)
+        if not prepared:
+            return self.get_prep_value(value)
+        return value
 
     def from_db_value(
             self,
@@ -671,6 +727,161 @@ class EnumPositiveBigIntegerField(IntEnumField, PositiveBigIntegerField):
     A database field supporting enumerations with positive (but signed) integer
     values that fit into 64 bytes or fewer
     """
+
+
+class EnumDateField(EnumField, DateField):
+    """
+    A database field supporting enumerations with date values.
+    """
+
+    @property
+    def primitive(self):
+        return EnumField.primitive.fget(self) or date  # type: ignore
+
+    def to_python(self, value: Any) -> Union[Enum, Any]:
+        if not self.enum:
+            return DateField.to_python(self, value)
+        if not isinstance(value, self.enum):
+            value = DateField.to_python(self, value)
+        return EnumField.to_python(self, value)
+
+    def value_to_string(self, obj):
+        val = self.value_from_object(obj)
+        if isinstance(val, Enum):
+            val = val.value
+        return "" if val is None else val.isoformat()
+
+
+class EnumDateTimeField(EnumField, DateTimeField):
+    """
+    A database field supporting enumerations with datetime values.
+    """
+
+    @property
+    def primitive(self):
+        return EnumField.primitive.fget(self) or datetime  # type: ignore
+
+    def to_python(self, value: Any) -> Union[Enum, Any]:
+        if not self.enum:
+            return DateTimeField.to_python(self, value)
+        if not isinstance(value, self.enum):
+            value = DateTimeField.to_python(self, value)
+        return EnumField.to_python(self, value)
+
+    def value_to_string(self, obj):
+        val = self.value_from_object(obj)
+        if isinstance(val, Enum):
+            val = val.value
+        return "" if val is None else val.isoformat()
+
+
+class EnumDurationField(EnumField, DurationField):
+    """
+    A database field supporting enumerations with duration values.
+    """
+
+    @property
+    def primitive(self):
+        return EnumField.primitive.fget(self) or timedelta  # type: ignore
+
+    def to_python(self, value: Any) -> Union[Enum, Any]:
+        if not self.enum:
+            return DurationField.to_python(self, value)
+        if not isinstance(value, self.enum):
+            value = DurationField.to_python(self, value)
+        return EnumField.to_python(self, value)
+
+    def value_to_string(self, obj):
+        from django.utils.duration import duration_string
+        val = self.value_from_object(obj)
+        if isinstance(val, Enum):
+            val = val.value
+        return "" if val is None else duration_string(val)
+
+
+class EnumTimeField(EnumField, TimeField):
+    """
+    A database field supporting enumerations with time values.
+    """
+
+    @property
+    def primitive(self):
+        return EnumField.primitive.fget(self) or time  # type: ignore
+
+    def to_python(self, value: Any) -> Union[Enum, Any]:
+        if not self.enum:
+            return TimeField.to_python(self, value)
+        if not isinstance(value, self.enum):
+            value = TimeField.to_python(self, value)
+        return EnumField.to_python(self, value)
+
+    def value_to_string(self, obj):
+        val = self.value_from_object(obj)
+        if isinstance(val, Enum):
+            val = val.value
+        return "" if val is None else val.isoformat()
+
+
+class EnumDecimalField(EnumField, DecimalField):
+    """
+    A database field supporting enumerations with Decimal values.
+    """
+
+    @property
+    def primitive(self):
+        return EnumField.primitive.fget(self) or Decimal  # type: ignore
+
+    def __init__(
+        self,
+        enum: Optional[Type[Enum]] = None,
+        primitive: Optional[Type[Any]] = None,
+        max_digits: Optional[int] = None,
+        decimal_places: Optional[int] = None,
+        **kwargs
+    ):
+        super().__init__(
+            enum=enum,
+            primitive=primitive,
+            max_digits=(
+                max_digits or
+                max([
+                    len(str(value).replace('.', '')) for value in values(enum)
+                ])
+            ),
+            decimal_places=(
+                decimal_places or
+                max(
+                    [0] + [
+                        len(str(value).split('.')[1])
+                        for value in values(enum)
+                        if '.' in str(value)
+                    ]
+                )
+            ),
+            **kwargs
+        )
+
+    def to_python(self, value: Any) -> Union[Enum, Any]:
+        if not self.enum:
+            return DecimalField.to_python(self, value)
+        if not isinstance(value, self.enum):
+            value = DecimalField.to_python(self, value)
+        return EnumField.to_python(self, value)
+
+    @cached_property
+    def validators(self):
+        return [
+            EnumValidatorAdapter(validator)
+            if isinstance(validator, DecimalValidator)
+            else validator
+            for validator in super().validators
+        ]
+
+    def value_to_string(self, obj):
+        val = self.value_from_object(obj)
+        if isinstance(val, Enum):
+            val = val.value
+        return "" if val is None else str(val)
 
 
 class EnumBitField(EnumField, BinaryField):
