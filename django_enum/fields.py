@@ -603,7 +603,10 @@ class EnumField(
             kwargs['blank_choice'] = [
                 (self.enum(0), '---------')  # pylint: disable=E1102
             ]
-        return super().get_choices(**kwargs)
+        return [
+            (getattr(choice, 'value', choice), label)
+            for choice, label in super().get_choices(**kwargs)
+        ]
 
 
 class EnumCharField(EnumField, CharField):
@@ -822,25 +825,26 @@ class EnumDecimalField(EnumField, DecimalField):
         decimal_places: Optional[int] = None,
         **kwargs
     ):
+        decimal_places = decimal_places or max(
+            [0] + [
+                len(str(value).split('.')[1])
+                for value in values(enum)
+                if '.' in str(value)
+            ]
+        )
+        max_digits = max_digits or (
+                decimal_places + max(
+                    [0] + [
+                        len(str(value).split('.', maxsplit=1)[0])
+                        for value in values(enum)
+                    ]
+                )
+        )
         super().__init__(
             enum=enum,
             primitive=primitive,
-            max_digits=(
-                max_digits or
-                max([
-                    len(str(value).replace('.', '')) for value in values(enum)
-                ])
-            ),
-            decimal_places=(
-                decimal_places or
-                max(
-                    [0] + [
-                        len(str(value).split('.')[1])
-                        for value in values(enum)
-                        if '.' in str(value)
-                    ]
-                )
-            ),
+            max_digits=max_digits,
+            decimal_places=decimal_places,
             **kwargs
         )
 

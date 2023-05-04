@@ -145,11 +145,11 @@ class EnumTester(models.Model):
         default=DecimalEnum.THREE.value,
         blank=True,
         choices=[
-            (DecimalEnum.ONE, 'One'),
-            (DecimalEnum.TWO, 'Two'),
-            (DecimalEnum.THREE, 'Three'),
-            (DecimalEnum.FOUR, 'Four'),
-            (DecimalEnum.FIVE, 'Five')
+            (DecimalEnum.ONE.value, 'One'),
+            (DecimalEnum.TWO.value, 'Two'),
+            (DecimalEnum.THREE.value, 'Three'),
+            (DecimalEnum.FOUR.value, 'Four'),
+            (DecimalEnum.FIVE.value, 'Five')
         ]
     )
 
