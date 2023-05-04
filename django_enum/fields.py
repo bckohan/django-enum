@@ -465,7 +465,7 @@ class EnumField(
                     raise
         return value
 
-    def get_db_prep_value(self, value, connection, prepared=False):
+    def get_db_prep_value(self, value, connection, prepared=False) -> Any:
         """
         Convert the field value into the Enum type and then pull its value
         out.
@@ -475,6 +475,17 @@ class EnumField(
         if not prepared:
             return self.get_prep_value(value)
         return value
+
+    def get_db_prep_save(self, value, connection) -> Any:
+        """
+        For Django <= 3.2 the super class implementation of this method invokes
+        a higher get_db_preb_value method.
+        """
+        return self.get_db_prep_value(
+            value,
+            connection=connection,
+            prepared=False
+        )
 
     def from_db_value(
             self,
