@@ -4,16 +4,7 @@ Support for Django model fields built from enumeration types.
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum, Flag
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import Any, List, Optional, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
 from django.core.validators import DecimalValidator
@@ -37,6 +28,7 @@ from django.db.models import (
 )
 from django.db.models.query_utils import DeferredAttribute
 from django.utils.deconstruct import deconstructible
+from django.utils.duration import duration_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_enum.forms import (
@@ -46,9 +38,12 @@ from django_enum.forms import (
     NonStrictSelect,
     NonStrictSelectMultiple,
 )
-from django_enum.utils import choices, determine_primitive, values
-
-T = TypeVar('T')  # pylint: disable=C0103
+from django_enum.utils import (
+    choices,
+    determine_primitive,
+    values,
+    with_typehint,
+)
 
 
 @deconstructible
@@ -75,20 +70,6 @@ class EnumValidatorAdapter:
 
     def __str__(self):
         return str(self.wrapped)
-
-
-def with_typehint(baseclass: Type[T]) -> Type[T]:
-    """
-    Change inheritance to add Field type hints when type checking is running.
-    This is just more simple than defining a Protocol - revisit if Django
-    provides Field protocol - should also just be a way to create a Protocol
-    from a class?
-
-    This is icky but it works - revisit in future.
-    """
-    if TYPE_CHECKING:
-        return baseclass  # pragma: no cover
-    return object  # type: ignore
 
 
 class ToPythonDeferredAttribute(DeferredAttribute):
@@ -199,7 +180,10 @@ class EnumFieldFactory(type):
         # make sure all enumeration values are symmetrically coercible to
         # the primitive, if they are not this could cause some strange behavior
         for value in values(enum):
-            if value is None or type(value) is primitive:
+            if (
+                value is None or
+                type(value) is primitive  # pylint: disable=C0123
+            ):
                 continue
             try:
                 assert type(value)(primitive(value)) == value
@@ -792,7 +776,6 @@ class EnumDurationField(EnumField, DurationField):
         return EnumField.to_python(self, value)
 
     def value_to_string(self, obj):
-        from django.utils.duration import duration_string
         val = self.value_from_object(obj)
         if isinstance(val, Enum):
             val = val.value
@@ -871,7 +854,7 @@ class EnumDecimalField(EnumField, DecimalField):
     @cached_property
     def validators(self):
         return [
-            EnumValidatorAdapter(validator)
+            EnumValidatorAdapter(validator)  # type: ignore
             if isinstance(validator, DecimalValidator)
             else validator
             for validator in super().validators

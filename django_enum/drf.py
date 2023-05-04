@@ -7,10 +7,9 @@ try:
     from typing import Any, Type, Union
 
     from django_enum import EnumField as EnumModelField
-    from django_enum.utils import choices, determine_primitive
+    from django_enum.utils import choices, determine_primitive, with_typehint
     from rest_framework.fields import ChoiceField
-    from rest_framework.serializers import ClassLookupDict
-    from rest_framework.utils.field_mapping import get_field_kwargs
+    from rest_framework.serializers import ClassLookupDict, ModelSerializer
 
 
     class EnumField(ChoiceField):
@@ -76,7 +75,9 @@ try:
             return getattr(value, 'value', value)
 
 
-    class EnumFieldMixin:
+    class EnumFieldMixin(
+        with_typehint(ModelSerializer)  # type: ignore
+    ):
         """
         A mixin for ModelSerializers that adds auto-magic support for
         EnumFields.
