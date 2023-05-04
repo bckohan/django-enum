@@ -476,17 +476,6 @@ class EnumField(
             return self.get_prep_value(value)
         return value
 
-    def get_db_prep_save(self, value, connection) -> Any:
-        """
-        For Django <= 3.2 the super class implementation of this method invokes
-        a higher get_db_preb_value method.
-        """
-        return self.get_db_prep_value(
-            value,
-            connection=connection,
-            prepared=False
-        )
-
     def from_db_value(
             self,
             value: Any,
@@ -876,6 +865,14 @@ class EnumDecimalField(EnumField, DecimalField):
         if isinstance(val, Enum):
             val = val.value
         return "" if val is None else str(val)
+
+    def get_db_prep_save(self, value, connection):
+        """Override base class to avoid calling to_python() in Django < 4."""
+        return self.get_db_prep_value(value, connection)
+
+    def get_prep_value(self, value):
+        """By-pass base class - it calls to_python() which we don't want."""
+        return EnumField.get_prep_value(self, value)
 
 
 class EnumBitField(EnumField, BinaryField):
