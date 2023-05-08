@@ -1,4 +1,5 @@
 """Enumeration support for django model forms"""
+from decimal import DecimalException
 from enum import Enum
 from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
@@ -9,7 +10,6 @@ from django.forms.fields import (
     TypedChoiceField,
     TypedMultipleChoiceField,
 )
-from decimal import DecimalException
 from django.forms.widgets import Select, SelectMultiple
 from django_enum.utils import choices as get_choices
 from django_enum.utils import determine_primitive

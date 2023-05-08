@@ -1,5 +1,7 @@
 import enum
 import os
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from pathlib import Path
 
 from bs4 import BeautifulSoup as Soup
@@ -29,12 +31,10 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import BadDefault, EnumTester
+from django_enum.tests.utils import try_convert
 from django_enum.utils import choices, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
-from datetime import date, datetime, timedelta, time
-from decimal import Decimal
-from django_enum.tests.utils import try_convert
 
 try:
     import django_filters
@@ -936,17 +936,17 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         from django.db.models import (
             BigIntegerField,
             CharField,
+            DateField,
+            DateTimeField,
+            DecimalField,
+            DurationField,
             FloatField,
             IntegerField,
             PositiveBigIntegerField,
             PositiveIntegerField,
             PositiveSmallIntegerField,
             SmallIntegerField,
-            DateField,
-            DateTimeField,
             TimeField,
-            DurationField,
-            DecimalField
         )
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_int'), SmallIntegerField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_pos_int'), PositiveSmallIntegerField)

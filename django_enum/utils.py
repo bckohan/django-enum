@@ -1,18 +1,18 @@
 """Utility routines for django_enum."""
 
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 from enum import Enum
 from typing import (
     TYPE_CHECKING,
     Any,
+    Dict,
     List,
     Optional,
     Tuple,
     Type,
     TypeVar,
-    Dict
 )
-from datetime import date, datetime, time, timedelta
-from decimal import Decimal
 
 __all__ = [
     'choices',
@@ -179,7 +179,7 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
                     try:
                         # test symmetric coercibility
                         works &= type(value)(candidate(value)) == value
-                    except Exception:  # pylint disable=W0703
+                    except Exception:  # pylint: disable=W0703
                         works = False
                 if works:
                     return candidate
@@ -189,7 +189,7 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
 
 
 def decimal_params(
-    enum: Type[Enum],
+    enum: Optional[Type[Enum]],
     decimal_places: Optional[int] = None,
     max_digits: Optional[int] = None
 ) -> Dict[str, int]:

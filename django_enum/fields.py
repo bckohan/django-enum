@@ -2,10 +2,7 @@
 Support for Django model fields built from enumeration types.
 """
 from datetime import date, datetime, time, timedelta
-from decimal import (
-    Decimal,
-    DecimalException
-)
+from decimal import Decimal, DecimalException
 from enum import Enum, Flag
 from typing import Any, List, Optional, Tuple, Type, Union
 
@@ -43,10 +40,10 @@ from django_enum.forms import (
 )
 from django_enum.utils import (
     choices,
+    decimal_params,
     determine_primitive,
     values,
     with_typehint,
-    decimal_params
 )
 
 
@@ -829,16 +826,17 @@ class EnumDecimalField(EnumField, DecimalField):
         decimal_places: Optional[int] = None,
         **kwargs
     ):
-
         super().__init__(
             enum=enum,
             primitive=primitive,
-            **decimal_params(
-                enum,
-                max_digits=max_digits,
-                decimal_places=decimal_places
-            ),
-            **kwargs
+            **{
+                **kwargs,
+                **decimal_params(
+                    enum,
+                    max_digits=max_digits,
+                    decimal_places=decimal_places
+                )
+            }
         )
 
     def to_python(self, value: Any) -> Union[Enum, Any]:

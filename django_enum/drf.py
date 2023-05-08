@@ -3,33 +3,33 @@
 __all__ = ['EnumField', 'EnumFieldMixin']
 
 try:
+    import inspect
+    from datetime import date, datetime, time, timedelta
+    from decimal import Decimal, DecimalException
     from enum import Enum
-    from typing import Any, Type, Union
+    from typing import Any, Type, Union, Dict, Optional
 
     from django_enum import EnumField as EnumModelField
     from django_enum.utils import (
         choices,
+        decimal_params,
         determine_primitive,
         with_typehint,
-        decimal_params
     )
     from rest_framework.fields import (
-        Field,
         CharField,
-        IntegerField,
-        FloatField,
         ChoiceField,
-        DecimalField,
-        TimeField,
         DateField,
         DateTimeField,
-        DurationField
+        DecimalField,
+        DurationField,
+        Field,
+        FloatField,
+        IntegerField,
+        TimeField,
     )
     from rest_framework.serializers import ModelSerializer
     from rest_framework.utils.field_mapping import get_field_kwargs
-    from datetime import date, datetime, time, timedelta
-    from decimal import Decimal, DecimalException
-    import inspect
 
 
     class ClassLookupDict:
@@ -43,10 +43,10 @@ try:
             values.
         """
 
-        def __init__(self, mapping):
+        def __init__(self, mapping: Dict[Type[Any], Any]):
             self.mapping = mapping
 
-        def __getitem__(self, key):
+        def __getitem__(self, key: Any) -> Optional[Any]:
             """
             Fetch the given object for the type or type of the given object.
 
@@ -86,7 +86,7 @@ try:
         enum: Type[Enum]
         primitive: Type[Any]
         strict: bool = True
-        primitive_field: Type[Field] = None
+        primitive_field: Optional[Type[Field]] = None
 
         def __init__(
                 self,

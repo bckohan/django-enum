@@ -1,5 +1,8 @@
 try:
 
+    from datetime import date, datetime, time, timedelta
+    from decimal import Decimal, DecimalException
+
     from django.db.models import IntegerChoices as DjangoIntegerChoices
     from django.db.models import TextChoices as DjangoTextChoices
     from django.utils.translation import gettext as _
@@ -9,17 +12,15 @@ try:
         IntegerChoices,
         TextChoices,
     )
-    from datetime import date, datetime, time, timedelta
-    from decimal import Decimal, DecimalException
+    from django_enum.tests.utils import try_convert
     from enum_properties import (
         EnumProperties,
         IntEnumProperties,
         IntFlagProperties,
         p,
-        s
+        s,
     )
     from rest_framework.renderers import JSONRenderer
-    from django_enum.tests.utils import try_convert
 
 
     class DJIntEnum(DjangoIntegerChoices):

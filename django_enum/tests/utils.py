@@ -1,8 +1,9 @@
+import re
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal, DecimalException
+
 from dateutil import parser
 from dateutil.parser import ParserError
-from datetime import datetime, time, date, timedelta
-from decimal import Decimal, DecimalException
-import re
 
 duration_rgx1 = re.compile(
     r'(-)?(\d+) (?:days?, )?(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?',

@@ -6,8 +6,12 @@ try:
         BigIntEnum,
         BigPosIntEnum,
         Constants,
+        DateEnum,
+        DateTimeEnum,
+        DecimalEnum,
         DJIntEnum,
         DJTextEnum,
+        DurationEnum,
         ExternEnum,
         GNSSConstellation,
         IntEnum,
@@ -17,11 +21,7 @@ try:
         SmallIntEnum,
         SmallPosIntEnum,
         TextEnum,
-        DateEnum,
-        DateTimeEnum,
         TimeEnum,
-        DurationEnum,
-        DecimalEnum
     )
     from enum_properties import s
 
