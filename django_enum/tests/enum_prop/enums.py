@@ -20,7 +20,6 @@ try:
         p,
         s,
     )
-    from rest_framework.renderers import JSONRenderer
 
 
     class DJIntEnum(DjangoIntegerChoices):

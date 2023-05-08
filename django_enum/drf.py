@@ -103,6 +103,9 @@ try:
             field_name = kwargs.pop('field_name', None)
             model_field = kwargs.pop('model_field', None)
             if not self.strict:
+                # if this field is not strict, we instantiate its primitive
+                # field type so we can fall back to its to_internal_value
+                # method if the value is not a valid enum value
                 primitive_field_cls = ClassLookupDict({
                     str: CharField,
                     int: IntegerField,
