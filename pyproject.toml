@@ -40,7 +40,7 @@ exclude = ["django_enum/tests"]
 [tool.poetry.dependencies]
 python = ">=3.7,<4.0"
 Django = ">=3.2,<5.0"
-enum-properties = {version = "^1.5.1", optional = true}
+enum-properties = {version = "^1.5.2", optional = true}
 django-filter = {version = ">=21", optional = true}
 djangorestframework = {version = "^3.9", optional = true}
 
@@ -68,6 +68,7 @@ importlib-metadata = [
     { version = "<5.0", markers = "python_version <= '3.7'" },
     { version = ">=5.0", markers = "python_version > '3.7'" },
 ]
+python-dateutil = "^2.8.2"
 
 [tool.poetry.group.psycopg2]
 optional = true

@@ -2,7 +2,10 @@
 Support for Django model fields built from enumeration types.
 """
 from datetime import date, datetime, time, timedelta
-from decimal import Decimal
+from decimal import (
+    Decimal,
+    DecimalException
+)
 from enum import Enum, Flag
 from typing import Any, List, Optional, Tuple, Type, Union
 
@@ -43,6 +46,7 @@ from django_enum.utils import (
     determine_primitive,
     values,
     with_typehint,
+    decimal_params
 )
 
 
@@ -394,7 +398,7 @@ class EnumField(
                 try:
                     value = self._coerce_to_value_type(value)
                     value = self.enum(value)  # pylint: disable=E1102
-                except (TypeError, ValueError):
+                except (TypeError, ValueError, DecimalException):
                     try:
                         value = self.enum[value]
                     except KeyError as err:
@@ -410,7 +414,7 @@ class EnumField(
         elif not self.coerce:
             try:
                 return self._coerce_to_value_type(value)
-            except (TypeError, ValueError) as err:
+            except (TypeError, ValueError, DecimalException) as err:
                 raise ValueError(
                     f"'{value}' is not a valid {self.primitive} "
                     f"required by field {self.name}."
@@ -825,26 +829,15 @@ class EnumDecimalField(EnumField, DecimalField):
         decimal_places: Optional[int] = None,
         **kwargs
     ):
-        decimal_places = decimal_places or max(
-            [0] + [
-                len(str(value).split('.')[1])
-                for value in values(enum)
-                if '.' in str(value)
-            ]
-        )
-        max_digits = max_digits or (
-                decimal_places + max(
-                    [0] + [
-                        len(str(value).split('.', maxsplit=1)[0])
-                        for value in values(enum)
-                    ]
-                )
-        )
+
         super().__init__(
             enum=enum,
             primitive=primitive,
-            max_digits=max_digits,
-            decimal_places=decimal_places,
+            **decimal_params(
+                enum,
+                max_digits=max_digits,
+                decimal_places=decimal_places
+            ),
             **kwargs
         )
 

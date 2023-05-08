@@ -65,33 +65,10 @@ try:
 
 
     try:
-
-        from django_enum.drf import EnumField
-        from django_enum.drf import EnumField as DRFEnumField
+        from django_enum.drf import EnumFieldMixin
         from rest_framework import serializers, viewsets
 
-        class EnumTesterSerializer(serializers.ModelSerializer):
-
-            # todo not working?
-            # serializer_field_mapping = {
-            #     **serializers.ModelSerializer.serializer_field_mapping,
-            #     EnumField: DRFEnumField
-            # }
-
-            small_pos_int = EnumField(SmallPosIntEnum, allow_null=True)
-            small_int = EnumField(SmallIntEnum)
-            pos_int = EnumField(PosIntEnum)
-            int = EnumField(IntEnum, allow_null=True)
-            big_pos_int = EnumField(BigPosIntEnum, allow_null=True)
-            big_int = EnumField(BigIntEnum)
-            constant = EnumField(Constants, allow_null=True)
-            text = EnumField(TextEnum, allow_null=True)
-            extern = EnumField(ExternEnum, allow_null=True)
-            dj_int_enum = EnumField(DJIntEnum)
-            dj_text_enum = EnumField(DJTextEnum)
-            non_strict_int = EnumField(SmallPosIntEnum, strict=False, allow_null=True)
-            non_strict_text = EnumField(TextEnum, strict=False, allow_blank=True)
-            no_coerce = EnumField(SmallPosIntEnum, allow_null=True)
+        class EnumTesterSerializer(EnumFieldMixin, serializers.ModelSerializer):
 
             class Meta:
                 model = EnumTester

@@ -1,7 +1,18 @@
 """Utility routines for django_enum."""
 
 from enum import Enum
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, TypeVar
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Dict
+)
+from datetime import date, datetime, time, timedelta
+from decimal import Decimal
 
 __all__ = [
     'choices',
@@ -16,7 +27,16 @@ __all__ = [
 
 T = TypeVar('T')  # pylint: disable=C0103
 
-SUPPORTED_PRIMITIVES = {int, str, float}
+SUPPORTED_PRIMITIVES = {
+    int,
+    str,
+    float,
+    date,
+    datetime,
+    time,
+    timedelta,
+    Decimal
+}
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
@@ -159,10 +179,47 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
                     try:
                         # test symmetric coercibility
                         works &= type(value)(candidate(value)) == value
-                    except (TypeError, ValueError):
+                    except Exception:  # pylint disable=W0703
                         works = False
                 if works:
                     return candidate
         elif value_types:
             return list(value_types).pop()
     return primitive
+
+
+def decimal_params(
+    enum: Type[Enum],
+    decimal_places: Optional[int] = None,
+    max_digits: Optional[int] = None
+) -> Dict[str, int]:
+    """
+    Determine the maximum number of digits and decimal places required to
+    represent all values of the enumeration class.
+
+    :param enum: The enumeration class to determine the decimal parameters for
+    :param decimal_places: Use this value for decimal_places rather than
+        the computed value
+    :param max_digits: Use this value for max_digits rather than the computed
+        value
+    :return: A tuple of (max_digits, decimal_places)
+    """
+    decimal_places = decimal_places or max(
+        [0] + [
+            len(str(value).split('.')[1])
+            for value in values(enum)
+            if '.' in str(value)
+        ]
+    )
+    max_digits = max_digits or (
+        decimal_places + max(
+            [0] + [
+                len(str(value).split('.', maxsplit=1)[0])
+                for value in values(enum)
+            ]
+        )
+    )
+    return {
+        'max_digits': max_digits,
+        'decimal_places': decimal_places
+    }

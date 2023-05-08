@@ -32,6 +32,9 @@ from django_enum.tests.djenum.models import BadDefault, EnumTester
 from django_enum.utils import choices, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
+from datetime import date, datetime, timedelta, time
+from decimal import Decimal
+from django_enum.tests.utils import try_convert
 
 try:
     import django_filters
@@ -93,6 +96,11 @@ class EnumTypeMixin:
         'constant',
         'text',
         'extern',
+        'date_enum',
+        'datetime_enum',
+        'duration_enum',
+        'time_enum',
+        'decimal_enum',
         'dj_int_enum',
         'dj_text_enum',
         'non_strict_int',
@@ -147,6 +155,26 @@ class EnumTypeMixin:
     def enum_type(self, field_name):
         return self.MODEL_CLASS._meta.get_field(field_name).enum
 
+    @property
+    def DateEnum(self):
+        return self.MODEL_CLASS._meta.get_field('date_enum').enum
+
+    @property
+    def DateTimeEnum(self):
+        return self.MODEL_CLASS._meta.get_field('datetime_enum').enum
+
+    @property
+    def DurationEnum(self):
+        return self.MODEL_CLASS._meta.get_field('duration_enum').enum
+
+    @property
+    def TimeEnum(self):
+        return self.MODEL_CLASS._meta.get_field('time_enum').enum
+
+    @property
+    def DecimalEnum(self):
+        return self.MODEL_CLASS._meta.get_field('decimal_enum').enum
+
     def enum_primitive(self, field_name):
         enum_type = self.enum_type(field_name)
         if enum_type in {
@@ -159,6 +187,16 @@ class EnumTypeMixin:
             return float
         elif enum_type in {self.TextEnum, self.DJTextEnum}:
             return str
+        elif enum_type is self.DateEnum:
+            return date
+        elif enum_type is self.DateTimeEnum:
+            return datetime
+        elif enum_type is self.DurationEnum:
+            return timedelta
+        elif enum_type is self.TimeEnum:
+            return time
+        elif enum_type is self.DecimalEnum:
+            return Decimal
         else:  # pragma: no cover
             raise RuntimeError(f'Missing enum type primitive for {enum_type}')
 
@@ -295,6 +333,11 @@ class TestChoices(EnumTypeMixin, TestCase):
             'constant': self.Constants.GOLDEN_RATIO,
             'text': self.TextEnum.VALUE2,
             'extern': self.ExternEnum.THREE,
+            'date_enum': self.DateEnum.HUGO,
+            'datetime_enum': self.DateTimeEnum.PINATUBO,
+            'duration_enum': self.DurationEnum.DAY,
+            'time_enum': self.TimeEnum.LUNCH,
+            'decimal_enum': self.DecimalEnum.FOUR
         }
 
     def test_defaults(self):
@@ -350,6 +393,26 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertEqual(
             self.MODEL_CLASS._meta.get_field('extern').get_default(),
             None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('date_enum').get_default(),
+            self.enum_type('date_enum').EMMA
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('datetime_enum').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('duration_enum').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('time_enum').get_default(),
+            None
+        )
+        self.assertEqual(
+            self.MODEL_CLASS._meta.get_field('decimal_enum').get_default(),
+            self.enum_type('decimal_enum').THREE
         )
         self.assertEqual(
             self.MODEL_CLASS._meta.get_field('dj_int_enum').get_default(),
@@ -879,6 +942,11 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
             PositiveIntegerField,
             PositiveSmallIntegerField,
             SmallIntegerField,
+            DateField,
+            DateTimeField,
+            TimeField,
+            DurationField,
+            DecimalField
         )
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_int'), SmallIntegerField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_pos_int'), PositiveSmallIntegerField)
@@ -889,6 +957,31 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('text'), CharField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('constant'), FloatField)
 
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('small_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('small_pos_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('pos_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('big_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('big_pos_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('extern').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('text').primitive, str)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('constant').primitive, float)
+
+        # exotics
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('date_enum'), DateField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('datetime_enum'), DateTimeField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('duration_enum'), DurationField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('time_enum'), TimeField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('decimal_enum'), DecimalField)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('decimal_enum').max_digits, 7)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('decimal_enum').decimal_places, 4)
+
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('date_enum').primitive, date)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('datetime_enum').primitive, datetime)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('duration_enum').primitive, timedelta)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('time_enum').primitive, time)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('decimal_enum').primitive, Decimal)
+        #
+
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_int'), EnumField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_pos_int'), EnumField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('pos_int'), EnumField)
@@ -897,6 +990,12 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('extern'), EnumField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('text'), EnumField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('constant'), EnumField)
+
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('date_enum'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('datetime_enum'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('duration_enum'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('time_enum'), EnumField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('decimal_enum'), EnumField)
 
         tester = self.MODEL_CLASS.objects.create()
 
@@ -1004,6 +1103,11 @@ class TestFormField(EnumTypeMixin, TestCase):
             'constant': 2.71828,
             'text': self.TextEnum.VALUE3,
             'extern': self.ExternEnum.THREE,
+            'date_enum': self.DateEnum.BRIAN,
+            'datetime_enum': self.DateTimeEnum.ST_HELENS,
+            'duration_enum': self.DurationEnum.FORTNIGHT,
+            'time_enum': self.TimeEnum.COB,
+            'decimal_enum': self.DecimalEnum.ONE,
             'dj_int_enum': 2,
             'dj_text_enum': self.DJTextEnum.B,
             'non_strict_int': self.SmallPosIntEnum.VAL2,
@@ -1022,6 +1126,11 @@ class TestFormField(EnumTypeMixin, TestCase):
             'big_int': '-12',
             'constant': 2.7,
             'text': '143 emma',
+            'date_enum': '20159-01-01',
+            'datetime_enum': 'AAAA-01-01 00:00:00',
+            'duration_enum': '1 elephant',
+            'time_enum': '2.a',
+            'decimal_enum': 'alpha',
             'extern': 6,
             'dj_int_enum': '',
             'dj_text_enum': 'D',
@@ -1029,6 +1138,8 @@ class TestFormField(EnumTypeMixin, TestCase):
             'non_strict_text': 'A' * 13,
             'no_coerce': 'Value 0',
         }
+
+    from json import encoder
 
     def verify_field(self, form, field, value):
         # this doesnt work with coerce=False fields
@@ -1095,6 +1206,11 @@ class TestFormField(EnumTypeMixin, TestCase):
             (EnumChoiceField(self.BigIntEnum), ''),
             (EnumChoiceField(self.Constants), 'y'),
             (EnumChoiceField(self.TextEnum), 42),
+            (EnumChoiceField(self.DateEnum), '20159-01-01'),
+            (EnumChoiceField(self.DateTimeEnum), 'AAAA-01-01 00:00:00'),
+            (EnumChoiceField(self.DurationEnum), '1 elephant'),
+            (EnumChoiceField(self.TimeEnum), '2.a'),
+            (EnumChoiceField(self.DecimalEnum), 'alpha'),
             (EnumChoiceField(self.ExternEnum), 0),
             (EnumChoiceField(self.DJIntEnum), '5.3'),
             (EnumChoiceField(self.DJTextEnum), 12),
@@ -1114,7 +1230,12 @@ class TestFormField(EnumTypeMixin, TestCase):
             (EnumChoiceField(self.ExternEnum, strict=False), 0),
             (EnumChoiceField(self.DJIntEnum, strict=False), '5'),
             (EnumChoiceField(self.DJTextEnum, strict=False), 12),
-            (EnumChoiceField(self.SmallPosIntEnum, strict=False), '12')
+            (EnumChoiceField(self.SmallPosIntEnum, strict=False), '12'),
+            (EnumChoiceField(self.DateEnum, strict=False), date(year=2015, month=1, day=1)),
+            (EnumChoiceField(self.DateTimeEnum, strict=False), datetime(year=2014, month=1, day=1, hour=0, minute=0, second=0)),
+            (EnumChoiceField(self.DurationEnum, strict=False), timedelta(seconds=15)),
+            (EnumChoiceField(self.TimeEnum, strict=False), time(hour=2, minute=0, second=0)),
+            (EnumChoiceField(self.DecimalEnum, strict=False), Decimal('0.5')),
         ]:
             try:
                 enum_field.clean(bad_value)
@@ -1164,6 +1285,11 @@ class TestRequests(EnumTypeMixin, TestCase):
         'constant',
         'text',
         'extern',
+        'date_enum',
+        'datetime_enum',
+        'duration_enum',
+        'time_enum',
+        'decimal_enum',
         'dj_int_enum',
         'dj_text_enum',
         'non_strict_int',
@@ -1190,6 +1316,11 @@ class TestRequests(EnumTypeMixin, TestCase):
                 big_int=self.BigIntEnum.VAL1,
                 constant=self.Constants.PI,
                 text=self.TextEnum.VALUE1,
+                date_enum=self.DateEnum.BRIAN,
+                datetime_enum=self.DateTimeEnum.PINATUBO,
+                duration_enum=self.DurationEnum.WEEK,
+                time_enum=self.TimeEnum.LUNCH,
+                decimal_enum=self.DecimalEnum.TWO,
                 extern=self.ExternEnum.ONE,
                 non_strict_int=self.SmallPosIntEnum.VAL1,
                 non_strict_text=self.TextEnum.VALUE1,
@@ -1210,6 +1341,11 @@ class TestRequests(EnumTypeMixin, TestCase):
                     constant=self.Constants.e,
                     text=self.TextEnum.VALUE2,
                     extern=self.ExternEnum.TWO,
+                    date_enum=self.DateEnum.EMMA,
+                    datetime_enum=self.DateTimeEnum.ST_HELENS,
+                    duration_enum=self.DurationEnum.DAY,
+                    time_enum=self.TimeEnum.MORNING,
+                    decimal_enum=self.DecimalEnum.ONE,
                     non_strict_int=self.SmallPosIntEnum.VAL2,
                     non_strict_text=self.TextEnum.VALUE2,
                     no_coerce=self.SmallPosIntEnum.VAL2
@@ -1229,6 +1365,11 @@ class TestRequests(EnumTypeMixin, TestCase):
                     constant=self.Constants.GOLDEN_RATIO,
                     text=self.TextEnum.VALUE3,
                     extern=self.ExternEnum.THREE,
+                    date_enum=self.DateEnum.HUGO,
+                    datetime_enum=self.DateTimeEnum.KATRINA,
+                    duration_enum=self.DurationEnum.FORTNIGHT,
+                    time_enum=self.TimeEnum.COB,
+                    decimal_enum=self.DecimalEnum.FIVE,
                     non_strict_int=self.SmallPosIntEnum.VAL3,
                     non_strict_text=self.TextEnum.VALUE3,
                     no_coerce=self.SmallPosIntEnum.VAL3
@@ -1263,6 +1404,11 @@ class TestRequests(EnumTypeMixin, TestCase):
             'constant': self.Constants.GOLDEN_RATIO,
             'text': self.TextEnum.VALUE2,
             'extern': self.ExternEnum.TWO,
+            'date_enum': self.DateEnum.EMMA.value,
+            'datetime_enum': self.DateTimeEnum.ST_HELENS.value,
+            'duration_enum': self.DurationEnum.DAY.value,
+            'time_enum': self.TimeEnum.MORNING.value,
+            'decimal_enum': self.DecimalEnum.ONE.value,
             'dj_int_enum': self.DJIntEnum.TWO,
             'dj_text_enum': self.DJTextEnum.C,
             'non_strict_int': self.SmallPosIntEnum.VAL1,
@@ -1277,6 +1423,117 @@ class TestRequests(EnumTypeMixin, TestCase):
         }
 
     if DJANGO_RESTFRAMEWORK_INSTALLED:  # pragma: no cover
+
+        def test_non_strict_drf_field(self):
+            from django_enum.drf import EnumField
+            from rest_framework import fields
+
+            field = EnumField(self.SmallPosIntEnum, strict=False)
+            self.assertEqual(field.to_internal_value('1'), 1)
+            self.assertEqual(field.to_representation(1), 1)
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.IntegerField
+            )
+
+            field = EnumField(self.Constants, strict=False)
+            self.assertEqual(field.to_internal_value('5.43'), 5.43)
+            self.assertEqual(field.to_representation(5.43), 5.43)
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.FloatField
+            )
+
+            field = EnumField(self.TextEnum, strict=False)
+            self.assertEqual(field.to_internal_value('random text'), 'random text')
+            self.assertEqual(field.to_representation('random text'), 'random text')
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.CharField
+            )
+
+            field = EnumField(self.DateEnum, strict=False)
+            self.assertEqual(field.to_internal_value('2017-12-05'), date(year=2017, day=5, month=12))
+            self.assertEqual(field.to_representation(date(year=2017, day=5, month=12)), date(year=2017, day=5, month=12))
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.DateField
+            )
+
+            field = EnumField(self.DateTimeEnum, strict=False)
+            self.assertEqual(field.to_internal_value('2017-12-05T01:02:30Z'), datetime(year=2017, day=5, month=12, hour=1, minute=2, second=30))
+            self.assertEqual(
+                field.to_representation(
+                    datetime(year=2017, day=5, month=12, hour=1, minute=2, second=30)
+                ),
+                datetime(year=2017, day=5, month=12, hour=1, minute=2, second=30)
+            )
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.DateTimeField
+            )
+
+            field = EnumField(self.DurationEnum, strict=False)
+            self.assertEqual(field.to_internal_value('P5DT01H00M01.312500S'), timedelta(days=5, hours=1, seconds=1.3125))
+            self.assertEqual(
+                field.to_representation(
+                    timedelta(days=5, hours=1, seconds=1.3125)
+                ),
+                timedelta(days=5, hours=1, seconds=1.3125)
+            )
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.DurationField
+            )
+
+            field = EnumField(self.TimeEnum, strict=False)
+            self.assertEqual(field.to_internal_value('01:02:30'), time(hour=1, minute=2, second=30))
+            self.assertEqual(
+                field.to_representation(
+                    time(hour=1, minute=2, second=30)
+                ),
+                time(hour=1, minute=2, second=30)
+            )
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.TimeField
+            )
+
+            field = EnumField(self.DecimalEnum, strict=False)
+            self.assertEqual(field.to_internal_value('1.67'), Decimal('1.67'))
+            self.assertEqual(
+                field.to_representation(Decimal('1.67')),
+                Decimal('1.67')
+            )
+            self.assertEqual(
+                field.primitive_field.__class__,
+                fields.DecimalField
+            )
+
+            from enum import Enum
+
+            class UnsupportedPrimitiveEnum(Enum):
+
+                VAL1 = (1,)
+                VAL2 = (1, 2)
+                VAL3 = (1, 2, 3)
+
+            field = EnumField(
+                UnsupportedPrimitiveEnum,
+                strict=False,
+                choices=[
+                    (UnsupportedPrimitiveEnum.VAL1, 'VAL1'),
+                    (UnsupportedPrimitiveEnum.VAL2, 'VAL2'),
+                    (UnsupportedPrimitiveEnum.VAL3, 'VAL3'),
+                ]
+            )
+            self.assertEqual(field.to_internal_value((1, 2, 4)), (1, 2, 4))
+            self.assertEqual(
+                field.to_representation((1, 2, 4)),
+                (1, 2, 4)
+            )
+            self.assertIsNone(field.primitive_field)
+
         def test_drf_serializer(self):
 
             from django_enum.drf import EnumField
@@ -1343,7 +1600,10 @@ class TestRequests(EnumTypeMixin, TestCase):
                 for field in self.fields:
                     self.assertEqual(obj[field], getattr(self.objects[idx], field))
                     if obj[field] is not None:
-                        self.assertIsInstance(obj[field], self.enum_primitive(field))
+                        self.assertIsInstance(
+                            try_convert(self.enum_primitive(field), obj[field], raise_on_error=False),
+                            self.enum_primitive(field)
+                        )
 
         def test_drf_update(self):
             c = Client()
@@ -1370,7 +1630,7 @@ class TestRequests(EnumTypeMixin, TestCase):
 
             self.assertEqual(fetched['id'], obj.id)
             for field in self.fields:
-                self.assertEqual(fetched[field], getattr(obj, field))
+                self.assertEqual(try_convert(self.enum_primitive(field), fetched[field], raise_on_error=False), getattr(obj, field))
                 if self.MODEL_CLASS._meta.get_field(field).coerce:
                     self.assertEqual(params[field], getattr(obj, field))
 
@@ -1394,9 +1654,9 @@ class TestRequests(EnumTypeMixin, TestCase):
 
             self.assertEqual(created['id'], obj.id)
             for field in self.fields:
-                self.assertEqual(created[field], getattr(obj, field))
+                self.assertEqual(getattr(obj, field), try_convert(self.enum_primitive(field), created[field], raise_on_error=False))
                 if self.MODEL_CLASS._meta.get_field(field).coerce:
-                    self.assertEqual(params[field], getattr(obj, field))
+                    self.assertEqual(getattr(obj, field), params[field])
 
     else:
         pass  # pragma: no cover
@@ -1422,7 +1682,17 @@ class TestRequests(EnumTypeMixin, TestCase):
 
         for param, value in params.items():
             form_val = added_resp.find(class_=param).find("span", class_="value").text
-            form_val = self.enum_primitive(param)(form_val)
+            try:
+                form_val = self.enum_primitive(param)(form_val)
+            except (TypeError, ValueError):
+                if form_val:
+                    form_val = try_convert(
+                        self.enum_primitive(param),
+                        form_val,
+                        raise_on_error=True
+                    )
+                else:  # pragma: no cover
+                    pass
             if self.MODEL_CLASS._meta.get_field(param).strict:
                 self.assertEqual(
                     self.enum_type(param)(form_val),
@@ -1466,7 +1736,7 @@ class TestRequests(EnumTypeMixin, TestCase):
         c.delete(reverse(f'{self.NAMESPACE}:{form_url}', kwargs={'pk': deleted.pk}))
         self.assertRaises(self.MODEL_CLASS.DoesNotExist, self.MODEL_CLASS.objects.get, pk=deleted.pk)
 
-    def get_enum_val(self, enum, value, null=True, coerce=True, strict=True):
+    def get_enum_val(self, enum, value, primitive, null=True, coerce=True, strict=True):
         try:
             if coerce:
                 if value is None or value == '':
@@ -1481,7 +1751,10 @@ class TestRequests(EnumTypeMixin, TestCase):
                 raise err
 
         if value not in {None, ''}:
-            return type(values(enum)[0])(value)
+            try:
+                return try_convert(primitive, value, raise_on_error=True)
+            except ValueError as err:
+                return primitive(value)
         return None if null else ''
 
     def test_add_form(self):
@@ -1503,8 +1776,12 @@ class TestRequests(EnumTypeMixin, TestCase):
         """
         for field in self.fields:
             field = self.MODEL_CLASS._meta.get_field(field)
-            expected = dict(zip([en if field.coerce else en.value for en in field.enum],
-                                labels(field.enum)))  # value -> label
+
+            expected = {}
+            for en in field.enum:
+                for val, label in field.choices:
+                    if en == val:
+                        expected[en if field.coerce else val] = label
 
             if (
                 not any([getattr(obj, field.name) == exp for exp in expected])
@@ -1537,6 +1814,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                         value = self.get_enum_val(
                             field.enum,
                             option['value'],
+                            primitive=self.enum_primitive(field.name),
                             null=field.null,
                             coerce=field.coerce,
                             strict=field.strict
@@ -1651,6 +1929,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                     obj_div.find(f'p', {'class': attr}).find(
                         'span', class_='value'
                     ).text,
+                    primitive=self.enum_primitive(attr),
                     null=self.MODEL_CLASS._meta.get_field(attr).null,
                     coerce=self.MODEL_CLASS._meta.get_field(attr).coerce,
                     strict=self.MODEL_CLASS._meta.get_field(attr).strict
@@ -2446,6 +2725,11 @@ if ENUM_PROPERTIES_INSTALLED:
                 'int': self.IntEnum.VALn1,
                 'big_pos_int': self.BigPosIntEnum.VAL3,
                 'big_int': self.BigIntEnum.VAL2,
+                'date_enum': self.DateEnum.BRIAN.value,
+                'datetime_enum': self.DateTimeEnum.PINATUBO.value,
+                'duration_enum': self.DurationEnum.FORTNIGHT.value,
+                'time_enum': self.TimeEnum.LUNCH.value,
+                'decimal_enum': self.DecimalEnum.THREE.value,
                 'constant': self.Constants.GOLDEN_RATIO,
                 'text': self.TextEnum.VALUE2,
                 'extern': self.ExternEnum.TWO,
@@ -2465,6 +2749,13 @@ if ENUM_PROPERTIES_INSTALLED:
                 'int': -2147483648,
                 'big_pos_int': self.BigPosIntEnum.VAL2,
                 'big_int': self.BigPosIntEnum.VAL2,
+                'date_enum': self.DateEnum.BRIAN.value,
+                'datetime_enum': datetime(
+                    year=1964, month=3, day=28, hour=17, minute=36, second=0
+                ),
+                'duration_enum': self.DurationEnum.FORTNIGHT.value,
+                'time_enum': self.TimeEnum.LUNCH.value,
+                'decimal_enum': self.DecimalEnum.THREE.value,
                 'constant': 'φ',
                 'text': 'v two',
                 'extern': 'two',

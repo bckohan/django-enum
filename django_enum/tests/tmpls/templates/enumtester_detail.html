@@ -10,6 +10,19 @@
     <p class="int">int: <b><span class="value">{{ object.int.value|to_str }}</span></b> <b><span class="label">{{ object.int.label|to_str }}</span></b></p>
     <p class="big_pos_int">big_pos_int: <b><span class="value">{{ object.big_pos_int.value|to_str }}</span></b> <b><span class="label">{{ object.big_pos_int.label|to_str }}</span></b></p>
     <p class="big_int">big_int: <b><span class="value">{{ object.big_int.value|to_str }}</span></b> <b><span class="label">{{ object.big_int.label|to_str }}</span></b></p>
+
+    <p class="date_enum">date_enum: <b><span class="value">{{ object.date_enum.value|to_str }}</span></b> <b><span class="label">{{ object.date_enum.label|to_str }}</span></b></p>
+
+    {% if object.datetime_enum|is_instance:DateTimeEnum %}
+    <p class="datetime_enum">datetime_enum: <b><span class="value">{{ object.datetime_enum.value|to_str }}</span></b> <b><span class="label">{{ object.datetime_enum.label|to_str }}</span></b></p>
+    {% else %}
+    <p class="datetime_enum">datetime_enum: <b><span class="value">{{ object.datetime_enum|to_str }}</span></b> <b><span class="label">{{ object.datetime_enum|to_str }}</span></b></p>
+    {% endif %}
+
+    <p class="time_enum">time_enum: <b><span class="value">{{ object.time_enum.value|to_str }}</span></b> <b><span class="label">{{ object.time_enum.label|to_str }}</span></b></p>
+    <p class="duration_enum">duration_enum: <b><span class="value">{{ object.duration_enum.value|to_str }}</span></b> <b><span class="label">{{ object.duration_enum.label|to_str }}</span></b></p>
+    <p class="decimal_enum">decimal_enum: <b><span class="value">{{ object.decimal_enum.value|to_str }}</span></b> <b><span class="label">{{ object.decimal_enum.label|to_str }}</span></b></p>
+
     <p class="constant">constant: <b><span class="value">{{ object.constant.value|to_str }}</span></b> <b><span class="label">{{ object.constant.label|to_str }}</span></b></p>
     <p class="text">text: <b><span class="value">{{ object.text.value|to_str }}</span></b> <b><span class="label">{{ object.text.label|to_str }}</span></b></p>
     <p class="extern">extern: <b><span class="value">{{ object.extern.value|to_str }}</span></b> <b><span class="label">{{ object.extern.name|to_str }}</span></b></p>

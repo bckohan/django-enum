@@ -9,6 +9,7 @@ from django.forms.fields import (
     TypedChoiceField,
     TypedMultipleChoiceField,
 )
+from decimal import DecimalException
 from django.forms.widgets import Select, SelectMultiple
 from django_enum.utils import choices as get_choices
 from django_enum.utils import determine_primitive
@@ -236,7 +237,7 @@ class ChoiceFieldMixin:
                 try:
                     value = self._coerce_to_value_type(value)
                     value = self.enum(value)
-                except (TypeError, ValueError):
+                except (TypeError, ValueError, DecimalException):
                     try:
                         value = self.enum[value]
                     except KeyError as err:

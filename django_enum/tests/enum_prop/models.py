@@ -17,6 +17,11 @@ try:
         SmallIntEnum,
         SmallPosIntEnum,
         TextEnum,
+        DateEnum,
+        DateTimeEnum,
+        TimeEnum,
+        DurationEnum,
+        DecimalEnum
     )
     from enum_properties import s
 
@@ -35,6 +40,43 @@ try:
         constant = EnumField(Constants, null=True, default=None, db_index=True, blank=True)
 
         text = EnumField(TextEnum, null=True, default=None, db_index=True, blank=True)
+
+        # exotics
+        date_enum = EnumField(
+            DateEnum,
+            null=False,
+            default=DateEnum.EMMA,
+            blank=True
+        )
+
+        datetime_enum = EnumField(
+            DateTimeEnum,
+            null=True,
+            default=None,
+            blank=True,
+            strict=False
+        )
+
+        time_enum = EnumField(
+            TimeEnum,
+            null=True,
+            default=None,
+            blank=True
+        )
+
+        duration_enum = EnumField(
+            DurationEnum,
+            null=True,
+            default=None,
+            blank=True
+        )
+
+        decimal_enum = EnumField(
+            DecimalEnum,
+            null=False,
+            default=DecimalEnum.THREE.value,
+            blank=True
+        )
 
         extern = EnumField(ExternEnum, null=True, default=None, db_index=True, blank=True)
 

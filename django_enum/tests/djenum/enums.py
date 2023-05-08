@@ -4,6 +4,7 @@ from enum import Enum, IntEnum
 
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import Choices
+from django_enum.tests.utils import try_convert
 
 
 class FloatChoices(float, Choices):
@@ -107,12 +108,56 @@ class DateEnum(Enum):
     EMMA = date(1989, 7, 27)
     HUGO = date(2016, 9, 9)
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            return cls(try_convert(date, value, raise_on_error=True))
+        return super()._missing_(value)
+
+    def __str__(self):
+        return self.value.isoformat()
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            try:
+                return super().__eq__(DateEnum(other))
+            except ValueError:
+                return False
+        if isinstance(other, date):
+            return self.value == other
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 class DateTimeEnum(Enum):
 
     ST_HELENS = datetime(1980, 5, 18, 8, 32, 0)
     PINATUBO = datetime(1991, 6, 15, 20, 9, 0)
     KATRINA = datetime(2005, 8, 29, 5, 10, 0)
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            return cls(try_convert(datetime, value, raise_on_error=True))
+        return super()._missing_(value)
+
+    def __str__(self):
+        return self.value.isoformat()  # pragma: no cover
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            try:
+                return super().__eq__(DateTimeEnum(other))
+            except ValueError:  # pragma: no cover
+                return False
+        if isinstance(other, datetime):
+            return self.value == other
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 class TimeEnum(Enum):
@@ -121,12 +166,57 @@ class TimeEnum(Enum):
     LUNCH = time(12, 30, 0)
     MORNING = time(9, 0, 0)
 
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            return cls(try_convert(time, value, raise_on_error=True))
+        return super()._missing_(value)
+
+    def __str__(self):
+        return self.value.isoformat()  # pragma: no cover
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            try:
+                return super().__eq__(TimeEnum(other))
+            except ValueError:
+                return False
+        if isinstance(other, time):
+            return self.value == other
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
+
 
 class DurationEnum(Enum):
 
     DAY = timedelta(days=1)
     WEEK = timedelta(weeks=1)
     FORTNIGHT = timedelta(weeks=2)
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, str):
+            return cls(try_convert(timedelta, value, raise_on_error=True))
+        return super()._missing_(value)
+
+    def __str__(self):  # pragma: no cover
+        from django.utils.duration import duration_iso_string
+        return duration_iso_string(self.value)
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            try:
+                return super().__eq__(DurationEnum(other))
+            except ValueError:
+                return False
+        if isinstance(other, timedelta):
+            return self.value == other
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()
 
 
 class DecimalEnum(Enum):
@@ -136,3 +226,22 @@ class DecimalEnum(Enum):
     THREE = Decimal('0.9999')
     FOUR  = Decimal('99.9999')
     FIVE  = Decimal('999')
+
+    @classmethod
+    def _missing_(cls, value):
+        if isinstance(value, (int, float, str)):
+            return cls(try_convert(Decimal, value, raise_on_error=True))
+        return super()._missing_(value)
+
+    def __eq__(self, other):
+        if isinstance(other, Decimal):
+            return self.value == other
+        if isinstance(other, str) and other or isinstance(other, (float, int)):
+            try:
+                return super().__eq__(DecimalEnum(str(other)))
+            except ValueError:  # pragma: no cover
+                return False
+        return super().__eq__(other)
+
+    def __hash__(self):
+        return super().__hash__()

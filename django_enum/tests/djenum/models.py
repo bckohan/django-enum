@@ -123,7 +123,8 @@ class EnumTester(models.Model):
         DateTimeEnum,
         null=True,
         default=None,
-        blank=True
+        blank=True,
+        strict=False
     )
     time_enum = EnumField(
         TimeEnum,

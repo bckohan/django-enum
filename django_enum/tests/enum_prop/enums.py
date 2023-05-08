@@ -9,7 +9,17 @@ try:
         IntegerChoices,
         TextChoices,
     )
-    from enum_properties import IntEnumProperties, IntFlagProperties, p, s
+    from datetime import date, datetime, time, timedelta
+    from decimal import Decimal, DecimalException
+    from enum_properties import (
+        EnumProperties,
+        IntEnumProperties,
+        IntFlagProperties,
+        p,
+        s
+    )
+    from rest_framework.renderers import JSONRenderer
+    from django_enum.tests.utils import try_convert
 
 
     class DJIntEnum(DjangoIntegerChoices):
@@ -89,6 +99,129 @@ try:
         VAL2 = 2, 'Value 2', BigPosIntEnum.VAL2, _('Something in the middle.')
         VAL3 = 2147483648, 'Value 2147483648', BigPosIntEnum.VAL3, _('One more than the greatest regular integer.')
 
+
+    class DateEnum(EnumProperties, s('label')):
+
+        BRIAN = date(1984, 8, 7), 'Brian'
+        EMMA = date(1989, 7, 27), 'Emma'
+        HUGO = date(2016, 9, 9), 'Hugo'
+
+        @classmethod
+        def _missing_(cls, value):
+            if isinstance(value, str):
+                return cls(try_convert(date, value, raise_on_error=True))
+            return super()._missing_(value)
+
+        def __eq__(self, other):
+            if isinstance(other, str):
+                try:
+                    return self == DateEnum(other)
+                except ValueError:
+                    return False
+            return super().__eq__(other)
+
+        def __hash__(self):
+            return super().__hash__()
+
+    class DateTimeEnum(EnumProperties, s('label')):
+
+        ST_HELENS = datetime(1980, 5, 18, 8, 32, 0), 'Mount St. Helens'
+        PINATUBO = datetime(1991, 6, 15, 20, 9, 0), 'Pinatubo'
+        KATRINA = datetime(2005, 8, 29, 5, 10, 0), 'Katrina'
+
+        @classmethod
+        def _missing_(cls, value):
+            if isinstance(value, str):
+                return cls(try_convert(datetime, value, raise_on_error=True))
+            return super()._missing_(value)
+
+        def __eq__(self, other):
+            if isinstance(other, str):
+                try:
+                    return self == DateTimeEnum(other)
+                except ValueError:
+                    return False
+            return super().__eq__(other)
+
+        def __hash__(self):
+            return super().__hash__()
+
+    class TimeEnum(EnumProperties, s('label')):
+
+        COB = time(17, 0, 0), 'Close of Business'
+        LUNCH = time(12, 30, 0), 'Lunch'
+        MORNING = time(9, 0, 0), 'Morning'
+
+        @classmethod
+        def _missing_(cls, value):
+            if isinstance(value, str):
+                return cls(try_convert(time, value, raise_on_error=True))
+            return super()._missing_(value)
+
+        def __eq__(self, other):
+            if isinstance(other, str):
+                try:
+                    return self == TimeEnum(other)
+                except ValueError:
+                    return False
+            return super().__eq__(other)
+
+        def __hash__(self):
+            return super().__hash__()
+
+    class DurationEnum(EnumProperties, s('label', case_fold=True)):
+
+        DAY = timedelta(days=1), 'DAY'
+        WEEK = timedelta(weeks=1), 'WEEK'
+        FORTNIGHT = timedelta(weeks=2), 'FORTNIGHT'
+
+        @classmethod
+        def _missing_(cls, value):
+            if isinstance(value, str):
+                return cls(try_convert(timedelta, value, raise_on_error=True))
+            return super()._missing_(value)
+
+        def __str__(self):  # pragma: no cover
+            from django.utils.duration import duration_iso_string
+            return duration_iso_string(self.value)
+
+        def __eq__(self, other):
+            if isinstance(other, str):
+                try:
+                    return self == DurationEnum(other)
+                except ValueError:
+                    return False
+            return super().__eq__(other)
+
+        def __hash__(self):
+            return super().__hash__()
+
+    class DecimalEnum(EnumProperties, s('label', case_fold=True)):
+
+        ONE = Decimal('0.99'), 'One'
+        TWO = Decimal('0.999'), 'Two'
+        THREE = Decimal('0.9999'), 'Three'
+        FOUR = Decimal('99.9999'), 'Four'
+        FIVE = Decimal('999'), 'Five'
+
+        @classmethod
+        def _missing_(cls, value):
+            if isinstance(value, (int, float, str)):
+                return cls(try_convert(Decimal, value, raise_on_error=True))
+            return super()._missing_(value)
+
+        def __eq__(self, other):
+            if isinstance(other, Decimal):
+                return self.value == other
+            if isinstance(other, str) and other or isinstance(other, (float, int)):
+                try:
+                    return super().__eq__(DecimalEnum(str(other)))
+                except ValueError:  # pragma: no cover
+                    return False
+            return super().__eq__(other)
+
+        def __hash__(self):
+            return super().__hash__()
 
     class PrecedenceTest(
         s('prop1'),
