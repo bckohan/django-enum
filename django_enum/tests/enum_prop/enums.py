@@ -181,10 +181,6 @@ try:
                 return cls(try_convert(timedelta, value, raise_on_error=True))
             return super()._missing_(value)
 
-        def __str__(self):  # pragma: no cover
-            from django.utils.duration import duration_iso_string
-            return duration_iso_string(self.value)
-
         def __eq__(self, other):
             if isinstance(other, str):
                 try:

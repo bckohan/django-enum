@@ -1,11 +1,12 @@
 from django import template
+from enum import Enum
 
 register = template.Library()
 
 
-@register.filter(name='is_instance')
-def is_instance(instance, cls):
-    return isinstance(instance, cls)
+@register.filter(name='is_enum')
+def is_enum(instance):
+    return isinstance(instance, Enum)
 
 
 @register.filter(name='to_str')

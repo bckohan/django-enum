@@ -13,7 +13,7 @@
 
     <p class="date_enum">date_enum: <b><span class="value">{{ object.date_enum.value|to_str }}</span></b> <b><span class="label">{{ object.date_enum.label|to_str }}</span></b></p>
 
-    {% if object.datetime_enum|is_instance:DateTimeEnum %}
+    {% if object.datetime_enum|is_enum %}
     <p class="datetime_enum">datetime_enum: <b><span class="value">{{ object.datetime_enum.value|to_str }}</span></b> <b><span class="label">{{ object.datetime_enum.label|to_str }}</span></b></p>
     {% else %}
     <p class="datetime_enum">datetime_enum: <b><span class="value">{{ object.datetime_enum|to_str }}</span></b> <b><span class="label">{{ object.datetime_enum|to_str }}</span></b></p>
@@ -29,13 +29,13 @@
     <p class="dj_int_enum">dj_int_enum: <b><span class="value">{{ object.dj_int_enum.value|to_str }}</span></b> <b><span class="label">{{ object.dj_int_enum.label|to_str }}</span></b></p>
     <p class="dj_text_enum">dj_text_enum: <b><span class="value">{{ object.dj_text_enum.value|to_str }}</span></b> <b><span class="label">{{ object.dj_text_enum.label|to_str }}</span></b></p>
 
-    {% if object.non_strict_int|is_instance:SmallPosIntEnum %}
+    {% if object.non_strict_int|is_enum %}
     <p class="non_strict_int">non_strict_int: <b><span class="value">{{ object.non_strict_int.value|to_str }}</span></b> <b><span class="label">{{ object.non_strict_int.label|to_str }}</span></b></p>
     {% else %}
     <p class="non_strict_int">non_strict_int: <b><span class="value">{{ object.non_strict_int|to_str }}</span></b> <b><span class="label">{{ object.non_strict_int|to_str }}</span></b></p>
     {% endif %}
 
-    {% if object.non_strict_text|is_instance:TextEnum %}
+    {% if object.non_strict_text|is_enum %}
     <p class="non_strict_text">non_strict_text: <b><span class="value">{{ object.non_strict_text.value|to_str }}</span></b> <b><span class="label">{{ object.non_strict_text.label|to_str }}</span></b></p>
     {% else %}
     <p class="non_strict_text">non_strict_text: <b><span class="value">{{ object.non_strict_text|to_str }}</span></b> <b><span class="label">{{ object.non_strict_text|to_str }}</span></b></p>

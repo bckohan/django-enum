@@ -114,9 +114,6 @@ class DateEnum(Enum):
             return cls(try_convert(date, value, raise_on_error=True))
         return super()._missing_(value)
 
-    def __str__(self):
-        return self.value.isoformat()
-
     def __eq__(self, other):
         if isinstance(other, str):
             try:
@@ -142,9 +139,6 @@ class DateTimeEnum(Enum):
         if isinstance(value, str):
             return cls(try_convert(datetime, value, raise_on_error=True))
         return super()._missing_(value)
-
-    def __str__(self):
-        return self.value.isoformat()  # pragma: no cover
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -172,9 +166,6 @@ class TimeEnum(Enum):
             return cls(try_convert(time, value, raise_on_error=True))
         return super()._missing_(value)
 
-    def __str__(self):
-        return self.value.isoformat()  # pragma: no cover
-
     def __eq__(self, other):
         if isinstance(other, str):
             try:
@@ -200,10 +191,6 @@ class DurationEnum(Enum):
         if isinstance(value, str):
             return cls(try_convert(timedelta, value, raise_on_error=True))
         return super()._missing_(value)
-
-    def __str__(self):  # pragma: no cover
-        from django.utils.duration import duration_iso_string
-        return duration_iso_string(self.value)
 
     def __eq__(self, other):
         if isinstance(other, str):
