@@ -1,3 +1,4 @@
+# pylint: disable=C0302
 """
 Support for Django model fields built from enumeration types.
 """
@@ -739,6 +740,18 @@ class EnumDateField(EnumField, DateField):
             val = val.value
         return "" if val is None else val.isoformat()
 
+    def get_db_prep_value(self, value, connection, prepared=False) -> Any:
+        return DateField.get_db_prep_value(
+            self,
+            super().get_db_prep_value(
+                value,
+                connection,
+                prepared=prepared
+            ) if not prepared else value,
+            connection=connection,
+            prepared=True
+        )
+
 
 class EnumDateTimeField(EnumField, DateTimeField):
     """
@@ -761,6 +774,18 @@ class EnumDateTimeField(EnumField, DateTimeField):
         if isinstance(val, Enum):
             val = val.value
         return "" if val is None else val.isoformat()
+
+    def get_db_prep_value(self, value, connection, prepared=False) -> Any:
+        return DateTimeField.get_db_prep_value(
+            self,
+            super().get_db_prep_value(
+                value,
+                connection,
+                prepared=prepared
+            ) if not prepared else value,
+            connection=connection,
+            prepared=True
+        )
 
 
 class EnumDurationField(EnumField, DurationField):
@@ -785,6 +810,18 @@ class EnumDurationField(EnumField, DurationField):
             val = val.value
         return "" if val is None else duration_string(val)
 
+    def get_db_prep_value(self, value, connection, prepared=False) -> Any:
+        return DurationField.get_db_prep_value(
+            self,
+            super().get_db_prep_value(
+                value,
+                connection,
+                prepared=prepared
+            ) if not prepared else value,
+            connection=connection,
+            prepared=True
+        )
+
 
 class EnumTimeField(EnumField, TimeField):
     """
@@ -807,6 +844,18 @@ class EnumTimeField(EnumField, TimeField):
         if isinstance(val, Enum):
             val = val.value
         return "" if val is None else val.isoformat()
+
+    def get_db_prep_value(self, value, connection, prepared=False) -> Any:
+        return TimeField.get_db_prep_value(
+            self,
+            super().get_db_prep_value(
+                value,
+                connection,
+                prepared=prepared
+            ) if not prepared else value,
+            connection=connection,
+            prepared=True
+        )
 
 
 class EnumDecimalField(EnumField, DecimalField):
@@ -865,9 +914,14 @@ class EnumDecimalField(EnumField, DecimalField):
         """Override base class to avoid calling to_python() in Django < 4."""
         return self.get_db_prep_value(value, connection)
 
-    def get_prep_value(self, value):
+    def get_prep_value(self, value: Any) -> Any:
         """By-pass base class - it calls to_python() which we don't want."""
         return EnumField.get_prep_value(self, value)
+
+    def get_db_prep_value(self, value, connection, prepared=False) -> Any:
+        if not prepared:
+            value = self.get_prep_value(value)
+        return connection.ops.adapt_decimalfield_value(value)
 
 
 class EnumBitField(EnumField, BinaryField):
