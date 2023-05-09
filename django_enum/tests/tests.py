@@ -2028,6 +2028,11 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
             'constant': self.Constants.GOLDEN_RATIO,
             'text': self.TextEnum.VALUE2,
             'extern': self.ExternEnum.TWO,
+            'date_enum': self.DateEnum.HUGO,
+            'datetime_enum': self.DateTimeEnum.KATRINA,
+            'time_enum': self.TimeEnum.COB,
+            'duration_enum': self.DurationEnum.FORTNIGHT,
+            'decimal_enum': self.DecimalEnum.FIVE,
             'dj_int_enum': 3,
             'dj_text_enum': self.DJTextEnum.A,
             'non_strict_int': 15,
@@ -2040,7 +2045,12 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
         return {
             'non_strict_int': 100,
             'constant': self.Constants.PI,
-            'big_int': -2147483649
+            'big_int': -2147483649,
+            'date_enum': self.DateEnum.BRIAN,
+            'datetime_enum': self.DateTimeEnum.ST_HELENS,
+            'time_enum': self.TimeEnum.LUNCH,
+            'duration_enum': self.DurationEnum.WEEK,
+            'decimal_enum': self.DecimalEnum.TWO,
         }
 
     def test_bulk_create(self):
