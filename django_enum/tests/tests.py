@@ -1566,7 +1566,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                 no_coerce = EnumField(self.SmallPosIntEnum)
 
                 class Meta:
-                    model = EnumTester
+                    model = self.MODEL_CLASS
                     fields = '__all__'
 
             ser = TestSerializer(data=self.post_params)
@@ -1582,7 +1582,9 @@ class TestRequests(EnumTypeMixin, TestCase):
                     'constant': 3.14,
                     'text': 'wrong',
                     'extern': 0,
-                    'pos_int': -50
+                    'pos_int': -50,
+                    'date_enum': date(year=2017, day=5, month=12),
+                    'decimal_enum': Decimal('1.89')
                 }
             )
 
@@ -1592,6 +1594,8 @@ class TestRequests(EnumTypeMixin, TestCase):
             self.assertTrue('text' in ser_bad.errors)
             self.assertTrue('extern' in ser_bad.errors)
             self.assertTrue('pos_int' in ser_bad.errors)
+            self.assertTrue('date_enum' in ser_bad.errors)
+            self.assertTrue('decimal_enum' in ser_bad.errors)
 
         def test_drf_read(self):
             c = Client()
@@ -2072,19 +2076,10 @@ if ENUM_PROPERTIES_INSTALLED:
 
     from django_enum.forms import EnumChoiceField
     from django_enum.tests.enum_prop.enums import (
-        BigIntEnum,
-        BigPosIntEnum,
-        Constants,
-        ExternEnum,
         GNSSConstellation,
-        IntEnum,
         LargeBitField,
         LargeNegativeField,
-        PosIntEnum,
-        PrecedenceTest,
-        SmallIntEnum,
-        SmallPosIntEnum,
-        TextEnum,
+        PrecedenceTest
     )
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
@@ -2095,145 +2090,145 @@ if ENUM_PROPERTIES_INSTALLED:
     from enum_properties import s
 
 
-    class TestEnumPropertiesIntegration(TestCase):
+    class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
 
         MODEL_CLASS = EnumTester
 
         def test_properties_and_symmetry(self):
-            self.assertEqual(Constants.PI.symbol, 'π')
-            self.assertEqual(Constants.e.symbol, 'e')
-            self.assertEqual(Constants.GOLDEN_RATIO.symbol, 'φ')
+            self.assertEqual(self.Constants.PI.symbol, 'π')
+            self.assertEqual(self.Constants.e.symbol, 'e')
+            self.assertEqual(self.Constants.GOLDEN_RATIO.symbol, 'φ')
 
             # test symmetry
-            self.assertEqual(Constants.PI, Constants('π'))
-            self.assertEqual(Constants.e, Constants('e'))
-            self.assertEqual(Constants.GOLDEN_RATIO, Constants('φ'))
+            self.assertEqual(self.Constants.PI, self.Constants('π'))
+            self.assertEqual(self.Constants.e, self.Constants('e'))
+            self.assertEqual(self.Constants.GOLDEN_RATIO, self.Constants('φ'))
 
-            self.assertEqual(Constants.PI, Constants('PI'))
-            self.assertEqual(Constants.e, Constants('e'))
-            self.assertEqual(Constants.GOLDEN_RATIO, Constants('GOLDEN_RATIO'))
+            self.assertEqual(self.Constants.PI, self.Constants('PI'))
+            self.assertEqual(self.Constants.e, self.Constants('e'))
+            self.assertEqual(self.Constants.GOLDEN_RATIO, self.Constants('GOLDEN_RATIO'))
 
-            self.assertEqual(Constants.PI, Constants('Pi'))
-            self.assertEqual(Constants.e, Constants("Euler's Number"))
-            self.assertEqual(Constants.GOLDEN_RATIO, Constants('Golden Ratio'))
+            self.assertEqual(self.Constants.PI, self.Constants('Pi'))
+            self.assertEqual(self.Constants.e, self.Constants("Euler's Number"))
+            self.assertEqual(self.Constants.GOLDEN_RATIO, self.Constants('Golden Ratio'))
 
-            self.assertEqual(TextEnum.VALUE1.version, 0)
-            self.assertEqual(TextEnum.VALUE2.version, 1)
-            self.assertEqual(TextEnum.VALUE3.version, 2)
-            self.assertEqual(TextEnum.DEFAULT.version, 3)
+            self.assertEqual(self.TextEnum.VALUE1.version, 0)
+            self.assertEqual(self.TextEnum.VALUE2.version, 1)
+            self.assertEqual(self.TextEnum.VALUE3.version, 2)
+            self.assertEqual(self.TextEnum.DEFAULT.version, 3)
 
-            self.assertEqual(TextEnum.VALUE1.help,
+            self.assertEqual(self.TextEnum.VALUE1.help,
                              'Some help text about value1.')
-            self.assertEqual(TextEnum.VALUE2.help,
+            self.assertEqual(self.TextEnum.VALUE2.help,
                              'Some help text about value2.')
-            self.assertEqual(TextEnum.VALUE3.help,
+            self.assertEqual(self.TextEnum.VALUE3.help,
                              'Some help text about value3.')
-            self.assertEqual(TextEnum.DEFAULT.help,
+            self.assertEqual(self.TextEnum.DEFAULT.help,
                              'Some help text about default.')
 
-            self.assertEqual(TextEnum.VALUE1, TextEnum('VALUE1'))
-            self.assertEqual(TextEnum.VALUE2, TextEnum('VALUE2'))
-            self.assertEqual(TextEnum.VALUE3, TextEnum('VALUE3'))
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('DEFAULT'))
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('VALUE1'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('VALUE2'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('VALUE3'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('DEFAULT'))
 
-            self.assertEqual(TextEnum.VALUE1, TextEnum('Value1'))
-            self.assertEqual(TextEnum.VALUE2, TextEnum('Value2'))
-            self.assertEqual(TextEnum.VALUE3, TextEnum('Value3'))
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('Default'))
-
-            # test asymmetry
-            self.assertRaises(ValueError, TextEnum, 0)
-            self.assertRaises(ValueError, TextEnum, 1)
-            self.assertRaises(ValueError, TextEnum, 2)
-            self.assertRaises(ValueError, TextEnum, 3)
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('Value1'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('Value2'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('Value3'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('Default'))
 
             # test asymmetry
-            self.assertRaises(ValueError, TextEnum,
+            self.assertRaises(ValueError, self.TextEnum, 0)
+            self.assertRaises(ValueError, self.TextEnum, 1)
+            self.assertRaises(ValueError, self.TextEnum, 2)
+            self.assertRaises(ValueError, self.TextEnum, 3)
+
+            # test asymmetry
+            self.assertRaises(ValueError, self.TextEnum,
                               'Some help text about value1.')
-            self.assertRaises(ValueError, TextEnum,
+            self.assertRaises(ValueError, self.TextEnum,
                               'Some help text about value2.')
-            self.assertRaises(ValueError, TextEnum,
+            self.assertRaises(ValueError, self.TextEnum,
                               'Some help text about value3.')
-            self.assertRaises(ValueError, TextEnum,
+            self.assertRaises(ValueError, self.TextEnum,
                               'Some help text about default.')
 
             # test basic case insensitive iterable symmetry
-            self.assertEqual(TextEnum.VALUE1, TextEnum('val1'))
-            self.assertEqual(TextEnum.VALUE1, TextEnum('v1'))
-            self.assertEqual(TextEnum.VALUE1, TextEnum('v one'))
-            self.assertEqual(TextEnum.VALUE1, TextEnum('VaL1'))
-            self.assertEqual(TextEnum.VALUE1, TextEnum('V1'))
-            self.assertEqual(TextEnum.VALUE1, TextEnum('v ONE'))
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('val1'))
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('v1'))
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('v one'))
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('VaL1'))
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('V1'))
+            self.assertEqual(self.TextEnum.VALUE1, self.TextEnum('v ONE'))
 
-            self.assertEqual(TextEnum.VALUE2, TextEnum('val22'))
-            self.assertEqual(TextEnum.VALUE2, TextEnum('v2'))
-            self.assertEqual(TextEnum.VALUE2, TextEnum('v two'))
-            self.assertEqual(TextEnum.VALUE2, TextEnum('VaL22'))
-            self.assertEqual(TextEnum.VALUE2, TextEnum('V2'))
-            self.assertEqual(TextEnum.VALUE2, TextEnum('v TWo'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('val22'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('v2'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('v two'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('VaL22'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('V2'))
+            self.assertEqual(self.TextEnum.VALUE2, self.TextEnum('v TWo'))
 
-            self.assertEqual(TextEnum.VALUE3, TextEnum('val333'))
-            self.assertEqual(TextEnum.VALUE3, TextEnum('v3'))
-            self.assertEqual(TextEnum.VALUE3, TextEnum('v three'))
-            self.assertEqual(TextEnum.VALUE3, TextEnum('VaL333'))
-            self.assertEqual(TextEnum.VALUE3, TextEnum('V333'))
-            self.assertEqual(TextEnum.VALUE3, TextEnum('v THRee'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('val333'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('v3'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('v three'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('VaL333'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('V333'))
+            self.assertEqual(self.TextEnum.VALUE3, self.TextEnum('v THRee'))
 
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('default'))
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('DeFaULT'))
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('DEfacTO'))
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('defacto'))
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('NONE'))
-            self.assertEqual(TextEnum.DEFAULT, TextEnum('none'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('default'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('DeFaULT'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('DEfacTO'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('defacto'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('NONE'))
+            self.assertEqual(self.TextEnum.DEFAULT, self.TextEnum('none'))
 
         def test_value_type_coercion(self):
             """test basic value coercion from str"""
-            self.assertEqual(Constants.PI, Constants(
+            self.assertEqual(self.Constants.PI, self.Constants(
                 '3.14159265358979323846264338327950288'))
-            self.assertEqual(Constants.e, Constants('2.71828'))
-            self.assertEqual(Constants.GOLDEN_RATIO, Constants(
+            self.assertEqual(self.Constants.e, self.Constants('2.71828'))
+            self.assertEqual(self.Constants.GOLDEN_RATIO, self.Constants(
                 '1.61803398874989484820458683436563811'))
 
-            self.assertEqual(SmallPosIntEnum.VAL1, SmallPosIntEnum('0'))
-            self.assertEqual(SmallPosIntEnum.VAL2, SmallPosIntEnum('2'))
-            self.assertEqual(SmallPosIntEnum.VAL3, SmallPosIntEnum('32767'))
+            self.assertEqual(self.SmallPosIntEnum.VAL1, self.SmallPosIntEnum('0'))
+            self.assertEqual(self.SmallPosIntEnum.VAL2, self.SmallPosIntEnum('2'))
+            self.assertEqual(self.SmallPosIntEnum.VAL3, self.SmallPosIntEnum('32767'))
 
-            self.assertEqual(SmallIntEnum.VALn1, SmallIntEnum('-32768'))
-            self.assertEqual(SmallIntEnum.VAL0, SmallIntEnum('0'))
-            self.assertEqual(SmallIntEnum.VAL1, SmallIntEnum('1'))
-            self.assertEqual(SmallIntEnum.VAL2, SmallIntEnum('2'))
-            self.assertEqual(SmallIntEnum.VAL3, SmallIntEnum('32767'))
+            self.assertEqual(self.SmallIntEnum.VALn1, self.SmallIntEnum('-32768'))
+            self.assertEqual(self.SmallIntEnum.VAL0, self.SmallIntEnum('0'))
+            self.assertEqual(self.SmallIntEnum.VAL1, self.SmallIntEnum('1'))
+            self.assertEqual(self.SmallIntEnum.VAL2, self.SmallIntEnum('2'))
+            self.assertEqual(self.SmallIntEnum.VAL3, self.SmallIntEnum('32767'))
 
-            self.assertEqual(IntEnum.VALn1, IntEnum('-2147483648'))
-            self.assertEqual(IntEnum.VAL0, IntEnum('0'))
-            self.assertEqual(IntEnum.VAL1, IntEnum('1'))
-            self.assertEqual(IntEnum.VAL2, IntEnum('2'))
-            self.assertEqual(IntEnum.VAL3, IntEnum('2147483647'))
+            self.assertEqual(self.IntEnum.VALn1, self.IntEnum('-2147483648'))
+            self.assertEqual(self.IntEnum.VAL0, self.IntEnum('0'))
+            self.assertEqual(self.IntEnum.VAL1, self.IntEnum('1'))
+            self.assertEqual(self.IntEnum.VAL2, self.IntEnum('2'))
+            self.assertEqual(self.IntEnum.VAL3, self.IntEnum('2147483647'))
 
-            self.assertEqual(PosIntEnum.VAL0, PosIntEnum('0'))
-            self.assertEqual(PosIntEnum.VAL1, PosIntEnum('1'))
-            self.assertEqual(PosIntEnum.VAL2, PosIntEnum('2'))
-            self.assertEqual(PosIntEnum.VAL3, PosIntEnum('2147483647'))
+            self.assertEqual(self.PosIntEnum.VAL0, self.PosIntEnum('0'))
+            self.assertEqual(self.PosIntEnum.VAL1, self.PosIntEnum('1'))
+            self.assertEqual(self.PosIntEnum.VAL2, self.PosIntEnum('2'))
+            self.assertEqual(self.PosIntEnum.VAL3, self.PosIntEnum('2147483647'))
 
-            self.assertEqual(BigPosIntEnum.VAL0, BigPosIntEnum('0'))
-            self.assertEqual(BigPosIntEnum.VAL1, BigPosIntEnum('1'))
-            self.assertEqual(BigPosIntEnum.VAL2, BigPosIntEnum('2'))
-            self.assertEqual(BigPosIntEnum.VAL3, BigPosIntEnum('2147483648'))
+            self.assertEqual(self.BigPosIntEnum.VAL0, self.BigPosIntEnum('0'))
+            self.assertEqual(self.BigPosIntEnum.VAL1, self.BigPosIntEnum('1'))
+            self.assertEqual(self.BigPosIntEnum.VAL2, self.BigPosIntEnum('2'))
+            self.assertEqual(self.BigPosIntEnum.VAL3, self.BigPosIntEnum('2147483648'))
 
-            self.assertEqual(BigIntEnum.VAL0, BigIntEnum('-2147483649'))
-            self.assertEqual(BigIntEnum.VAL1, BigIntEnum('1'))
-            self.assertEqual(BigIntEnum.VAL2, BigIntEnum('2'))
-            self.assertEqual(BigIntEnum.VAL3, BigIntEnum('2147483648'))
+            self.assertEqual(self.BigIntEnum.VAL0, self.BigIntEnum('-2147483649'))
+            self.assertEqual(self.BigIntEnum.VAL1, self.BigIntEnum('1'))
+            self.assertEqual(self.BigIntEnum.VAL2, self.BigIntEnum('2'))
+            self.assertEqual(self.BigIntEnum.VAL3, self.BigIntEnum('2147483648'))
 
         def test_symmetric_type_coercion(self):
             """test that symmetric properties have types coerced"""
-            self.assertEqual(BigIntEnum.VAL0, BigIntEnum(BigPosIntEnum.VAL0))
-            self.assertEqual(BigIntEnum.VAL1, BigIntEnum(BigPosIntEnum.VAL1))
-            self.assertEqual(BigIntEnum.VAL2, BigIntEnum(BigPosIntEnum.VAL2))
-            self.assertEqual(BigIntEnum.VAL3, BigIntEnum(BigPosIntEnum.VAL3))
+            self.assertEqual(self.BigIntEnum.VAL0, self.BigIntEnum(self.BigPosIntEnum.VAL0))
+            self.assertEqual(self.BigIntEnum.VAL1, self.BigIntEnum(self.BigPosIntEnum.VAL1))
+            self.assertEqual(self.BigIntEnum.VAL2, self.BigIntEnum(self.BigPosIntEnum.VAL2))
+            self.assertEqual(self.BigIntEnum.VAL3, self.BigIntEnum(self.BigPosIntEnum.VAL3))
 
-            self.assertEqual(BigIntEnum.VAL0, BigIntEnum(0))
-            self.assertEqual(BigIntEnum.VAL0, BigIntEnum('0'))
+            self.assertEqual(self.BigIntEnum.VAL0, self.BigIntEnum(0))
+            self.assertEqual(self.BigIntEnum.VAL0, self.BigIntEnum('0'))
 
         def test_no_labels(self):
             """
@@ -2280,60 +2275,70 @@ if ENUM_PROPERTIES_INSTALLED:
             Test that enum values can be saved directly.
             """
             tester = self.MODEL_CLASS.objects.create(
-                small_pos_int=SmallPosIntEnum.VAL2,
-                small_int=SmallIntEnum.VAL0,
-                pos_int=PosIntEnum.VAL1,
-                int=IntEnum.VALn1,
-                big_pos_int=BigPosIntEnum.VAL3,
-                big_int=BigIntEnum.VAL2,
-                constant=Constants.GOLDEN_RATIO,
-                text=TextEnum.VALUE2,
-                extern=ExternEnum.ONE
+                small_pos_int=self.SmallPosIntEnum.VAL2,
+                small_int=self.SmallIntEnum.VAL0,
+                pos_int=self.PosIntEnum.VAL1,
+                int=self.IntEnum.VALn1,
+                big_pos_int=self.BigPosIntEnum.VAL3,
+                big_int=self.BigIntEnum.VAL2,
+                date_enum=self.DateEnum.BRIAN,
+                datetime_enum=self.DateTimeEnum.PINATUBO,
+                duration_enum=self.DurationEnum.FORTNIGHT,
+                time_enum=self.TimeEnum.LUNCH,
+                decimal_enum=self.DecimalEnum.THREE,
+                constant=self.Constants.GOLDEN_RATIO,
+                text=self.TextEnum.VALUE2,
+                extern=self.ExternEnum.ONE
             )
 
-            self.assertEqual(tester.small_pos_int, SmallPosIntEnum.VAL2)
-            self.assertEqual(tester.small_int, SmallIntEnum.VAL0)
-            self.assertEqual(tester.pos_int, PosIntEnum.VAL1)
-            self.assertEqual(tester.int, IntEnum.VALn1)
-            self.assertEqual(tester.big_pos_int, BigPosIntEnum.VAL3)
-            self.assertEqual(tester.big_int, BigIntEnum.VAL2)
-            self.assertEqual(tester.constant, Constants.GOLDEN_RATIO)
-            self.assertEqual(tester.text, TextEnum.VALUE2)
-            self.assertEqual(tester.extern, ExternEnum.ONE)
+            self.assertEqual(tester.small_pos_int, self.SmallPosIntEnum.VAL2)
+            self.assertEqual(tester.small_int, self.SmallIntEnum.VAL0)
+            self.assertEqual(tester.pos_int, self.PosIntEnum.VAL1)
+            self.assertEqual(tester.int, self.IntEnum.VALn1)
+            self.assertEqual(tester.big_pos_int, self.BigPosIntEnum.VAL3)
+            self.assertEqual(tester.big_int, self.BigIntEnum.VAL2)
+            self.assertEqual(tester.constant, self.Constants.GOLDEN_RATIO)
+            self.assertEqual(tester.text, self.TextEnum.VALUE2)
+            self.assertEqual(tester.extern, self.ExternEnum.ONE)
+            self.assertEqual(tester.date_enum, self.DateEnum.BRIAN)
+            self.assertEqual(tester.datetime_enum, self.DateTimeEnum.PINATUBO)
+            self.assertEqual(tester.duration_enum, self.DurationEnum.FORTNIGHT)
+            self.assertEqual(tester.time_enum, self.TimeEnum.LUNCH)
+            self.assertEqual(tester.decimal_enum, self.DecimalEnum.THREE)
 
-            tester.small_pos_int = SmallPosIntEnum.VAL1
-            tester.small_int = SmallIntEnum.VAL2
-            tester.pos_int = PosIntEnum.VAL0
-            tester.int = IntEnum.VAL1
-            tester.big_pos_int = BigPosIntEnum.VAL2
-            tester.big_int = BigIntEnum.VAL1
-            tester.constant = Constants.PI
-            tester.text = TextEnum.VALUE3
-            tester.extern = ExternEnum.TWO
+            tester.small_pos_int = self.SmallPosIntEnum.VAL1
+            tester.small_int = self.SmallIntEnum.VAL2
+            tester.pos_int = self.PosIntEnum.VAL0
+            tester.int = self.IntEnum.VAL1
+            tester.big_pos_int = self.BigPosIntEnum.VAL2
+            tester.big_int = self.BigIntEnum.VAL1
+            tester.constant = self.Constants.PI
+            tester.text = self.TextEnum.VALUE3
+            tester.extern = self.ExternEnum.TWO
 
             tester.save()
 
-            self.assertEqual(tester.small_pos_int, SmallPosIntEnum.VAL1)
-            self.assertEqual(tester.small_int, SmallIntEnum.VAL2)
-            self.assertEqual(tester.pos_int, PosIntEnum.VAL0)
-            self.assertEqual(tester.int, IntEnum.VAL1)
-            self.assertEqual(tester.big_pos_int, BigPosIntEnum.VAL2)
-            self.assertEqual(tester.big_int, BigIntEnum.VAL1)
-            self.assertEqual(tester.constant, Constants.PI)
-            self.assertEqual(tester.text, TextEnum.VALUE3)
-            self.assertEqual(tester.extern, ExternEnum.TWO)
+            self.assertEqual(tester.small_pos_int, self.SmallPosIntEnum.VAL1)
+            self.assertEqual(tester.small_int, self.SmallIntEnum.VAL2)
+            self.assertEqual(tester.pos_int, self.PosIntEnum.VAL0)
+            self.assertEqual(tester.int, self.IntEnum.VAL1)
+            self.assertEqual(tester.big_pos_int, self.BigPosIntEnum.VAL2)
+            self.assertEqual(tester.big_int, self.BigIntEnum.VAL1)
+            self.assertEqual(tester.constant, self.Constants.PI)
+            self.assertEqual(tester.text, self.TextEnum.VALUE3)
+            self.assertEqual(tester.extern, self.ExternEnum.TWO)
 
             tester.refresh_from_db()
 
-            self.assertEqual(tester.small_pos_int, SmallPosIntEnum.VAL1)
-            self.assertEqual(tester.small_int, SmallIntEnum.VAL2)
-            self.assertEqual(tester.pos_int, PosIntEnum.VAL0)
-            self.assertEqual(tester.int, IntEnum.VAL1)
-            self.assertEqual(tester.big_pos_int, BigPosIntEnum.VAL2)
-            self.assertEqual(tester.big_int, BigIntEnum.VAL1)
-            self.assertEqual(tester.constant, Constants.PI)
-            self.assertEqual(tester.text, TextEnum.VALUE3)
-            self.assertEqual(tester.extern, ExternEnum.TWO)
+            self.assertEqual(tester.small_pos_int, self.SmallPosIntEnum.VAL1)
+            self.assertEqual(tester.small_int, self.SmallIntEnum.VAL2)
+            self.assertEqual(tester.pos_int, self.PosIntEnum.VAL0)
+            self.assertEqual(tester.int, self.IntEnum.VAL1)
+            self.assertEqual(tester.big_pos_int, self.BigPosIntEnum.VAL2)
+            self.assertEqual(tester.big_int, self.BigIntEnum.VAL1)
+            self.assertEqual(tester.constant, self.Constants.PI)
+            self.assertEqual(tester.text, self.TextEnum.VALUE3)
+            self.assertEqual(tester.extern, self.ExternEnum.TWO)
 
             tester.small_pos_int = '32767'
             tester.small_int = -32768
@@ -2356,7 +2361,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(tester.big_int, -2147483649)
             self.assertEqual(tester.constant, 2.71828)
             self.assertEqual(tester.text, 'D')
-            self.assertEqual(tester.extern, ExternEnum.THREE)
+            self.assertEqual(tester.extern, self.ExternEnum.THREE)
 
             with transaction.atomic():
                 tester.text = 'not valid'
@@ -2593,16 +2598,16 @@ if ENUM_PROPERTIES_INSTALLED:
 
             self.assertEqual(self.MODEL_CLASS.objects.filter(constant=self.Constants.GOLDEN_RATIO).count(), 2)
             self.assertEqual(self.MODEL_CLASS.objects.filter(constant=self.Constants.GOLDEN_RATIO.name).count(), 2)
-            self.assertEqual(self.MODEL_CLASS.objects.filter(constant=Constants.GOLDEN_RATIO.value).count(), 2)
+            self.assertEqual(self.MODEL_CLASS.objects.filter(constant=self.Constants.GOLDEN_RATIO.value).count(), 2)
             self.assertEqual(self.MODEL_CLASS.objects.filter(constant__isnull=True).count(), 1)
 
             # test symmetry
-            self.assertEqual(self.MODEL_CLASS.objects.filter(constant=Constants.GOLDEN_RATIO.symbol).count(), 2)
+            self.assertEqual(self.MODEL_CLASS.objects.filter(constant=self.Constants.GOLDEN_RATIO.symbol).count(), 2)
             self.assertEqual(self.MODEL_CLASS.objects.filter(constant='φ').count(), 2)
 
-            self.assertEqual(self.MODEL_CLASS.objects.filter(text=TextEnum.VALUE2).count(), 2)
-            self.assertEqual(len(TextEnum.VALUE2.aliases), 3)
-            for alias in TextEnum.VALUE2.aliases:
+            self.assertEqual(self.MODEL_CLASS.objects.filter(text=self.TextEnum.VALUE2).count(), 2)
+            self.assertEqual(len(self.TextEnum.VALUE2.aliases), 3)
+            for alias in self.TextEnum.VALUE2.aliases:
                 self.assertEqual(self.MODEL_CLASS.objects.filter(text=alias).count(), 2)
 
             self.assertEqual(self.MODEL_CLASS.objects.filter(extern='One').count(), 2)
