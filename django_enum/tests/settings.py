@@ -91,6 +91,7 @@ MIDDLEWARE = (
 )
 
 INSTALLED_APPS = [
+    'django_enum.tests.converters',
     'django_enum.tests.djenum',
     'django_enum.tests.tmpls',
     'django.contrib.auth',

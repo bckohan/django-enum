@@ -15,6 +15,7 @@ from django_enum.choices import (
     IntegerChoices,
     TextChoices,
 )
+from django_enum.converters import register_enum_converter
 from django_enum.fields import (
     EnumBigIntegerField,
     EnumCharField,
@@ -54,7 +55,8 @@ __all__ = [
     'FilterSet',
     'EnumFilter',
     'NonStrictSelect',
-    'NonStrictSelectMultiple'
+    'NonStrictSelectMultiple',
+    'register_enum_converter'
 ]
 
 VERSION = (2, 0, 0)

@@ -1,5 +1,6 @@
-from django import template
 from enum import Enum
+
+from django import template
 
 register = template.Library()
 

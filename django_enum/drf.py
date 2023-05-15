@@ -7,7 +7,7 @@ try:
     from datetime import date, datetime, time, timedelta
     from decimal import Decimal, DecimalException
     from enum import Enum
-    from typing import Any, Type, Union, Dict, Optional
+    from typing import Any, Dict, Optional, Type, Union
 
     from django_enum import EnumField as EnumModelField
     from django_enum.utils import (

@@ -11,7 +11,7 @@ from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import F, Q
 from django.http import QueryDict
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
@@ -2099,7 +2099,7 @@ if ENUM_PROPERTIES_INSTALLED:
         GNSSConstellation,
         LargeBitField,
         LargeNegativeField,
-        PrecedenceTest
+        PrecedenceTest,
     )
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
@@ -3909,4 +3909,46 @@ if ENUM_PROPERTIES_INSTALLED:
 
 else:  # pragma: no cover
     pass
+
+
+class TestEnumConverter(TestCase):
+
+    def test_enum_converter(self):
+        from django.urls import reverse
+        from django.urls.converters import get_converter
+        from django_enum.tests.converters.urls import Enum1, record
+        from django_enum.tests.djenum.enums import DecimalEnum
+        converter = get_converter('Enum1')
+        self.assertEqual(converter.regex, '1|2')
+        self.assertEqual(converter.to_python('1'), Enum1.A)
+        self.assertEqual(converter.to_python('2'), Enum1.B)
+        self.assertEqual(converter.primitive, int)
+        self.assertEqual(converter.enum, Enum1)
+        self.assertEqual(converter.prop, 'value')
+
+        self.assertEqual(
+            reverse('enum1_view', kwargs={'enum': Enum1.A}),
+            '/1'
+        )
+
+        response = self.client.get('/1')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(record[0], Enum1.A)
+
+        converter = get_converter('decimal_enum')
+        self.assertEqual(converter.regex, '0.99|0.999|0.9999|99.9999|999')
+        self.assertEqual(converter.to_python('0.999'), DecimalEnum.TWO)
+        self.assertEqual(converter.to_python('99.9999'), DecimalEnum.FOUR)
+        self.assertEqual(converter.primitive, Decimal)
+        self.assertEqual(converter.enum, DecimalEnum)
+        self.assertEqual(converter.prop, 'value')
+
+        self.assertEqual(
+            reverse('decimal_enum_view', kwargs={'enum': DecimalEnum.ONE}),
+            '/0.99'
+        )
+
+        response = self.client.get('/0.99')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(record[1], DecimalEnum.ONE)
 

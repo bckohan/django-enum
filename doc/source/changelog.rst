@@ -5,6 +5,7 @@ Change Log
 v2.0.0
 ======
 
+* Implemented `Provide an optional enum path converter. <https://github.com/bckohan/django-enum/issues/22>`_
 * Implemented `Supply a mixin for DRF ModelSerializers that instantiates the provided DRF EnumField type for model EnumFields. <https://github.com/bckohan/django-enum/issues/47>`_
 * Implemented `Add support for date, datetime, timedelta, time and Decimal enumeration types. <https://github.com/bckohan/django-enum/issues/43>`_
 * Implemented `EnumField's should inherit from common base titled EnumField <https://github.com/bckohan/django-enum/issues/46>`_
