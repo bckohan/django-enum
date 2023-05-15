@@ -3,7 +3,7 @@ from enum import IntEnum
 from django.http import HttpResponse
 from django.urls import path
 from django_enum import register_enum_converter
-from django_enum.tests.djenum.enums import DecimalEnum
+from django_enum.tests.djenum.enums import DecimalEnum, Constants
 
 
 class Enum1(IntEnum):
@@ -13,6 +13,7 @@ class Enum1(IntEnum):
 
 register_enum_converter(Enum1)
 register_enum_converter(DecimalEnum, 'decimal_enum')
+register_enum_converter(Constants, prop='label')
 
 record = []
 
@@ -25,5 +26,6 @@ def enum_converter_view(request, enum):
 urlpatterns = [
     path('<Enum1:enum>', enum_converter_view, name='enum1_view'),
     path('<decimal_enum:enum>', enum_converter_view, name='decimal_enum_view'),
+    path('<Constants:enum>', enum_converter_view, name='constants_view')
 ]
 

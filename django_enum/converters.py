@@ -2,9 +2,8 @@
 A metaclass and converter for Django's URL dispatcher to use with Python's
 Enum class.
 """
-from decimal import DecimalException
 from enum import Enum
-from typing import Type
+from typing import Type, Dict
 
 from django.urls.converters import register_converter
 from django_enum.utils import determine_primitive
@@ -18,20 +17,13 @@ class _EnumConverter:
     prop: str = 'value'
     primitive: type
 
+    _lookup_: Dict[str, Enum]
+
     def to_python(self, value: str) -> Enum:
         """
-        Attempt coercion of value to enumeration type instance, if unsuccessful
-        and non-strict, coercion to enum's primitive type will be done,
-        otherwise a ValueError is raised.
+        Convert the string representation of the enum into an instance of it.
         """
-        try:
-            return self.enum(value)  # pylint: disable=E1102
-        except (TypeError, ValueError):
-            try:
-                value = self.primitive(value)
-                return self.enum(value)  # pylint: disable=E1102
-            except (TypeError, ValueError, DecimalException):
-                return self.enum[value]
+        return self._lookup_[value]
 
     def to_url(self, value):
         """
@@ -60,7 +52,10 @@ def register_enum_converter(enum: Type[Enum], type_name='', prop='value'):
                 'enum': enum,
                 'prop': prop,
                 'primitive': determine_primitive(enum),
-                'regex': '|'.join([str(getattr(env, prop)) for env in enum])
+                'regex': '|'.join([str(getattr(env, prop)) for env in enum]),
+                '_lookup_': {
+                    str(getattr(env, prop)): env for env in enum
+                }
             }
         ),
         type_name or enum.__name__

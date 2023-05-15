@@ -3917,7 +3917,8 @@ class TestEnumConverter(TestCase):
         from django.urls import reverse
         from django.urls.converters import get_converter
         from django_enum.tests.converters.urls import Enum1, record
-        from django_enum.tests.djenum.enums import DecimalEnum
+        from django_enum.tests.djenum.enums import DecimalEnum, Constants
+
         converter = get_converter('Enum1')
         self.assertEqual(converter.regex, '1|2')
         self.assertEqual(converter.to_python('1'), Enum1.A)
@@ -3952,3 +3953,21 @@ class TestEnumConverter(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(record[1], DecimalEnum.ONE)
 
+
+        converter = get_converter('Constants')
+        self.assertEqual(converter.regex, "Pi|Euler's Number|Golden Ratio")
+        self.assertEqual(converter.to_python('Golden Ratio'), Constants.GOLDEN_RATIO)
+        self.assertEqual(converter.to_python("Euler's Number"), Constants.e)
+        self.assertEqual(converter.to_python('Pi'), Constants.PI)
+        self.assertEqual(converter.primitive, float)
+        self.assertEqual(converter.enum, Constants)
+        self.assertEqual(converter.prop, 'label')
+
+        self.assertEqual(
+            reverse('constants_view', kwargs={'enum': Constants.GOLDEN_RATIO}),
+            '/Golden%20Ratio'
+        )
+
+        response = self.client.get("/Euler's Number")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(record[2], Constants.e)
