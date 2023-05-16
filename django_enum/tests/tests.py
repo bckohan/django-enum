@@ -3917,7 +3917,7 @@ class TestEnumConverter(TestCase):
         from django.urls import reverse
         from django.urls.converters import get_converter
         from django_enum.tests.converters.urls import Enum1, record
-        from django_enum.tests.djenum.enums import DecimalEnum, Constants
+        from django_enum.tests.djenum.enums import Constants, DecimalEnum
 
         converter = get_converter('Enum1')
         self.assertEqual(converter.regex, '1|2')

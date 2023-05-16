@@ -3,7 +3,7 @@ A metaclass and converter for Django's URL dispatcher to use with Python's
 Enum class.
 """
 from enum import Enum
-from typing import Type, Dict
+from typing import Dict, Type
 
 from django.urls.converters import register_converter
 from django_enum.utils import determine_primitive

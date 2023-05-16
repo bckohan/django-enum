@@ -2,9 +2,10 @@
 """
 Support for Django model fields built from enumeration types.
 """
+import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
-from enum import Enum, Flag
+from enum import Enum, Flag, IntFlag
 from typing import Any, List, Optional, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
@@ -24,9 +25,11 @@ from django.db.models import (
     PositiveBigIntegerField,
     PositiveIntegerField,
     PositiveSmallIntegerField,
+    Q,
     SmallIntegerField,
     TimeField,
 )
+from django.db.models.constraints import CheckConstraint
 from django.db.models.query_utils import DeferredAttribute
 from django.utils.deconstruct import deconstructible
 from django.utils.duration import duration_string
@@ -46,6 +49,11 @@ from django_enum.utils import (
     values,
     with_typehint,
 )
+
+if sys.version_info >= (3, 11):
+    from enum import CONFORM, EJECT
+else:
+    CONFORM = EJECT = None
 
 
 @deconstructible
@@ -196,6 +204,7 @@ class EnumFieldFactory(type):
                 ) from coerce_error
 
         if issubclass(primitive, int):
+            is_flag = issubclass(enum, Flag)
             min_value = min((val for val in values(enum) if val is not None))
             max_value = max((val for val in values(enum) if val is not None))
             min_bits = (min_value.bit_length(), max_value.bit_length())
@@ -211,22 +220,54 @@ class EnumFieldFactory(type):
             field_cls: Type[EnumField]
             if min_value < 0:
                 if min_bits <= (16, 15):
-                    field_cls = EnumSmallIntegerField
+                    field_cls = (
+                        FlagSmallIntegerField
+                        if is_flag else
+                        EnumSmallIntegerField
+                    )
                 elif min_bits <= (32, 31):
-                    field_cls = EnumIntegerField
+                    field_cls = (
+                        FlagIntegerField
+                        if is_flag else
+                        EnumIntegerField
+                    )
                 elif min_bits <= (64, 63):
-                    field_cls = EnumBigIntegerField
+                    field_cls = (
+                        FlagBigIntegerField
+                        if is_flag else
+                        EnumBigIntegerField
+                    )
                 else:
-                    field_cls = EnumBitField
+                    field_cls = (
+                        FlagExtraBigIntegerField
+                        if is_flag else
+                        EnumExtraBigIntegerField
+                    )
             else:
-                if min_bits[1] >= 64:
-                    field_cls = EnumBitField
+                if min_bits[1] >= 64 and is_flag:
+                    field_cls = (
+                        FlagExtraBigIntegerField
+                        if is_flag else
+                        EnumExtraBigIntegerField
+                    )
                 elif min_bits[1] >= 32:
-                    field_cls = EnumPositiveBigIntegerField
+                    field_cls = (
+                        FlagPositiveBigIntegerField
+                        if is_flag else
+                        EnumPositiveBigIntegerField
+                    )
                 elif min_bits[1] >= 16:
-                    field_cls = EnumPositiveIntegerField
+                    field_cls = (
+                        FlagPositiveIntegerField
+                        if is_flag else
+                        EnumPositiveIntegerField
+                    )
                 else:
-                    field_cls = EnumPositiveSmallIntegerField
+                    field_cls = (
+                        FlagPositiveSmallIntegerField
+                        if is_flag else
+                        EnumPositiveSmallIntegerField
+                    )
 
             return field_cls(
                 enum=enum,
@@ -303,6 +344,13 @@ class EnumField(
     :param enum: The enum class
     :param strict: If True (default) the field will throw ValueErrors if the
         value is not coercible to a valid enumeration type.
+    :param coerce: If True (default) the field will always coerce values to the
+        enum type when possible. If False, the field will contain the primitive
+        type of the enumeration.
+    :param constrained: If True (default) and strict is also true
+        CheckConstraints will be added to the model to constrain values of the
+        database column to values of the enumeration type. If True and strict
+        is False constraints will still be added.
     :param args: Any standard unnamed field arguments for the underlying
         field type.
     :param field_kwargs: Any standard named field arguments for the underlying
@@ -313,6 +361,7 @@ class EnumField(
     _strict_: bool = True
     _coerce_: bool = True
     _primitive_: Any
+    _constrained_: bool = _strict_
 
     descriptor_class = ToPythonDeferredAttribute
 
@@ -334,6 +383,14 @@ class EnumField(
         type
         """
         return self._coerce_
+
+    @property
+    def constrained(self):
+        """
+        False if the database values are not constrained to the enumeration.
+        By default this is set to the value of strict.
+        """
+        return self._constrained_
 
     @property
     def primitive(self):
@@ -364,12 +421,14 @@ class EnumField(
             primitive: Optional[Type[Any]] = None,
             strict: bool = _strict_,
             coerce: bool = _coerce_,
+            constrained: Optional[bool] = None,
             **kwargs
     ):
         self._enum_ = enum
         self._primitive_ = primitive
         self._strict_ = strict if enum else False
         self._coerce_ = coerce if enum else False
+        self._constrained_ = constrained if constrained is not None else strict
         if self.enum is not None:
             kwargs.setdefault('choices', choices(enum))
 
@@ -610,6 +669,20 @@ class EnumField(
             for choice, label in super().get_choices(**kwargs)
         ]
 
+    def contribute_to_class(
+        self, cls, name, **kwargs
+    ):  # pylint: disable=W0221
+        super().contribute_to_class(cls, name, **kwargs)
+        if self.constrained and self.enum:
+            cls._meta.constraints.append(  # pylint: disable=W0212
+                CheckConstraint(
+                    check=Q(**{f'{name}__in': values(self.enum)}),
+                    name=f'{cls._meta.app_label}_'  # pylint: disable=W0212
+                         f'{cls.__name__}_{name}_is_'
+                         f'{self.enum.__name__}'.lower()
+                )
+            )  # pylint: disable=protected-access
+
 
 class EnumCharField(EnumField, CharField):
     """
@@ -646,7 +719,7 @@ class EnumFloatField(EnumField, FloatField):
 
 class IntEnumField(EnumField):
     """
-    A mixin containing common implementation details for for database field
+    A mixin containing common implementation details for a database field
     supporting enumerations with integer values.
     """
     @property
@@ -924,7 +997,114 @@ class EnumDecimalField(EnumField, DecimalField):
         return connection.ops.adapt_decimalfield_value(value)
 
 
-class EnumBitField(EnumField, BinaryField):
+class FlagField(with_typehint(IntEnumField)):  # type: ignore
+    """
+    A common base class for EnumFields that store Flag enumerations and
+    support bitwise operations.
+    """
+
+    enum: Type[Flag]
+
+    def contribute_to_class(self, cls, name, **kwargs):
+        """
+        Add check constraints that honor flag fields range and boundary setting.
+        Bypass EnumField's contribute_to_class() method, which adds constraints
+        that are too specific.
+
+        Boundary settings:
+            "strict" -> error is raised  [default for Flag]
+            "conform" -> extra bits are discarded
+            "eject" -> lose flag status [default for IntFlag]
+            "keep" -> keep flag status and all bits
+
+        The constraints here are designed to be as general as possible. Any
+        condition that will allow the field to be instantiated off of a given
+        value from the database will not be constrained. For example, if
+        eject is True and strict is False, then the field will not be
+        constrained because no value will raise an error on field
+        instantiation.
+        """
+        if self.constrained and self.enum and self.bit_length <= 64:
+            is_conform, is_eject = False, issubclass(self.enum, IntFlag)
+            boundary = getattr(self.enum, '_boundary_', None)
+            if CONFORM and EJECT and boundary is not None:
+                is_conform, is_eject = (
+                    boundary is CONFORM,
+                    boundary is EJECT
+                )
+
+            if not (is_eject and not self.strict) and not is_conform:
+                min_value = min(
+                    (val for val in values(self.enum) if val is not None)
+                )
+                max_value = max(
+                    (val for val in values(self.enum) if val is not None)
+                )
+                if min_value < 0 and not max_value > 0:
+                    min_value = -1 * (2**self.bit_length - 1)
+                    max_value = 0
+                else:
+                    min_value = 0
+                    max_value = 2 ** self.bit_length - 1
+
+                cls._meta.constraints.append(  # pylint: disable=W0212
+                    CheckConstraint(
+                        check=(
+                            Q(**{f'{name}__gte': min_value}) &
+                            Q(**{f'{name}__lte': max_value})
+                        ),
+                        name=f'{cls._meta.app_label}_'  # pylint: disable=W0212
+                             f'{cls.__name__}_{name}_'
+                             f'is_{self.enum.__name__}'.lower()
+                    )
+                )
+
+        IntegerField.contribute_to_class(self, cls, name, **kwargs)
+
+
+class FlagSmallIntegerField(FlagField, EnumSmallIntegerField):
+    """
+    A database field supporting flag enumerations with integer values that fit
+    into 2 bytes or fewer
+    """
+
+
+class FlagPositiveSmallIntegerField(FlagField, EnumPositiveSmallIntegerField):
+    """
+    A database field supporting flag enumerations with positive (but signed)
+    integer values that fit into 2 bytes or fewer
+    """
+
+
+class FlagIntegerField(FlagField, EnumIntegerField):
+    """
+    A database field supporting flag enumerations with integer values that fit
+    into 32 bytes or fewer
+    """
+
+
+class FlagPositiveIntegerField(FlagField, EnumPositiveIntegerField):
+    """
+    A database field supporting flag enumerations with positive (but signed)
+    integer values that fit into 32 bytes or fewer
+    """
+
+
+class FlagBigIntegerField(FlagField, EnumBigIntegerField):
+    """
+    A database field supporting flag enumerations with integer values that fit
+    into 64 bytes or fewer
+    """
+
+
+class FlagPositiveBigIntegerField(FlagField, EnumPositiveBigIntegerField):
+    """
+    A database field supporting flag enumerations with positive (but signed)
+    integer values that fit into 64 bytes or fewer
+    """
+
+
+class EnumExtraBigIntegerField(IntEnumField, BinaryField):
     """
     A database field supporting enumerations with integer values that require
     more than 64 bits. This field only works for Enums that inherit from int.
@@ -933,13 +1113,13 @@ class EnumBitField(EnumField, BinaryField):
 
     description = _('A bit field wider than the standard word size.')
 
-    @property
-    def bit_length(self):
-        """
-        The minimum number of bits required to represent all primitive values
-        of the enumeration.
-        """
-        return self._bit_length_
+    @cached_property
+    def signed(self):
+        """True if the enum has negative values"""
+        for val in self.enum or []:
+            if val.value < 0:
+                return True
+        return False
 
     @property
     def primitive(self):
@@ -948,30 +1128,6 @@ class EnumBitField(EnumField, BinaryField):
         be bytes or memoryview or bytearray or a subclass thereof.
         """
         return EnumField.primitive.fget(self) or bytes  # type: ignore
-
-    def __init__(
-        self,
-        enum: Optional[Type[Enum]] = None,
-        primitive: Optional[Type[Any]] = None,
-        bit_length: Optional[Type[Any]] = None,
-        editable=True,
-        **kwargs
-    ):
-        self._bit_length_ = bit_length
-        super().__init__(
-            enum=enum,
-            primitive=primitive,
-            editable=editable,
-            **kwargs
-        )
-
-    @cached_property
-    def signed(self):
-        """True if the enum has negative values"""
-        for val in self.enum or []:
-            if val.value < 0:
-                return True
-        return False
 
     def get_prep_value(self, value: Any) -> Any:
         """
@@ -1034,3 +1190,15 @@ class EnumBitField(EnumField, BinaryField):
             expression,
             connection
         )
+
+    def contribute_to_class(self, cls, name, **kwargs):
+        BinaryField.contribute_to_class(self, cls, name, **kwargs)
+
+
+class FlagExtraBigIntegerField(FlagField, EnumExtraBigIntegerField):
+    """
+    Flag fields that require more than 64 bits.
+    """
+
+    def contribute_to_class(self, cls, name, **kwargs):
+        BinaryField.contribute_to_class(self, cls, name, **kwargs)

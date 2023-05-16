@@ -157,6 +157,7 @@ try:
 
         class Meta:
             ordering = ('id',)
+            constraints = []
 
 
     class MyModel(models.Model):
@@ -276,6 +277,9 @@ try:
             null=True
         )
         no_default = EnumField(LargeBitField)
+
+        class Meta:
+            constraints = []
 
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover

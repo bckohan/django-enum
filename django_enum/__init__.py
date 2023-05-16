@@ -16,17 +16,7 @@ from django_enum.choices import (
     TextChoices,
 )
 from django_enum.converters import register_enum_converter
-from django_enum.fields import (
-    EnumBigIntegerField,
-    EnumCharField,
-    EnumField,
-    EnumFloatField,
-    EnumIntegerField,
-    EnumPositiveBigIntegerField,
-    EnumPositiveIntegerField,
-    EnumPositiveSmallIntegerField,
-    EnumSmallIntegerField,
-)
+from django_enum.fields import EnumField, FlagField
 from django_enum.filters import EnumFilter, FilterSet
 from django_enum.forms import (
     EnumChoiceField,
@@ -37,14 +27,7 @@ from django_enum.forms import (
 
 __all__ = [
     'EnumField',
-    'EnumFloatField',
-    'EnumCharField',
-    'EnumSmallIntegerField',
-    'EnumIntegerField',
-    'EnumBigIntegerField',
-    'EnumPositiveSmallIntegerField',
-    'EnumPositiveIntegerField',
-    'EnumPositiveBigIntegerField',
+    'FlagField',
     'TextChoices',
     'IntegerChoices',
     'FlagChoices',
