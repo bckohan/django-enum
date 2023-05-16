@@ -50,10 +50,16 @@ from django_enum.utils import (
     with_typehint,
 )
 
+CONFORM: Optional[Enum]
+EJECT: Optional[Enum]
+
 if sys.version_info >= (3, 11):
     from enum import CONFORM, EJECT
 else:
     CONFORM = EJECT = None
+
+
+MAX_CONSTRAINT_NAME_LENGTH = 64
 
 
 @deconstructible
@@ -669,6 +675,31 @@ class EnumField(
             for choice, label in super().get_choices(**kwargs)
         ]
 
+    @staticmethod
+    def constraint_name(
+            model_class: Type[Model],
+            field_name: str,
+            enum: Type[Enum]
+    ) -> str:
+        """
+        Get a check constraint name for the given enumeration field on the
+        given model class. Check constraint names are limited to
+        MAX_CONSTRAINT_NAME_LENGTH. The begginning of the name will be cutoff
+        if it exceeds the length.
+
+        :param model_class: The class of the Model the field is on
+        :param field_name: The name of the field
+        :param enum: The enumeration type of the EnumField
+        """
+        name = (
+            f'{model_class._meta.app_label}_'  # pylint: disable=W0212
+            f'{model_class.__name__}_{field_name}_'
+            f'{enum.__name__}'.lower()
+        )
+        if len(name) > 64:
+            return name[len(name)-64:]
+        return name
+
     def contribute_to_class(
         self, cls, name, **kwargs
     ):  # pylint: disable=W0221
@@ -677,9 +708,7 @@ class EnumField(
             cls._meta.constraints.append(  # pylint: disable=W0212
                 CheckConstraint(
                     check=Q(**{f'{name}__in': values(self.enum)}),
-                    name=f'{cls._meta.app_label}_'  # pylint: disable=W0212
-                         f'{cls.__name__}_{name}_is_'
-                         f'{self.enum.__name__}'.lower()
+                    name=self.constraint_name(cls, name, self.enum)
                 )
             )  # pylint: disable=protected-access
 
@@ -1053,9 +1082,7 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                             Q(**{f'{name}__gte': min_value}) &
                             Q(**{f'{name}__lte': max_value})
                         ),
-                        name=f'{cls._meta.app_label}_'  # pylint: disable=W0212
-                             f'{cls.__name__}_{name}_'
-                             f'is_{self.enum.__name__}'.lower()
+                        name=self.constraint_name(cls, name, self.enum)
                     )
                 )
 
