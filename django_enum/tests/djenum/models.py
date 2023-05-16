@@ -159,7 +159,6 @@ class EnumTester(models.Model):
 
     class Meta:
         ordering = ('id',)
-        constraints = []
 
 
 class BadDefault(models.Model):

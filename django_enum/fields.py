@@ -705,12 +705,13 @@ class EnumField(
     ):  # pylint: disable=W0221
         super().contribute_to_class(cls, name, **kwargs)
         if self.constrained and self.enum:
-            cls._meta.constraints.append(  # pylint: disable=W0212
+            cls._meta.constraints = [  # pylint: disable=W0212
+                *cls._meta.constraints,  # pylint: disable=W0212
                 CheckConstraint(
                     check=Q(**{f'{name}__in': values(self.enum)}),
                     name=self.constraint_name(cls, name, self.enum)
                 )
-            )  # pylint: disable=protected-access
+            ]  # pylint: disable=protected-access
 
 
 class EnumCharField(EnumField, CharField):
@@ -1076,7 +1077,8 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                     min_value = 0
                     max_value = 2 ** self.bit_length - 1
 
-                cls._meta.constraints.append(  # pylint: disable=W0212
+                cls._meta.constraints = [  # pylint: disable=W0212
+                    *cls._meta.constraints,  # pylint: disable=W0212
                     CheckConstraint(
                         check=(
                             Q(**{f'{name}__gte': min_value}) &
@@ -1084,7 +1086,7 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                         ),
                         name=self.constraint_name(cls, name, self.enum)
                     )
-                )
+                ]
 
         IntegerField.contribute_to_class(self, cls, name, **kwargs)
 

@@ -278,9 +278,6 @@ try:
         )
         no_default = EnumField(LargeBitField)
 
-        class Meta:
-            constraints = []
-
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass
