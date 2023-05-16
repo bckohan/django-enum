@@ -52,6 +52,8 @@ was to:
 * Represent enum fields with the smallest possible column type.
 * Provide full bitfield functionality using standard Python Flag enumerations.
 * Be as simple and light-weight an extension to core Django as possible.
+* Enforce enumeration value consistency at the database level by default using
+  check constraints.
 
 `django-enum <https://django-enum.readthedocs.io/en/latest/>`_ works in concert
 with Django_'s built in ``TextChoices`` and ``IntegerChoices`` to provide a

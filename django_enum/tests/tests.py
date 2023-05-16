@@ -3953,7 +3953,6 @@ class TestEnumConverter(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(record[1], DecimalEnum.ONE)
 
-
         converter = get_converter('Constants')
         self.assertEqual(converter.regex, "Pi|Euler's Number|Golden Ratio")
         self.assertEqual(converter.to_python('Golden Ratio'), Constants.GOLDEN_RATIO)

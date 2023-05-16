@@ -49,6 +49,9 @@ from django_enum.utils import (
     values,
     with_typehint,
 )
+import base64
+import hashlib
+
 
 CONFORM: Optional[Enum]
 EJECT: Optional[Enum]
@@ -59,7 +62,7 @@ else:
     CONFORM = EJECT = None
 
 
-MAX_CONSTRAINT_NAME_LENGTH = 64
+MAX_CONSTRAINT_NAME_LENGTH = 30
 
 
 @deconstructible
@@ -684,21 +687,29 @@ class EnumField(
         """
         Get a check constraint name for the given enumeration field on the
         given model class. Check constraint names are limited to
-        MAX_CONSTRAINT_NAME_LENGTH. The begginning of the name will be cutoff
-        if it exceeds the length.
+        MAX_CONSTRAINT_NAME_LENGTH. The beginning parts of the name will be
+        reduced to small hashes until the size of the name is under threshold.
 
         :param model_class: The class of the Model the field is on
         :param field_name: The name of the field
         :param enum: The enumeration type of the EnumField
         """
         name = (
-            f'{model_class._meta.app_label}_'  # pylint: disable=W0212
-            f'{model_class.__name__}_{field_name}_'
+            f'{model_class._meta.app_label}-'  # pylint: disable=W0212
+            f'{model_class.__name__}-{field_name}-'
             f'{enum.__name__}'.lower()
         )
-        if len(name) > 64:
-            return name[len(name)-64:]
-        return name
+        idx = 0
+        while len(name) > MAX_CONSTRAINT_NAME_LENGTH:
+            parts = name.split('-')
+            parts[idx] = base64.urlsafe_b64encode(
+                hashlib.sha1(
+                    parts[idx].encode()
+                ).digest()
+            )[:MAX_CONSTRAINT_NAME_LENGTH//(len(parts)+len(parts)-1)].decode()
+            idx += 1
+            name = '-'.join(parts)
+        return name.lower()
 
     def contribute_to_class(
         self, cls, name, **kwargs
