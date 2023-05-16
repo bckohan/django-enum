@@ -2,8 +2,6 @@
 """
 Support for Django model fields built from enumeration types.
 """
-import base64
-import hashlib
 import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
@@ -61,7 +59,7 @@ else:
     CONFORM = EJECT = None
 
 
-MAX_CONSTRAINT_NAME_LENGTH = 30
+MAX_CONSTRAINT_NAME_LENGTH = 64
 
 
 @deconstructible
@@ -698,16 +696,8 @@ class EnumField(
             f'{model_class.__name__}-{field_name}-'
             f'{enum.__name__}'.lower()
         )
-        idx = 0
         while len(name) > MAX_CONSTRAINT_NAME_LENGTH:
-            parts = name.split('-')
-            parts[idx] = base64.urlsafe_b64encode(
-                hashlib.sha1(
-                    parts[idx].encode()
-                ).digest()
-            )[:MAX_CONSTRAINT_NAME_LENGTH//(len(parts)+len(parts)-1)].decode()
-            idx += 1
-            name = '-'.join(parts)
+            return name[len(name)-MAX_CONSTRAINT_NAME_LENGTH:].lower()
         return name.lower()
 
     def contribute_to_class(
