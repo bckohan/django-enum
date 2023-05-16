@@ -692,13 +692,13 @@ class EnumField(
         :param enum: The enumeration type of the EnumField
         """
         name = (
-            f'{model_class._meta.app_label}-'  # pylint: disable=W0212
-            f'{model_class.__name__}-{field_name}-'
-            f'{enum.__name__}'.lower()
+            f'{model_class._meta.app_label}_'  # pylint: disable=W0212
+            f'{model_class.__name__}_{field_name}_'
+            f'{enum.__name__}'
         )
         while len(name) > MAX_CONSTRAINT_NAME_LENGTH:
-            return name[len(name)-MAX_CONSTRAINT_NAME_LENGTH:].lower()
-        return name.lower()
+            return name[len(name)-MAX_CONSTRAINT_NAME_LENGTH:]
+        return name
 
     def contribute_to_class(
         self, cls, name, **kwargs
