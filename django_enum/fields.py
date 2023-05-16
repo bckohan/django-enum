@@ -2,6 +2,8 @@
 """
 Support for Django model fields built from enumeration types.
 """
+import base64
+import hashlib
 import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
@@ -49,9 +51,6 @@ from django_enum.utils import (
     values,
     with_typehint,
 )
-import base64
-import hashlib
-
 
 CONFORM: Optional[Enum]
 EJECT: Optional[Enum]
