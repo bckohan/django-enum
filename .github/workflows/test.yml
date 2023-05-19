@@ -238,6 +238,7 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: test
+          MYSQL_VERSION: ${{ matrix.mysql-version }}
         # Set health checks to wait until mysql has started
         options: >-
           --health-cmd "mysqladmin ping"
