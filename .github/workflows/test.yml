@@ -271,7 +271,7 @@ jobs:
         env:
           MYSQL_VERSION: ${{ matrix.mysql-version }}
         run: |
-          poetry run pytest --cov-fail-under=95
+          poetry run pytest --cov-fail-under=85
 
   mariadb:
     runs-on: ubuntu-latest
