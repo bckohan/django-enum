@@ -3427,6 +3427,29 @@ def remove_color_values(apps, schema_editor):
 
             MigrationTester.objects.all().delete()
 
+
+    class TestConstrainedButNonStrict(ResetModelsMixin, MigratorTestCase):
+
+        migrate_from = ('django_enum_tests_edit_tests', '0002_alter_values')
+        migrate_to = ('django_enum_tests_edit_tests', '0003_remove_black')
+
+        @classmethod
+        def setUpClass(cls):
+            set_models(4)
+            super().setUpClass()
+
+        def test_constrained_non_strict(self):
+            set_models(4)
+            from .edit_tests.models import MigrationTester
+            from django.db.utils import IntegrityError
+            self.assertRaises(
+                IntegrityError,
+                MigrationTester.objects.create,
+                int_enum=42,
+                color='R'
+            )
+
+
     class TestRemoveConstraintMigration(ResetModelsMixin, MigratorTestCase):
 
         migrate_from = ('django_enum_tests_edit_tests', '0003_remove_black')
