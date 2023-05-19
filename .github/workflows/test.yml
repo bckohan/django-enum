@@ -238,7 +238,6 @@ jobs:
         env:
           MYSQL_ROOT_PASSWORD: root
           MYSQL_DATABASE: test
-          MYSQL_VERSION: ${{ matrix.mysql-version }}
         # Set health checks to wait until mysql has started
         options: >-
           --health-cmd "mysqladmin ping"
@@ -269,6 +268,8 @@ jobs:
           poetry run pip install -U "${{ matrix.django-version }}"
           poetry run pip install -U mysqlclient"${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
+        env:
+          MYSQL_VERSION: ${{ matrix.mysql-version }}
         run: |
           poetry run pytest --cov-fail-under=95
 

@@ -59,7 +59,9 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 # migration tests - we have this check here to allow CI to disable them and
 # still run the rest of the tests on mysql versions < 8 - remove this when
 # 8 becomes the lowest version Django supports
-DISABLE_MIGRATION_TESTS = os.environ.get('MYSQL_VERSION', '') == '5.7'
+DISABLE_MIGRATION_TESTS = (
+    os.environ.get('MYSQL_VERSION', '') == '5.7'
+)
 
 
 def set_models(version):
