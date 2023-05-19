@@ -705,13 +705,22 @@ class EnumField(
     ):  # pylint: disable=W0221
         super().contribute_to_class(cls, name, **kwargs)
         if self.constrained and self.enum:
+            constraint = Q(**{f'{name}__in': values(self.enum)})
+            if self.null:
+                constraint |= Q(**{f'{name}__isnull': True})
             cls._meta.constraints = [  # pylint: disable=W0212
                 *cls._meta.constraints,  # pylint: disable=W0212
                 CheckConstraint(
-                    check=Q(**{f'{name}__in': values(self.enum)}),
+                    check=constraint,
                     name=self.constraint_name(cls, name, self.enum)
                 )
             ]  # pylint: disable=protected-access
+            # this dictionary is used to serialize the model, so if constraints
+            # is not present - they will not be added to migrations
+            cls._meta.original_attrs.setdefault(  # pylint: disable=W0212
+                'constraints',
+                cls._meta.constraints  # pylint: disable=W0212
+            )
 
 
 class EnumCharField(EnumField, CharField):
@@ -1077,16 +1086,26 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                     min_value = 0
                     max_value = 2 ** self.bit_length - 1
 
+                constraint = (
+                    Q(**{f'{name}__gte': min_value}) &
+                    Q(**{f'{name}__lte': max_value})
+                )
+                if self.null:
+                    constraint |= Q(**{f'{name}__isnull': True})
                 cls._meta.constraints = [  # pylint: disable=W0212
                     *cls._meta.constraints,  # pylint: disable=W0212
                     CheckConstraint(
-                        check=(
-                            Q(**{f'{name}__gte': min_value}) &
-                            Q(**{f'{name}__lte': max_value})
-                        ),
+                        check=constraint,
                         name=self.constraint_name(cls, name, self.enum)
                     )
                 ]
+                # this dictionary is used to serialize the model, so if
+                # constraints is not present - they will not be added to
+                # migrations
+                cls._meta.original_attrs.setdefault(  # pylint: disable=W0212
+                    'constraints',
+                    cls._meta.constraints  # pylint: disable=W0212
+                )
 
         IntegerField.contribute_to_class(self, cls, name, **kwargs)
 

@@ -157,7 +157,7 @@ try:
 
         class Meta:
             ordering = ('id',)
-            constraints = []
+            #constraints = []
 
 
     class MyModel(models.Model):
