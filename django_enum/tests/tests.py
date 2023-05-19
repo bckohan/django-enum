@@ -2910,6 +2910,12 @@ if ENUM_PROPERTIES_INSTALLED:
                 os.path.isfile(settings.TEST_MIGRATION_DIR / '0001_initial.py')
             )
 
+            with open(settings.TEST_MIGRATION_DIR / '0001_initial.py', 'r') as inpt:
+                contents = inpt.read()
+                self.assertEqual(contents.count('AddConstraint'), 2)
+                self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', [0, 1, 2]))"), 1)
+                self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B', 'K']))"), 1)
+
         def test_makemigrate_2(self):
             from django.conf import settings
             import shutil
@@ -2968,6 +2974,12 @@ def revert_enum_values(apps, schema_editor):
             with open(settings.TEST_MIGRATION_DIR / '0002_alter_values.py', 'w') as output:
                 output.write(new_contents)
 
+            with open(settings.TEST_MIGRATION_DIR / '0002_alter_values.py', 'r') as inpt:
+                contents = inpt.read()
+                self.assertEqual(contents.count('RemoveConstraint'), 1)
+                self.assertEqual(contents.count('AddConstraint'), 1)
+                self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', [1, 2, 3]))"), 1)
+
         def test_makemigrate_3(self):
             from django.conf import settings
             set_models(3)
@@ -3010,6 +3022,11 @@ def remove_color_values(apps, schema_editor):
                       'w') as output:
                 output.write(new_contents)
 
+            with open(settings.TEST_MIGRATION_DIR / '0003_remove_black.py', 'r') as inpt:
+                contents = inpt.read()
+                self.assertEqual(contents.count('RemoveConstraint'), 1)
+                self.assertEqual(contents.count('AddConstraint'), 1)
+                self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B']))"), 1)
 
         def test_makemigrate_4(self):
             from django.conf import settings
@@ -3043,6 +3060,11 @@ def remove_color_values(apps, schema_editor):
                     settings.TEST_MIGRATION_DIR / '0004_remove_constraint.py')
             )
 
+            with open(settings.TEST_MIGRATION_DIR / '0004_remove_constraint.py', 'r') as inpt:
+                contents = inpt.read()
+                self.assertEqual(contents.count('RemoveConstraint'), 1)
+                self.assertEqual(contents.count('AddConstraint'), 0)
+
         def test_makemigrate_6(self):
             from django.conf import settings
             set_models(6)
@@ -3074,6 +3096,13 @@ def remove_color_values(apps, schema_editor):
                 os.path.isfile(
                     settings.TEST_MIGRATION_DIR / '0006_add_int_enum.py')
             )
+
+            with open(settings.TEST_MIGRATION_DIR / '0006_add_int_enum.py', 'r') as inpt:
+                contents = inpt.read()
+                self.assertEqual(contents.count('RemoveConstraint'), 1)
+                self.assertEqual(contents.count('AddConstraint'), 2)
+                self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', ['A', 'B', 'C'])"), 1)
+                self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B', 'K']))"), 1)
 
         def test_makemigrate_8(self):
             from django.conf import settings
@@ -4059,6 +4088,9 @@ class ConstraintTests(EnumTypeMixin, TestCase):
     MODEL_CLASS = EnumTester
 
     def test_constraint_naming(self):
+        from django_enum.fields import MAX_CONSTRAINT_NAME_LENGTH
+
+        name = f'{self.MODEL_CLASS._meta.app_label}_EnumTester_small_pos_int_SmallPosIntEnum'
 
         self.assertEqual(
             EnumField.constraint_name(
@@ -4066,7 +4098,7 @@ class ConstraintTests(EnumTypeMixin, TestCase):
                 'small_pos_int',
                 self.SmallPosIntEnum
             ),
-            'go_enum_tests_enum_prop_EnumTester_small_pos_int_SmallPosIntEnum'
+            name[len(name)-MAX_CONSTRAINT_NAME_LENGTH:]
         )
 
         self.assertEqual(
@@ -4075,5 +4107,5 @@ class ConstraintTests(EnumTypeMixin, TestCase):
                 'small_int',
                 self.SmallIntEnum
             ),
-            'django_enum_tests_enum_prop_EnumTester_small_int_SmallIntEnum'
+            f'{self.MODEL_CLASS._meta.app_label}_EnumTester_small_int_SmallIntEnum'
         )
