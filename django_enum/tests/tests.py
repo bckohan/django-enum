@@ -3,7 +3,7 @@ import os
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from pathlib import Path
-
+import sys
 from bs4 import BeautifulSoup as Soup
 from django.core import serializers
 from django.core.exceptions import ValidationError
@@ -3956,25 +3956,25 @@ def remove_color_values(apps, schema_editor):
                 GNSSConstellation.GPS | GNSSConstellation.BEIDOU
             )
 
-            # Exclude by awesome_flag
+            if sys.version_info >= (3, 11):
+                not_other = ~(GNSSConstellation.GPS | GNSSConstellation.BEIDOU)
+            else:
+                not_other = GNSSConstellation.GLONASS | GNSSConstellation.GALILEO | GNSSConstellation.QZSS
+
             fltr2 = BitFieldModel.objects.filter(
-                bit_field_small=~(
-                    GNSSConstellation.GPS | GNSSConstellation.BEIDOU
-                )
+                bit_field_small=not_other
             )
             self.assertEqual(fltr2.count(), 0)
 
             obj2 = BitFieldModel.objects.create(
-                bit_field_small=~(
-                    GNSSConstellation.GPS | GNSSConstellation.BEIDOU
-                ),
+                bit_field_small=not_other,
                 no_default='ONE',
             )
             self.assertEqual(fltr2.count(), 1)
             self.assertEqual(fltr2.first().pk, obj2.pk)
             self.assertEqual(
                 fltr2.first().bit_field_small,
-                GNSSConstellation.GLONASS | GNSSConstellation.GALILEO | GNSSConstellation.QZSS
+                not_other
             )
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
