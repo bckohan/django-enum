@@ -282,6 +282,7 @@ jobs:
         python-version: [ '3.7', '3.11']
         mysqlclient-version: ['==1.4.0', '']
         mariadb-version: ['10.2', 'latest']
+        mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
           - 'Django~=4.2.0' # LTS April 2026
@@ -298,6 +299,10 @@ jobs:
             mariadb-version: '10.2'
           - python-version: '3.11'
             mysqlclient-version: '==1.4.0'
+          - mariadb-version: 'latest'
+            mariadb-healthcheck: "mysqladmin ping"
+          - mariadb-version: '10.2'
+            mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
 
     services:
       mysql:
@@ -309,7 +314,7 @@ jobs:
           MYSQL_DATABASE: test
         # Set health checks to wait until mysql has started
         options: >-
-          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-cmd="${{ matrix.mariadb-healthcheck }}"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
