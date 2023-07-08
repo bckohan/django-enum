@@ -3908,6 +3908,75 @@ def remove_color_values(apps, schema_editor):
             self.assertEqual(GNSSConstellation.BEIDOU, GNSSConstellation('BeiDou'))
             self.assertEqual(GNSSConstellation.QZSS, GNSSConstellation('qzss'))
 
+        def test_flag_filters(self):
+
+            from django_enum.tests.enum_prop.enums import (
+                GNSSConstellation,
+            )
+
+            # Create the model
+            obj = BitFieldModel.objects.create(
+                bit_field_small=GNSSConstellation.GPS,
+                no_default='ONE',
+            )
+
+            # does this work in SQLite?
+            BitFieldModel.objects.filter(pk=obj.pk).update(
+                bit_field_small=F('bit_field_small').bitor(
+                    GNSSConstellation.GLONASS
+                )
+            )
+
+            # Set flags manually
+            BitFieldModel.objects.filter(pk=obj.pk).update(
+                bit_field_small=(
+                        GNSSConstellation.GPS |
+                        GNSSConstellation.GALILEO |
+                        GNSSConstellation.BEIDOU
+                )
+            )
+
+            # Remove galileo (does not work in SQLite)
+            BitFieldModel.objects.filter(pk=obj.pk).update(
+                bit_field_small=F('bit_field_small').bitand(
+                    ~GNSSConstellation.GALILEO
+                )
+            )
+
+            # Find by awesome_flag
+            fltr = BitFieldModel.objects.filter(
+                bit_field_small=(
+                    GNSSConstellation.GPS | GNSSConstellation.BEIDOU
+                )
+            )
+            self.assertEqual(fltr.count(), 1)
+            self.assertEqual(fltr.first().pk, obj.pk)
+            self.assertEqual(
+                fltr.first().bit_field_small,
+                GNSSConstellation.GPS | GNSSConstellation.BEIDOU
+            )
+
+            # Exclude by awesome_flag
+            fltr2 = BitFieldModel.objects.filter(
+                bit_field_small=~(
+                    GNSSConstellation.GPS | GNSSConstellation.BEIDOU
+                )
+            )
+            self.assertEqual(fltr2.count(), 0)
+
+            obj2 = BitFieldModel.objects.create(
+                bit_field_small=~(
+                    GNSSConstellation.GPS | GNSSConstellation.BEIDOU
+                ),
+                no_default='ONE',
+            )
+            self.assertEqual(fltr2.count(), 1)
+            self.assertEqual(fltr2.first().pk, obj2.pk)
+            self.assertEqual(
+                fltr2.first().bit_field_small,
+                GNSSConstellation.GLONASS | GNSSConstellation.GALILEO | GNSSConstellation.QZSS
+            )
+
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
 
         def test_mapboxstyle(self):
