@@ -7,7 +7,9 @@ from django.urls import reverse
 from django_enum import EnumField
 from django_enum.tests.djenum.enums import (
     BigIntEnum,
+    BigNegativeFlagEnum,
     BigPosIntEnum,
+    BigPositiveFlagEnum,
     Constants,
     DateEnum,
     DateTimeEnum,
@@ -16,20 +18,18 @@ from django_enum.tests.djenum.enums import (
     DJTextEnum,
     DurationEnum,
     ExternEnum,
+    ExtraBigNegativeFlagEnum,
+    ExtraBigPositiveFlagEnum,
     IntEnum,
+    NegativeFlagEnum,
     PosIntEnum,
+    PositiveFlagEnum,
     SmallIntEnum,
+    SmallNegativeFlagEnum,
     SmallPosIntEnum,
+    SmallPositiveFlagEnum,
     TextEnum,
     TimeEnum,
-    SmallPositiveFlagEnum,
-    PositiveFlagEnum,
-    BigPositiveFlagEnum,
-    SmallNegativeFlagEnum,
-    NegativeFlagEnum,
-    BigNegativeFlagEnum,
-    ExtraBigPositiveFlagEnum,
-    ExtraBigNegativeFlagEnum,
 )
 
 

@@ -42,6 +42,7 @@ from django_enum.forms import (
     NonStrictSelect,
     NonStrictSelectMultiple,
 )
+from django_enum.query import HasAllFlagsLookup, HasAnyFlagsLookup
 from django_enum.utils import (
     choices,
     decimal_params,
@@ -49,7 +50,6 @@ from django_enum.utils import (
     values,
     with_typehint,
 )
-from django_enum.query import HasAnyFlagsLookup, HasAllFlagsLookup
 
 CONFORM: Optional[Enum]
 EJECT: Optional[Enum]
@@ -1185,7 +1185,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
         The common primitive type of the enumeration values. This will always
         be bytes or memoryview or bytearray or a subclass thereof.
         """
-        return bytes  # type: ignore
+        return bytes
 
     def get_prep_value(self, value: Any) -> Any:
         """
@@ -1198,7 +1198,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
             return value
 
         value = self._try_coerce(value, force=True)
-        value = getattr(value, 'value', value)
+        value = int(getattr(value, 'value', value))
         value = value.to_bytes(
             (value.bit_length() + 7) // 8,
             byteorder='big',
@@ -1206,7 +1206,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
         )
         return BinaryField.get_prep_value(self, value)
 
-    def get_db_prep_value(self, value, connection, prepared=False):
+    def get_db_prep_value(self, value: Any, connection, prepared=False):
         """
         Convert the field value into the Enum type and then pull its value
         out.
@@ -1217,7 +1217,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
             return value
 
         value = self._try_coerce(value, force=True)
-        value = getattr(value, 'value', value)
+        value = int(getattr(value, 'value', value))
         value = value.to_bytes(
             (value.bit_length() + 7) // 8,
             byteorder='big',

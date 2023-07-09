@@ -1,9 +1,10 @@
 import enum
 import os
+import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from pathlib import Path
-import sys
+
 from bs4 import BeautifulSoup as Soup
 from django.core import serializers
 from django.core.exceptions import ValidationError
@@ -16,13 +17,13 @@ from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
 from django_enum.fields import (
-    FlagSmallIntegerField,
-    FlagIntegerField,
     FlagBigIntegerField,
-    FlagPositiveSmallIntegerField,
-    FlagPositiveIntegerField,
+    FlagExtraBigIntegerField,
+    FlagIntegerField,
     FlagPositiveBigIntegerField,
-    FlagExtraBigIntegerField
+    FlagPositiveIntegerField,
+    FlagPositiveSmallIntegerField,
+    FlagSmallIntegerField,
 )
 from django_enum.forms import EnumChoiceField  # dont remove this
 # from django_enum.tests.djenum.enums import (
@@ -39,7 +40,11 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 #     ExternEnum
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
-from django_enum.tests.djenum.models import BadDefault, EnumTester, EnumFlagTester
+from django_enum.tests.djenum.models import (
+    BadDefault,
+    EnumFlagTester,
+    EnumTester,
+)
 from django_enum.tests.utils import try_convert
 from django_enum.utils import choices, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
@@ -954,6 +959,7 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         """
         from django.db.models import (
             BigIntegerField,
+            BinaryField,
             CharField,
             DateField,
             DateTimeField,
@@ -966,7 +972,6 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
             PositiveSmallIntegerField,
             SmallIntegerField,
             TimeField,
-            BinaryField
         )
 
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_int'), SmallIntegerField)
@@ -3005,8 +3010,9 @@ if ENUM_PROPERTIES_INSTALLED:
                     self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B', 'K']))"), 1)
 
             def test_makemigrate_2(self):
-                from django.conf import settings
                 import shutil
+
+                from django.conf import settings
                 set_models(2)
                 self.assertFalse(
                     os.path.isfile(
@@ -3528,8 +3534,9 @@ def remove_color_values(apps, schema_editor):
 
             def test_constrained_non_strict(self):
                 set_models(4)
-                from .edit_tests.models import MigrationTester
                 from django.db.utils import IntegrityError
+
+                from .edit_tests.models import MigrationTester
                 self.assertRaises(
                     IntegrityError,
                     MigrationTester.objects.create,
@@ -3642,7 +3649,10 @@ def remove_color_values(apps, schema_editor):
                     MigrationTester.objects.create(int_enum=int_enum, color=color)
 
             def test_0005_remove_int_enum(self):
-                from django.core.exceptions import FieldDoesNotExist, FieldError
+                from django.core.exceptions import (
+                    FieldDoesNotExist,
+                    FieldError,
+                )
 
                 MigrationTesterNew = self.new_state.apps.get_model(
                     'django_enum_tests_edit_tests',
@@ -3730,7 +3740,10 @@ def remove_color_values(apps, schema_editor):
                     MigrationTester.objects.create(color=color)
 
             def test_0006_add_int_enum(self):
-                from django.core.exceptions import FieldDoesNotExist, FieldError
+                from django.core.exceptions import (
+                    FieldDoesNotExist,
+                    FieldError,
+                )
 
                 MigrationTesterNew = self.new_state.apps.get_model(
                     'django_enum_tests_edit_tests',
@@ -3855,7 +3868,10 @@ def remove_color_values(apps, schema_editor):
                 MigrationTester.objects.create()
 
             def test_0008_change_default(self):
-                from django.core.exceptions import FieldDoesNotExist, FieldError
+                from django.core.exceptions import (
+                    FieldDoesNotExist,
+                    FieldError,
+                )
 
                 MigrationTesterNew = self.new_state.apps.get_model(
                     'django_enum_tests_edit_tests',
@@ -3988,9 +4004,7 @@ def remove_color_values(apps, schema_editor):
 
         def test_flag_filters(self):
 
-            from django_enum.tests.enum_prop.enums import (
-                GNSSConstellation,
-            )
+            from django_enum.tests.enum_prop.enums import GNSSConstellation
 
             # Create the model
             obj = BitFieldModel.objects.create(
