@@ -2183,6 +2183,167 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
             self.NUMBER
         )
 
+# TODO
+# class FlagTests(TestCase):
+#
+#     MODEL_CLASS = EnumFlagTester
+#
+#     def test_flag_filters(self):
+#
+#         self.MODEL_CLASS.objects.create()
+#
+#
+#         obj0 = BitFieldModel.objects.create(
+#             bit_field_small=GNSSConstellation(0),
+#             no_default='ONE'
+#         )
+#
+#         # Create the model
+#         obj = BitFieldModel.objects.create(
+#             bit_field_small=GNSSConstellation.GPS,
+#             no_default='ONE',
+#         )
+#
+#         # does this work in SQLite?
+#         BitFieldModel.objects.filter(pk=obj.pk).update(
+#             bit_field_small=F('bit_field_small').bitor(
+#                 GNSSConstellation.GLONASS
+#             )
+#         )
+#
+#         # Set flags manually
+#         BitFieldModel.objects.filter(pk=obj.pk).update(
+#             bit_field_small=(
+#                     GNSSConstellation.GPS |
+#                     GNSSConstellation.GALILEO |
+#                     GNSSConstellation.BEIDOU
+#             )
+#         )
+#
+#         # Remove galileo (does not work in SQLite)
+#         BitFieldModel.objects.filter(pk=obj.pk).update(
+#             bit_field_small=F('bit_field_small').bitand(
+#                 ~GNSSConstellation.GALILEO
+#             )
+#         )
+#
+#         # Find by awesome_flag
+#         fltr = BitFieldModel.objects.filter(
+#             bit_field_small=(
+#                 GNSSConstellation.GPS | GNSSConstellation.BEIDOU
+#             )
+#         )
+#         self.assertEqual(fltr.count(), 1)
+#         self.assertEqual(fltr.first().pk, obj.pk)
+#         self.assertEqual(
+#             fltr.first().bit_field_small,
+#             GNSSConstellation.GPS | GNSSConstellation.BEIDOU
+#         )
+#
+#         if sys.version_info >= (3, 11):
+#             not_other = ~(GNSSConstellation.GPS | GNSSConstellation.BEIDOU)
+#         else:
+#             not_other = GNSSConstellation.GLONASS | GNSSConstellation.GALILEO | GNSSConstellation.QZSS
+#
+#         fltr2 = BitFieldModel.objects.filter(
+#             bit_field_small=not_other
+#         )
+#         self.assertEqual(fltr2.count(), 0)
+#
+#         obj2 = BitFieldModel.objects.create(
+#             bit_field_small=not_other,
+#             no_default='ONE',
+#         )
+#         self.assertEqual(fltr2.count(), 1)
+#         self.assertEqual(fltr2.first().pk, obj2.pk)
+#         self.assertEqual(
+#             fltr2.first().bit_field_small,
+#             not_other
+#         )
+#
+#         obj3 = BitFieldModel.objects.create(
+#             bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS,
+#             no_default='ONE',
+#         )
+#
+#         for cont in [
+#             BitFieldModel.objects.filter(
+#                 bit_field_small__has_any=GNSSConstellation.GPS
+#             ),
+#             BitFieldModel.objects.filter(
+#                 bit_field_small__has_all=GNSSConstellation.GPS
+#             )
+#         ]:
+#             self.assertEqual(cont.count(), 2)
+#             self.assertIn(obj3, cont)
+#             self.assertIn(obj, cont)
+#             self.assertNotIn(obj2, cont)
+#
+#         cont2 = BitFieldModel.objects.filter(
+#             bit_field_small__has_any=(
+#                 GNSSConstellation.GPS | GNSSConstellation.GLONASS
+#             )
+#         )
+#         self.assertEqual(cont2.count(), 3)
+#         self.assertIn(obj3, cont2)
+#         self.assertIn(obj2, cont2)
+#         self.assertIn(obj, cont2)
+#
+#         cont3 = BitFieldModel.objects.filter(
+#             bit_field_small__has_all=(
+#                 GNSSConstellation.GPS | GNSSConstellation.GLONASS
+#             )
+#         )
+#         self.assertEqual(cont3.count(), 1)
+#         self.assertIn(obj3, cont3)
+#
+#         cont4 = BitFieldModel.objects.filter(
+#             bit_field_small__has_all=(
+#                 GNSSConstellation.GALILEO | GNSSConstellation.QZSS
+#             )
+#         )
+#         self.assertEqual(cont4.count(), 1)
+#         self.assertIn(obj2, cont4)
+#
+#         cont5 = BitFieldModel.objects.filter(
+#             bit_field_small__has_all=(
+#                 GNSSConstellation.GPS | GNSSConstellation.QZSS
+#             )
+#         )
+#         self.assertEqual(cont5.count(), 0)
+#
+#         cont6 = BitFieldModel.objects.filter(
+#             bit_field_small__has_any=(
+#                 GNSSConstellation.BEIDOU | GNSSConstellation.QZSS
+#             )
+#         )
+#         self.assertEqual(cont6.count(), 2)
+#         self.assertIn(obj, cont6)
+#         self.assertIn(obj2, cont6)
+#
+#         cont7 = BitFieldModel.objects.filter(
+#             bit_field_small__has_any=GNSSConstellation(0)
+#         )
+#         self.assertEqual(cont7.count(), 1)
+#         self.assertIn(obj0, cont7)
+#
+#         cont8 = BitFieldModel.objects.filter(
+#             bit_field_small__has_all=GNSSConstellation(0)
+#         )
+#         self.assertEqual(cont8.count(), 1)
+#         self.assertIn(obj0, cont8)
+#
+#         cont9 = BitFieldModel.objects.filter(
+#             bit_field_small=GNSSConstellation(0)
+#         )
+#         self.assertEqual(cont9.count(), 1)
+#         self.assertIn(obj0, cont9)
+#
+#         cont10 = BitFieldModel.objects.filter(
+#             bit_field_small__exact=GNSSConstellation(0)
+#         )
+#         self.assertEqual(cont10.count(), 1)
+#         self.assertIn(obj0, cont10)
 
 if ENUM_PROPERTIES_INSTALLED:
 
@@ -2660,36 +2821,20 @@ if ENUM_PROPERTIES_INSTALLED:
                 bit_field_large=LargeBitField.ONE | LargeBitField.TWO,
                 bit_field_large_neg=None
             )
-            # TODO support queries
-            # qry1 = BitFieldModel.objects.extra(where=[f'bit_field_small & {GNSSConstellation.GPS.value} = {GNSSConstellation.GPS.value}'])
-            # self.assertEqual(qry1.count(), 2)
-            #
-            # qry2 = BitFieldModel.objects.extra(where=[f'bit_field_small & {GNSSConstellation.GLONASS.value} = {GNSSConstellation.GLONASS.value}'])
-            # self.assertEqual(qry2.count(), 1)
-            #
-            # # qry1 = BitFieldModel.objects.filter().extra(where=[f'bit_field_large & {LargeBitField.ONE.value} = {LargeBitField.ONE.value}'])
-            # # self.assertEqual(qry1.count(), 2)
-            # #
-            # # qry2 = BitFieldModel.objects.filter().extra(where=[f'bit_field_large & {LargeBitField.TWO.value} = {LargeBitField.TWO.value}'])
-            # # self.assertEqual(qry2.count(), 1)
-            #
-            # tester3 = BitFieldModel.objects.create()
-            #
-            # values = [row for row in BitFieldModel.objects.all().values_list(
-            #     'bit_field_small', 'bit_field_large', 'bit_field_large_neg', 'no_default'
-            # )]
-            # self.assertEqual(
-            #     values, [
-            #         (GNSSConstellation.GPS, LargeBitField.ONE, LargeNegativeField.NEG_ONE, LargeBitField(0)),
-            #         (GNSSConstellation.GPS | GNSSConstellation.GLONASS, LargeBitField.ONE | LargeBitField.TWO, None, LargeBitField(0)),
-            #         (GNSSConstellation(0), None, LargeNegativeField.NEG_ONE, LargeBitField(0))
-            #     ]
-            # )
-            #
-            # self.assertTrue(GNSSConstellation.GPS in tester2.bit_field_small)
-            # self.assertTrue(GNSSConstellation.GLONASS in tester2.bit_field_small)
-            #
-            # BitFieldModel.objects.all().delete()
+
+            from django.core.exceptions import FieldError
+            # has_any and has_all are not supported on ExtraLarge bit fields
+            with self.assertRaises(FieldError):
+                BitFieldModel.objects.filter(bit_field_large__has_any=LargeBitField.ONE)
+
+            with self.assertRaises(FieldError):
+                BitFieldModel.objects.filter(bit_field_large__has_all=LargeBitField.ONE | LargeBitField.TWO)
+
+            with self.assertRaises(FieldError):
+                BitFieldModel.objects.filter(bit_field_large_neg__has_any=LargeNegativeField.NEG_ONE)
+
+            with self.assertRaises(FieldError):
+                BitFieldModel.objects.filter(bit_field_large_neg__has_all=LargeNegativeField.NEG_ONE | LargeNegativeField.ZERO)
 
 
     class TestEnumQueriesProps(TestEnumQueries):
@@ -4006,6 +4151,11 @@ def remove_color_values(apps, schema_editor):
 
             from django_enum.tests.enum_prop.enums import GNSSConstellation
 
+            obj0 = BitFieldModel.objects.create(
+                bit_field_small=GNSSConstellation(0),
+                no_default='ONE'
+            )
+
             # Create the model
             obj = BitFieldModel.objects.create(
                 bit_field_small=GNSSConstellation.GPS,
@@ -4129,6 +4279,29 @@ def remove_color_values(apps, schema_editor):
             self.assertIn(obj, cont6)
             self.assertIn(obj2, cont6)
 
+            cont7 = BitFieldModel.objects.filter(
+                bit_field_small__has_any=GNSSConstellation(0)
+            )
+            self.assertEqual(cont7.count(), 1)
+            self.assertIn(obj0, cont7)
+
+            cont8 = BitFieldModel.objects.filter(
+                bit_field_small__has_all=GNSSConstellation(0)
+            )
+            self.assertEqual(cont8.count(), 1)
+            self.assertIn(obj0, cont8)
+
+            cont9 = BitFieldModel.objects.filter(
+                bit_field_small=GNSSConstellation(0)
+            )
+            self.assertEqual(cont9.count(), 1)
+            self.assertIn(obj0, cont9)
+
+            cont10 = BitFieldModel.objects.filter(
+                bit_field_small__exact=GNSSConstellation(0)
+            )
+            self.assertEqual(cont10.count(), 1)
+            self.assertIn(obj0, cont10)
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
 

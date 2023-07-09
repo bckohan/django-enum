@@ -16,9 +16,11 @@ class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
     def process_lhs(self, compiler, connection, lhs=None):
         lhs_sql, lhs_params = super().process_lhs(compiler, connection, lhs)
         rhs_sql, rhs_params = super().process_rhs(compiler, connection)
-        return (' & ' if self.rhs else ' | ').join(
-            (lhs_sql, rhs_sql)
-        ), [*lhs_params, *rhs_params]
+        if self.rhs:
+            return ' & '.join(
+                (lhs_sql, rhs_sql)
+            ), [*lhs_params, *rhs_params]
+        return lhs_sql, lhs_params
 
     def get_rhs_op(self, connection, rhs):
         return connection.operators['exact'] % rhs
@@ -39,4 +41,4 @@ class HasAnyFlagsLookup(HasAllFlagsLookup):  # pylint: disable=W0223
         return rhs_sql, rhs_params
 
     def get_rhs_op(self, connection, rhs):
-        return connection.operators['gt'] % rhs
+        return connection.operators['gt' if self.rhs else 'exact'] % rhs

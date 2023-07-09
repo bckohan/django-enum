@@ -217,6 +217,7 @@ class EnumFlagTester(models.Model):
     small_pos = EnumField(
         SmallPositiveFlagEnum,
         default=SmallPositiveFlagEnum(0),
+        null=True,
         db_index=True,
         blank=True
     )
