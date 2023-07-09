@@ -49,6 +49,7 @@ from django_enum.utils import (
     values,
     with_typehint,
 )
+from django_enum.query import HasAnyFlagsLookup, HasAllFlagsLookup
 
 CONFORM: Optional[Enum]
 EJECT: Optional[Enum]
@@ -1152,6 +1153,15 @@ class FlagPositiveBigIntegerField(FlagField, EnumPositiveBigIntegerField):
     """
 
 
+for field in [
+    FlagSmallIntegerField, FlagPositiveSmallIntegerField, FlagIntegerField,
+    FlagPositiveIntegerField, FlagBigIntegerField,
+    FlagPositiveBigIntegerField
+]:
+    field.register_lookup(HasAnyFlagsLookup)
+    field.register_lookup(HasAllFlagsLookup)
+
+
 class EnumExtraBigIntegerField(IntEnumField, BinaryField):
     """
     A database field supporting enumerations with integer values that require
@@ -1175,7 +1185,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
         The common primitive type of the enumeration values. This will always
         be bytes or memoryview or bytearray or a subclass thereof.
         """
-        return EnumField.primitive.fget(self) or bytes  # type: ignore
+        return bytes  # type: ignore
 
     def get_prep_value(self, value: Any) -> Any:
         """

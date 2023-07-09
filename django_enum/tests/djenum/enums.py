@@ -1,6 +1,6 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from enum import Enum, IntEnum
+from enum import Enum, IntEnum, IntFlag
 
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import Choices
@@ -232,3 +232,58 @@ class DecimalEnum(Enum):
 
     def __hash__(self):
         return super().__hash__()
+
+
+class SmallNegativeFlagEnum(IntFlag):
+    VAL1 = -(2 ** 13)
+    VAL2 = -(2 ** 14)
+    VAL3 = -(2 ** 15)
+
+
+class SmallPositiveFlagEnum(IntFlag):
+
+    VAL1 = 2**12
+    VAL2 = 2**13
+    VAL3 = 2**14
+
+
+class NegativeFlagEnum(IntFlag):
+
+    VAL1 = -(2**29)
+    VAL2 = -(2**30)
+    VAL3 = -(2**31)
+
+
+class PositiveFlagEnum(IntFlag):
+
+    VAL1 = 2**28
+    VAL2 = 2**29
+    VAL3 = 2**30
+
+
+class BigNegativeFlagEnum(IntFlag):
+
+    VAL1 = -(2**61)
+    VAL2 = -(2**62)
+    VAL3 = -(2**63)
+
+
+class BigPositiveFlagEnum(IntFlag):
+
+    VAL1 = 2**60
+    VAL2 = 2**61
+    VAL3 = 2**62
+
+
+class ExtraBigNegativeFlagEnum(IntFlag):
+
+    VALUE1 = -(2**64)
+    VALUE2 = -(2**65)
+    VALUE3 = -(2**66)
+
+
+class ExtraBigPositiveFlagEnum(IntFlag):
+
+    VALUE1 = 2 ** 63
+    VALUE2 = 2 ** 64
+    VALUE3 = 2 ** 65

@@ -22,6 +22,14 @@ from django_enum.tests.djenum.enums import (
     SmallPosIntEnum,
     TextEnum,
     TimeEnum,
+    SmallPositiveFlagEnum,
+    PositiveFlagEnum,
+    BigPositiveFlagEnum,
+    SmallNegativeFlagEnum,
+    NegativeFlagEnum,
+    BigNegativeFlagEnum,
+    ExtraBigPositiveFlagEnum,
+    ExtraBigNegativeFlagEnum,
 )
 
 
@@ -202,3 +210,62 @@ class EmptyEnumValueTester(models.Model):
 
     # should not be possible to store NoneIntEnum.VALUE1
     none_int_enum_non_null = EnumField(NoneIntEnum, null=False)
+
+
+class EnumFlagTester(models.Model):
+
+    small_pos = EnumField(
+        SmallPositiveFlagEnum,
+        default=SmallPositiveFlagEnum(0),
+        db_index=True,
+        blank=True
+    )
+
+    pos = EnumField(
+        PositiveFlagEnum,
+        default=PositiveFlagEnum(0),
+        db_index=True,
+        blank=True
+    )
+
+    big_pos = EnumField(
+        BigPositiveFlagEnum,
+        default=BigPositiveFlagEnum(0),
+        db_index=True,
+        blank=True
+    )
+
+    extra_big_pos = EnumField(
+        ExtraBigPositiveFlagEnum,
+        default=ExtraBigPositiveFlagEnum(0),
+        db_index=True,
+        blank=True
+    )
+
+    small_neg = EnumField(
+        SmallNegativeFlagEnum,
+        default=SmallNegativeFlagEnum(0),
+        db_index=True,
+        blank=True
+    )
+
+    neg = EnumField(
+        NegativeFlagEnum,
+        default=NegativeFlagEnum(0),
+        db_index=True,
+        blank=True
+    )
+
+    big_neg = EnumField(
+        BigNegativeFlagEnum,
+        default=BigNegativeFlagEnum(0),
+        db_index=True,
+        blank=True
+    )
+
+    extra_big_neg = EnumField(
+        ExtraBigNegativeFlagEnum,
+        default=ExtraBigNegativeFlagEnum(0),
+        db_index=True,
+        blank=True
+    )

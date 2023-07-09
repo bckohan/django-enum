@@ -78,7 +78,7 @@ def choices(enum_cls: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
                     member.value,
                     getattr(member, 'label', getattr(member, 'name'))
                 )
-                for member in enum_cls
+                for member in list(enum_cls) or enum_cls.__members__.values()
             ]
         ]
     ) if enum_cls else []

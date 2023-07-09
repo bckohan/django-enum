@@ -15,6 +15,15 @@ from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
+from django_enum.fields import (
+    FlagSmallIntegerField,
+    FlagIntegerField,
+    FlagBigIntegerField,
+    FlagPositiveSmallIntegerField,
+    FlagPositiveIntegerField,
+    FlagPositiveBigIntegerField,
+    FlagExtraBigIntegerField
+)
 from django_enum.forms import EnumChoiceField  # dont remove this
 # from django_enum.tests.djenum.enums import (
 #     BigIntEnum,
@@ -30,7 +39,7 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 #     ExternEnum
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
-from django_enum.tests.djenum.models import BadDefault, EnumTester
+from django_enum.tests.djenum.models import BadDefault, EnumTester, EnumFlagTester
 from django_enum.tests.utils import try_convert
 from django_enum.utils import choices, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
@@ -937,6 +946,7 @@ class TestChoices(EnumTypeMixin, TestCase):
 class TestFieldTypeResolution(EnumTypeMixin, TestCase):
 
     MODEL_CLASS = EnumTester
+    MODEL_FLAG_CLASS = EnumFlagTester
 
     def test_base_fields(self):
         """
@@ -956,9 +966,12 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
             PositiveSmallIntegerField,
             SmallIntegerField,
             TimeField,
+            BinaryField
         )
+
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_int'), SmallIntegerField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('small_pos_int'), PositiveSmallIntegerField)
+        self.assertIsInstance(self.MODEL_CLASS._meta.get_field('int'), IntegerField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('pos_int'), PositiveIntegerField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('big_int'), BigIntegerField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('big_pos_int'), PositiveBigIntegerField)
@@ -966,14 +979,52 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('text'), CharField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('constant'), FloatField)
 
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_neg'), SmallIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_neg'), FlagSmallIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_pos'), PositiveSmallIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_pos'), FlagPositiveSmallIntegerField)
+
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('neg'), IntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('neg'), FlagIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('pos'), PositiveIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('pos'), FlagPositiveIntegerField)
+
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_neg'), BigIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_neg'), FlagBigIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_pos'), PositiveBigIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_pos'), FlagPositiveBigIntegerField)
+
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg'), FlagExtraBigIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos'), FlagExtraBigIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg'), BinaryField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos'), BinaryField)
+
         self.assertEqual(self.MODEL_CLASS._meta.get_field('small_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('small_int').bit_length, 16)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('small_pos_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('small_pos_int').bit_length, 15)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('pos_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('pos_int').bit_length, 31)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('int').bit_length, 32)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('big_int').primitive, int)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('big_pos_int').primitive, int)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('big_pos_int').bit_length, 32)
+        self.assertEqual(self.MODEL_CLASS._meta.get_field('big_int').bit_length, 32)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('extern').primitive, int)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('text').primitive, str)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('constant').primitive, float)
+
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('small_neg').primitive, int)
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('small_pos').primitive, int)
+
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('neg').primitive, int)
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('pos').primitive, int)
+
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('big_neg').primitive, int)
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('big_pos').primitive, int)
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg').primitive, bytes)
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos').primitive, bytes)
 
         # exotics
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('date_enum'), DateField)
@@ -1030,6 +1081,33 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsNone(tester.text)
 
         self.assertIsNone(tester.extern)
+
+    def test_field_def_errors(self):
+        from django.db.models import Model
+        with self.assertRaises(ValueError):
+            class TestModel(Model):
+                enum = EnumField()
+
+    # TODO
+    # def test_variable_primitive_type(self):
+    #     from django.db.models import Model
+    #     from enum import Enum
+    #     from django_enum.utils import determine_primitive
+    #
+    #     class MultiPrimitive(Enum):
+    #         VAL1 = 1
+    #         VAL2 = '2'
+    #         VAL3 = 3.0
+    #
+    #     self.assertEqual(determine_primitive(MultiPrimitive), None)
+    #
+    #     with self.assertRaises(ValueError):
+    #         class TestModel(Model):
+    #             enum = EnumField(MultiPrimitive)
+
+        # this should work
+        # class TestModel(Model):
+        #     enum = EnumField(MultiPrimitive, primitive=float)
 
 
 class TestEmptyEnumValues(TestCase):
@@ -3976,6 +4054,67 @@ def remove_color_values(apps, schema_editor):
                 fltr2.first().bit_field_small,
                 not_other
             )
+
+            obj3 = BitFieldModel.objects.create(
+                bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS,
+                no_default='ONE',
+            )
+
+            for cont in [
+                BitFieldModel.objects.filter(
+                    bit_field_small__has_any=GNSSConstellation.GPS
+                ),
+                BitFieldModel.objects.filter(
+                    bit_field_small__has_all=GNSSConstellation.GPS
+                )
+            ]:
+                self.assertEqual(cont.count(), 2)
+                self.assertIn(obj3, cont)
+                self.assertIn(obj, cont)
+                self.assertNotIn(obj2, cont)
+
+            cont2 = BitFieldModel.objects.filter(
+                bit_field_small__has_any=(
+                    GNSSConstellation.GPS | GNSSConstellation.GLONASS
+                )
+            )
+            self.assertEqual(cont2.count(), 3)
+            self.assertIn(obj3, cont2)
+            self.assertIn(obj2, cont2)
+            self.assertIn(obj, cont2)
+
+            cont3 = BitFieldModel.objects.filter(
+                bit_field_small__has_all=(
+                    GNSSConstellation.GPS | GNSSConstellation.GLONASS
+                )
+            )
+            self.assertEqual(cont3.count(), 1)
+            self.assertIn(obj3, cont3)
+
+            cont4 = BitFieldModel.objects.filter(
+                bit_field_small__has_all=(
+                    GNSSConstellation.GALILEO | GNSSConstellation.QZSS
+                )
+            )
+            self.assertEqual(cont4.count(), 1)
+            self.assertIn(obj2, cont4)
+
+            cont5 = BitFieldModel.objects.filter(
+                bit_field_small__has_all=(
+                    GNSSConstellation.GPS | GNSSConstellation.QZSS
+                )
+            )
+            self.assertEqual(cont5.count(), 0)
+
+            cont6 = BitFieldModel.objects.filter(
+                bit_field_small__has_any=(
+                    GNSSConstellation.BEIDOU | GNSSConstellation.QZSS
+                )
+            )
+            self.assertEqual(cont6.count(), 2)
+            self.assertIn(obj, cont6)
+            self.assertIn(obj2, cont6)
+
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
 

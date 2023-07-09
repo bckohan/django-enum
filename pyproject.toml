@@ -69,6 +69,7 @@ importlib-metadata = [
     { version = ">=5.0", markers = "python_version > '3.7'" },
 ]
 python-dateutil = "^2.8.2"
+ipdb = "^0.13.13"
 
 [tool.poetry.group.psycopg2]
 optional = true
