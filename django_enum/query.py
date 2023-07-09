@@ -4,7 +4,7 @@ Specialized has_any and has_all query lookups for flag enumerations.
 from django.db.models.lookups import Exact
 
 
-class HasAllFlagsLookup(Exact):
+class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
     """
     Extend Exact lookup to support lookup on has all flags. This lookup bitwise
     ANDs the column with the lookup value and checks that the result is equal
@@ -24,7 +24,7 @@ class HasAllFlagsLookup(Exact):
         return connection.operators['exact'] % rhs
 
 
-class HasAnyFlagsLookup(HasAllFlagsLookup):
+class HasAnyFlagsLookup(HasAllFlagsLookup):  # pylint: disable=W0223
     """
     Extend Exact lookup to support lookup on has any flags. This bitwise ANDs
     the column with the lookup value and checks that the result is greater

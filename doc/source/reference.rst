@@ -47,6 +47,16 @@ Forms
    :private-members:
 
 
+Query
+-----
+
+.. automodule:: django_enum.query
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+
 Serializer Fields
 -----------------
 
