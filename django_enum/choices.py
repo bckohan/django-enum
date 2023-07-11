@@ -9,6 +9,7 @@ from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models.enums import ChoicesMeta
+from django_enum.utils import choices, names
 
 DEFAULT_BOUNDARY = getattr(enum, 'KEEP', None)
 
@@ -28,6 +29,22 @@ try:
         choices attribute and label properties to enumerations and
         enum-properties' generic property support.
         """
+
+        @property
+        def names(cls):
+            """
+            For some exotic enums list(Enum) is empty, so we override names if
+            empty
+            """
+            return ChoicesMeta.names.fget(cls) or names(cls, override=True)
+
+        @property
+        def choices(cls):
+            """
+            For some exotic enums list(Enum) is empty, so we override choices
+            if empty
+            """
+            return ChoicesMeta.choices.fget(cls) or choices(cls, override=True)
 
 
     class DjangoSymmetricMixin(SymmetricMixin):

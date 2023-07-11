@@ -216,7 +216,7 @@ class EnumFlagTester(models.Model):
 
     small_pos = EnumField(
         SmallPositiveFlagEnum,
-        default=SmallPositiveFlagEnum(0),
+        default=None,
         null=True,
         db_index=True,
         blank=True
@@ -270,3 +270,12 @@ class EnumFlagTester(models.Model):
         db_index=True,
         blank=True
     )
+
+    def __repr__(self):
+        return f'EnumFlagTester(small_pos={repr(self.small_pos)}, ' \
+               f'pos={repr(self.pos)}, ' \
+               f'big_pos={repr(self.big_pos)}, ' \
+               f'extra_big_pos={repr(self.extra_big_pos)}, ' \
+               f'small_neg={repr(self.small_neg)}, neg={repr(self.neg)}, ' \
+               f'big_neg={repr(self.big_neg)}, ' \
+               f'extra_big_neg={repr(self.extra_big_neg)})'

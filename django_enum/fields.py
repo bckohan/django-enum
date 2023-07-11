@@ -226,52 +226,40 @@ class EnumFieldFactory(type):
 
             field_cls: Type[EnumField]
             if min_value < 0:
+                # Its possible to create a flag enum with negative values. This
+                # enum behaves like a regular enum - the bitwise combinations
+                # do not work - these weird flag enums are supported as normal
+                # enumerations with negative values at the DB level
                 if min_bits <= (16, 15):
-                    field_cls = (
-                        FlagSmallIntegerField
-                        if is_flag else
-                        EnumSmallIntegerField
-                    )
+                    field_cls = EnumSmallIntegerField
                 elif min_bits <= (32, 31):
-                    field_cls = (
-                        FlagIntegerField
-                        if is_flag else
-                        EnumIntegerField
-                    )
+                    field_cls = EnumIntegerField
                 elif min_bits <= (64, 63):
-                    field_cls = (
-                        FlagBigIntegerField
-                        if is_flag else
-                        EnumBigIntegerField
-                    )
+                    field_cls = EnumBigIntegerField
                 else:
-                    field_cls = (
-                        FlagExtraBigIntegerField
-                        if is_flag else
-                        EnumExtraBigIntegerField
-                    )
+                    field_cls = EnumExtraBigIntegerField
             else:
                 if min_bits[1] >= 64 and is_flag:
                     field_cls = (
-                        FlagExtraBigIntegerField
+                        ExtraBigIntegerFlagField
                         if is_flag else
                         EnumExtraBigIntegerField
                     )
                 elif min_bits[1] >= 32:
                     field_cls = (
-                        FlagPositiveBigIntegerField
+                        BigIntegerFlagField
                         if is_flag else
                         EnumPositiveBigIntegerField
                     )
                 elif min_bits[1] >= 16:
                     field_cls = (
-                        FlagPositiveIntegerField
+                        IntegerFlagField
                         if is_flag else
                         EnumPositiveIntegerField
                     )
                 else:
                     field_cls = (
-                        FlagPositiveSmallIntegerField
+                        SmallIntegerFlagField
                         if is_flag else
                         EnumPositiveSmallIntegerField
                     )
@@ -705,7 +693,20 @@ class EnumField(
         self, cls, name, **kwargs
     ):  # pylint: disable=W0221
         super().contribute_to_class(cls, name, **kwargs)
-        if self.constrained and self.enum:
+        if self.constrained and self.enum and issubclass(self.enum, IntFlag):
+            # It's possible to declare an IntFlag field with negative values -
+            # these enums do not behave has expected and flag-like DB
+            # operations are not supported, so they are treated as normal
+            # IntEnum fields, but the check constraints are flag-like range
+            # constraints, so we bring those in here
+            FlagField.contribute_to_class(
+                self,
+                cls,
+                name,
+                call_base=False,
+                **kwargs
+            )
+        elif self.constrained and self.enum:
             constraint = Q(**{f'{name}__in': values(self.enum)})
             if self.null:
                 constraint |= Q(**{f'{name}__isnull': True})
@@ -1045,7 +1046,13 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
 
     enum: Type[Flag]
 
-    def contribute_to_class(self, cls, name, **kwargs):
+    def contribute_to_class(
+            self,
+            cls: Type[EnumField],
+            name: str,
+            call_base: bool = True,
+            **kwargs
+    ) -> None:
         """
         Add check constraints that honor flag fields range and boundary setting.
         Bypass EnumField's contribute_to_class() method, which adds constraints
@@ -1107,57 +1114,32 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                     'constraints',
                     cls._meta.constraints  # pylint: disable=W0212
                 )
+        if call_base:
+            IntegerField.contribute_to_class(self, cls, name, **kwargs)
 
-        IntegerField.contribute_to_class(self, cls, name, **kwargs)
 
-
-class FlagSmallIntegerField(FlagField, EnumSmallIntegerField):
+class SmallIntegerFlagField(FlagField, EnumPositiveSmallIntegerField):
     """
-    A database field supporting flag enumerations with integer values that fit
-    into 2 bytes or fewer
-    """
-
-
-class FlagPositiveSmallIntegerField(FlagField, EnumPositiveSmallIntegerField):
-    """
-    A database field supporting flag enumerations with positive (but signed)
-    integer values that fit into 2 bytes or fewer
+    A database field supporting flag enumerations with positive integer values
+    that fit into 2 bytes or fewer
     """
 
 
-class FlagIntegerField(FlagField, EnumIntegerField):
+class IntegerFlagField(FlagField, EnumPositiveIntegerField):
     """
-    A database field supporting flag enumerations with integer values that fit
-    into 32 bytes or fewer
-    """
-
-
-class FlagPositiveIntegerField(FlagField, EnumPositiveIntegerField):
-    """
-    A database field supporting flag enumerations with positive (but signed)
-    integer values that fit into 32 bytes or fewer
+    A database field supporting flag enumerations with positive integer values
+    that fit into 32 bytes or fewer
     """
 
 
-class FlagBigIntegerField(FlagField, EnumBigIntegerField):
+class BigIntegerFlagField(FlagField, EnumPositiveBigIntegerField):
     """
     A database field supporting flag enumerations with integer values that fit
     into 64 bytes or fewer
     """
 
 
-class FlagPositiveBigIntegerField(FlagField, EnumPositiveBigIntegerField):
-    """
-    A database field supporting flag enumerations with positive (but signed)
-    integer values that fit into 64 bytes or fewer
-    """
-
-
-for field in [
-    FlagSmallIntegerField, FlagPositiveSmallIntegerField, FlagIntegerField,
-    FlagPositiveIntegerField, FlagBigIntegerField,
-    FlagPositiveBigIntegerField
-]:
+for field in [SmallIntegerFlagField, IntegerFlagField, BigIntegerFlagField]:
     field.register_lookup(HasAnyFlagsLookup)
     field.register_lookup(HasAllFlagsLookup)
 
@@ -1253,10 +1235,10 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
         BinaryField.contribute_to_class(self, cls, name, **kwargs)
 
 
-class FlagExtraBigIntegerField(FlagField, EnumExtraBigIntegerField):
+class ExtraBigIntegerFlagField(FlagField, EnumExtraBigIntegerField):
     """
     Flag fields that require more than 64 bits.
     """
 
-    def contribute_to_class(self, cls, name, **kwargs):
+    def contribute_to_class(self, cls, name, call_base=True, **kwargs):
         BinaryField.contribute_to_class(self, cls, name, **kwargs)

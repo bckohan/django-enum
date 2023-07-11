@@ -7,7 +7,7 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup as Soup
 from django.core import serializers
-from django.core.exceptions import ValidationError
+from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import F, Q
@@ -17,13 +17,12 @@ from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
 from django_enum.fields import (
-    FlagBigIntegerField,
-    FlagExtraBigIntegerField,
-    FlagIntegerField,
-    FlagPositiveBigIntegerField,
-    FlagPositiveIntegerField,
-    FlagPositiveSmallIntegerField,
-    FlagSmallIntegerField,
+    BigIntegerFlagField,
+    EnumExtraBigIntegerField,
+    ExtraBigIntegerFlagField,
+    FlagField,
+    IntegerFlagField,
+    SmallIntegerFlagField,
 )
 from django_enum.forms import EnumChoiceField  # dont remove this
 # from django_enum.tests.djenum.enums import (
@@ -76,6 +75,27 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 DISABLE_MIGRATION_TESTS = (
     os.environ.get('MYSQL_VERSION', '') == '5.7'
 )
+
+
+def combine_flags(*flags):
+    if flags:
+        flag = flags[0]
+        for flg in flags[1:]:
+            flag = flag | flg
+        return flag
+    return 0
+
+
+def invert_flags(en):
+    # invert a flag enumeration. in python 3.11+ ~ operator is supported
+    if sys.version_info >= (3, 11, 4) and en.value > 0:
+        return ~en
+    return en.__class__(
+        combine_flags(*[
+            flag for flag in list(en.__class__.__members__.values())
+            if flag not in en
+        ])
+    )
 
 
 def set_models(version):
@@ -985,24 +1005,24 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('constant'), FloatField)
 
         self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_neg'), SmallIntegerField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_neg'), FlagSmallIntegerField)
+        self.assertNotIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_neg'), FlagField)
         self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_pos'), PositiveSmallIntegerField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_pos'), FlagPositiveSmallIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('small_pos'), SmallIntegerFlagField)
 
         self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('neg'), IntegerField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('neg'), FlagIntegerField)
+        self.assertNotIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('neg'), FlagField)
         self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('pos'), PositiveIntegerField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('pos'), FlagPositiveIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('pos'), IntegerFlagField)
 
         self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_neg'), BigIntegerField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_neg'), FlagBigIntegerField)
+        self.assertNotIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_neg'), FlagField)
         self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_pos'), PositiveBigIntegerField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_pos'), FlagPositiveBigIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('big_pos'), BigIntegerFlagField)
 
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg'), FlagExtraBigIntegerField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos'), FlagExtraBigIntegerField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg'), EnumExtraBigIntegerField)
+        self.assertNotIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg'), FlagField)
         self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg'), BinaryField)
-        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos'), BinaryField)
+        self.assertIsInstance(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos'), ExtraBigIntegerFlagField)
 
         self.assertEqual(self.MODEL_CLASS._meta.get_field('small_int').primitive, int)
         self.assertEqual(self.MODEL_CLASS._meta.get_field('small_int').bit_length, 16)
@@ -2183,167 +2203,224 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
             self.NUMBER
         )
 
-# TODO
-# class FlagTests(TestCase):
-#
-#     MODEL_CLASS = EnumFlagTester
-#
-#     def test_flag_filters(self):
-#
-#         self.MODEL_CLASS.objects.create()
-#
-#
-#         obj0 = BitFieldModel.objects.create(
-#             bit_field_small=GNSSConstellation(0),
-#             no_default='ONE'
-#         )
-#
-#         # Create the model
-#         obj = BitFieldModel.objects.create(
-#             bit_field_small=GNSSConstellation.GPS,
-#             no_default='ONE',
-#         )
-#
-#         # does this work in SQLite?
-#         BitFieldModel.objects.filter(pk=obj.pk).update(
-#             bit_field_small=F('bit_field_small').bitor(
-#                 GNSSConstellation.GLONASS
-#             )
-#         )
-#
-#         # Set flags manually
-#         BitFieldModel.objects.filter(pk=obj.pk).update(
-#             bit_field_small=(
-#                     GNSSConstellation.GPS |
-#                     GNSSConstellation.GALILEO |
-#                     GNSSConstellation.BEIDOU
-#             )
-#         )
-#
-#         # Remove galileo (does not work in SQLite)
-#         BitFieldModel.objects.filter(pk=obj.pk).update(
-#             bit_field_small=F('bit_field_small').bitand(
-#                 ~GNSSConstellation.GALILEO
-#             )
-#         )
-#
-#         # Find by awesome_flag
-#         fltr = BitFieldModel.objects.filter(
-#             bit_field_small=(
-#                 GNSSConstellation.GPS | GNSSConstellation.BEIDOU
-#             )
-#         )
-#         self.assertEqual(fltr.count(), 1)
-#         self.assertEqual(fltr.first().pk, obj.pk)
-#         self.assertEqual(
-#             fltr.first().bit_field_small,
-#             GNSSConstellation.GPS | GNSSConstellation.BEIDOU
-#         )
-#
-#         if sys.version_info >= (3, 11):
-#             not_other = ~(GNSSConstellation.GPS | GNSSConstellation.BEIDOU)
-#         else:
-#             not_other = GNSSConstellation.GLONASS | GNSSConstellation.GALILEO | GNSSConstellation.QZSS
-#
-#         fltr2 = BitFieldModel.objects.filter(
-#             bit_field_small=not_other
-#         )
-#         self.assertEqual(fltr2.count(), 0)
-#
-#         obj2 = BitFieldModel.objects.create(
-#             bit_field_small=not_other,
-#             no_default='ONE',
-#         )
-#         self.assertEqual(fltr2.count(), 1)
-#         self.assertEqual(fltr2.first().pk, obj2.pk)
-#         self.assertEqual(
-#             fltr2.first().bit_field_small,
-#             not_other
-#         )
-#
-#         obj3 = BitFieldModel.objects.create(
-#             bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS,
-#             no_default='ONE',
-#         )
-#
-#         for cont in [
-#             BitFieldModel.objects.filter(
-#                 bit_field_small__has_any=GNSSConstellation.GPS
-#             ),
-#             BitFieldModel.objects.filter(
-#                 bit_field_small__has_all=GNSSConstellation.GPS
-#             )
-#         ]:
-#             self.assertEqual(cont.count(), 2)
-#             self.assertIn(obj3, cont)
-#             self.assertIn(obj, cont)
-#             self.assertNotIn(obj2, cont)
-#
-#         cont2 = BitFieldModel.objects.filter(
-#             bit_field_small__has_any=(
-#                 GNSSConstellation.GPS | GNSSConstellation.GLONASS
-#             )
-#         )
-#         self.assertEqual(cont2.count(), 3)
-#         self.assertIn(obj3, cont2)
-#         self.assertIn(obj2, cont2)
-#         self.assertIn(obj, cont2)
-#
-#         cont3 = BitFieldModel.objects.filter(
-#             bit_field_small__has_all=(
-#                 GNSSConstellation.GPS | GNSSConstellation.GLONASS
-#             )
-#         )
-#         self.assertEqual(cont3.count(), 1)
-#         self.assertIn(obj3, cont3)
-#
-#         cont4 = BitFieldModel.objects.filter(
-#             bit_field_small__has_all=(
-#                 GNSSConstellation.GALILEO | GNSSConstellation.QZSS
-#             )
-#         )
-#         self.assertEqual(cont4.count(), 1)
-#         self.assertIn(obj2, cont4)
-#
-#         cont5 = BitFieldModel.objects.filter(
-#             bit_field_small__has_all=(
-#                 GNSSConstellation.GPS | GNSSConstellation.QZSS
-#             )
-#         )
-#         self.assertEqual(cont5.count(), 0)
-#
-#         cont6 = BitFieldModel.objects.filter(
-#             bit_field_small__has_any=(
-#                 GNSSConstellation.BEIDOU | GNSSConstellation.QZSS
-#             )
-#         )
-#         self.assertEqual(cont6.count(), 2)
-#         self.assertIn(obj, cont6)
-#         self.assertIn(obj2, cont6)
-#
-#         cont7 = BitFieldModel.objects.filter(
-#             bit_field_small__has_any=GNSSConstellation(0)
-#         )
-#         self.assertEqual(cont7.count(), 1)
-#         self.assertIn(obj0, cont7)
-#
-#         cont8 = BitFieldModel.objects.filter(
-#             bit_field_small__has_all=GNSSConstellation(0)
-#         )
-#         self.assertEqual(cont8.count(), 1)
-#         self.assertIn(obj0, cont8)
-#
-#         cont9 = BitFieldModel.objects.filter(
-#             bit_field_small=GNSSConstellation(0)
-#         )
-#         self.assertEqual(cont9.count(), 1)
-#         self.assertIn(obj0, cont9)
-#
-#         cont10 = BitFieldModel.objects.filter(
-#             bit_field_small__exact=GNSSConstellation(0)
-#         )
-#         self.assertEqual(cont10.count(), 1)
-#         self.assertIn(obj0, cont10)
+
+class FlagTests(TestCase):
+
+    MODEL_CLASS = EnumFlagTester
+
+    def test_flag_filters(self):
+        fields = [
+            field for field in self.MODEL_CLASS._meta.fields
+            if isinstance(field, EnumField)
+        ]
+
+        # keep track of empty counts for filter assertions
+        empties = {field.name: 0 for field in fields}
+
+        def update_empties(obj):
+            for field in fields:
+                value = getattr(obj, field.name)
+                if value is not None and int(value) == 0:
+                    empties[field.name] += 1
+
+        obj0 = self.MODEL_CLASS.objects.create()
+        update_empties(obj0)
+
+        null_qry = self.MODEL_CLASS.objects.filter(small_pos__isnull=True)
+        self.assertEqual(null_qry.count(), 1)
+        self.assertEqual(null_qry.first(), obj0)
+        self.assertIsNone(null_qry.first().small_pos)
+
+        for field in [
+            field.name for field in fields
+            if isinstance(field, FlagField) and
+            not isinstance(field, ExtraBigIntegerFlagField)
+        ]:
+            EnumClass = self.MODEL_CLASS._meta.get_field(field).enum
+
+            empty = self.MODEL_CLASS.objects.create(**{field: EnumClass(0)})
+            update_empties(empty)
+
+            # Create the model
+            obj = self.MODEL_CLASS.objects.create(**{field: EnumClass.ONE})
+            update_empties(obj)
+    
+            # does this work in SQLite?
+            self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
+                field: F(field).bitor(
+                    EnumClass.TWO
+                )
+            })
+    
+            # Set flags manually
+            self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
+                field: (
+                    EnumClass.ONE |
+                    EnumClass.THREE |
+                    EnumClass.FOUR
+                )
+            })
+    
+            # Remove THREE (does not work in SQLite)
+            self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
+                field: F(field).bitand(
+                    invert_flags(EnumClass.THREE)
+                )
+            })
+    
+            # Find by awesome_flag
+            fltr = self.MODEL_CLASS.objects.filter(**{
+                field: (
+                    EnumClass.ONE | EnumClass.FOUR
+                )
+            })
+            try:
+                self.assertEqual(fltr.count(), 1)
+            except:
+                import ipdb
+                ipdb.set_trace()
+            self.assertEqual(fltr.first().pk, obj.pk)
+            self.assertEqual(
+                getattr(fltr.first(), field),
+                EnumClass.ONE | EnumClass.FOUR
+            )
+    
+            if sys.version_info >= (3, 11):
+                not_other = invert_flags(EnumClass.ONE | EnumClass.FOUR)
+            else:
+                not_other = EnumClass.TWO | EnumClass.THREE | EnumClass.FIVE
+    
+            fltr2 = self.MODEL_CLASS.objects.filter(**{
+                field: not_other
+            })
+            self.assertEqual(fltr2.count(), 0)
+    
+            obj2 = self.MODEL_CLASS.objects.create(**{
+                field: not_other
+            })
+            update_empties(obj2)
+            self.assertEqual(fltr2.count(), 1)
+            self.assertEqual(fltr2.first().pk, obj2.pk)
+            self.assertEqual(
+                getattr(fltr2.first(), field),
+                not_other
+            )
+    
+            obj3 = self.MODEL_CLASS.objects.create(**{
+                field: EnumClass.ONE | EnumClass.TWO,
+            })
+            update_empties(obj3)
+    
+            for cont in [
+                self.MODEL_CLASS.objects.filter(**{
+                    f'{field}__has_any': EnumClass.ONE
+                }),
+                self.MODEL_CLASS.objects.filter(**{
+                    f'{field}__has_all': EnumClass.ONE
+                })
+            ]:
+                self.assertEqual(cont.count(), 2)
+                self.assertIn(obj3, cont)
+                self.assertIn(obj, cont)
+                self.assertNotIn(obj2, cont)
+    
+            cont2 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__has_any': (
+                    EnumClass.ONE | EnumClass.TWO
+                )
+            })
+            self.assertEqual(cont2.count(), 3)
+            self.assertIn(obj3, cont2)
+            self.assertIn(obj2, cont2)
+            self.assertIn(obj, cont2)
+    
+            cont3 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__has_all': (
+                    EnumClass.ONE | EnumClass.TWO
+                )
+            })
+            self.assertEqual(cont3.count(), 1)
+            self.assertIn(obj3, cont3)
+    
+            cont4 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__has_all': (
+                    EnumClass.THREE | EnumClass.FIVE
+                )
+            })
+            self.assertEqual(cont4.count(), 1)
+            self.assertIn(obj2, cont4)
+    
+            cont5 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__has_all': (
+                    EnumClass.ONE | EnumClass.FIVE
+                )
+            })
+            self.assertEqual(cont5.count(), 0)
+    
+            cont6 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__has_any': (
+                    EnumClass.FOUR | EnumClass.FIVE
+                )
+            })
+            self.assertEqual(cont6.count(), 2)
+            self.assertIn(obj, cont6)
+            self.assertIn(obj2, cont6)
+    
+            cont7 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__has_any': EnumClass(0)
+            })
+            self.assertEqual(cont7.count(), empties[field])
+            self.assertIn(empty, cont7)
+    
+            cont8 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__has_all': EnumClass(0)
+            })
+            self.assertEqual(cont8.count(), empties[field])
+            self.assertIn(empty, cont8)
+    
+            cont9 = self.MODEL_CLASS.objects.filter(**{
+                field: EnumClass(0)
+            })
+            self.assertEqual(cont9.count(), empties[field])
+            self.assertIn(empty, cont9)
+    
+            cont10 = self.MODEL_CLASS.objects.filter(**{
+                f'{field}__exact': EnumClass(0)
+            })
+            self.assertEqual(cont10.count(), empties[field])
+            self.assertIn(empty, cont10)
+
+        EnumClass = self.MODEL_CLASS._meta.get_field('pos').enum
+        compound_qry = self.MODEL_CLASS.objects.filter(
+            Q(small_pos__isnull=True) | Q(pos__has_any=EnumClass.ONE)
+        )
+
+        self.assertEqual(compound_qry.count(), 9)
+        for obj in compound_qry:
+            self.assertTrue(obj.small_pos is None or obj.pos & EnumClass.ONE)
+
+        compound_qry = self.MODEL_CLASS.objects.filter(
+            Q(small_pos__isnull=True) & Q(pos__has_any=EnumClass.ONE)
+        )
+        self.assertEqual(compound_qry.count(), 2)
+        for obj in compound_qry:
+            self.assertTrue(obj.small_pos is None and obj.pos & EnumClass.ONE)
+
+    def test_unsupported_flags(self):
+        obj = self.MODEL_CLASS.objects.create()
+        for field in [
+            'small_neg', 'neg', 'big_neg', 'extra_big_neg', 'extra_big_pos'
+        ]:
+            EnumClass = self.MODEL_CLASS._meta.get_field(field).enum
+            with self.assertRaises(FieldError):
+                self.MODEL_CLASS.objects.filter(
+                    **{'field__has_any': EnumClass.ONE}
+                )
+
+            with self.assertRaises(FieldError):
+                self.MODEL_CLASS.objects.filter(
+                    **{'field__has_all': EnumClass.ONE}
+                )
 
 if ENUM_PROPERTIES_INSTALLED:
 
@@ -2357,6 +2434,7 @@ if ENUM_PROPERTIES_INSTALLED:
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
         BitFieldModel,
+        EnumFlagPropTester,
         EnumTester,
         MyModel,
     )
@@ -2822,7 +2900,6 @@ if ENUM_PROPERTIES_INSTALLED:
                 bit_field_large_neg=None
             )
 
-            from django.core.exceptions import FieldError
             # has_any and has_all are not supported on ExtraLarge bit fields
             with self.assertRaises(FieldError):
                 BitFieldModel.objects.filter(bit_field_large__has_any=LargeBitField.ONE)
@@ -4132,176 +4209,19 @@ def remove_color_values(apps, schema_editor):
             self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
 
 
-    class FlagTests(TestCase):
+    class FlagTestsProp(FlagTests):
 
-        def test_flag_enum(self):
+        MODEL_CLASS = EnumFlagPropTester
 
-            from django_enum.tests.enum_prop.enums import (
-                CarrierFrequency,
-                GNSSConstellation,
-            )
+        def test_prop_enum(self):
 
+            from django_enum.tests.enum_prop.enums import GNSSConstellation
             self.assertEqual(GNSSConstellation.GPS, GNSSConstellation('gps'))
             self.assertEqual(GNSSConstellation.GLONASS, GNSSConstellation('GLONASS'))
             self.assertEqual(GNSSConstellation.GALILEO, GNSSConstellation('galileo'))
             self.assertEqual(GNSSConstellation.BEIDOU, GNSSConstellation('BeiDou'))
             self.assertEqual(GNSSConstellation.QZSS, GNSSConstellation('qzss'))
 
-        def test_flag_filters(self):
-
-            from django_enum.tests.enum_prop.enums import GNSSConstellation
-
-            obj0 = BitFieldModel.objects.create(
-                bit_field_small=GNSSConstellation(0),
-                no_default='ONE'
-            )
-
-            # Create the model
-            obj = BitFieldModel.objects.create(
-                bit_field_small=GNSSConstellation.GPS,
-                no_default='ONE',
-            )
-
-            # does this work in SQLite?
-            BitFieldModel.objects.filter(pk=obj.pk).update(
-                bit_field_small=F('bit_field_small').bitor(
-                    GNSSConstellation.GLONASS
-                )
-            )
-
-            # Set flags manually
-            BitFieldModel.objects.filter(pk=obj.pk).update(
-                bit_field_small=(
-                        GNSSConstellation.GPS |
-                        GNSSConstellation.GALILEO |
-                        GNSSConstellation.BEIDOU
-                )
-            )
-
-            # Remove galileo (does not work in SQLite)
-            BitFieldModel.objects.filter(pk=obj.pk).update(
-                bit_field_small=F('bit_field_small').bitand(
-                    ~GNSSConstellation.GALILEO
-                )
-            )
-
-            # Find by awesome_flag
-            fltr = BitFieldModel.objects.filter(
-                bit_field_small=(
-                    GNSSConstellation.GPS | GNSSConstellation.BEIDOU
-                )
-            )
-            self.assertEqual(fltr.count(), 1)
-            self.assertEqual(fltr.first().pk, obj.pk)
-            self.assertEqual(
-                fltr.first().bit_field_small,
-                GNSSConstellation.GPS | GNSSConstellation.BEIDOU
-            )
-
-            if sys.version_info >= (3, 11):
-                not_other = ~(GNSSConstellation.GPS | GNSSConstellation.BEIDOU)
-            else:
-                not_other = GNSSConstellation.GLONASS | GNSSConstellation.GALILEO | GNSSConstellation.QZSS
-
-            fltr2 = BitFieldModel.objects.filter(
-                bit_field_small=not_other
-            )
-            self.assertEqual(fltr2.count(), 0)
-
-            obj2 = BitFieldModel.objects.create(
-                bit_field_small=not_other,
-                no_default='ONE',
-            )
-            self.assertEqual(fltr2.count(), 1)
-            self.assertEqual(fltr2.first().pk, obj2.pk)
-            self.assertEqual(
-                fltr2.first().bit_field_small,
-                not_other
-            )
-
-            obj3 = BitFieldModel.objects.create(
-                bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS,
-                no_default='ONE',
-            )
-
-            for cont in [
-                BitFieldModel.objects.filter(
-                    bit_field_small__has_any=GNSSConstellation.GPS
-                ),
-                BitFieldModel.objects.filter(
-                    bit_field_small__has_all=GNSSConstellation.GPS
-                )
-            ]:
-                self.assertEqual(cont.count(), 2)
-                self.assertIn(obj3, cont)
-                self.assertIn(obj, cont)
-                self.assertNotIn(obj2, cont)
-
-            cont2 = BitFieldModel.objects.filter(
-                bit_field_small__has_any=(
-                    GNSSConstellation.GPS | GNSSConstellation.GLONASS
-                )
-            )
-            self.assertEqual(cont2.count(), 3)
-            self.assertIn(obj3, cont2)
-            self.assertIn(obj2, cont2)
-            self.assertIn(obj, cont2)
-
-            cont3 = BitFieldModel.objects.filter(
-                bit_field_small__has_all=(
-                    GNSSConstellation.GPS | GNSSConstellation.GLONASS
-                )
-            )
-            self.assertEqual(cont3.count(), 1)
-            self.assertIn(obj3, cont3)
-
-            cont4 = BitFieldModel.objects.filter(
-                bit_field_small__has_all=(
-                    GNSSConstellation.GALILEO | GNSSConstellation.QZSS
-                )
-            )
-            self.assertEqual(cont4.count(), 1)
-            self.assertIn(obj2, cont4)
-
-            cont5 = BitFieldModel.objects.filter(
-                bit_field_small__has_all=(
-                    GNSSConstellation.GPS | GNSSConstellation.QZSS
-                )
-            )
-            self.assertEqual(cont5.count(), 0)
-
-            cont6 = BitFieldModel.objects.filter(
-                bit_field_small__has_any=(
-                    GNSSConstellation.BEIDOU | GNSSConstellation.QZSS
-                )
-            )
-            self.assertEqual(cont6.count(), 2)
-            self.assertIn(obj, cont6)
-            self.assertIn(obj2, cont6)
-
-            cont7 = BitFieldModel.objects.filter(
-                bit_field_small__has_any=GNSSConstellation(0)
-            )
-            self.assertEqual(cont7.count(), 1)
-            self.assertIn(obj0, cont7)
-
-            cont8 = BitFieldModel.objects.filter(
-                bit_field_small__has_all=GNSSConstellation(0)
-            )
-            self.assertEqual(cont8.count(), 1)
-            self.assertIn(obj0, cont8)
-
-            cont9 = BitFieldModel.objects.filter(
-                bit_field_small=GNSSConstellation(0)
-            )
-            self.assertEqual(cont9.count(), 1)
-            self.assertIn(obj0, cont9)
-
-            cont10 = BitFieldModel.objects.filter(
-                bit_field_small__exact=GNSSConstellation(0)
-            )
-            self.assertEqual(cont10.count(), 1)
-            self.assertIn(obj0, cont10)
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
 

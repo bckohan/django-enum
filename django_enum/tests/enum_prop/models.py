@@ -4,7 +4,9 @@ try:
     from django_enum import EnumField, TextChoices
     from django_enum.tests.enum_prop.enums import (
         BigIntEnum,
+        BigNegativeFlagEnum,
         BigPosIntEnum,
+        BigPositiveFlagEnum,
         Constants,
         DateEnum,
         DateTimeEnum,
@@ -13,13 +15,19 @@ try:
         DJTextEnum,
         DurationEnum,
         ExternEnum,
+        ExtraBigNegativeFlagEnum,
+        ExtraBigPositiveFlagEnum,
         GNSSConstellation,
         IntEnum,
         LargeBitField,
         LargeNegativeField,
+        NegativeFlagEnum,
         PosIntEnum,
+        PositiveFlagEnum,
         SmallIntEnum,
+        SmallNegativeFlagEnum,
         SmallPosIntEnum,
+        SmallPositiveFlagEnum,
         TextEnum,
         TimeEnum,
     )
@@ -277,6 +285,75 @@ try:
             null=True
         )
         no_default = EnumField(LargeBitField)
+
+
+    class EnumFlagPropTester(models.Model):
+
+        small_pos = EnumField(
+            SmallPositiveFlagEnum,
+            default=None,
+            null=True,
+            db_index=True,
+            blank=True
+        )
+
+        pos = EnumField(
+            PositiveFlagEnum,
+            default=PositiveFlagEnum(0),
+            db_index=True,
+            blank=True
+        )
+
+        big_pos = EnumField(
+            BigPositiveFlagEnum,
+            default=BigPositiveFlagEnum(0),
+            db_index=True,
+            blank=True
+        )
+
+        extra_big_pos = EnumField(
+            ExtraBigPositiveFlagEnum,
+            default=ExtraBigPositiveFlagEnum(0),
+            db_index=True,
+            blank=True
+        )
+
+        small_neg = EnumField(
+            SmallNegativeFlagEnum,
+            default=SmallNegativeFlagEnum(0),
+            db_index=True,
+            blank=True
+        )
+
+        neg = EnumField(
+            NegativeFlagEnum,
+            default=NegativeFlagEnum(0),
+            db_index=True,
+            blank=True
+        )
+
+        big_neg = EnumField(
+            BigNegativeFlagEnum,
+            default=BigNegativeFlagEnum(0),
+            db_index=True,
+            blank=True
+        )
+
+        extra_big_neg = EnumField(
+            ExtraBigNegativeFlagEnum,
+            default=ExtraBigNegativeFlagEnum(0),
+            db_index=True,
+            blank=True
+        )
+
+        def __repr__(self):
+            return f'EnumFlagTester(small_pos={repr(self.small_pos)}, ' \
+                   f'pos={repr(self.pos)}, ' \
+                   f'big_pos={repr(self.big_pos)}, ' \
+                   f'extra_big_pos={repr(self.extra_big_pos)}, ' \
+                   f'small_neg={repr(self.small_neg)}, neg={repr(self.neg)}, ' \
+                   f'big_neg={repr(self.big_neg)}, ' \
+                   f'extra_big_neg={repr(self.extra_big_neg)})'
 
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover

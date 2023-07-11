@@ -234,56 +234,78 @@ class DecimalEnum(Enum):
         return super().__hash__()
 
 
-class SmallNegativeFlagEnum(IntFlag):
-    VAL1 = -(2 ** 13)
-    VAL2 = -(2 ** 14)
-    VAL3 = -(2 ** 15)
-
-
 class SmallPositiveFlagEnum(IntFlag):
 
-    VAL1 = 2**12
-    VAL2 = 2**13
-    VAL3 = 2**14
-
-
-class NegativeFlagEnum(IntFlag):
-
-    VAL1 = -(2**29)
-    VAL2 = -(2**30)
-    VAL3 = -(2**31)
+    ONE = 2**10
+    TWO = 2**11
+    THREE = 2**12
+    FOUR = 2**13
+    FIVE = 2**14
 
 
 class PositiveFlagEnum(IntFlag):
 
-    VAL1 = 2**28
-    VAL2 = 2**29
-    VAL3 = 2**30
-
-
-class BigNegativeFlagEnum(IntFlag):
-
-    VAL1 = -(2**61)
-    VAL2 = -(2**62)
-    VAL3 = -(2**63)
+    ONE = 2**26
+    TWO = 2**27
+    THREE = 2**28
+    FOUR = 2**29
+    FIVE = 2**30
 
 
 class BigPositiveFlagEnum(IntFlag):
 
-    VAL1 = 2**60
-    VAL2 = 2**61
-    VAL3 = 2**62
-
-
-class ExtraBigNegativeFlagEnum(IntFlag):
-
-    VALUE1 = -(2**64)
-    VALUE2 = -(2**65)
-    VALUE3 = -(2**66)
+    ONE = 2**58
+    TWO = 2**59
+    THREE = 2**60
+    FOUR = 2**61
+    FIVE = 2**62
 
 
 class ExtraBigPositiveFlagEnum(IntFlag):
 
-    VALUE1 = 2 ** 63
-    VALUE2 = 2 ** 64
-    VALUE3 = 2 ** 65
+    ONE = 2 ** 61
+    TWO = 2 ** 62
+    THREE = 2 ** 63
+    FOUR = 2 ** 64
+    FIVE = 2 ** 65
+
+
+# its possible to make negative valued flag enums, but the bitwise operations
+# do not really work. We test them because they may be seen in the wild. At
+# the DB level they behave like normal enumerations with a flag enumeration's
+# check constraint by range instead of by value
+
+class SmallNegativeFlagEnum(IntFlag):
+
+    ONE = -(2 ** 11)
+    TWO = -(2 ** 12)
+    THREE = -(2 ** 13)
+    FOUR = -(2 ** 14)
+    FIVE = -(2 ** 15)
+
+
+class NegativeFlagEnum(IntFlag):
+
+    ONE = -(2**27)
+    TWO = -(2**28)
+    THREE = -(2**29)
+    FOUR = -(2**30)
+    FIVE = -(2**31)
+
+
+class BigNegativeFlagEnum(IntFlag):
+
+    ONE = -(2**59)
+    TWO = -(2**60)
+    THREE = -(2**61)
+    FOUR = -(2**62)
+    FIVE = -(2**63)
+
+
+class ExtraBigNegativeFlagEnum(IntFlag):
+
+    ONE = -(2**62)
+    TWO = -(2**63)
+    THREE = -(2**64)
+    FOUR = -(2**65)
+    FIVE = -(2**66)

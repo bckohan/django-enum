@@ -53,7 +53,10 @@ def with_typehint(baseclass: Type[T]) -> Type[T]:
     return object  # type: ignore
 
 
-def choices(enum_cls: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
+def choices(
+    enum_cls: Optional[Type[Enum]],
+    override: bool = False
+) -> List[Tuple[Any, str]]:
     """
     Get the Django choices for an enumeration type. If the enum type has a
     choices attribute, it will be used. Otherwise, the choices will be derived
@@ -64,11 +67,11 @@ def choices(enum_cls: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
     Choices type.
 
     :param enum_cls: The enumeration type
+    :param override: Do not defer to choices attribute on the class if True
     :return: A list of (value, label) pairs
     """
-    return getattr(
-        enum_cls,
-        'choices', [
+    return (getattr(enum_cls, 'choices', []) if not override else []) or (
+        [
             *(
                 [(None, enum_cls.__empty__)]
                 if hasattr(enum_cls, '__empty__') else []
@@ -84,19 +87,22 @@ def choices(enum_cls: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
     ) if enum_cls else []
 
 
-def names(enum_cls: Optional[Type[Enum]]) -> List[Any]:
+def names(enum_cls: Optional[Type[Enum]], override: bool = False) -> List[Any]:
     """
     Return a list of names to use for the enumeration type. This is used
     for compat with enums that do not inherit from Django's Choices type.
 
     :param enum_cls: The enumeration type
+    :param override: Do not defer to names attribute on the class if True
     :return: A list of labels
     """
-    return getattr(
-        enum_cls,
-        'names', [
+    return (getattr(enum_cls, 'names', []) if not override else []) or (
+        [
             *(['__empty__'] if hasattr(enum_cls, '__empty__') else []),
-            *[member.name for member in enum_cls]
+            *[
+                member.name
+                for member in list(enum_cls) or enum_cls.__members__.values()
+            ]
         ]
     ) if enum_cls else []
 

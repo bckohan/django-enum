@@ -286,5 +286,78 @@ try:
         TWO   = 2, 'Two'
         THREE = 3, 'Three'
 
+
+    class SmallPositiveFlagEnum(FlagChoices):
+
+        ONE = 2 ** 10, 'One'
+        TWO = 2 ** 11, 'Two'
+        THREE = 2 ** 12, 'Three'
+        FOUR = 2 ** 13, 'Four'
+        FIVE = 2 ** 14, 'Five'
+
+
+    class PositiveFlagEnum(FlagChoices):
+
+        ONE = 2 ** 26, 'One'
+        TWO = 2 ** 27, 'Two'
+        THREE = 2 ** 28, 'Three'
+        FOUR = 2 ** 29, 'Four'
+        FIVE = 2 ** 30, 'Five'
+
+
+    class BigPositiveFlagEnum(FlagChoices):
+
+        ONE = 2 ** 58, 'One'
+        TWO = 2 ** 59, 'Two'
+        THREE = 2 ** 60, 'Three'
+        FOUR = 2 ** 61, 'Four'
+        FIVE = 2 ** 62, 'Five'
+
+
+    class ExtraBigPositiveFlagEnum(FlagChoices):
+
+        ONE = 2 ** 61, 'One'
+        TWO = 2 ** 62, 'Two'
+        THREE = 2 ** 63, 'Three'
+        FOUR = 2 ** 64, 'Four'
+        FIVE = 2 ** 65, 'Five'
+
+
+    class SmallNegativeFlagEnum(FlagChoices):
+
+        ONE = -(2 ** 11), 'One'
+        TWO = -(2 ** 12), 'Two'
+        THREE = -(2 ** 13), 'Three'
+        FOUR = -(2 ** 14), 'Four'
+        FIVE = -(2 ** 15), 'Five'
+
+
+    class NegativeFlagEnum(FlagChoices):
+
+        ONE = -(2 ** 27), 'One'
+        TWO = -(2 ** 28), 'Two'
+        THREE = -(2 ** 29), 'Three'
+        FOUR = -(2 ** 30), 'Four'
+        FIVE = -(2 ** 31), 'Five'
+
+
+    class BigNegativeFlagEnum(FlagChoices):
+
+        ONE = -(2 ** 59), 'One'
+        TWO = -(2 ** 60), 'Two'
+        THREE = -(2 ** 61), 'Three'
+        FOUR = -(2 ** 62), 'Four'
+        FIVE = -(2 ** 63), 'Five'
+
+
+    class ExtraBigNegativeFlagEnum(FlagChoices):
+
+        ONE = -(2 ** 62), 'One'
+        TWO = -(2 ** 63), 'Two'
+        THREE = -(2 ** 64), 'Three'
+        FOUR = -(2 ** 65), 'Four'
+        FIVE = -(2 ** 66), 'Five'
+
+
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass
