@@ -452,6 +452,20 @@ class EnumField(
             **kwargs
         )
 
+    def __copy__(self):
+        """
+        See django.db.models.fields.Field.__copy__, we have to override this
+        here because base implementation results in an "object layout differs
+        from base" TypeError - we inherit a new Empty type from this instance's
+        class to ensure the same object layout and then use the same "weird"
+        copy mechanism as Django's base Field class. Django's Field class
+        should probably use this same technique.
+        """
+        obj = type('Empty', (self.__class__,), {})()
+        obj.__class__ = self.__class__
+        obj.__dict__ = self.__dict__.copy()
+        return obj
+
     def _try_coerce(
             self,
             value: Any,

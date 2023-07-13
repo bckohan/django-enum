@@ -1317,7 +1317,6 @@ class MiscOffNominalTests(TestCase):
 
     def test_no_value_enum(self):
         from enum import Enum
-
         from django_enum.utils import determine_primitive
 
         class EmptyEnum(Enum):
@@ -1327,6 +1326,21 @@ class MiscOffNominalTests(TestCase):
 
         with self.assertRaises(ValueError):
             EnumField(EmptyEnum)
+
+    def test_copy_field(self):
+        from enum import Enum
+        from copy import copy, deepcopy
+
+        class BasicEnum(Enum):
+            VAL1 = '1'
+            VAL2 = '2'
+            VAL3 = '3'
+
+        field = EnumField(BasicEnum)
+        field2 = deepcopy(field)
+        field3 = copy(field)
+
+        self.assertEqual(field.enum, field2.enum, field3.enum)
 
 
 class TestEmptyEnumValues(TestCase):
