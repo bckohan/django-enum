@@ -1,4 +1,5 @@
 """Enumeration support for django model forms"""
+from copy import copy
 from decimal import DecimalException
 from enum import Enum
 from typing import Any, Iterable, List, Optional, Tuple, Type, Union
@@ -75,7 +76,7 @@ class NonStrictSelectMultiple(NonStrictMixin, SelectMultiple):
     """
 
 
-class ChoiceFieldMixin:
+class ChoiceFieldMixin:  # pylint: disable=R0902
     """
     Mixin to adapt base model form ChoiceFields to use on EnumFields.
 
@@ -86,7 +87,7 @@ class ChoiceFieldMixin:
         is encountered. If unspecified the default empty value of '' is
         returned.
     :param empty_values: Override the list of what are considered to be empty
-        values.
+        values. Defaults to TypedChoiceField.empty_values.
     :param strict: If False, values not included in the enumeration list, but
         of the same primitive type are acceptable.
     :param choices: Override choices, otherwise enumeration choices attribute
@@ -101,14 +102,17 @@ class ChoiceFieldMixin:
     empty_values: List[Any]
     choices: Iterable[Tuple[Any, Any]]
 
+    _empty_value_overridden_: bool = False
+    _empty_values_overridden_: bool = False
+
     def __init__(
             self,
-            enum: Optional[Type[Choices]] = _enum_,
+            enum: Optional[Type[Enum]] = _enum_,
             primitive: Optional[Type] = _primitive_,
             *,
             empty_value: Any = _Unspecified,
             strict: bool = _strict_,
-            empty_values: List[Any] = TypedChoiceField.empty_values,
+            empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
             choices: Iterable[Tuple[Any, str]] = (),
             **kwargs
     ):
@@ -117,7 +121,11 @@ class ChoiceFieldMixin:
         if not self.strict:
             kwargs.setdefault('widget', NonStrictSelect)
 
-        self.empty_values = empty_values
+        if empty_values is _Unspecified:
+            self.empty_values = copy(TypedChoiceField.empty_values)
+        else:
+            self.empty_values = empty_values  # type: ignore
+            self._empty_values_overridden_ = True
 
         super().__init__(  # type: ignore
             choices=choices or getattr(self.enum, 'choices', choices),
@@ -126,7 +134,11 @@ class ChoiceFieldMixin:
         )
 
         if empty_value is not _Unspecified:
-            if empty_value not in self.empty_values:
+            self._empty_value_overridden_ = True
+            if (
+                empty_value not in self.empty_values
+                and not self._empty_values_overridden_
+            ):
                 self.empty_values.insert(0, empty_value)
             self.empty_value = empty_value
 
@@ -166,23 +178,25 @@ class ChoiceFieldMixin:
         self.choices = self.choices or get_choices(self.enum)
         # remove any of our valid enumeration values or symmetric properties
         # from our empty value list if there exists an equivalency
-        for empty in self.empty_values:
-            for _enum_val in self.enum:
-                if empty == _enum_val:
-                    # copy the list instead of modifying the class's
-                    self.empty_values = [
-                        empty for empty in self.empty_values
-                        if empty != _enum_val
-                    ]
-                    if empty == self.empty_value:
-                        if self.empty_values:
-                            self.empty_value = self.empty_values[0]
-                        else:
-                            raise ValueError(
-                                f'Enumeration value {repr(_enum_val)} is'
-                                f'equivalent to {self.empty_value}, you must '
-                                f'specify a non-conflicting empty_value.'
-                            )
+        if not self._empty_values_overridden_:
+            members = self.enum.__members__.values()
+            self.empty_values = [
+                val for val in self.empty_values
+                if val not in members
+            ]
+        if (
+            not self._empty_value_overridden_ and
+            self.empty_value not in self.empty_values
+            and self.empty_values
+        ):
+            self.empty_value = self.empty_values[0]
+
+        if self.empty_value not in self.empty_values:
+            raise ValueError(
+                f'Enumeration value {repr(self.empty_value)} is'
+                f'equivalent to {self.empty_value}, you must '
+                f'specify a non-conflicting empty_value.'
+            )
 
     def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""

@@ -6,7 +6,7 @@ import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
 from enum import Enum, Flag, IntFlag
-from typing import Any, List, Optional, Tuple, Type, Union
+from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from django.core.exceptions import ValidationError
 from django.core.validators import DecimalValidator
@@ -44,6 +44,7 @@ from django_enum.forms import (
 )
 from django_enum.query import HasAllFlagsLookup, HasAnyFlagsLookup
 from django_enum.utils import (
+    SupportedPrimitive,
     choices,
     decimal_params,
     determine_primitive,
@@ -54,13 +55,16 @@ from django_enum.utils import (
 CONFORM: Optional[Enum]
 EJECT: Optional[Enum]
 
-if sys.version_info >= (3, 11):
+if sys.version_info >= (3, 11):  # pragma: no cover
     from enum import CONFORM, EJECT
 else:
-    CONFORM = EJECT = None
+    CONFORM = EJECT = None  # pragma: no cover
 
 
 MAX_CONSTRAINT_NAME_LENGTH = 64
+
+
+PrimitiveT = TypeVar('PrimitiveT', bound=Type[SupportedPrimitive])
 
 
 @deconstructible
@@ -83,10 +87,13 @@ class EnumValidatorAdapter:
         return self.wrapped == other
 
     def __repr__(self):
-        return repr(self.wrapped)
+        return f'EnumValidatorAdapter({repr(self.wrapped)})'
 
-    def __str__(self):
-        return str(self.wrapped)
+    def __getattribute__(self, name):
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError:
+            return self.wrapped.__getattribute__(name)
 
 
 class ToPythonDeferredAttribute(DeferredAttribute):
@@ -113,7 +120,7 @@ class EnumFieldFactory(type):
     def __call__(  # pylint: disable=C0103, R0912, R0911
             cls,
             enum: Optional[Type[Enum]] = None,
-            primitive: Optional[Type] = None,
+            primitive: Optional[Type[SupportedPrimitive]] = None,
             bit_length: Optional[int] = None,
             **field_kwargs
     ) -> 'EnumField':
@@ -157,8 +164,8 @@ class EnumFieldFactory(type):
             type is used to determine which Django field type the EnumField
             will inherit from and will be used to coerce the enumeration values
             to a python type other than the enumeration class. All enumeration
-            values with the exception of None must be symmetrically coercible
-            to the primitive type.
+            values excluding None must be symmetrically coercible to the
+            primitive type.
         :param bit_length: For enumerations of primitive type Integer. Override
             the default bit length of the enumeration. This field determines
             the size of the integer column in the database and by default is
@@ -203,21 +210,30 @@ class EnumFieldFactory(type):
             ):
                 continue
             try:
-                assert type(value)(primitive(value)) == value
+                assert type(value)(primitive(value)) == value  # type: ignore
             except (TypeError, ValueError, AssertionError) as coerce_error:
                 raise ValueError(
                     f'Not all {enum} values are symmetrically coercible to '
                     f'primitive type {primitive}'
                 ) from coerce_error
 
+        def lte(tpl1: Tuple[int, int], tpl2: Tuple[int, int]) -> bool:
+            return tpl1[0] <= tpl2[0] and tpl1[1] <= tpl2[1]
+
         if issubclass(primitive, int):
             is_flag = issubclass(enum, Flag)
-            min_value = min((val for val in values(enum) if val is not None))
-            max_value = max((val for val in values(enum) if val is not None))
+            min_value = min((
+                val if isinstance(val, primitive) else primitive(val)
+                for val in values(enum) if val is not None
+            ))
+            max_value = max((
+                val if isinstance(val, primitive) else primitive(val)
+                for val in values(enum) if val is not None
+            ))
             min_bits = (min_value.bit_length(), max_value.bit_length())
 
             if bit_length is not None:
-                assert min_bits <= (bit_length, bit_length), \
+                assert lte(min_bits, (bit_length, bit_length)), \
                     f'bit_length {bit_length} is too small to store all ' \
                     f'values of {enum}'
                 min_bits = (bit_length, bit_length)
@@ -230,11 +246,11 @@ class EnumFieldFactory(type):
                 # enum behaves like a regular enum - the bitwise combinations
                 # do not work - these weird flag enums are supported as normal
                 # enumerations with negative values at the DB level
-                if min_bits <= (16, 15):
+                if lte(min_bits, (16, 15)):
                     field_cls = EnumSmallIntegerField
-                elif min_bits <= (32, 31):
+                elif lte(min_bits, (32, 31)):
                     field_cls = EnumIntegerField
-                elif min_bits <= (64, 63):
+                elif lte(min_bits, (64, 63)):
                     field_cls = EnumBigIntegerField
                 else:
                     field_cls = EnumExtraBigIntegerField
@@ -327,6 +343,7 @@ class EnumFieldFactory(type):
 
 
 class EnumField(
+    Generic[PrimitiveT],
     # why can't mypy handle the dynamic base class below?
     with_typehint(Field),  # type: ignore
     metaclass=EnumFieldFactory
@@ -355,7 +372,7 @@ class EnumField(
     _enum_: Optional[Type[Enum]] = None
     _strict_: bool = True
     _coerce_: bool = True
-    _primitive_: Any
+    _primitive_: Optional[PrimitiveT] = None
     _constrained_: bool = _strict_
 
     descriptor_class = ToPythonDeferredAttribute
@@ -402,18 +419,22 @@ class EnumField(
         """
         return self._primitive_
 
-    def _coerce_to_value_type(self, value: Any) -> Optional[Enum]:
+    def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
         # note if enum type is int and a floating point is passed we could get
         # situations like X.xxx == X - this is acceptable
-        if value is not None and self.enum:
+        if (
+            value is not None
+            and self.primitive and
+            not isinstance(value, self.primitive)
+        ):
             return self.primitive(value)  # pylint: disable=E1102
         return value
 
     def __init__(
             self,
             enum: Optional[Type[Enum]] = None,
-            primitive: Optional[Type[Any]] = None,
+            primitive: Optional[PrimitiveT] = None,
             strict: bool = _strict_,
             coerce: bool = _coerce_,
             constrained: Optional[bool] = None,
@@ -426,8 +447,10 @@ class EnumField(
         self._constrained_ = constrained if constrained is not None else strict
         if self.enum is not None:
             kwargs.setdefault('choices', choices(enum))
-
-        super().__init__(**kwargs)
+        super().__init__(
+            null=kwargs.pop('null', False) or None in values(self.enum),
+            **kwargs
+        )
 
     def _try_coerce(
             self,
@@ -529,8 +552,8 @@ class EnumField(
         See get_db_prep_value_
         """
         if not prepared:
-            return self.get_prep_value(value)
-        return value
+            value = self.get_prep_value(value)
+        return self._coerce_to_value_type(value)
 
     def from_db_value(
             self,
@@ -557,6 +580,14 @@ class EnumField(
             )
             if value is None:
                 return value
+            # we might have an exotic value type that needs to be coerced to
+            # its primitive
+            for val in values(self.enum):
+                try:
+                    if type(val)(value) == val:
+                        return value
+                except (ValueError, TypeError):
+                    pass
             raise
 
     def to_python(self, value: Any) -> Union[Enum, Any]:
@@ -707,7 +738,12 @@ class EnumField(
                 **kwargs
             )
         elif self.constrained and self.enum:
-            constraint = Q(**{f'{name}__in': values(self.enum)})
+            constraint = Q(**{
+                f'{name}__in': [
+                    self._coerce_to_value_type(value)
+                    for value in values(self.enum)
+                ]
+            })
             if self.null:
                 constraint |= Q(**{f'{name}__isnull': True})
             cls._meta.constraints = [  # pylint: disable=W0212
@@ -725,7 +761,7 @@ class EnumField(
             )
 
 
-class EnumCharField(EnumField, CharField):
+class EnumCharField(EnumField[Type[str]], CharField):
     """
     A database field supporting enumerations with character values.
     """
@@ -737,20 +773,23 @@ class EnumCharField(EnumField, CharField):
     def __init__(
         self,
         enum: Optional[Type[Enum]] = None,
-        primitive: Optional[Type[Any]] = None,
+        primitive: Optional[Type[str]] = str,
         **kwargs
     ):
-        kwargs.setdefault(
-            'max_length',
-            max((
-                len(choice[0])
-                for choice in kwargs.get('choices', choices(enum))
-            ))
-        )
+        self._enum_ = enum
+        self._primitive_ = primitive
+        if self.enum:
+            kwargs.setdefault(
+                'max_length',
+                max([
+                    len(self._coerce_to_value_type(choice[0]) or '')
+                    for choice in kwargs.get('choices', choices(enum))
+                ])
+            )
         super().__init__(enum=enum, primitive=primitive, **kwargs)
 
 
-class EnumFloatField(EnumField, FloatField):
+class EnumFloatField(EnumField[Type[float]], FloatField):
     """A database field supporting enumerations with floating point values"""
 
     @property
@@ -758,7 +797,7 @@ class EnumFloatField(EnumField, FloatField):
         return EnumField.primitive.fget(self) or float  # type: ignore
 
 
-class IntEnumField(EnumField):
+class IntEnumField(EnumField[Type[int]]):
     """
     A mixin containing common implementation details for a database field
     supporting enumerations with integer values.
@@ -782,7 +821,7 @@ class IntEnumField(EnumField):
     def __init__(
             self,
             enum: Optional[Type[Enum]] = None,
-            primitive: Optional[Type[Any]] = None,
+            primitive: Optional[Type[int]] = int,
             bit_length: Optional[int] = None,
             **kwargs
     ):
@@ -832,7 +871,7 @@ class EnumPositiveBigIntegerField(IntEnumField, PositiveBigIntegerField):
     """
 
 
-class EnumDateField(EnumField, DateField):
+class EnumDateField(EnumField[Type[date]], DateField):
     """
     A database field supporting enumerations with date values.
     """
@@ -850,8 +889,7 @@ class EnumDateField(EnumField, DateField):
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        if isinstance(val, Enum):
-            val = val.value
+        val = val.value if isinstance(val, Enum) else val
         return "" if val is None else val.isoformat()
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
@@ -867,7 +905,7 @@ class EnumDateField(EnumField, DateField):
         )
 
 
-class EnumDateTimeField(EnumField, DateTimeField):
+class EnumDateTimeField(EnumField[Type[datetime]], DateTimeField):
     """
     A database field supporting enumerations with datetime values.
     """
@@ -885,8 +923,7 @@ class EnumDateTimeField(EnumField, DateTimeField):
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        if isinstance(val, Enum):
-            val = val.value
+        val = val.value if isinstance(val, Enum) else val
         return "" if val is None else val.isoformat()
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
@@ -902,7 +939,7 @@ class EnumDateTimeField(EnumField, DateTimeField):
         )
 
 
-class EnumDurationField(EnumField, DurationField):
+class EnumDurationField(EnumField[Type[timedelta]], DurationField):
     """
     A database field supporting enumerations with duration values.
     """
@@ -920,8 +957,7 @@ class EnumDurationField(EnumField, DurationField):
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        if isinstance(val, Enum):
-            val = val.value
+        val = val.value if isinstance(val, Enum) else val
         return "" if val is None else duration_string(val)
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
@@ -937,7 +973,7 @@ class EnumDurationField(EnumField, DurationField):
         )
 
 
-class EnumTimeField(EnumField, TimeField):
+class EnumTimeField(EnumField[Type[time]], TimeField):
     """
     A database field supporting enumerations with time values.
     """
@@ -955,8 +991,7 @@ class EnumTimeField(EnumField, TimeField):
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        if isinstance(val, Enum):
-            val = val.value
+        val = val.value if isinstance(val, Enum) else val
         return "" if val is None else val.isoformat()
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
@@ -972,7 +1007,7 @@ class EnumTimeField(EnumField, TimeField):
         )
 
 
-class EnumDecimalField(EnumField, DecimalField):
+class EnumDecimalField(EnumField[Type[Decimal]], DecimalField):
     """
     A database field supporting enumerations with Decimal values.
     """
@@ -984,7 +1019,7 @@ class EnumDecimalField(EnumField, DecimalField):
     def __init__(
         self,
         enum: Optional[Type[Enum]] = None,
-        primitive: Optional[Type[Any]] = None,
+        primitive: Optional[Type[Decimal]] = None,
         max_digits: Optional[int] = None,
         decimal_places: Optional[int] = None,
         **kwargs
@@ -1020,8 +1055,7 @@ class EnumDecimalField(EnumField, DecimalField):
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        if isinstance(val, Enum):
-            val = val.value
+        val = val.value if isinstance(val, Enum) else val
         return "" if val is None else str(val)
 
     def get_db_prep_save(self, value, connection):
@@ -1034,7 +1068,7 @@ class EnumDecimalField(EnumField, DecimalField):
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
         if not prepared:
-            value = self.get_prep_value(value)
+            value = self._coerce_to_value_type(self.get_prep_value(value))
         return connection.ops.adapt_decimalfield_value(value)
 
 
@@ -1081,12 +1115,16 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                 )
 
             if not (is_eject and not self.strict) and not is_conform:
-                min_value = min(
-                    (val for val in values(self.enum) if val is not None)
-                )
-                max_value = max(
-                    (val for val in values(self.enum) if val is not None)
-                )
+                min_value = min((
+                    self._coerce_to_value_type(val)
+                    for val in values(self.enum)
+                    if val is not None
+                ))
+                max_value = max((
+                    self._coerce_to_value_type(val)
+                    for val in values(self.enum)
+                    if val is not None
+                ))
                 if min_value < 0 and not max_value > 0:
                     min_value = -1 * (2**self.bit_length - 1)
                     max_value = 0
@@ -1160,14 +1198,6 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
             if val.value < 0:
                 return True
         return False
-
-    @property
-    def primitive(self):
-        """
-        The common primitive type of the enumeration values. This will always
-        be bytes or memoryview or bytearray or a subclass thereof.
-        """
-        return bytes
 
     def get_prep_value(self, value: Any) -> Any:
         """

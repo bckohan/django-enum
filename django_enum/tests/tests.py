@@ -244,6 +244,144 @@ class EnumTypeMixin:
             raise RuntimeError(f'Missing enum type primitive for {enum_type}')
 
 
+class TestValidatorAdapter(TestCase):
+
+    def test(self):
+        from django.core.validators import DecimalValidator
+        from django_enum.fields import EnumValidatorAdapter
+        validator = DecimalValidator(max_digits=5, decimal_places=2)
+        adapted = EnumValidatorAdapter(validator)
+        self.assertEqual(adapted.max_digits, validator.max_digits)
+        self.assertEqual(adapted.decimal_places, validator.decimal_places)
+        self.assertEqual(adapted, validator)
+        self.assertEqual(repr(adapted), f'EnumValidatorAdapter({repr(validator)})')
+        ok = Decimal('123.45')
+        bad = Decimal('123.456')
+        self.assertIsNone(validator(ok))
+        self.assertIsNone(adapted(ok))
+        self.assertRaises(ValidationError, validator, bad)
+        self.assertRaises(ValidationError, adapted, bad)
+
+
+class TestEccentricEnums(TestCase):
+
+    def test_primitive_resolution(self):
+        from django_enum.tests.djenum.models import MultiPrimitiveTestModel
+        self.assertEqual(
+            MultiPrimitiveTestModel._meta.get_field('multi').primitive,
+            str
+        )
+        self.assertEqual(
+            MultiPrimitiveTestModel._meta.get_field('multi_float').primitive,
+            float
+        )
+        self.assertEqual(
+            MultiPrimitiveTestModel._meta.get_field('multi_none').primitive,
+            str
+        )
+
+    def test_multiple_primitives(self):
+        from django_enum.tests.djenum.models import (
+            MultiPrimitiveEnum,
+            MultiPrimitiveTestModel,
+            MultiWithNone,
+        )
+        empty = MultiPrimitiveTestModel.objects.create()
+        obj1 = MultiPrimitiveTestModel.objects.create(
+            multi=MultiPrimitiveEnum.VAL1
+        )
+        obj2 = MultiPrimitiveTestModel.objects.create(
+            multi=MultiPrimitiveEnum.VAL2
+        )
+        obj3 = MultiPrimitiveTestModel.objects.create(
+            multi=MultiPrimitiveEnum.VAL3
+        )
+        obj4 = MultiPrimitiveTestModel.objects.create(
+            multi=MultiPrimitiveEnum.VAL4
+        )
+
+        srch0 = MultiPrimitiveTestModel.objects.filter(multi__isnull=True)
+        srch1 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL1)
+        srch2 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL2)
+        srch3 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL3)
+        srch4 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL4)
+        srch_p1 = MultiPrimitiveTestModel.objects.filter(multi=1)
+        srch_p2 = MultiPrimitiveTestModel.objects.filter(multi='2.0')
+        srch_p3 = MultiPrimitiveTestModel.objects.filter(multi=3.0)
+        srch_p4 = MultiPrimitiveTestModel.objects.filter(multi=Decimal('4.5'))
+
+        with self.assertRaises(ValueError):
+            MultiPrimitiveTestModel.objects.filter(multi='1')
+
+        with self.assertRaises(ValueError):
+            MultiPrimitiveTestModel.objects.filter(multi='3.0')
+
+        with self.assertRaises(ValueError):
+            MultiPrimitiveTestModel.objects.filter(multi='4.5')
+
+        self.assertEqual(srch0.count(), 1)
+        self.assertEqual(srch1.count(), 1)
+        self.assertEqual(srch2.count(), 1)
+        self.assertEqual(srch3.count(), 1)
+        self.assertEqual(srch4.count(), 1)
+        self.assertEqual(srch_p1.count(), 1)
+        self.assertEqual(srch_p2.count(), 1)
+        self.assertEqual(srch_p3.count(), 1)
+        self.assertEqual(srch_p4.count(), 1)
+
+        self.assertEqual(srch0[0], empty)
+        self.assertEqual(srch1[0], obj1)
+        self.assertEqual(srch2[0], obj2)
+        self.assertEqual(srch3[0], obj3)
+        self.assertEqual(srch4[0], obj4)
+        self.assertEqual(srch_p1[0], obj1)
+        self.assertEqual(srch_p2[0], obj2)
+        self.assertEqual(srch_p3[0], obj3)
+        self.assertEqual(srch_p4[0], obj4)
+
+        self.assertEqual(
+            MultiPrimitiveTestModel.objects.filter(
+                multi_float=MultiPrimitiveEnum.VAL2
+            ).count(), 5
+        )
+
+        obj5 = MultiPrimitiveTestModel.objects.create(
+            multi_none=None
+        )
+
+        nq0 = MultiPrimitiveTestModel.objects.filter(
+            multi_none=MultiWithNone.NONE
+        )
+        nq1 = MultiPrimitiveTestModel.objects.filter(
+            multi_none__isnull=True
+        )
+        nq2 = MultiPrimitiveTestModel.objects.filter(
+            multi_none=None
+        )
+        self.assertEqual(nq0.count(), 1)
+        self.assertEqual(nq1.count(), 1)
+        self.assertEqual(nq2.count(), 1)
+        self.assertTrue(nq0[0] == nq1[0] == nq2[0] == obj5)
+
+    def test_enum_choice_field(self):
+        from django_enum.tests.djenum.enums import (
+            MultiPrimitiveEnum,
+            MultiWithNone,
+        )
+
+        form_field1 = EnumChoiceField(MultiPrimitiveEnum)
+        self.assertEqual(form_field1.choices, choices(MultiPrimitiveEnum))
+        self.assertEqual(form_field1.primitive, str)
+
+        form_field2 = EnumChoiceField(MultiPrimitiveEnum, primitive=float)
+        self.assertEqual(form_field2.choices, choices(MultiPrimitiveEnum))
+        self.assertEqual(form_field2.primitive, float)
+
+        form_field3 = EnumChoiceField(MultiWithNone)
+        self.assertEqual(form_field3.choices, choices(MultiWithNone))
+        self.assertEqual(form_field3.primitive, str)
+
+
 class TestEnumCompat(TestCase):
     """ Test that django_enum allows non-choice derived enums to be used """
 
@@ -634,7 +772,10 @@ class TestChoices(EnumTypeMixin, TestCase):
             'dj_text_enum': self.DJTextEnum.A,
             'non_strict_int':  75,
             'non_strict_text':  'arbitrary',
-            'no_coerce': self.SmallPosIntEnum.VAL2
+            'no_coerce': self.SmallPosIntEnum.VAL2,
+            'datetime_enum': self.DateTimeEnum.ST_HELENS,
+            'duration_enum': self.DurationEnum.DAY,
+            'time_enum': self.TimeEnum.MORNING
         }
 
     def do_test_values(self):
@@ -1048,10 +1189,10 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
 
         self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('big_neg').primitive, int)
         self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('big_pos').primitive, int)
-        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg').primitive, bytes)
-        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos').primitive, bytes)
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_neg').primitive, int)
+        self.assertEqual(self.MODEL_FLAG_CLASS._meta.get_field('extra_big_pos').primitive, int)
 
-        # exotics
+        # eccentric enums
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('date_enum'), DateField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('datetime_enum'), DateTimeField)
         self.assertIsInstance(self.MODEL_CLASS._meta.get_field('duration_enum'), DurationField)
@@ -1107,37 +1248,91 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
 
         self.assertIsNone(tester.extern)
 
+
+class MiscOffNominalTests(TestCase):
+
     def test_field_def_errors(self):
         from django.db.models import Model
         with self.assertRaises(ValueError):
             class TestModel(Model):
                 enum = EnumField()
 
-    # TODO
-    # def test_variable_primitive_type(self):
-    #     from django.db.models import Model
-    #     from enum import Enum
-    #     from django_enum.utils import determine_primitive
-    #
-    #     class MultiPrimitive(Enum):
-    #         VAL1 = 1
-    #         VAL2 = '2'
-    #         VAL3 = 3.0
-    #
-    #     self.assertEqual(determine_primitive(MultiPrimitive), None)
-    #
-    #     with self.assertRaises(ValueError):
-    #         class TestModel(Model):
-    #             enum = EnumField(MultiPrimitive)
+    def test_variable_primitive_type(self):
+        from enum import Enum
 
-        # this should work
-        # class TestModel(Model):
-        #     enum = EnumField(MultiPrimitive, primitive=float)
+        from django.db.models import Model
+        from django_enum.utils import determine_primitive
+
+        class MultiPrimitive(Enum):
+            VAL1 = 1
+            VAL2 = '2'
+            VAL3 = 3.0
+            VAL4 = b'4'
+
+        self.assertIsNone(determine_primitive(MultiPrimitive))
+
+        with self.assertRaises(ValueError):
+            class TestModel(Model):
+                enum = EnumField(MultiPrimitive)
+
+        with self.assertRaises(ValueError):
+            """
+            2 is not symmetrically convertable float<->str
+            """
+            class TestModel(Model):
+                enum = EnumField(MultiPrimitive, primitive=float)
+
+    def test_unsupported_primitive(self):
+        from enum import Enum
+
+        from django_enum.utils import determine_primitive
+
+        class MyPrimitive:
+            pass
+
+        class WeirdPrimitive(Enum):
+            VAL1 = MyPrimitive()
+            VAL2 = MyPrimitive()
+            VAL3 = MyPrimitive()
+
+        self.assertEqual(determine_primitive(WeirdPrimitive), MyPrimitive)
+
+        with self.assertRaises(NotImplementedError):
+            EnumField(WeirdPrimitive)
+
+    def test_bit_length_override(self):
+        from enum import IntFlag
+
+        class IntEnum(IntFlag):
+            VAL1 = 2**0
+            VAL2 = 2**2
+            VAL3 = 2**3
+            VAL8 = 2**8
+
+        with self.assertRaises(AssertionError):
+            EnumField(IntEnum, bit_length=7)
+
+        field = EnumField(IntEnum, bit_length=12)
+        self.assertEqual(field.bit_length, 12)
+
+    def test_no_value_enum(self):
+        from enum import Enum
+
+        from django_enum.utils import determine_primitive
+
+        class EmptyEnum(Enum):
+            pass
+
+        self.assertIsNone(determine_primitive(EmptyEnum))
+
+        with self.assertRaises(ValueError):
+            EnumField(EmptyEnum)
 
 
 class TestEmptyEnumValues(TestCase):
 
     def test_none_enum_values(self):
+        # TODO??
         pass
 
 
@@ -1503,6 +1698,7 @@ class TestRequests(EnumTypeMixin, TestCase):
 
     def tearDown(self):
         self.MODEL_CLASS.objects.all().delete()
+
 
     @property
     def post_params(self):
@@ -2800,10 +2996,23 @@ if ENUM_PROPERTIES_INSTALLED:
                 A = 'A', [None, '', ()]
                 B = 'B', 'ok'
 
+            field = EnumChoiceField(enum=EmptyEqEnum2, empty_values=[None, '', ()])
+            self.assertEqual(field.empty_values, [None, '', ()])
+            self.assertEqual(field.empty_value, '')
+
+            field2 = EnumChoiceField(enum=EmptyEqEnum2, empty_value=0)
+            self.assertEqual(field2.empty_values, [0, [], {}])
+            self.assertEqual(field2.empty_value, 0)
+
+            field3 = EnumChoiceField(enum=EmptyEqEnum2, empty_values=[None, ()])
+            self.assertEqual(field3.empty_values, [None, ()])
+            self.assertEqual(field3.empty_value, None)
+
             self.assertRaises(
                 ValueError,
                 EnumChoiceField,
                 enum=EmptyEqEnum2,
+                empty_value=0,
                 empty_values=[None, '', ()]
             )
 
@@ -2815,7 +3024,7 @@ if ENUM_PROPERTIES_INSTALLED:
                 EnumChoiceField(
                     enum=EmptyEqEnum2,
                     empty_value=0,
-                    empty_values=[None, '', ()]
+                    empty_values=[0, None, '', ()]
                 )
             except Exception:  # pragma: no cover
                 self.fail(
@@ -4215,12 +4424,23 @@ def remove_color_values(apps, schema_editor):
 
         def test_prop_enum(self):
 
-            from django_enum.tests.enum_prop.enums import GNSSConstellation
+            from django_enum.tests.enum_prop.enums import (
+                GNSSConstellation,
+                SmallNegativeFlagEnum,
+                SmallPositiveFlagEnum,
+            )
+
             self.assertEqual(GNSSConstellation.GPS, GNSSConstellation('gps'))
             self.assertEqual(GNSSConstellation.GLONASS, GNSSConstellation('GLONASS'))
             self.assertEqual(GNSSConstellation.GALILEO, GNSSConstellation('galileo'))
             self.assertEqual(GNSSConstellation.BEIDOU, GNSSConstellation('BeiDou'))
             self.assertEqual(GNSSConstellation.QZSS, GNSSConstellation('qzss'))
+
+            self.assertEqual(choices(SmallNegativeFlagEnum), SmallNegativeFlagEnum.choices)
+            self.assertEqual(names(SmallNegativeFlagEnum), SmallNegativeFlagEnum.names)
+
+            self.assertEqual(choices(SmallPositiveFlagEnum), SmallPositiveFlagEnum.choices)
+            self.assertEqual(names(SmallPositiveFlagEnum), SmallPositiveFlagEnum.names)
 
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
@@ -4457,3 +4677,28 @@ class ConstraintTests(EnumTypeMixin, TestCase):
             ),
             f'{self.MODEL_CLASS._meta.app_label}_EnumTester_small_int_SmallIntEnum'
         )
+
+    # def test_primitive_constraints(self):
+    #     from django.db import connection
+    #     from django_enum.tests.djenum.models import MultiPrimitiveTestModel
+    #
+    #     table_name = MultiPrimitiveTestModel._meta.db_table
+    #     multi = MultiPrimitiveTestModel._meta.get_field('multi')
+    #     multi_float = MultiPrimitiveTestModel._meta.get_field('multi_float')
+    #     multi_none = MultiPrimitiveTestModel._meta.get_field('multi_none')
+    #     multi_none_unconstrained = MultiPrimitiveTestModel._meta.get_field('multi_none_unconstrained')
+    #
+    #
+    #     with connection.cursor() as cursor:
+    #         # Try to insert a person with negative age
+    #         cursor.execute(
+    #             f"INSERT INTO {table_name} ({multi.column}) VALUES (-5)"
+    #         )
+    #
+    #         # Fetch the results
+    #         cursor.execute(
+    #             f"SELECT {column_name} FROM {table_name} WHERE {column_name} < 0")
+    #         rows = cursor.fetchall()
+    #
+    #         # Assert that no rows are returned (i.e., the check constraint worked)
+    #         self.assertEqual(len(rows), 0)

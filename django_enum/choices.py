@@ -33,16 +33,16 @@ try:
         @property
         def names(cls):
             """
-            For some exotic enums list(Enum) is empty, so we override names if
-            empty
+            For some eccentric enums list(Enum) is empty, so we override names
+            if empty
             """
             return ChoicesMeta.names.fget(cls) or names(cls, override=True)
 
         @property
         def choices(cls):
             """
-            For some exotic enums list(Enum) is empty, so we override choices
-            if empty
+            For some eccentric enums list(Enum) is empty, so we override
+            choices if empty
             """
             return ChoicesMeta.choices.fget(cls) or choices(cls, override=True)
 

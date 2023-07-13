@@ -21,6 +21,8 @@ from django_enum.tests.djenum.enums import (
     ExtraBigNegativeFlagEnum,
     ExtraBigPositiveFlagEnum,
     IntEnum,
+    MultiPrimitiveEnum,
+    MultiWithNone,
     NegativeFlagEnum,
     PosIntEnum,
     PositiveFlagEnum,
@@ -115,7 +117,7 @@ class EnumTester(models.Model):
         blank=True
     )
 
-    # exotics
+    # eccentric enums
     date_enum = EnumField(
         DateEnum,
         null=False,
@@ -279,3 +281,31 @@ class EnumFlagTester(models.Model):
                f'small_neg={repr(self.small_neg)}, neg={repr(self.neg)}, ' \
                f'big_neg={repr(self.big_neg)}, ' \
                f'extra_big_neg={repr(self.extra_big_neg)})'
+
+
+class MultiPrimitiveTestModel(models.Model):
+
+    # primitive will default to string
+    multi = EnumField(MultiPrimitiveEnum, null=True, default=None, blank=True)
+
+    # primitive will be a float
+    multi_float = EnumField(
+        MultiPrimitiveEnum,
+        primitive=float,
+        null=True,
+        default='2.0',
+        blank=True
+    )
+
+    multi_none = EnumField(
+        MultiWithNone,
+        default=MultiWithNone.VAL1,
+        blank=True
+    )
+
+    multi_none_unconstrained = EnumField(
+        MultiWithNone,
+        default=MultiWithNone.VAL1,
+        blank=True,
+        constrained=False
+    )

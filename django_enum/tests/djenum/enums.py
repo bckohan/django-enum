@@ -309,3 +309,20 @@ class ExtraBigNegativeFlagEnum(IntFlag):
     THREE = -(2**64)
     FOUR = -(2**65)
     FIVE = -(2**66)
+
+
+class MultiPrimitiveEnum(Enum):
+
+    VAL1 = 1
+    VAL2 = '2.0'
+    VAL3 = 3.0
+    VAL4 = Decimal('4.5')
+
+
+class MultiWithNone(Enum):
+
+    NONE = None
+    VAL1 = 1
+    VAL2 = '2.0'
+    VAL3 = 3.0
+    VAL4 = Decimal('4.5')

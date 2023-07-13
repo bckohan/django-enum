@@ -12,6 +12,8 @@ from typing import (
     Tuple,
     Type,
     TypeVar,
+    Union,
+    get_args,
 )
 
 __all__ = [
@@ -20,23 +22,25 @@ __all__ = [
     'labels',
     'values',
     'determine_primitive',
-    'SUPPORTED_PRIMITIVES',
-    'with_typehint'
+    'with_typehint',
+    'SupportedPrimitive',
+    'decimal_params'
 ]
 
 
 T = TypeVar('T')  # pylint: disable=C0103
 
-SUPPORTED_PRIMITIVES = {
+SupportedPrimitive = Union[
     int,
     str,
     float,
+    # bytes,
     date,
     datetime,
     time,
     timedelta,
     Decimal
-}
+]
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
@@ -163,34 +167,30 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
     :return: A python type or None if no primitive type could be determined
     """
     primitive = None
-    if enum:
-        for prim in enum.__mro__:
-            if primitive:
-                break  # type: ignore
-            for supported in SUPPORTED_PRIMITIVES:
-                if issubclass(prim, supported):
-                    primitive = supported
-                    break
-        value_types = set()
-        for value in values(enum):
-            if value is not None:
-                value_types.add(type(value))
+    for prim in enum.__mro__:
+        if issubclass(prim, get_args(SupportedPrimitive)):
+            primitive = prim
+            break
+    value_types = set()
+    for value in values(enum):
+        if value is not None:
+            value_types.add(type(value))
 
-        if len(value_types) > 1 and primitive is None:
-            for candidate in SUPPORTED_PRIMITIVES:
-                works = True
-                for value in values(enum):
-                    if value is None:
-                        continue
-                    try:
-                        # test symmetric coercibility
-                        works &= type(value)(candidate(value)) == value
-                    except Exception:  # pylint: disable=W0703
-                        works = False
-                if works:
-                    return candidate
-        elif value_types:
-            return list(value_types).pop()
+    if len(value_types) > 1 and primitive is None:
+        for candidate in get_args(SupportedPrimitive):
+            works = True
+            for value in values(enum):
+                if value is None:
+                    continue
+                try:
+                    # test symmetric coercibility
+                    works &= type(value)(candidate(value)) == value
+                except Exception:  # pylint: disable=W0703
+                    works = False
+            if works:
+                return candidate
+    elif value_types:
+        return list(value_types).pop()
     return primitive
 
 

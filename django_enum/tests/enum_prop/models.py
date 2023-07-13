@@ -49,7 +49,7 @@ try:
 
         text = EnumField(TextEnum, null=True, default=None, db_index=True, blank=True)
 
-        # exotics
+        # eccentric enums
         date_enum = EnumField(
             DateEnum,
             null=False,
