@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     Union,
 )
+from typing_extensions import get_args
 
 __all__ = [
     'choices',
@@ -40,12 +41,6 @@ SupportedPrimitive = Union[
     timedelta,
     Decimal
 ]
-
-
-try:
-    from typing import get_args  # type: ignore
-except ImportError:  # pragma: no cover
-    from typing_extensions import get_args
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
