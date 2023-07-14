@@ -305,25 +305,36 @@ class TestEccentricEnums(TestCase):
         srch2 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL2)
         srch3 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL3)
         srch4 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL4)
-        srch_p1 = MultiPrimitiveTestModel.objects.filter(multi=1)
-        srch_p2 = MultiPrimitiveTestModel.objects.filter(multi='2.0')
-        srch_p3 = MultiPrimitiveTestModel.objects.filter(multi=3.0)
-        srch_p4 = MultiPrimitiveTestModel.objects.filter(multi=Decimal('4.5'))
+
+        srch_v1 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL1.value)
+        srch_v2 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL2.value)
+        srch_v3 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL3.value)
+        srch_v4 = MultiPrimitiveTestModel.objects.filter(multi=MultiPrimitiveEnum.VAL4.value)
+
+        # search is also robust to symmetrical values
+        srch_p1 = MultiPrimitiveTestModel.objects.filter(multi=1.0)
+        srch_p2 = MultiPrimitiveTestModel.objects.filter(multi=Decimal('2.0'))
+        srch_p3 = MultiPrimitiveTestModel.objects.filter(multi=3)
+        srch_p4 = MultiPrimitiveTestModel.objects.filter(multi='4.5')
 
         with self.assertRaises(ValueError):
-            MultiPrimitiveTestModel.objects.filter(multi='1')
+            MultiPrimitiveTestModel.objects.filter(multi=Decimal(1.1))
 
         with self.assertRaises(ValueError):
-            MultiPrimitiveTestModel.objects.filter(multi='3.0')
+            MultiPrimitiveTestModel.objects.filter(multi='3.1')
 
         with self.assertRaises(ValueError):
-            MultiPrimitiveTestModel.objects.filter(multi='4.5')
+            MultiPrimitiveTestModel.objects.filter(multi=4.6)
 
         self.assertEqual(srch0.count(), 1)
         self.assertEqual(srch1.count(), 1)
         self.assertEqual(srch2.count(), 1)
         self.assertEqual(srch3.count(), 1)
         self.assertEqual(srch4.count(), 1)
+        self.assertEqual(srch_v1.count(), 1)
+        self.assertEqual(srch_v2.count(), 1)
+        self.assertEqual(srch_v3.count(), 1)
+        self.assertEqual(srch_v4.count(), 1)
         self.assertEqual(srch_p1.count(), 1)
         self.assertEqual(srch_p2.count(), 1)
         self.assertEqual(srch_p3.count(), 1)
@@ -4692,27 +4703,123 @@ class ConstraintTests(EnumTypeMixin, TestCase):
             f'{self.MODEL_CLASS._meta.app_label}_EnumTester_small_int_SmallIntEnum'
         )
 
-    # def test_primitive_constraints(self):
-    #     from django.db import connection
-    #     from django_enum.tests.djenum.models import MultiPrimitiveTestModel
-    #
-    #     table_name = MultiPrimitiveTestModel._meta.db_table
-    #     multi = MultiPrimitiveTestModel._meta.get_field('multi')
-    #     multi_float = MultiPrimitiveTestModel._meta.get_field('multi_float')
-    #     multi_none = MultiPrimitiveTestModel._meta.get_field('multi_none')
-    #     multi_none_unconstrained = MultiPrimitiveTestModel._meta.get_field('multi_none_unconstrained')
-    #
-    #
-    #     with connection.cursor() as cursor:
-    #         # Try to insert a person with negative age
-    #         cursor.execute(
-    #             f"INSERT INTO {table_name} ({multi.column}) VALUES (-5)"
-    #         )
-    #
-    #         # Fetch the results
-    #         cursor.execute(
-    #             f"SELECT {column_name} FROM {table_name} WHERE {column_name} < 0")
-    #         rows = cursor.fetchall()
-    #
-    #         # Assert that no rows are returned (i.e., the check constraint worked)
-    #         self.assertEqual(len(rows), 0)
+    def test_multi_primitive_constraints(self):
+        from django.db import connection, transaction
+        from django_enum.tests.djenum.models import MultiPrimitiveTestModel
+        from django_enum.tests.djenum.enums import MultiPrimitiveEnum, MultiWithNone
+        from django.db.utils import IntegrityError
+
+        table_name = MultiPrimitiveTestModel._meta.db_table
+        multi = MultiPrimitiveTestModel._meta.get_field('multi')
+        multi_float = MultiPrimitiveTestModel._meta.get_field('multi_float')
+        multi_none = MultiPrimitiveTestModel._meta.get_field('multi_none')
+        multi_none_unconstrained = MultiPrimitiveTestModel._meta.get_field('multi_none_unconstrained')
+        multi_unconstrained_non_strict = MultiPrimitiveTestModel._meta.get_field('multi_unconstrained_non_strict')
+
+        def do_insert(db_cursor, db_field, db_insert):
+            with transaction.atomic():
+                if db_field is not multi_unconstrained_non_strict:
+                    return db_cursor.execute(
+                        f"INSERT INTO {table_name} ({db_field.column}, "
+                        f"{multi_unconstrained_non_strict.column}) VALUES "
+                        f"({db_insert}, {getattr(multi_unconstrained_non_strict.default, 'value', multi_unconstrained_non_strict.default)})"
+                    )
+                return db_cursor.execute(
+                    f"INSERT INTO {table_name} ({db_field.column}) VALUES ({db_insert})"
+                )
+
+        for field, vals in [
+            (multi, (
+                    ("'1'", MultiPrimitiveEnum.VAL1), ("'2.0'", MultiPrimitiveEnum.VAL2),
+                    ("'3.0'", MultiPrimitiveEnum.VAL3), ("'4.5'", MultiPrimitiveEnum.VAL4),
+                    ('NULL', None))
+             ),
+            (multi_float, (
+                ("1.0", MultiPrimitiveEnum.VAL1), ("2.0", MultiPrimitiveEnum.VAL2),
+                ("3.0", MultiPrimitiveEnum.VAL3), ("4.5", MultiPrimitiveEnum.VAL4),
+                ("1", MultiPrimitiveEnum.VAL1), ("2", MultiPrimitiveEnum.VAL2),
+                ("3", MultiPrimitiveEnum.VAL3), ('NULL', None))
+             ),
+            (multi_none, (
+                ("'1'", MultiWithNone.VAL1), ("'2.0'", MultiWithNone.VAL2),
+                ("'3.0'", MultiWithNone.VAL3), ("'4.5'", MultiWithNone.VAL4),
+                ('NULL', MultiWithNone.NONE))
+             ),
+            (multi_none_unconstrained, (
+                    ("'1'", MultiWithNone.VAL1), ("'2.0'", MultiWithNone.VAL2),
+                    ("'3.0'", MultiWithNone.VAL3),
+                    ("'4.5'", MultiWithNone.VAL4),
+                    ('NULL', MultiWithNone.NONE))
+             ),
+            (multi_unconstrained_non_strict, (
+                    ("'1'", MultiPrimitiveEnum.VAL1), ("'2.0'", MultiPrimitiveEnum.VAL2),
+                    ("'3.0'", MultiPrimitiveEnum.VAL3),
+                    ("'4.5'", MultiPrimitiveEnum.VAL4))
+             ),
+        ]:
+            with connection.cursor() as cursor:
+                for insert, value in vals:
+                    MultiPrimitiveTestModel.objects.all().delete()
+
+                    do_insert(cursor, field, insert)
+
+                    if value == 'NULL':
+                        qry = MultiPrimitiveTestModel.objects.filter(**{f'{field.name}__isnull': True})
+                    else:
+                        qry = MultiPrimitiveTestModel.objects.filter(**{field.name: value})
+
+                    self.assertEqual(qry.count(), 1)
+                    self.assertEqual(getattr(qry.first(), field.name), value)
+
+        MultiPrimitiveTestModel.objects.all().delete()
+
+        for field, vals in [
+            (multi, ("'1.0'", "2", "'4.6'", "'2'")),
+            (multi_float, ("1.1", "2.1", "3.2", "4.6")),
+            (multi_none, ("'1.0'", "2", "'4.6'", "'2'")),
+            (multi_unconstrained_non_strict, ('NULL',))  # null=false still honored when unconstrained
+        ]:
+            with connection.cursor() as cursor:
+                for value in vals:
+                    with self.assertRaises(IntegrityError):
+                        do_insert(cursor, field, value)
+
+        for field, vals in [
+            (multi_none_unconstrained, (
+                    ("'1.1'", '1.1'), ("'2'", '2'),
+                    ("'3.2'", '3.2'), ("'4.6'", '4.6'),
+             )),
+        ]:
+            with connection.cursor() as cursor:
+                for insert, value in vals:
+                    MultiPrimitiveTestModel.objects.all().delete()
+
+                    do_insert(cursor, field, insert)
+
+                    qry = MultiPrimitiveTestModel.objects.raw(
+                        f"SELECT * FROM {table_name} WHERE {field.column} = {insert}"
+                    )
+                    with self.assertRaises(ValueError):
+                        qry[0]
+
+        for field, vals in [
+            (multi_unconstrained_non_strict, (
+                    ("'1.1'", '1.1'), ("'2'", '2'),
+                    ("'3.2'", '3.2'), ("'4.6'", '4.6'),
+             )),
+        ]:
+            with connection.cursor() as cursor:
+                for insert, value in vals:
+                    MultiPrimitiveTestModel.objects.all().delete()
+
+                    do_insert(cursor, field, insert)
+
+                    self.assertEqual(
+                        getattr(
+                            MultiPrimitiveTestModel.objects.filter(
+                                **{field.name: value}
+                            ).first(),
+                            multi_unconstrained_non_strict.name
+                        ),
+                        value
+                    )

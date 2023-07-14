@@ -373,6 +373,7 @@ class EnumField(
     _strict_: bool = True
     _coerce_: bool = True
     _primitive_: Optional[PrimitiveT] = None
+    _value_primitives_: List[Any] = []
     _constrained_: bool = _strict_
 
     descriptor_class = ToPythonDeferredAttribute
@@ -442,6 +443,10 @@ class EnumField(
     ):
         self._enum_ = enum
         self._primitive_ = primitive
+        self._value_primitives_ = [self._primitive_]
+        for value_type in [type(value) for value in values(enum)]:
+            if value_type not in self._value_primitives_:
+                self._value_primitives_.append(value_type)
         self._strict_ = strict if enum else False
         self._coerce_ = coerce if enum else False
         self._constrained_ = constrained if constrained is not None else strict
@@ -491,6 +496,12 @@ class EnumField(
                     try:
                         value = self.enum[value]
                     except KeyError as err:
+                        if len(self._value_primitives_) > 1:
+                            for primitive in self._value_primitives_:
+                                try:
+                                    return self.enum(primitive(value))
+                                except Exception:
+                                    pass
                         if self.strict or not isinstance(
                             value,
                             self.primitive
@@ -594,14 +605,6 @@ class EnumField(
             )
             if value is None:
                 return value
-            # we might have an exotic value type that needs to be coerced to
-            # its primitive
-            for val in values(self.enum):
-                try:
-                    if type(val)(value) == val:
-                        return value
-                except (ValueError, TypeError):
-                    pass
             raise
 
     def to_python(self, value: Any) -> Union[Enum, Any]:

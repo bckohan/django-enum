@@ -309,3 +309,11 @@ class MultiPrimitiveTestModel(models.Model):
         blank=True,
         constrained=False
     )
+
+    multi_unconstrained_non_strict = EnumField(
+        MultiPrimitiveEnum,
+        default=MultiPrimitiveEnum.VAL1,
+        blank=True,
+        constrained=False,
+        strict=False
+    )
