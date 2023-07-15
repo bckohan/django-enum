@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 SECRET_KEY = 'psst'
@@ -91,6 +92,11 @@ MIDDLEWARE = (
 )
 
 INSTALLED_APPS = [
+    *(
+        ['django_enum.tests.flag_constraints']
+        if sys.version_info >= (3, 11) else []
+    ),
+    'django_enum.tests.constraints',
     'django_enum.tests.converters',
     'django_enum.tests.djenum',
     'django_enum.tests.tmpls',

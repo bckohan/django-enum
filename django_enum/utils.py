@@ -14,6 +14,7 @@ from typing import (
     TypeVar,
     Union,
 )
+
 from typing_extensions import get_args
 
 __all__ = [

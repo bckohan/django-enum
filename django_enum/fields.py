@@ -6,11 +6,14 @@ import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
 from enum import Enum, Flag, IntFlag
+from functools import reduce
+from operator import or_
 from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from django.core.exceptions import ValidationError
 from django.core.validators import DecimalValidator
 from django.db.models import (
+    NOT_PROVIDED,
     BigIntegerField,
     BinaryField,
     CharField,
@@ -52,13 +55,14 @@ from django_enum.utils import (
     with_typehint,
 )
 
-CONFORM: Optional[Enum]
-EJECT: Optional[Enum]
+CONFORM: Union[Enum, Type[NOT_PROVIDED]]
+EJECT: Union[Enum, Type[NOT_PROVIDED]]
+STRICT: Union[Enum, Type[NOT_PROVIDED]]
 
 if sys.version_info >= (3, 11):  # pragma: no cover
-    from enum import CONFORM, EJECT
+    from enum import CONFORM, EJECT, STRICT
 else:
-    CONFORM = EJECT = None  # pragma: no cover
+    CONFORM = EJECT = STRICT = NOT_PROVIDED  # pragma: no cover
 
 
 MAX_CONSTRAINT_NAME_LENGTH = 64
@@ -499,8 +503,10 @@ class EnumField(
                         if len(self._value_primitives_) > 1:
                             for primitive in self._value_primitives_:
                                 try:
-                                    return self.enum(primitive(value))
-                                except Exception:
+                                    return self.enum(  # pylint: disable=E1102
+                                        primitive(value)
+                                    )
+                                except Exception:  # pylint: disable=W0703
                                     pass
                         if self.strict or not isinstance(
                             value,
@@ -1105,9 +1111,9 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             **kwargs
     ) -> None:
         """
-        Add check constraints that honor flag fields range and boundary setting.
-        Bypass EnumField's contribute_to_class() method, which adds constraints
-        that are too specific.
+        Add check constraints that honor flag fields range and boundary
+        setting. Bypass EnumField's contribute_to_class() method, which adds
+        constraints that are too specific.
 
         Boundary settings:
             "strict" -> error is raised  [default for Flag]
@@ -1115,46 +1121,42 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             "eject" -> lose flag status [default for IntFlag]
             "keep" -> keep flag status and all bits
 
-        The constraints here are designed to be as general as possible. Any
-        condition that will allow the field to be instantiated off of a given
-        value from the database will not be constrained. For example, if
-        eject is True and strict is False, then the field will not be
-        constrained because no value will raise an error on field
-        instantiation.
+        The constraints here are designed to make sense given the boundary
+        setting, ensure that simple database reads through the ORM cannot throw
+        exceptions and that search behaves as expected.
+
+        - KEEP: no constraints
+        - EJECT: constrained to the enum's range if strict is True
+        - CONFORM: constrained to the enum's range. It would be possible to
+            insert and load an out of range value, but that value would not be
+            searchable so a constraint is added.
+        - STRICT: constrained to the enum's range
+
         """
         if self.constrained and self.enum and self.bit_length <= 64:
-            is_conform, is_eject = False, issubclass(self.enum, IntFlag)
             boundary = getattr(self.enum, '_boundary_', None)
-            if CONFORM and EJECT and boundary is not None:
-                is_conform, is_eject = (
-                    boundary is CONFORM,
-                    boundary is EJECT
-                )
+            is_conform, is_eject, is_strict = (
+                boundary is CONFORM,
+                boundary is EJECT,
+                boundary is STRICT
+            )
 
-            if not (is_eject and not self.strict) and not is_conform:
-                min_value = min((
-                    self._coerce_to_value_type(val)
-                    for val in values(self.enum)
-                    if val is not None
-                ))
-                max_value = max((
-                    self._coerce_to_value_type(val)
-                    for val in values(self.enum)
-                    if val is not None
-                ))
-                if min_value < 0 and not max_value > 0:
-                    min_value = -1 * (2**self.bit_length - 1)
-                    max_value = 0
-                else:
-                    min_value = 0
-                    max_value = 2 ** self.bit_length - 1
+            flags = [
+                self._coerce_to_value_type(val)
+                for val in values(self.enum)
+                if val is not None
+            ]
+
+            if is_strict or is_conform or (is_eject and self.strict) and flags:
 
                 constraint = (
-                    Q(**{f'{name}__gte': min_value}) &
-                    Q(**{f'{name}__lte': max_value})
-                )
+                    Q(**{f'{name}__gte': min(*flags)}) &
+                    Q(**{f'{name}__lte': reduce(or_, flags)})
+                ) | Q(**{name: 0})
+
                 if self.null:
                     constraint |= Q(**{f'{name}__isnull': True})
+
                 cls._meta.constraints = [  # pylint: disable=W0212
                     *cls._meta.constraints,  # pylint: disable=W0212
                     CheckConstraint(
