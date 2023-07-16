@@ -3443,7 +3443,7 @@ if ENUM_PROPERTIES_INSTALLED:
 
                 super().setUpClass()
 
-            def test_makemigrate_1(self):
+            def test_makemigrate_01(self):
                 from django.conf import settings
                 set_models(1)
                 self.assertFalse(
@@ -3462,7 +3462,7 @@ if ENUM_PROPERTIES_INSTALLED:
                     self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', [0, 1, 2]))"), 1)
                     self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B', 'K']))"), 1)
 
-            def test_makemigrate_2(self):
+            def test_makemigrate_02(self):
                 import shutil
 
                 from django.conf import settings
@@ -3527,7 +3527,7 @@ def revert_enum_values(apps, schema_editor):
                     self.assertEqual(contents.count('AddConstraint'), 1)
                     self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', [1, 2, 3]))"), 1)
 
-            def test_makemigrate_3(self):
+            def test_makemigrate_03(self):
                 from django.conf import settings
                 set_models(3)
                 self.assertFalse(
@@ -3575,7 +3575,7 @@ def remove_color_values(apps, schema_editor):
                     self.assertEqual(contents.count('AddConstraint'), 1)
                     self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B']))"), 1)
 
-            def test_makemigrate_4(self):
+            def test_makemigrate_04(self):
                 from django.conf import settings
                 set_models(4)
                 self.assertFalse(
@@ -3591,7 +3591,7 @@ def remove_color_values(apps, schema_editor):
                         settings.TEST_MIGRATION_DIR / '0004_change_names.py')
                 )
 
-            def test_makemigrate_5(self):
+            def test_makemigrate_05(self):
                 from django.conf import settings
                 set_models(5)
                 self.assertFalse(
@@ -3612,75 +3612,91 @@ def remove_color_values(apps, schema_editor):
                     self.assertEqual(contents.count('RemoveConstraint'), 1)
                     self.assertEqual(contents.count('AddConstraint'), 0)
 
-            def test_makemigrate_6(self):
+            def test_makemigrate_06(self):
                 from django.conf import settings
                 set_models(6)
                 self.assertFalse(
                     os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0005_remove_int_enum.py')
+                        settings.TEST_MIGRATION_DIR / '0005_expand_int_enum.py')
                 )
 
-                call_command('makemigrations', name='remove_int_enum')
+                call_command('makemigrations', name='expand_int_enum')
 
-                # should not exist!
+                # should exist!
                 self.assertTrue(
                     os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0005_remove_int_enum.py')
+                        settings.TEST_MIGRATION_DIR / '0005_expand_int_enum.py')
                 )
 
-            def test_makemigrate_7(self):
+            def test_makemigrate_07(self):
                 from django.conf import settings
                 set_models(7)
                 self.assertFalse(
                     os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0006_add_int_enum.py')
+                        settings.TEST_MIGRATION_DIR / '0006_remove_int_enum.py')
+                )
+
+                call_command('makemigrations', name='remove_int_enum')
+
+                # should exist!
+                self.assertTrue(
+                    os.path.isfile(
+                        settings.TEST_MIGRATION_DIR / '0006_remove_int_enum.py')
+                )
+
+            def test_makemigrate_08(self):
+                from django.conf import settings
+                set_models(8)
+                self.assertFalse(
+                    os.path.isfile(
+                        settings.TEST_MIGRATION_DIR / '0007_add_int_enum.py')
                 )
 
                 call_command('makemigrations', name='add_int_enum')
 
-                # should not exist!
+                # should exist!
                 self.assertTrue(
                     os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0006_add_int_enum.py')
+                        settings.TEST_MIGRATION_DIR / '0007_add_int_enum.py')
                 )
 
-                with open(settings.TEST_MIGRATION_DIR / '0006_add_int_enum.py', 'r') as inpt:
+                with open(settings.TEST_MIGRATION_DIR / '0007_add_int_enum.py', 'r') as inpt:
                     contents = inpt.read()
                     self.assertEqual(contents.count('RemoveConstraint'), 1)
                     self.assertEqual(contents.count('AddConstraint'), 2)
                     self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', ['A', 'B', 'C'])"), 1)
                     self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B', 'K']))"), 1)
 
-            def test_makemigrate_8(self):
-                from django.conf import settings
-                set_models(8)
-                self.assertFalse(
-                    os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0007_set_default.py')
-                )
-
-                call_command('makemigrations', name='set_default')
-
-                # should not exist!
-                self.assertTrue(
-                    os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0007_set_default.py')
-                )
-
-            def test_makemigrate_9(self):
+            def test_makemigrate_09(self):
                 from django.conf import settings
                 set_models(9)
                 self.assertFalse(
                     os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0008_change_default.py')
+                        settings.TEST_MIGRATION_DIR / '0008_set_default.py')
+                )
+
+                call_command('makemigrations', name='set_default')
+
+                # should exist!
+                self.assertTrue(
+                    os.path.isfile(
+                        settings.TEST_MIGRATION_DIR / '0008_set_default.py')
+                )
+
+            def test_makemigrate_10(self):
+                from django.conf import settings
+                set_models(10)
+                self.assertFalse(
+                    os.path.isfile(
+                        settings.TEST_MIGRATION_DIR / '0009_change_default.py')
                 )
 
                 call_command('makemigrations', name='change_default')
 
-                # should not exist!
+                # should exist!
                 self.assertTrue(
                     os.path.isfile(
-                        settings.TEST_MIGRATION_DIR / '0008_change_default.py')
+                        settings.TEST_MIGRATION_DIR / '0009_change_default.py')
                 )
 
         class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
@@ -4011,6 +4027,7 @@ def remove_color_values(apps, schema_editor):
             def test_remove_contraint_code(self):
                 # no migration was generated for this model class change
                 from .edit_tests.models import MigrationTester
+                from django.db.models import PositiveSmallIntegerField
 
                 MigrationTester.objects.all().delete()
 
@@ -4065,8 +4082,9 @@ def remove_color_values(apps, schema_editor):
                     ).count(),
                     1
                 )
-                self.assertEqual(MigrationTester.objects.get(int_enum=42).int_enum,
-                                 42)
+                self.assertEqual(
+                    MigrationTester.objects.get(int_enum=42).int_enum, 42
+                )
 
                 self.assertEqual(
                     MigrationTester.objects.count(),
@@ -4075,15 +4093,78 @@ def remove_color_values(apps, schema_editor):
 
                 MigrationTester.objects.all().delete()
 
+                self.assertIsInstance(
+                    MigrationTester._meta.get_field('int_enum'),
+                    PositiveSmallIntegerField
+                )
 
-        class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
+
+        class TestExpandIntEnumMigration(ResetModelsMixin, MigratorTestCase):
 
             migrate_from = ('django_enum_tests_edit_tests', '0003_remove_black')
-            migrate_to = ('django_enum_tests_edit_tests', '0005_remove_int_enum')
+            migrate_to = ('django_enum_tests_edit_tests', '0005_expand_int_enum')
 
             @classmethod
             def setUpClass(cls):
                 set_models(6)
+                super().setUpClass()
+
+            def prepare(self):
+                from django.db.utils import DataError
+                MigrationTester = self.old_state.apps.get_model(
+                    'django_enum_tests_edit_tests',
+                    'MigrationTester'
+                )
+
+                # Let's create a model with just a single field specified:
+                for int_enum, color in [
+                    (1, 'R'),
+                    (2, 'G'),
+                    (3, 'B'),
+                ]:
+                    MigrationTester.objects.create(
+                        int_enum=int_enum,
+                        color=color
+                    )
+
+                with self.assertRaises(DataError):
+                    MigrationTester.objects.create(int_enum=32768, color='B')
+
+            def test_0005_expand_int_enum(self):
+                from django.db.models import PositiveIntegerField
+                from django.core.exceptions import (
+                    FieldDoesNotExist,
+                    FieldError,
+                )
+
+                MigrationTesterNew = self.new_state.apps.get_model(
+                    'django_enum_tests_edit_tests',
+                    'MigrationTester'
+                )
+
+                self.assertIsInstance(
+                    MigrationTesterNew._meta.get_field('int_enum'),
+                    PositiveIntegerField
+                )
+
+            def test_0005_code(self):
+                from .edit_tests.models import MigrationTester
+
+                MigrationTester.objects.create(int_enum=32768, color='B')
+                self.assertEqual(
+                    MigrationTester.objects.filter(int_enum=32768).count(), 1
+                )
+                self.assertEqual(MigrationTester.objects.count(), 4)
+
+
+        class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
+
+            migrate_from = ('django_enum_tests_edit_tests', '0005_expand_int_enum')
+            migrate_to = ('django_enum_tests_edit_tests', '0006_remove_int_enum')
+
+            @classmethod
+            def setUpClass(cls):
+                set_models(7)
                 super().setUpClass()
 
             def prepare(self):
@@ -4101,7 +4182,7 @@ def remove_color_values(apps, schema_editor):
                 ]:
                     MigrationTester.objects.create(int_enum=int_enum, color=color)
 
-            def test_0005_remove_int_enum(self):
+            def test_0006_remove_int_enum(self):
                 from django.core.exceptions import (
                     FieldDoesNotExist,
                     FieldError,
@@ -4123,7 +4204,7 @@ def remove_color_values(apps, schema_editor):
                     {'int_enum': 1}
                 )
 
-            def test_0005_code(self):
+            def test_0006_code(self):
                 from .edit_tests.models import MigrationTester
 
                 MigrationTester.objects.all().delete()
@@ -4173,12 +4254,12 @@ def remove_color_values(apps, schema_editor):
 
         class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
 
-            migrate_from = ('django_enum_tests_edit_tests', '0005_remove_int_enum')
-            migrate_to = ('django_enum_tests_edit_tests', '0006_add_int_enum')
+            migrate_from = ('django_enum_tests_edit_tests', '0006_remove_int_enum')
+            migrate_to = ('django_enum_tests_edit_tests', '0007_add_int_enum')
 
             @classmethod
             def setUpClass(cls):
-                set_models(7)
+                set_models(8)
                 super().setUpClass()
 
             def prepare(self):
@@ -4192,7 +4273,7 @@ def remove_color_values(apps, schema_editor):
                 for color in ['R', 'G', 'B']:
                     MigrationTester.objects.create(color=color)
 
-            def test_0006_add_int_enum(self):
+            def test_0007_add_int_enum(self):
                 from django.core.exceptions import (
                     FieldDoesNotExist,
                     FieldError,
@@ -4236,7 +4317,7 @@ def remove_color_values(apps, schema_editor):
                 self.assertEqual(
                     MigrationTesterNew.objects.filter(color='B').count(), 1)
 
-            def test_0006_code(self):
+            def test_0007_code(self):
                 from .edit_tests.models import MigrationTester
 
                 MigrationTester.objects.all().delete()
@@ -4303,12 +4384,12 @@ def remove_color_values(apps, schema_editor):
             MigratorTestCase
         ):
 
-            migrate_from = ('django_enum_tests_edit_tests', '0007_set_default')
-            migrate_to = ('django_enum_tests_edit_tests', '0008_change_default')
+            migrate_from = ('django_enum_tests_edit_tests', '0008_set_default')
+            migrate_to = ('django_enum_tests_edit_tests', '0009_change_default')
 
             @classmethod
             def setUpClass(cls):
-                set_models(8)
+                set_models(9)
                 super().setUpClass()
 
             def prepare(self):
@@ -4320,7 +4401,7 @@ def remove_color_values(apps, schema_editor):
 
                 MigrationTester.objects.create()
 
-            def test_0008_change_default(self):
+            def test_0009_change_default(self):
                 from django.core.exceptions import (
                     FieldDoesNotExist,
                     FieldError,
