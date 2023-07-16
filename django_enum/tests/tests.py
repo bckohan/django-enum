@@ -4110,7 +4110,7 @@ def remove_color_values(apps, schema_editor):
                 super().setUpClass()
 
             def prepare(self):
-                from django.db.utils import DataError
+                from django.db.utils import DatabaseError
                 MigrationTester = self.old_state.apps.get_model(
                     'django_enum_tests_edit_tests',
                     'MigrationTester'
@@ -4127,7 +4127,7 @@ def remove_color_values(apps, schema_editor):
                         color=color
                     )
 
-                with self.assertRaises(DataError):
+                with self.assertRaises(DatabaseError):
                     MigrationTester.objects.create(int_enum=32768, color='B')
 
             def test_0005_expand_int_enum(self):
