@@ -131,4 +131,4 @@ dmypy.json
 .idea
 /poetry.lock
 test.db
-django_enum/tests/edit_tests/migrations/000*.py
+django_enum/tests/edit_tests/migrations/00*.py

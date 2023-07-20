@@ -92,6 +92,7 @@ MIDDLEWARE = (
 )
 
 INSTALLED_APPS = [
+    'django_enum.tests.benchmark',
     *(
         ['django_enum.tests.flag_constraints']
         if sys.version_info >= (3, 11) else []
