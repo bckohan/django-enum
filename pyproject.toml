@@ -71,6 +71,10 @@ importlib-metadata = [
 python-dateutil = "^2.8.2"
 ipdb = "^0.13.13"
 
+matplotlib = [
+    { version = ">=3.7.2", markers = "python_version > '3.7'" },
+]
+
 [tool.poetry.group.psycopg2]
 optional = true
 

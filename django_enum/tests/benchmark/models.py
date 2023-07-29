@@ -1,6 +1,6 @@
-from django.db.models import Model, BooleanField, Index
-from django_enum.tests.benchmark.enums import enums
+from django.db.models import BooleanField, Index, Model
 from django_enum import EnumField
+from django_enum.tests.benchmark.enums import enums
 
 
 def chop(original_list, limit=32):
@@ -30,15 +30,15 @@ for num_flags in range(0, 63):
             '__module__': 'django_enum.tests.benchmark.models',
             'BOOL': True,
             'num_flags': num_flags+1,
-            'Meta': type(
-                'Meta',
-                (),
-                {
-                    'indexes': [
-                        Index(fields=[
-                            f'flg_{flg}' for flg in flgs
-                        ]) for flgs in chop(range(num_flags+1))
-                    ]
-                })
+            # 'Meta': type(
+            #     'Meta',
+            #     (),
+            #     {
+            #         'indexes': [
+            #             Index(fields=[
+            #                 f'flg_{flg}' for flg in flgs
+            #             ]) for flgs in chop(range(num_flags+1))
+            #         ]
+            #     })
         }
     )

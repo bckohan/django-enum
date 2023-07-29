@@ -45,7 +45,7 @@ from django_enum.tests.djenum.models import (
     EnumTester,
 )
 from django_enum.tests.utils import try_convert
-from django_enum.utils import choices, labels, names, values
+from django_enum.utils import choices, get_set_bits, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
@@ -66,6 +66,23 @@ try:
     ENUM_PROPERTIES_INSTALLED = True
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     ENUM_PROPERTIES_INSTALLED = False
+
+
+###############################################################################
+# monkey patch a fix to django oracle backend bug, blocks all oracle tests
+from django.db.backends.oracle.schema import DatabaseSchemaEditor
+
+quote_value = DatabaseSchemaEditor.quote_value
+
+
+def quote_value_patched(self, value):
+    if isinstance(value, date) and not isinstance(value, datetime):
+        return "DATE '%s'" % value.isoformat()
+    return quote_value(self, value)
+
+
+DatabaseSchemaEditor.quote_value = quote_value_patched
+###############################################################################
 
 
 # MySQL <8 does not support check constraints which is a problem for the
@@ -2426,6 +2443,52 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
         )
 
 
+class UtilsTests(TestCase):
+
+    def test_get_set_bits(self):
+
+        from django_enum.tests.djenum.enums import SmallPositiveFlagEnum
+        self.assertEqual(
+            get_set_bits(
+                SmallPositiveFlagEnum.ONE | SmallPositiveFlagEnum.THREE
+            ),
+            [10, 12]
+        )
+        self.assertEqual(
+            get_set_bits(
+                int((SmallPositiveFlagEnum.ONE | SmallPositiveFlagEnum.THREE).value)
+            ),
+            [10, 12]
+        )
+
+        self.assertEqual(
+            get_set_bits(
+                SmallPositiveFlagEnum.TWO | SmallPositiveFlagEnum.FIVE,
+            ),
+            [11, 14]
+        )
+
+        self.assertEqual(
+            get_set_bits(SmallPositiveFlagEnum.FOUR),
+            [13]
+        )
+
+        self.assertEqual(
+            get_set_bits(SmallPositiveFlagEnum(0)),
+            []
+        )
+
+        self.assertEqual(
+            get_set_bits(int(SmallPositiveFlagEnum(0))),
+            []
+        )
+
+        self.assertEqual(
+            get_set_bits(0),
+            []
+        )
+
+
 class FlagTests(TestCase):
 
     MODEL_CLASS = EnumFlagTester
@@ -2455,8 +2518,8 @@ class FlagTests(TestCase):
 
         for field in [
             field.name for field in fields
-            if isinstance(field, FlagField) and
-            not isinstance(field, ExtraBigIntegerFlagField)
+            if isinstance(field, FlagField)
+            and not isinstance(field, ExtraBigIntegerFlagField)
         ]:
             EnumClass = self.MODEL_CLASS._meta.get_field(field).enum
 
@@ -2468,11 +2531,16 @@ class FlagTests(TestCase):
             update_empties(obj)
     
             # does this work in SQLite?
-            self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
-                field: F(field).bitor(
-                    EnumClass.TWO
-                )
-            })
+            if 'extra' not in field:
+                self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
+                    field: F(field).bitor(
+                        EnumClass.TWO
+                    )
+                })
+            else:
+                for obj in self.MODEL_CLASS.objects.filter(pk=obj.pk):
+                    setattr(obj, field, getattr(obj, field) | EnumClass.TWO)
+                    obj.save()
     
             # Set flags manually
             self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
@@ -2484,11 +2552,20 @@ class FlagTests(TestCase):
             })
     
             # Remove THREE (does not work in SQLite)
-            self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
-                field: F(field).bitand(
-                    invert_flags(EnumClass.THREE)
-                )
-            })
+            if 'extra' not in field:
+                self.MODEL_CLASS.objects.filter(pk=obj.pk).update(**{
+                    field: F(field).bitand(
+                        invert_flags(EnumClass.THREE)
+                    )
+                })
+            else:
+                for obj in self.MODEL_CLASS.objects.filter(pk=obj.pk):
+                    setattr(
+                        obj,
+                        field,
+                        getattr(obj, field) & invert_flags(EnumClass.THREE)
+                    )
+                    obj.save()
     
             # Find by awesome_flag
             fltr = self.MODEL_CLASS.objects.filter(**{
@@ -2639,6 +2716,7 @@ class FlagTests(TestCase):
                 self.MODEL_CLASS.objects.filter(
                     **{'field__has_all': EnumClass.ONE}
                 )
+
 
 if ENUM_PROPERTIES_INSTALLED:
 
@@ -3438,7 +3516,7 @@ if ENUM_PROPERTIES_INSTALLED:
 
                 from django.conf import settings
                 for migration in glob.glob(
-                        f'{settings.TEST_MIGRATION_DIR}/000*py'):
+                        f'{settings.TEST_MIGRATION_DIR}/00*py'):
                     os.remove(migration)
 
                 super().setUpClass()
@@ -4026,8 +4104,9 @@ def remove_color_values(apps, schema_editor):
 
             def test_remove_contraint_code(self):
                 # no migration was generated for this model class change
-                from .edit_tests.models import MigrationTester
                 from django.db.models import PositiveSmallIntegerField
+
+                from .edit_tests.models import MigrationTester
 
                 MigrationTester.objects.all().delete()
 
@@ -4131,11 +4210,11 @@ def remove_color_values(apps, schema_editor):
                     MigrationTester.objects.create(int_enum=32768, color='B')
 
             def test_0005_expand_int_enum(self):
-                from django.db.models import PositiveIntegerField
                 from django.core.exceptions import (
                     FieldDoesNotExist,
                     FieldError,
                 )
+                from django.db.models import PositiveIntegerField
 
                 MigrationTesterNew = self.new_state.apps.get_model(
                     'django_enum_tests_edit_tests',
@@ -4863,6 +4942,15 @@ if not DISABLE_CONSTRAINT_TESTS:
             ]:
                 with connection.cursor() as cursor:
                     for value in vals:
+
+                        # TODO it seems like Oracle allows nulls to be inserted
+                        #   directly when null=False??
+                        if (
+                            field == multi_unconstrained_non_strict and
+                            value == 'NULL' and
+                            connection.vendor == 'oracle'
+                        ):
+                            continue
                         with self.assertRaises(IntegrityError):
                             do_insert(cursor, field, value)
 

@@ -263,8 +263,8 @@ class BigPositiveFlagEnum(IntFlag):
 
 class ExtraBigPositiveFlagEnum(IntFlag):
 
-    ONE = 2 ** 61
-    TWO = 2 ** 62
+    ONE = 2 ** 0
+    TWO = 2 ** 1
     THREE = 2 ** 63
     FOUR = 2 ** 64
     FIVE = 2 ** 65
@@ -304,8 +304,8 @@ class BigNegativeFlagEnum(IntFlag):
 
 class ExtraBigNegativeFlagEnum(IntFlag):
 
-    ONE = -(2**62)
-    TWO = -(2**63)
+    ONE = -(2**0)
+    TWO = -(2**1)
     THREE = -(2**64)
     FOUR = -(2**65)
     FIVE = -(2**66)

@@ -36,7 +36,7 @@ elif rdbms == 'mysql':  # pragma: no cover
             "ENGINE": "django.db.backends.mysql",
             'NAME': os.environ.get('MYSQL_DATABASE', 'test'),
             'USER': os.environ.get('MYSQL_USER', 'root'),
-            'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'root'),
+            #'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'root'),
             'HOST': os.environ.get('MYSQL_HOST', '127.0.0.1'),
             'PORT': os.environ.get('MYSQL_PORT', 3306),
         }
@@ -57,12 +57,20 @@ elif rdbms == 'oracle':  # pragma: no cover
         'default': {
             'ENGINE': 'django.db.backends.oracle',
             'NAME': f'{os.environ.get("ORACLE_HOST", "localhost")}:'
-                    f'{os.environ.get("ORACLE_PORT", 1521)}/'
-                    f'{os.environ.get("ORACLE_DATABASE", "FREEPDB1")}',
+                    f'{os.environ.get("ORACLE_PORT", 1521)}'
+                    f'/{os.environ.get("ORACLE_DATABASE", "XEPDB1")}',
             'USER': os.environ.get('ORACLE_USER', 'system'),
             'PASSWORD': os.environ.get('ORACLE_PASSWORD', 'password')
         }
     }
+
+# from django.db.backends.oracle.base import FormatStylePlaceholderCursor
+# from django.db.backends import utils
+# from django.db.backends.base import schema
+# from django.db.models.constraints import CheckConstraint
+# from django.db.backends.oracle.schema import DatabaseSchemaEditor
+# from django.db.backends.postgresql.schema import DatabaseSchemaEditor
+# from django.db.backends.mysql.schema import DatabaseSchemaEditor
 
 ROOT_URLCONF = 'django_enum.tests.urls'
 

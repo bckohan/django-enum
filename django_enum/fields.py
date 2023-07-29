@@ -45,7 +45,10 @@ from django_enum.forms import (
     NonStrictSelect,
     NonStrictSelectMultiple,
 )
-from django_enum.query import HasAllFlagsLookup, HasAnyFlagsLookup
+from django_enum.query import (  # HasAllFlagsExtraBigLookup,; HasAnyFlagsExtraBigLookup
+    HasAllFlagsLookup,
+    HasAnyFlagsLookup,
+)
 from django_enum.utils import (
     SupportedPrimitive,
     choices,
@@ -1291,3 +1294,7 @@ class ExtraBigIntegerFlagField(FlagField, EnumExtraBigIntegerField):
 
     def contribute_to_class(self, cls, name, call_base=True, **kwargs):
         BinaryField.contribute_to_class(self, cls, name, **kwargs)
+
+
+# ExtraBigIntegerFlagField.register_lookup(HasAnyFlagsExtraBigLookup)
+# ExtraBigIntegerFlagField.register_lookup(HasAllFlagsExtraBigLookup)

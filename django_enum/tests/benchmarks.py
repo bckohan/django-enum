@@ -1,19 +1,25 @@
 # pragma: no cover
+import json
+import random
+from functools import reduce
+from operator import and_, or_
+from pathlib import Path
 from time import perf_counter
+
+from django.db import connection
+from django.db.models import Q
+from django.test import TestCase, override_settings
 from django_enum.tests.benchmark import enums as benchmark_enums
 from django_enum.tests.benchmark import models as benchmark_models
-from django.test import TestCase
-import random
-from django.db import connection
-from functools import reduce
-from operator import or_, and_
-from django.db.models import Q
 
 try:
     import enum_properties
     ENUM_PROPERTIES_INSTALLED = True
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     ENUM_PROPERTIES_INSTALLED = False
+
+
+BENCHMARK_FILE = Path(__file__).parent.parent.parent / 'benchmarks.json'
 
 
 class BulkCreateMixin:
@@ -300,57 +306,116 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
         self.create()
 
     def get_table_size(self, cursor, table, total=True):
-        cursor.execute(
-            f"SELECT pg_size_pretty(pg{'_total' if total else ''}"
-            f"_relation_size('{table}'));"
-        )
-        size_bytes, scale = cursor.fetchone()[0].lower().split()
-        size_bytes = float(size_bytes)
-        if 'k' in scale:
-            size_bytes *= 1024
-        elif 'm' in scale:
-            size_bytes *= 1024 * 1024
-        elif 'g' in scale:
-            size_bytes *= 1024 * 1024 * 1024
+        if connection.vendor == 'postgresql':
+            cursor.execute(
+                f"SELECT pg_size_pretty(pg{'_total' if total else ''}"
+                f"_relation_size('{table}'));"
+            )
+            size_bytes, scale = cursor.fetchone()[0].lower().split()
+            size_bytes = float(size_bytes)
+            if 'k' in scale:
+                size_bytes *= 1024
+            elif 'm' in scale:
+                size_bytes *= 1024 * 1024
+            elif 'g' in scale:
+                size_bytes *= 1024 * 1024 * 1024
 
-        return size_bytes
+            return size_bytes
+        elif connection.vendor == 'mysql':
+            cursor.execute(
+                f"SELECT ROUND((DATA_LENGTH "
+                f"{'+ INDEX_LENGTH' if total else ''})) AS `bytes`"
+                f"FROM information_schema.TABLES WHERE TABLE_NAME = '{table}';"
+            )
+            return cursor.fetchone()[0]
+        elif connection.vendor == 'sqlite':
+            cursor.execute(
+                f"SELECT SUM('pgsize') FROM 'dbstat' WHERE name='{table}'"
+            )
+            return cursor.fetchone()[0]
+        else:
+            raise NotImplementedError(
+                f'get_table_size not implemented for {connection.vendor}'
+            )
 
     def get_column_size(self, cursor, table, column):
-        cursor.execute(
-            f"SELECT sum(pg_column_size({column})) FROM {table};"
-        )
-        return cursor.fetchone()[0]
+        if connection.vendor == 'postgresql':
+            cursor.execute(
+                f"SELECT sum(pg_column_size({column})) FROM {table};"
+            )
+            return cursor.fetchone()[0]
+        else:
+            raise NotImplementedError(
+                f'get_column_size not implemented for {connection.vendor}'
+            )
 
     def test_size_benchmark(self):
 
-        table_sizes = {}
-        total_table_sizes = {}
-        column_sizes = {}
+        flag_totals = []
+        flag_table = []
+        flag_column = []
+
+        bool_totals = []
+        bool_table = []
+        bool_column = []
 
         with connection.cursor() as cursor:
-            for FlagModel, BoolModel in zip(self.FLAG_MODELS, self.BOOL_MODELS):
-                assert FlagModel.num_flags == BoolModel.num_flags
-                flag_size = self.get_table_size(cursor, FlagModel._meta.db_table, total=False)
-                bool_size = self.get_table_size(cursor, BoolModel._meta.db_table, total=False)
-                total_flag_size = self.get_table_size(cursor, FlagModel._meta.db_table, total=True)
-                total_bool_size = self.get_table_size(cursor, BoolModel._meta.db_table, total=True)
-                flag_col_size = self.get_column_size(cursor, FlagModel._meta.db_table, FlagModel._meta.get_field('flags').column)
-                bool_col_size = sum([
-                    self.get_column_size(
-                        cursor,
-                        BoolModel._meta.db_table,
-                        BoolModel._meta.get_field(f'flg_{flg}').column
-                    ) for flg in range(0, BoolModel.num_flags)
-                ])
-                table_sizes[FlagModel.num_flags] = (bool_size - flag_size) / self.COUNT
-                total_table_sizes[FlagModel.num_flags] = (total_bool_size - total_flag_size) / self.COUNT
-                column_sizes[FlagModel.num_flags] = (bool_col_size - flag_col_size) / self.COUNT
+            for idx, (FlagModel, BoolModel) in enumerate(zip(self.FLAG_MODELS, self.BOOL_MODELS)):
+                assert FlagModel.num_flags == BoolModel.num_flags == (idx + 1)
 
-        print([table_sizes[num_flags] for num_flags in sorted(table_sizes.keys())])
-        print('--------------------------------')
-        print([total_table_sizes[num_flags] for num_flags in sorted(total_table_sizes.keys())])
-        print('--------------------------------')
-        print([column_sizes[num_flags] for num_flags in sorted(column_sizes.keys())])
+                flag_totals.append(self.get_table_size(cursor, FlagModel._meta.db_table, total=True))
+                bool_totals.append(self.get_table_size(cursor, BoolModel._meta.db_table, total=True))
+
+                flag_table.append(self.get_table_size(cursor, FlagModel._meta.db_table, total=False))
+                bool_table.append(self.get_table_size(cursor, BoolModel._meta.db_table, total=False))
+
+                if connection.vendor in ['postgresql']:
+                    flag_column.append(
+                        self.get_column_size(
+                            cursor,
+                            FlagModel._meta.db_table,
+                            FlagModel._meta.get_field('flags').column)
+                    )
+
+                    bool_column.append(sum([
+                        self.get_column_size(
+                            cursor,
+                            BoolModel._meta.db_table,
+                            BoolModel._meta.get_field(f'flg_{flg}').column
+                        ) for flg in range(0, BoolModel.num_flags)
+                    ]))
+                else:
+                    flag_column.append(flag_table[-1])
+                    bool_column.append(bool_table[-1])
+
+        data = {}
+        if BENCHMARK_FILE.is_file():
+            with open(BENCHMARK_FILE, 'r') as bf:
+                try:
+                    data = json.load(bf)
+                except json.JSONDecodeError:
+                    pass
+
+        with open(BENCHMARK_FILE, 'w') as bf:
+            sizes = data.setdefault(
+                'size', {}
+            ).setdefault(
+                connection.vendor, {
+                    'flags': {},
+                    'bools': {}
+                }
+            )
+            sizes['flags']['total'] = flag_totals
+            sizes['flags']['table'] = flag_table
+            sizes['flags']['column'] = flag_column
+            sizes['bools']['total'] = bool_totals
+            sizes['bools']['table'] = bool_table
+            sizes['bools']['column'] = bool_column
+
+            data['size'].setdefault('count', self.COUNT)
+            assert self.COUNT == data['size']['count']
+
+            bf.write(json.dumps(data, indent=4))
 
     def test_query_performance(self):
 

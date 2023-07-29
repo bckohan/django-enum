@@ -2,7 +2,7 @@
 
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from enum import Enum
+from enum import Enum, IntFlag
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -25,7 +25,8 @@ __all__ = [
     'determine_primitive',
     'with_typehint',
     'SupportedPrimitive',
-    'decimal_params'
+    'decimal_params',
+    'get_set_bits'
 ]
 
 
@@ -230,3 +231,13 @@ def decimal_params(
         'max_digits': max_digits,
         'decimal_places': decimal_places
     }
+
+
+def get_set_bits(flag: Union[int, IntFlag]) -> List[int]:
+    """
+    Return the indices of the bits set in the flag.
+
+    :param flag: The flag to get the set bits for, value must be an int.
+    :return: A list of indices of the set bits
+    """
+    return [i for i in range(flag.bit_length()) if flag & (1 << i)]
