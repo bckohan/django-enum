@@ -71,13 +71,15 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 ###############################################################################
 # monkey patch a fix to django oracle backend bug, blocks all oracle tests
 from django.db.backends.oracle.schema import DatabaseSchemaEditor
-
+from django.utils.duration import duration_iso_string
 quote_value = DatabaseSchemaEditor.quote_value
 
 
 def quote_value_patched(self, value):
     if isinstance(value, date) and not isinstance(value, datetime):
         return "DATE '%s'" % value.isoformat()
+    elif isinstance(value, timedelta):
+        return "'%s'" % duration_iso_string(value)
     return quote_value(self, value)
 
 
