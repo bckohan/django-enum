@@ -364,7 +364,7 @@ jobs:
     services:
       oracle:
 
-        image: gvenzl/oracle-free:latest
+        image: gvenzl/oracle-xe:latest
 
         env:
           ORACLE_PASSWORD: password
@@ -394,7 +394,7 @@ jobs:
           virtualenvs-in-project: true
       - name: Install Oracle Client
         run: |
-          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/219000/oracle-instantclient-basiclite-21.9.0.0.0-1.el8.x86_64.rpm
+          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2111000/oracle-instantclient-basiclite-21.11.0.0.0-1.el8.x86_64.rpm
           sudo apt install alien libaio1
           sudo alien -i oracle-client.rpm
           sudo sh -c  'echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
