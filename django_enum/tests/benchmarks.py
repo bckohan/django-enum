@@ -8,7 +8,7 @@ from time import perf_counter
 
 from django.db import connection
 from django.db.models import Q
-from django.test import TestCase, override_settings
+from django.test import TestCase, modify_settings
 from django_enum.tests.benchmark import enums as benchmark_enums
 from django_enum.tests.benchmark import models as benchmark_models
 
@@ -63,6 +63,8 @@ if ENUM_PROPERTIES_INSTALLED:
         SingleNoCoercePerf,
     )
 
+
+    @modify_settings(DEBUG=False)
     class PerformanceTest(BulkCreateMixin, TestCase):
         """
         We intentionally test bulk operations performance because thats what
@@ -278,6 +280,19 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertTrue((no_coerce_time / choice_time) < 2)
 
 
+@modify_settings(
+    DEBUG=False,
+    INSTALLED_APPS = [
+        'django_enum.tests.benchmark',
+        'django.contrib.auth',
+        'django.contrib.contenttypes',
+        'django.contrib.sessions',
+        'django.contrib.sites',
+        'django.contrib.messages',
+        'django.contrib.staticfiles',
+        'django.contrib.admin',
+    ]
+)
 class FlagBenchmarks(BulkCreateMixin, TestCase):
 
     COUNT = 10000

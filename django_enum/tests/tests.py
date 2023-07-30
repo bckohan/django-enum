@@ -943,8 +943,14 @@ class TestChoices(EnumTypeMixin, TestCase):
         # print(len(obj.non_strict_text))
 
     def test_serialization(self):
-        tester = self.MODEL_CLASS.objects.create(**self.values_params)
-        from django.core.serializers import json
+        from django.db.utils import DatabaseError
+        try:
+            tester = self.MODEL_CLASS.objects.create(**self.values_params)
+        except DatabaseError:
+            from django.db import connection
+            from pprint import pprint
+            pprint(connection.queries)
+
         serialized = serializers.serialize('json', self.MODEL_CLASS.objects.all())
 
         tester.delete()
