@@ -48,6 +48,7 @@ from django_enum.tests.utils import try_convert
 from django_enum.utils import choices, get_set_bits, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
+from django.test.utils import CaptureQueriesContext
 
 try:
     import django_filters
@@ -944,13 +945,16 @@ class TestChoices(EnumTypeMixin, TestCase):
 
     def test_serialization(self):
         from django.db.utils import DatabaseError
-        try:
-            tester = self.MODEL_CLASS.objects.create(**self.values_params)
-        except DatabaseError:
-            from django.db import connection
-            from pprint import pprint
-            pprint(connection.queries)
-            raise
+        from django.db import connection
+
+        with CaptureQueriesContext(connection) as ctx:
+            try:
+                # code that runs SQL queries
+                tester = self.MODEL_CLASS.objects.create(**self.values_params)
+            except DatabaseError:
+                from pprint import pprint
+                pprint(ctx.captured_queries)
+                raise
 
         serialized = serializers.serialize('json', self.MODEL_CLASS.objects.all())
 
