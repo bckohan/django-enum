@@ -950,6 +950,7 @@ class TestChoices(EnumTypeMixin, TestCase):
             from django.db import connection
             from pprint import pprint
             pprint(connection.queries)
+            raise
 
         serialized = serializers.serialize('json', self.MODEL_CLASS.objects.all())
 
