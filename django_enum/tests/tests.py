@@ -73,6 +73,8 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 # monkey patch a fix to django oracle backend bug, blocks all oracle tests
 from django.db.backends.oracle.schema import DatabaseSchemaEditor
 from django.utils.duration import duration_iso_string
+from django.db.backends.oracle.base import FormatStylePlaceholderCursor
+
 quote_value = DatabaseSchemaEditor.quote_value
 
 
@@ -85,6 +87,28 @@ def quote_value_patched(self, value):
 
 
 DatabaseSchemaEditor.quote_value = quote_value_patched
+
+
+_param_generator = FormatStylePlaceholderCursor._param_generator
+
+
+def param_generator(self, params):
+    params = _param_generator(self, params)
+    if hasattr(params, "items"):
+        return {
+            k: duration_iso_string(v)
+            if isinstance(v, timedelta)
+            else v for k, v in params.items()
+        }
+    else:
+        return [
+            duration_iso_string(p)
+            if isinstance(p, timedelta) else p for p in params
+        ]
+
+
+FormatStylePlaceholderCursor._param_generator = param_generator
+import cx_Oracle
 ###############################################################################
 
 
@@ -946,13 +970,14 @@ class TestChoices(EnumTypeMixin, TestCase):
     def test_serialization(self):
         from django.db.utils import DatabaseError
         from django.db import connection
+        from pprint import pprint
 
         with CaptureQueriesContext(connection) as ctx:
             try:
                 # code that runs SQL queries
                 tester = self.MODEL_CLASS.objects.create(**self.values_params)
+                pprint(ctx.captured_queries)
             except DatabaseError:
-                from pprint import pprint
                 pprint(ctx.captured_queries)
                 raise
 
