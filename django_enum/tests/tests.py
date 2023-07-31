@@ -75,6 +75,7 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 # ORACLE is buggy!
 
 IGNORE_ORA_01843 = os.environ.get('IGNORE_ORA_01843', False) in ['true', 'True', '1', 'yes', 'YES']
+print(f'IGNORE_ORA_01843: {IGNORE_ORA_01843}')
 
 # monkey patch a fix to django oracle backend bug, blocks all oracle tests
 from django.db.backends.oracle.schema import DatabaseSchemaEditor
@@ -681,6 +682,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         try:
             self.MODEL_CLASS.objects.create(**self.create_params)
         except DatabaseError as err:
+            print(str(err))
             if IGNORE_ORA_01843 and connection.vendor == 'oracle' and 'ORA-01843' in str(err):
                 # this is an oracle bug - intermittent failure on
                 # perfectly fine date format in SQL
@@ -703,6 +705,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         try:
             obj = self.MODEL_CLASS.objects.create(**self.create_params)
         except DatabaseError as err:
+            print(str(err))
             if IGNORE_ORA_01843 and connection.vendor == 'oracle' and 'ORA-01843' in str(err):
                 # this is an oracle bug - intermittent failure on
                 # perfectly fine date format in SQL
@@ -899,6 +902,7 @@ class TestChoices(EnumTypeMixin, TestCase):
         try:
             self.do_test_values()
         except DatabaseError as err:
+            print(str(err))
             if IGNORE_ORA_01843 and connection.vendor == 'oracle' and 'ORA-01843' in str(err):
                 # this is an oracle bug - intermittent failure on
                 # perfectly fine date format in SQL
@@ -992,6 +996,7 @@ class TestChoices(EnumTypeMixin, TestCase):
                     **self.values_params
                 )
             except DatabaseError as err:
+                print(str(err))
                 if IGNORE_ORA_01843 and connection.vendor == 'oracle' and 'ORA-01843' in str(
                         err):
                     # this is an oracle bug - intermittent failure on
