@@ -404,10 +404,10 @@ jobs:
           virtualenvs-in-project: true
       - name: Install Oracle Client
         run: |
-          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/1919000/oracle-instantclient19.19-basiclite-19.19.0.0.0-1.x86_64.rpm
+          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2111000/oracle-instantclient-basiclite-21.11.0.0.0-1.el8.x86_64.rpm
           sudo apt install alien libaio1
           sudo alien -i oracle-client.rpm
-          sudo sh -c  'echo /usr/lib/oracle/19/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
+          sudo sh -c  'echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
           sudo ldconfig
       - name: Install Dependencies
         run: |
@@ -419,5 +419,8 @@ jobs:
         run: |
           poetry run pytest -s
 
-#curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2111000/oracle-instantclient-basiclite-21.11.0.0.0-1.el8.x86_64.rpm
-#sudo sh -c  'echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
+#curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/1919000/oracle-instantclient19.19-basiclite-19.19.0.0.0-1.x86_64.rpm
+#sudo apt install alien libaio1
+#sudo alien -i oracle-client.rpm
+#sudo sh -c  'echo /usr/lib/oracle/19/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
+#sudo ldconfig
