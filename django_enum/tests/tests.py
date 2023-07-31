@@ -805,6 +805,7 @@ class TestChoices(EnumTypeMixin, TestCase):
             'non_strict_int':  75,
             'non_strict_text':  'arbitrary',
             'no_coerce': self.SmallPosIntEnum.VAL2,
+            'date_enum': self.DateEnum.EMMA,
             'datetime_enum': self.DateTimeEnum.ST_HELENS,
             'duration_enum': self.DurationEnum.DAY,
             'time_enum': self.TimeEnum.MORNING
