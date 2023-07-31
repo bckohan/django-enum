@@ -357,16 +357,23 @@ jobs:
         django-version:
           - 'Django~=3.2.0' # LTS April 2024
           - 'Django~=4.2.0' # LTS April 2026
+        oracle-version:
+          - '18'
+          - 'latest'
         exclude:
           - python-version: '3.7'
             django-version: 'Django~=4.2.0'
           - python-version: '3.11'
             django-version: 'Django~=3.2.0'
+          - django-version: 'Django~=3.2.0'
+            oracle-version: 'latest'
+          - django-version: 'Django~=4.2.0'
+            oracle-version: '18'
 
     services:
       oracle:
 
-        image: gvenzl/oracle-xe:latest
+        image: gvenzl/oracle-xe:${{ matrix.oracle-version }}
 
         env:
           ORACLE_PASSWORD: password
