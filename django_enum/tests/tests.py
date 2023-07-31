@@ -12,7 +12,7 @@ from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import F, Q
 from django.http import QueryDict
-from django.test import Client, TestCase, override_settings
+from django.test import Client, TestCase
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
@@ -25,7 +25,6 @@ from django_enum.fields import (
     SmallIntegerFlagField,
 )
 from django.db.utils import DatabaseError
-import warnings
 from django_enum.forms import EnumChoiceField  # dont remove this
 # from django_enum.tests.djenum.enums import (
 #     BigIntEnum,
@@ -51,6 +50,7 @@ from django_enum.utils import choices, get_set_bits, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 from django.test.utils import CaptureQueriesContext
+import pytest
 
 try:
     import django_filters
@@ -687,7 +687,7 @@ class TestChoices(EnumTypeMixin, TestCase):
                 # this is an oracle bug - intermittent failure on
                 # perfectly fine date format in SQL
                 # TODO - remove when fixed
-                warnings.warn('Oracle bug ORA-01843 encountered - ignoring')
+                pytest.skip("Oracle bug ORA-01843 encountered - skipping")
                 return
             raise
         for param in self.fields:
@@ -710,7 +710,7 @@ class TestChoices(EnumTypeMixin, TestCase):
                 # this is an oracle bug - intermittent failure on
                 # perfectly fine date format in SQL
                 # TODO - remove when fixed
-                warnings.warn('Oracle bug ORA-01843 encountered - ignoring')
+                pytest.skip("Oracle bug ORA-01843 encountered - skipping")
                 return
             raise
         with self.assertNumQueries(1):
@@ -907,7 +907,7 @@ class TestChoices(EnumTypeMixin, TestCase):
                 # this is an oracle bug - intermittent failure on
                 # perfectly fine date format in SQL
                 # TODO - remove when fixed
-                warnings.warn('Oracle bug ORA-01843 encountered - ignoring')
+                pytest.skip("Oracle bug ORA-01843 encountered - skipping")
                 return
             raise
 
@@ -1003,8 +1003,7 @@ class TestChoices(EnumTypeMixin, TestCase):
                     # perfectly fine date format in SQL
                     # TODO - remove when fixed
                     pprint(ctx.captured_queries)
-                    warnings.warn(
-                        'Oracle bug ORA-01843 encountered - ignoring')
+                    pytest.skip("Oracle bug ORA-01843 encountered - skipping")
                     return
                 raise
 
