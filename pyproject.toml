@@ -77,6 +77,7 @@ ipdb = "^0.13.13"
 matplotlib = [
     { version = ">=3.7.2", markers = "python_version > '3.7'" },
 ]
+tqdm = "^4.65.0"
 
 [tool.poetry.group.psycopg2]
 optional = true

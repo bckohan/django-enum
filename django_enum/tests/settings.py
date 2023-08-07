@@ -36,7 +36,7 @@ elif rdbms == 'mysql':  # pragma: no cover
             "ENGINE": "django.db.backends.mysql",
             'NAME': os.environ.get('MYSQL_DATABASE', 'test'),
             'USER': os.environ.get('MYSQL_USER', 'root'),
-            'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'root'),
+            #'PASSWORD': os.environ.get('MYSQL_PASSWORD', 'root'),
             'HOST': os.environ.get('MYSQL_HOST', '127.0.0.1'),
             'PORT': os.environ.get('MYSQL_PORT', 3306),
         }

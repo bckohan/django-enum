@@ -1,6 +1,6 @@
 from django.db.models import BooleanField, Index, Model
 from django_enum import EnumField
-from django_enum.tests.benchmark.enums import enums
+from django_enum.tests.benchmark.enums import Index16, enums
 
 
 def chop(original_list, limit=32):
@@ -24,7 +24,7 @@ for num_flags in range(0, 63):
         (Model,),
         {
             **{
-                f'flg_{flg}': BooleanField()
+                f'flg_{flg}': BooleanField(default=False)
                 for flg in range(0, num_flags+1)
             },
             '__module__': 'django_enum.tests.benchmark.models',

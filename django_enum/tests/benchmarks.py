@@ -1,16 +1,21 @@
 # pragma: no cover
 import json
+import os
 import random
-from functools import reduce
+from functools import partial, reduce
 from operator import and_, or_
 from pathlib import Path
 from time import perf_counter
 
 from django.db import connection
 from django.db.models import Q
-from django.test import TestCase, modify_settings
+from django.test import TestCase, override_settings
+from django.test.utils import CaptureQueriesContext
 from django_enum.tests.benchmark import enums as benchmark_enums
 from django_enum.tests.benchmark import models as benchmark_models
+from django_enum.tests.oracle_patch import patch_oracle
+from django_enum.utils import get_set_bits
+from tqdm import tqdm
 
 try:
     import enum_properties
@@ -21,10 +26,74 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 
 BENCHMARK_FILE = Path(__file__).parent.parent.parent / 'benchmarks.json'
 
+patch_oracle()
+
+
+def get_table_size(cursor, table, total=True):
+    if connection.vendor == 'postgresql':
+        cursor.execute(
+            f"SELECT pg_size_pretty(pg{'_total' if total else ''}"
+            f"_relation_size('{table}'));"
+        )
+        size_bytes, scale = cursor.fetchone()[0].lower().split()
+        size_bytes = float(size_bytes)
+        if 'k' in scale:
+            size_bytes *= 1024
+        elif 'm' in scale:
+            size_bytes *= 1024 * 1024
+        elif 'g' in scale:
+            size_bytes *= 1024 * 1024 * 1024
+
+        return size_bytes
+    elif connection.vendor == 'mysql':
+        # weird table size explosion when #columns >= 24? see if OPTIMIZE
+        # helps
+        cursor.execute(f'OPTIMIZE TABLE {table}')
+        cursor.fetchall()
+        cursor.execute(
+            f"SELECT ROUND((DATA_LENGTH "
+            f"{'+ INDEX_LENGTH' if total else ''})) AS `bytes`"
+            f"FROM information_schema.TABLES WHERE TABLE_NAME = '{table}';"
+        )
+        return cursor.fetchone()[0]
+    elif connection.vendor == 'sqlite':
+        cursor.execute(
+            f'select sum(pgsize) as size from dbstat where name="{table}"'
+        )
+        return cursor.fetchone()[0]
+    elif connection.vendor == 'oracle':
+        # todo index total?
+        cursor.execute(
+            f"select sum(bytes) from user_extents where "
+            f"segment_type='TABLE' and segment_name='{table.upper()}'"
+        )
+        ret = cursor.fetchone()
+
+        if ret is None:
+            import ipdb
+            ipdb.set_trace()
+        return ret[0]
+    else:
+        raise NotImplementedError(
+            f'get_table_size not implemented for {connection.vendor}'
+        )
+
+
+def get_column_size(cursor, table, column):
+    if connection.vendor == 'postgresql':
+        cursor.execute(
+            f"SELECT sum(pg_column_size({column})) FROM {table};"
+        )
+        return cursor.fetchone()[0]
+    else:
+        raise NotImplementedError(
+            f'get_column_size not implemented for {connection.vendor}'
+        )
+
 
 class BulkCreateMixin:
 
-    CHUNK_SIZE = 2048
+    CHUNK_SIZE = 8196
 
     create_queue = {}
 
@@ -38,6 +107,8 @@ class BulkCreateMixin:
             ):
                 Model.objects.bulk_create(queue)
                 queue.clear()
+
+
 
 
 if ENUM_PROPERTIES_INSTALLED:
@@ -64,7 +135,7 @@ if ENUM_PROPERTIES_INSTALLED:
     )
 
 
-    @modify_settings(DEBUG=False)
+    @override_settings(DEBUG=False)
     class PerformanceTest(BulkCreateMixin, TestCase):
         """
         We intentionally test bulk operations performance because thats what
@@ -280,7 +351,7 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertTrue((no_coerce_time / choice_time) < 2)
 
 
-@modify_settings(
+@override_settings(
     DEBUG=False,
     INSTALLED_APPS = [
         'django_enum.tests.benchmark',
@@ -295,7 +366,7 @@ if ENUM_PROPERTIES_INSTALLED:
 )
 class FlagBenchmarks(BulkCreateMixin, TestCase):
 
-    COUNT = 10000
+    COUNT = 1000
 
     FLAG_MODELS = [
         mdl for name, mdl in benchmark_models.__dict__.items()
@@ -320,50 +391,6 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
 
         self.create()
 
-    def get_table_size(self, cursor, table, total=True):
-        if connection.vendor == 'postgresql':
-            cursor.execute(
-                f"SELECT pg_size_pretty(pg{'_total' if total else ''}"
-                f"_relation_size('{table}'));"
-            )
-            size_bytes, scale = cursor.fetchone()[0].lower().split()
-            size_bytes = float(size_bytes)
-            if 'k' in scale:
-                size_bytes *= 1024
-            elif 'm' in scale:
-                size_bytes *= 1024 * 1024
-            elif 'g' in scale:
-                size_bytes *= 1024 * 1024 * 1024
-
-            return size_bytes
-        elif connection.vendor == 'mysql':
-            cursor.execute(
-                f"SELECT ROUND((DATA_LENGTH "
-                f"{'+ INDEX_LENGTH' if total else ''})) AS `bytes`"
-                f"FROM information_schema.TABLES WHERE TABLE_NAME = '{table}';"
-            )
-            return cursor.fetchone()[0]
-        elif connection.vendor == 'sqlite':
-            cursor.execute(
-                f"SELECT SUM('pgsize') FROM 'dbstat' WHERE name='{table}'"
-            )
-            return cursor.fetchone()[0]
-        else:
-            raise NotImplementedError(
-                f'get_table_size not implemented for {connection.vendor}'
-            )
-
-    def get_column_size(self, cursor, table, column):
-        if connection.vendor == 'postgresql':
-            cursor.execute(
-                f"SELECT sum(pg_column_size({column})) FROM {table};"
-            )
-            return cursor.fetchone()[0]
-        else:
-            raise NotImplementedError(
-                f'get_column_size not implemented for {connection.vendor}'
-            )
-
     def test_size_benchmark(self):
 
         flag_totals = []
@@ -378,30 +405,27 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
             for idx, (FlagModel, BoolModel) in enumerate(zip(self.FLAG_MODELS, self.BOOL_MODELS)):
                 assert FlagModel.num_flags == BoolModel.num_flags == (idx + 1)
 
-                flag_totals.append(self.get_table_size(cursor, FlagModel._meta.db_table, total=True))
-                bool_totals.append(self.get_table_size(cursor, BoolModel._meta.db_table, total=True))
+                flag_totals.append(get_table_size(cursor, FlagModel._meta.db_table, total=True))
+                bool_totals.append(get_table_size(cursor, BoolModel._meta.db_table, total=True))
 
-                flag_table.append(self.get_table_size(cursor, FlagModel._meta.db_table, total=False))
-                bool_table.append(self.get_table_size(cursor, BoolModel._meta.db_table, total=False))
+                flag_table.append(get_table_size(cursor, FlagModel._meta.db_table, total=False))
+                bool_table.append(get_table_size(cursor, BoolModel._meta.db_table, total=False))
 
                 if connection.vendor in ['postgresql']:
                     flag_column.append(
-                        self.get_column_size(
+                        get_column_size(
                             cursor,
                             FlagModel._meta.db_table,
                             FlagModel._meta.get_field('flags').column)
                     )
 
                     bool_column.append(sum([
-                        self.get_column_size(
+                        get_column_size(
                             cursor,
                             BoolModel._meta.db_table,
                             BoolModel._meta.get_field(f'flg_{flg}').column
                         ) for flg in range(0, BoolModel.num_flags)
                     ]))
-                else:
-                    flag_column.append(flag_table[-1])
-                    bool_column.append(bool_table[-1])
 
         data = {}
         if BENCHMARK_FILE.is_file():
@@ -415,7 +439,7 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
             sizes = data.setdefault(
                 'size', {}
             ).setdefault(
-                connection.vendor, {
+                os.environ.get('RDBMS', connection.vendor), {
                     'flags': {},
                     'bools': {}
                 }
@@ -573,3 +597,320 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
         print(has_any_load_tpl)
         print('------------ has_all_load ---------------')
         print(has_all_load_tpl)
+
+
+class FlagIndexTests(BulkCreateMixin, TestCase):
+
+    CHECK_POINTS = [
+        *(int(10**i) for i in range(1, 7)),
+        *(int(i * ((10**7) / 5)) for i in range(1, 6)),
+        *(int(i * ((10**8) / 5)) for i in range(1, 6)),
+        #*(int(i * ((10**9) / 5)) for i in range(1, 6))
+    ]
+
+    NUM_FLAGS = 16
+
+    FlagModel = getattr(benchmark_models, f'FlagTester{NUM_FLAGS-1:03d}')
+    EnumClass = FlagModel._meta.get_field('flags').enum
+    BoolModel = getattr(benchmark_models, f'BoolTester{NUM_FLAGS-1:03d}')
+
+    flag_indexes = []
+    bool_indexes = []
+
+    @property
+    def num_flags(self):
+        return self.NUM_FLAGS
+
+    def setUp(self):
+        self.FlagModel.objects.all().delete()
+        self.BoolModel.objects.all().delete()
+
+    def tearDown(self) -> None:
+        self.FlagModel.objects.all().delete()
+        self.BoolModel.objects.all().delete()
+
+    def create_rows(self, total, pbar):
+        """
+        Create a bunch of rows with random flags set, until the total number
+        of rows is equal to `total`.
+        """
+        f_cnt = self.FlagModel.objects.count()
+        b_cnt = self.BoolModel.objects.count()
+        assert f_cnt == b_cnt
+
+        for idx in range(f_cnt, total+1):
+            mask = random.getrandbits(self.FlagModel.num_flags)
+            set_flags = get_set_bits(mask)
+            self.create(self.FlagModel(flags=mask))
+            self.create(self.BoolModel(**{
+                f'flg_{flg}': True for flg in set_flags
+            }))
+            pbar.update(n=1)
+
+        self.create()
+
+    def do_flag_query(self, masks):
+
+        flg_all = []
+        flg_any = []
+        flg_exact = []
+
+        flg_all_time = 0
+        flg_any_time = 0
+        flg_exact_time = 0
+
+        for mask in masks:
+
+            # dont change query order
+
+            start = perf_counter()
+            flg_all.append(self.FlagModel.objects.filter(flags__has_all=mask).count())
+            flg_all_time += perf_counter() - start
+
+            start = perf_counter()
+            flg_any.append(self.FlagModel.objects.filter(flags__has_any=mask).count())
+            flg_any_time += perf_counter() - start
+
+            start = perf_counter()
+            flg_exact.append(self.FlagModel.objects.filter(flags=mask).count())
+            flg_exact_time += perf_counter() - start
+
+        with connection.cursor() as cursor:
+            table_size = get_table_size(
+                cursor, self.FlagModel._meta.db_table, total=True
+            )
+
+        return (
+            flg_all_time / len(masks),
+            flg_any_time / len(masks),
+            flg_exact_time / len(masks),
+            flg_all, flg_any, flg_exact,
+            table_size
+        )
+
+    def do_bool_query(self, masks, use_all=False):
+
+        bool_all = []
+        bool_any = []
+        bool_exact = []
+
+        bool_all_time = 0
+        bool_any_time = 0
+        bool_exact_time = 0
+
+        for mask in masks:
+            set_bits = get_set_bits(mask)
+
+            bq = [Q(**{f'flg_{flg}': True}) for flg in set_bits]
+            bq_all = reduce(and_, bq)
+            bq_any = reduce(or_, bq)
+
+            if use_all:
+                def get_all_q(set_bits):
+                    return [
+                        Q(**{f'flg_{flg}': True})
+                        if flg in set_bits else
+                        Q(**{f'flg_{flg}__in': [True, False]})
+                        for flg in range(self.num_flags)
+                    ]
+
+                bq_all = reduce(and_, get_all_q(set_bits))
+
+                # todo there is not a better way to formulate a has_any query
+                #  that will use the index ??
+
+                # bq_any = reduce(
+                #     or_,
+                #     [reduce(and_, get_all_q([bit])) for bit in set_bits]
+                # )
+
+            exact_q = reduce(
+                and_,
+                [
+                    Q(**{f'flg_{flg}': flg in set_bits})
+                    for flg in range(self.num_flags)
+                ]
+            )
+
+            # dont change query order
+            start = perf_counter()
+            bool_all.append(self.BoolModel.objects.filter(bq_all).count())
+            bool_all_time += perf_counter() - start
+
+            start = perf_counter()
+            if isinstance(bq_any, str):
+                with connection.cursor() as cursor:
+                    cursor.execute(bq_any)
+                    bool_any.append(int(cursor.fetchall()[0][0]))
+            else:
+                bool_any.append(self.BoolModel.objects.filter(bq_any).count())
+            bool_any_time += perf_counter() - start
+
+            start = perf_counter()
+            bool_exact.append(self.BoolModel.objects.filter(exact_q).count())
+            bool_exact_time += perf_counter() - start
+
+        with connection.cursor() as cursor:
+            table_size = get_table_size(
+                cursor, self.BoolModel._meta.db_table, total=True
+            )
+
+        return (
+            bool_all_time / len(masks),
+            bool_any_time / len(masks),
+            bool_exact_time / len(masks),
+            bool_all, bool_any, bool_exact,
+            table_size
+        )
+
+    def test_indexes(self):
+
+        vendor = os.environ.get('RDBMS', connection.vendor)
+
+        data = {}
+        if BENCHMARK_FILE.is_file():
+            with open(BENCHMARK_FILE, 'r') as bf:
+                try:
+                    data = json.load(bf)
+                except json.JSONDecodeError:
+                    pass
+        data.setdefault('queries', {}).setdefault(vendor, {})
+
+        def no_index():
+            pass
+
+        queries = {}
+        with tqdm(total=self.CHECK_POINTS[-1]) as pbar:
+            for check_point in self.CHECK_POINTS:
+                self.create_rows(check_point, pbar)
+
+                # keep search value at this point constant across methods
+                masks = [
+                    self.EnumClass(random.getrandbits(self.num_flags))
+                    for _ in range(10)
+                ]
+                all_mask_counts = [[] for _ in range(len(masks))]
+                any_mask_counts = [[] for _ in range(len(masks))]
+                exact_mask_counts = [[] for _ in range(len(masks))]
+                for index, name, query in [
+                    (no_index, '[FLAG] No Index', self.do_flag_query),
+                    (self.flag_single_index, '[FLAG] Single Index', self.do_flag_query),
+                    (no_index, '[BOOL] No Index', self.do_bool_query),
+                    (self.bool_column_indexes, '[BOOL] Col Index', self.do_bool_query),
+                    (self.bool_multi_column_indexes, '[BOOL] MultiCol Index', partial(self.do_bool_query, use_all=True)),
+                    #(self.postgres_gin, '[BOOL] GIN', self.do_bool_query),
+                ]:
+                    index()
+
+                    with CaptureQueriesContext(connection) as ctx:
+                        (
+                            all_time, any_time, exact_time,
+                            all_cnts, any_cnts, exact_cnts,
+                            table_size
+                        ) = query(masks)
+                        queries[f'{name} has_all'] = ctx.captured_queries[0]['sql']
+                        queries[f'{name} has_any'] = ctx.captured_queries[1]['sql']
+                        queries[f'{name} has_exact'] = ctx.captured_queries[2]['sql']
+
+                    for idx, (all_cnt, any_cnt, exact_cnt) in enumerate(
+                        zip(all_cnts, any_cnts, exact_cnts)
+                    ):
+                        all_mask_counts[idx].append(all_cnt)
+                        any_mask_counts[idx].append(any_cnt)
+                        exact_mask_counts[idx].append(exact_cnt)
+
+                    self.drop_indexes()
+
+                    index_benchmarks = data['queries'][vendor].setdefault(
+                        name, {}
+                    ).setdefault(self.num_flags, {})
+                    index_benchmarks[check_point] = {
+                        'all_time': all_time,
+                        'any_time': any_time,
+                        'exact_time': exact_time,
+                        'table_size': table_size
+                    }
+
+                # sanity checks
+                for all_counts, any_counts, exact_counts in zip(
+                        all_mask_counts,
+                        any_mask_counts,
+                        exact_mask_counts
+                ):
+                    try:
+                        self.assertEqual(max(all_counts), min(all_counts))
+                        self.assertEqual(max(any_counts), min(any_counts))
+                        self.assertEqual(max(exact_counts), min(exact_counts))
+                        self.assertGreater(any_counts[0], 0)
+                        self.assertGreater(any_counts[0], all_counts[0])
+                        self.assertTrue(all_counts[0] >= exact_counts[0])
+                    except AssertionError:
+                        import ipdb
+                        ipdb.set_trace()
+                        raise
+
+        with open(BENCHMARK_FILE, 'w') as bf:
+            bf.write(json.dumps(data, indent=4))
+
+    def drop_indexes(self):
+
+        def drop_index(table, index):
+            if connection.vendor in ['oracle', 'postgresql', 'sqlite']:
+                cursor.execute(f'DROP INDEX {index}')
+            elif connection.vendor == 'mysql':
+                cursor.execute(f'ALTER TABLE {table} DROP INDEX {index}')
+            else:
+                raise NotImplementedError(
+                    f'Drop index for vendor {connection.vendor} not '
+                    f'implemented!'
+                )
+
+        with connection.cursor() as cursor:
+
+            for idx in self.flag_indexes:
+                drop_index(self.FlagModel._meta.db_table, idx)
+            self.flag_indexes.clear()
+
+            for idx in self.bool_indexes:
+                drop_index(self.BoolModel._meta.db_table, idx)
+            self.bool_indexes.clear()
+
+    def postgres_gin(self):
+
+        with connection.cursor() as cursor:
+            """
+            Need a GIN operator for boolean columns
+            """
+            columns = ','.join([f'flg_{idx}' for idx in range(self.num_flags)])
+            cursor.execute(
+                f'CREATE INDEX bool_gin_index ON {self.BoolModel._meta.db_table} USING gin({columns})'
+            )
+            self.bool_indexes.append('bool_gin_index')
+
+    def bool_column_indexes(self):
+
+        with connection.cursor() as cursor:
+
+            for idx in range(self.num_flags):
+                idx_name = f'bool_{idx}'
+                cursor.execute(f'CREATE INDEX {idx_name} ON {self.BoolModel._meta.db_table} (flg_{idx})')
+                self.bool_indexes.append(idx_name)
+
+    def bool_multi_column_indexes(self):
+
+        with connection.cursor() as cursor:
+
+            idx_name = 'bool_multi'
+            columns = ','.join([f'flg_{idx}' for idx in range(self.num_flags)])
+            cursor.execute(
+                f'CREATE INDEX {idx_name} ON '
+                f'{self.BoolModel._meta.db_table} ({columns})'
+            )
+            self.bool_indexes.append(idx_name)
+
+    def flag_single_index(self):
+
+        with connection.cursor() as cursor:
+            idx_name = f'flag_idx'
+            cursor.execute(f'CREATE INDEX {idx_name} ON {self.FlagModel._meta.db_table} (flags)')
+            self.flag_indexes.append(idx_name)

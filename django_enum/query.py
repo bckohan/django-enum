@@ -82,7 +82,10 @@ class HasAnyFlagsLookup(HasAllFlagsLookup):  # pylint: disable=W0223
 
     def process_rhs(self, compiler, connection):
         rhs_sql, rhs_params = super().process_rhs(compiler, connection)
-        rhs_params[0] = 0
+        if rhs_params:
+            rhs_params[0] = 0
+        else:
+            rhs_sql = '0'
         return rhs_sql, rhs_params
 
     def get_rhs_op(self, connection, rhs):

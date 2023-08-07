@@ -396,7 +396,8 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Set Variables
-        # oracle bug is encountered in Linux CI - does not manifest on OSX
+        # oracle bug is encountered in Linux CI - does not manifest using same
+        # oracle DB containers on OSX
         run: echo "IGNORE_ORA_01843=True" >> $GITHUB_ENV
       - name: Install Poetry
         uses: snok/install-poetry@v1
@@ -418,4 +419,4 @@ jobs:
           poetry run pip install -U "${{ matrix.django-version }}"
       - name: Run Full Unit Tests
         run: |
-          poetry run pytest -s
+          poetry run pytest

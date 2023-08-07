@@ -492,21 +492,3 @@ than 64 flags it will be stored as a `BinaryField <https://docs.djangoproject.co
     bitwise operations. Most RDBMS systems do not support bitwise operations on
     binary fields. Future work may involve exploring support for this as a
     Postgres extension.
-
-
-Performance
-###########
-
-The cost to resolve a raw database value into an Enum_ type object is
-non-zero. ``EnumFields`` may not be appropriate for use cases at the very edge
-of critical performance targets, but for most scenarios the cost of using
-``EnumFields`` is negligible.
-
-An effort is made to characterize and monitor the performance penalty of
-using ``EnumFields`` over a Django_ native field with choices and integration
-tests ensure performance of future releases will not worsen.
-
-.. note::
-
-    The read performance penalty can be eliminated by setting ``coerce`` to
-    ``False``.

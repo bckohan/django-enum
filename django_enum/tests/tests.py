@@ -5,14 +5,17 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from pathlib import Path
 
+import pytest
 from bs4 import BeautifulSoup as Soup
 from django.core import serializers
 from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
 from django.db import connection, transaction
-from django.db.models import F, Q
+from django.db.models import F, Func, OuterRef, Q, Subquery
+from django.db.utils import DatabaseError
 from django.http import QueryDict
 from django.test import Client, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
@@ -24,7 +27,6 @@ from django_enum.fields import (
     IntegerFlagField,
     SmallIntegerFlagField,
 )
-from django.db.utils import DatabaseError
 from django_enum.forms import EnumChoiceField  # dont remove this
 # from django_enum.tests.djenum.enums import (
 #     BigIntEnum,
@@ -40,17 +42,16 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 #     ExternEnum
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
-from django_enum.tests.djenum.models import (
+from django_enum.tests.djenum.models import (  # EnumFlagTesterRelated
     BadDefault,
     EnumFlagTester,
     EnumTester,
 )
+from django_enum.tests.oracle_patch import patch_oracle
 from django_enum.tests.utils import try_convert
 from django_enum.utils import choices, get_set_bits, labels, names, values
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
-from django.test.utils import CaptureQueriesContext
-import pytest
 
 try:
     import django_filters
@@ -76,23 +77,7 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 
 IGNORE_ORA_01843 = os.environ.get('IGNORE_ORA_01843', False) in ['true', 'True', '1', 'yes', 'YES']
 print(f'IGNORE_ORA_01843: {IGNORE_ORA_01843}')
-
-# monkey patch a fix to django oracle backend bug, blocks all oracle tests
-from django.db.backends.oracle.schema import DatabaseSchemaEditor
-from django.utils.duration import duration_iso_string
-
-quote_value = DatabaseSchemaEditor.quote_value
-
-
-def quote_value_patched(self, value):
-    if isinstance(value, date) and not isinstance(value, datetime):
-        return "DATE '%s'" % value.isoformat()
-    elif isinstance(value, timedelta):
-        return "'%s'" % duration_iso_string(value)
-    return quote_value(self, value)
-
-
-DatabaseSchemaEditor.quote_value = quote_value_patched
+patch_oracle()
 ###############################################################################
 
 
@@ -984,9 +969,10 @@ class TestChoices(EnumTypeMixin, TestCase):
         # print(len(obj.non_strict_text))
 
     def test_serialization(self):
-        from django.db.utils import DatabaseError
-        from django.db import connection
         from pprint import pprint
+
+        from django.db import connection
+        from django.db.utils import DatabaseError
 
         with CaptureQueriesContext(connection) as ctx:
             # code that runs SQL queries
@@ -2556,6 +2542,7 @@ class UtilsTests(TestCase):
 class FlagTests(TestCase):
 
     MODEL_CLASS = EnumFlagTester
+    #RELATED_CLASS = EnumFlagTesterRelated
 
     def test_flag_filters(self):
         fields = [
@@ -2764,6 +2751,71 @@ class FlagTests(TestCase):
         self.assertEqual(compound_qry.count(), 2)
         for obj in compound_qry:
             self.assertTrue(obj.small_pos is None and obj.pos & EnumClass.ONE)
+
+    def test_subquery(self):
+
+        EnumClass = self.MODEL_CLASS._meta.get_field('pos').enum
+        self.MODEL_CLASS.objects.all().delete()
+
+        objects = [
+            self.MODEL_CLASS.objects.create(
+                pos=EnumClass.TWO | EnumClass.FOUR | EnumClass.FIVE
+            ),
+            self.MODEL_CLASS.objects.create(
+                pos=EnumClass.ONE | EnumClass.THREE
+            ),
+            self.MODEL_CLASS.objects.create(
+                pos=EnumClass.TWO | EnumClass.FOUR
+            ),
+            self.MODEL_CLASS.objects.create(
+                pos=EnumClass.FIVE
+            ),
+            self.MODEL_CLASS.objects.create(
+                pos=(
+                    EnumClass.ONE | EnumClass.TWO | EnumClass.THREE |
+                    EnumClass.FOUR | EnumClass.FIVE
+                )
+            )
+        ]
+
+        exact_matches = self.MODEL_CLASS.objects.filter(
+            pos__exact=OuterRef("pos")
+        ).order_by().annotate(
+            count=Func(F('id'), function='Count')
+        ).values('count')
+
+        any_matches = self.MODEL_CLASS.objects.filter(
+            pos__has_any=OuterRef("pos")
+        ).order_by().annotate(
+            count=Func(F('id'), function='Count')
+        ).values('count')
+
+        all_matches = self.MODEL_CLASS.objects.filter(
+            pos__has_all=OuterRef("pos")
+        ).order_by().annotate(
+            count=Func(F('id'), function='Count')
+        ).values('count')
+
+        for obj in self.MODEL_CLASS.objects.annotate(
+            exact_matches=Subquery(exact_matches)
+        ):
+            self.assertEqual(obj.exact_matches, 1)
+
+        for expected, obj in zip(
+            [2, 2, 3, 3, 1],
+            self.MODEL_CLASS.objects.annotate(
+                all_matches=Subquery(all_matches)
+            ).order_by('id')
+        ):
+            self.assertEqual(obj.all_matches, expected)
+
+        for expected, obj in zip(
+            [4, 2, 3, 3, 5],
+            self.MODEL_CLASS.objects.annotate(
+                any_matches=Subquery(any_matches)
+            ).order_by('id')
+        ):
+            self.assertEqual(obj.any_matches, expected)
 
     def test_unsupported_flags(self):
         obj = self.MODEL_CLASS.objects.create()

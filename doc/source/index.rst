@@ -181,5 +181,6 @@ exception will be thrown.
 
    usage
    examples
+   performance
    reference
    changelog
