@@ -11,7 +11,7 @@ from django.core import serializers
 from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
 from django.db import connection, transaction
-from django.db.models import F, Func, OuterRef, Q, Subquery
+from django.db.models import Count, F, Func, OuterRef, Q, Subquery
 from django.db.utils import DatabaseError
 from django.http import QueryDict
 from django.test import Client, TestCase
@@ -42,9 +42,10 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 #     ExternEnum
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
-from django_enum.tests.djenum.models import (  # EnumFlagTesterRelated
+from django_enum.tests.djenum.models import (
     BadDefault,
     EnumFlagTester,
+    EnumFlagTesterRelated,
     EnumTester,
 )
 from django_enum.tests.oracle_patch import patch_oracle
@@ -2542,7 +2543,7 @@ class UtilsTests(TestCase):
 class FlagTests(TestCase):
 
     MODEL_CLASS = EnumFlagTester
-    #RELATED_CLASS = EnumFlagTesterRelated
+    RELATED_CLASS = EnumFlagTesterRelated
 
     def test_flag_filters(self):
         fields = [
@@ -2753,6 +2754,7 @@ class FlagTests(TestCase):
             self.assertTrue(obj.small_pos is None and obj.pos & EnumClass.ONE)
 
     def test_subquery(self):
+        """test that has_any and has_all work with complex queries involving subqueries"""
 
         for field in [
             field for field in self.MODEL_CLASS._meta.fields
@@ -2822,6 +2824,83 @@ class FlagTests(TestCase):
             ):
                 self.assertEqual(obj.any_matches, expected)
 
+    def test_joins(self):
+        """test that has_any and has_all work with complex queries involving joins"""
+
+        for field in [
+            field for field in self.MODEL_CLASS._meta.fields
+            if isinstance(field, FlagField)
+            and not isinstance(field, ExtraBigIntegerFlagField)
+        ]:
+            EnumClass = field.enum
+            self.MODEL_CLASS.objects.all().delete()
+
+            objects = [
+                self.MODEL_CLASS.objects.create(
+                    **{field.name: EnumClass.TWO | EnumClass.FOUR | EnumClass.FIVE}
+                ),
+                self.MODEL_CLASS.objects.create(
+                    **{field.name: EnumClass.ONE | EnumClass.THREE}
+                ),
+                self.MODEL_CLASS.objects.create(
+                    **{field.name: EnumClass.TWO | EnumClass.FOUR}
+                ),
+                self.MODEL_CLASS.objects.create(**{field.name: EnumClass.FIVE}),
+                self.MODEL_CLASS.objects.create(
+                    **{
+                        field.name: (
+                            EnumClass.ONE | EnumClass.TWO | EnumClass.THREE |
+                            EnumClass.FOUR | EnumClass.FIVE
+                        )
+                    }
+                )
+            ]
+            related = []
+            for obj in objects:
+                related.append([
+                    self.RELATED_CLASS.objects.create(
+                        **{field.name: EnumClass.TWO | EnumClass.FOUR | EnumClass.FIVE}
+                    ),
+                    self.RELATED_CLASS.objects.create(
+                        **{field.name: EnumClass.ONE | EnumClass.THREE}
+                    ),
+                    self.RELATED_CLASS.objects.create(
+                        **{field.name: EnumClass.TWO | EnumClass.FOUR}
+                    ),
+                    self.RELATED_CLASS.objects.create(**{field.name: EnumClass.FIVE}),
+                    self.RELATED_CLASS.objects.create(
+                        **{
+                            field.name: (
+                                EnumClass.ONE | EnumClass.TWO | EnumClass.THREE |
+                                EnumClass.FOUR | EnumClass.FIVE
+                            )
+                        }
+                    )
+                ])
+                for rel in related[-1]:
+                    rel.related_flags.add(obj)
+
+            for obj in self.MODEL_CLASS.objects.annotate(
+                exact_matches=Count('related_flags__id', filter=Q(**{f'related_flags__{field.name}__exact': F(field.name)}))
+            ):
+                self.assertEqual(obj.exact_matches, 1)
+
+            for idx, (expected, obj) in enumerate(zip(
+                [2, 2, 3, 3, 1],
+                self.MODEL_CLASS.objects.annotate(
+                    all_matches=Count('related_flags__id', filter=Q(**{f'related_flags__{field.name}__has_all': F(field.name)}))
+                ).order_by('id')
+            )):
+                self.assertEqual(obj.all_matches, expected)
+
+            for idx, (expected, obj) in enumerate(zip(
+                [4, 2, 3, 3, 5],
+                self.MODEL_CLASS.objects.annotate(
+                    any_matches=Count('related_flags__id', filter=Q(**{f'related_flags__{field.name}__has_any': F(field.name)}))
+                ).order_by('id')
+            )):
+                self.assertEqual(obj.any_matches, expected)
+
     def test_unsupported_flags(self):
         obj = self.MODEL_CLASS.objects.create()
         for field in [
@@ -2852,6 +2931,7 @@ if ENUM_PROPERTIES_INSTALLED:
     from django_enum.tests.enum_prop.models import (
         BitFieldModel,
         EnumFlagPropTester,
+        EnumFlagPropTesterRelated,
         EnumTester,
         MyModel,
     )
@@ -4724,6 +4804,7 @@ def remove_color_values(apps, schema_editor):
     class FlagTestsProp(FlagTests):
 
         MODEL_CLASS = EnumFlagPropTester
+        RELATED_CLASS = EnumFlagPropTesterRelated
 
         def test_prop_enum(self):
 

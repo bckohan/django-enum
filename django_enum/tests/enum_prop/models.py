@@ -287,7 +287,7 @@ try:
         no_default = EnumField(LargeBitField)
 
 
-    class EnumFlagPropTester(models.Model):
+    class BaseEnumFlagPropTester(models.Model):
 
         small_pos = EnumField(
             SmallPositiveFlagEnum,
@@ -354,6 +354,20 @@ try:
                    f'small_neg={repr(self.small_neg)}, neg={repr(self.neg)}, ' \
                    f'big_neg={repr(self.big_neg)}, ' \
                    f'extra_big_neg={repr(self.extra_big_neg)})'
+
+        class Meta:
+            abstract = True
+
+
+    class EnumFlagPropTester(BaseEnumFlagPropTester):
+        pass
+
+    class EnumFlagPropTesterRelated(BaseEnumFlagPropTester):
+
+        related_flags = models.ManyToManyField(
+            EnumFlagPropTester,
+            related_name='related_flags'
+        )
 
 
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
