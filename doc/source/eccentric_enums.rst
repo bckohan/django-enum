@@ -30,7 +30,7 @@ and map to the obvious Django model field type:
 
 While it is mostly not advisable to use eccentric enumerations, there may be
 some compelling reasons to do so. For example, it may make sense in
-situations where the database will be used in a non-Django context and the
+situations where the database will be used in a non-Python context and the
 enumeration values need to retain their native meaning.
 
 
@@ -55,7 +55,7 @@ Mixed value enumerations are supported. For example:
 ``EnumField`` will determine the most appropriate database column type to store
 the enumeration by trying each of the supported primitive types in order and
 selecting the first one that is symmetrically coercible to and from each
-enumeration value. None values are allowed and do not take part in the
+enumeration value. ``None`` values are allowed and do not take part in the
 primitive type selection. In the above example, the database column type would
 be a string.
 
@@ -78,7 +78,7 @@ to override the Enum_'s ``_missing_`` method:
     # primitive will be a float
     eccentric_float = EnumField(EccentricEnum, primitive=float)
 
-In the above case since None is an enumeration value, ``EnumField`` will
+In the above case since ``None`` is an enumeration value, ``EnumField`` will
 automatically set null=True on the model field.
 
 Custom Enumeration Values
