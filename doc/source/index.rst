@@ -182,5 +182,6 @@ exception will be thrown.
    usage
    examples
    performance
+   eccentric_enums
    reference
    changelog

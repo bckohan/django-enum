@@ -79,7 +79,7 @@ does a full table scan:
 
    Query performance comparison without indexing. In this scenario, with a 16
    flag bitmask compared to 16 boolean columns, each of the three query types
-   perform roughly 20% faster on PostgreSQL.
+   perform roughly 20-40% faster on PostgreSQL.
 
 
 Indexed Exact Queries

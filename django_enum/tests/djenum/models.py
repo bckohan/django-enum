@@ -24,12 +24,15 @@ from django_enum.tests.djenum.enums import (
     MultiPrimitiveEnum,
     MultiWithNone,
     NegativeFlagEnum,
+    PathEnum,
     PosIntEnum,
     PositiveFlagEnum,
     SmallIntEnum,
     SmallNegativeFlagEnum,
     SmallPosIntEnum,
     SmallPositiveFlagEnum,
+    StrProps,
+    StrPropsEnum,
     TextEnum,
     TimeEnum,
 )
@@ -394,3 +397,10 @@ class MultiPrimitiveTestModel(models.Model):
         constrained=False,
         strict=False
     )
+
+
+class CustomPrimitiveTestModel(models.Model):
+
+    path = EnumField(PathEnum, primitive=str)
+
+    str_props = EnumField(StrPropsEnum, primitive=str)

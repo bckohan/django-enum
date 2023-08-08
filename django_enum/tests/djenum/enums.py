@@ -1,6 +1,7 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum, IntEnum, IntFlag
+from pathlib import Path
 
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import Choices
@@ -326,3 +327,49 @@ class MultiWithNone(Enum):
     VAL2 = '2.0'
     VAL3 = 3.0
     VAL4 = Decimal('4.5')
+
+
+class PathEnum(Enum):
+
+    USR = Path('/usr')
+    USR_LOCAL = Path('/usr/local')
+    USR_LOCAL_BIN = Path('/usr/local/bin')
+
+
+class StrProps:
+    """
+    Wrap a string with some properties.
+    """
+
+    _str = ''
+
+    def __init__(self, string):
+        self._str = string
+
+    def __str__(self):
+        return self._str
+
+    @property
+    def upper(self):
+        return self._str.upper()
+
+    @property
+    def lower(self):
+        return self._str.lower()
+
+    def __eq__(self, other):
+        if isinstance(other, str):
+            return self._str == other
+        if other is not None:
+            return self._str == other._str
+        return False
+
+    def deconstruct(self):
+        return 'django_enum.tests.djenum.enums.StrProps', (self._str,), {}
+
+
+class StrPropsEnum(Enum):
+
+    STR1 = StrProps('str1')
+    STR2 = StrProps('str2')
+    STR3 = StrProps('str3')

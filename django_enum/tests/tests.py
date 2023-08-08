@@ -406,6 +406,63 @@ class TestEccentricEnums(TestCase):
         self.assertEqual(form_field3.choices, choices(MultiWithNone))
         self.assertEqual(form_field3.primitive, str)
 
+    def test_custom_primitive(self):
+        from django_enum.tests.djenum.enums import (
+            PathEnum,
+            StrProps,
+            StrPropsEnum,
+        )
+        from django_enum.tests.djenum.models import CustomPrimitiveTestModel
+
+        obj = CustomPrimitiveTestModel.objects.create(
+            path='/usr/local',
+            str_props='str1'
+        )
+        self.assertEqual(obj.path, PathEnum.USR_LOCAL)
+        self.assertEqual(obj.str_props, StrPropsEnum.STR1)
+
+        obj2 = CustomPrimitiveTestModel.objects.create(
+            path=PathEnum.USR,
+            str_props=StrPropsEnum.STR2
+        )
+        self.assertEqual(obj2.path, PathEnum.USR)
+        self.assertEqual(obj2.str_props, StrPropsEnum.STR2)
+
+        obj3 = CustomPrimitiveTestModel.objects.create(
+            path=Path('/usr/local/bin'),
+            str_props=StrProps('str3')
+        )
+        self.assertEqual(obj3.path, PathEnum.USR_LOCAL_BIN)
+        self.assertEqual(obj3.str_props, StrPropsEnum.STR3)
+
+        self.assertEqual(
+            obj,
+            CustomPrimitiveTestModel.objects.get(path='/usr/local')
+        )
+        self.assertEqual(
+            obj,
+            CustomPrimitiveTestModel.objects.get(str_props='str1')
+        )
+
+        self.assertEqual(
+            obj2,
+            CustomPrimitiveTestModel.objects.get(path=PathEnum.USR)
+        )
+        self.assertEqual(
+            obj2,
+            CustomPrimitiveTestModel.objects.get(str_props=StrPropsEnum.STR2)
+        )
+
+        self.assertEqual(
+            obj3,
+            CustomPrimitiveTestModel.objects.get(path=Path('/usr/local/bin')),
+        )
+
+        self.assertEqual(
+            obj3,
+            CustomPrimitiveTestModel.objects.get(str_props=StrProps('str3')),
+        )
+
 
 class TestEnumCompat(TestCase):
     """ Test that django_enum allows non-choice derived enums to be used """
