@@ -2754,68 +2754,73 @@ class FlagTests(TestCase):
 
     def test_subquery(self):
 
-        EnumClass = self.MODEL_CLASS._meta.get_field('pos').enum
-        self.MODEL_CLASS.objects.all().delete()
+        for field in [
+            field for field in self.MODEL_CLASS._meta.fields
+            if isinstance(field, FlagField)
+            and not isinstance(field, ExtraBigIntegerFlagField)
+        ]:
+            EnumClass = field.enum
+            self.MODEL_CLASS.objects.all().delete()
 
-        objects = [
-            self.MODEL_CLASS.objects.create(
-                pos=EnumClass.TWO | EnumClass.FOUR | EnumClass.FIVE
-            ),
-            self.MODEL_CLASS.objects.create(
-                pos=EnumClass.ONE | EnumClass.THREE
-            ),
-            self.MODEL_CLASS.objects.create(
-                pos=EnumClass.TWO | EnumClass.FOUR
-            ),
-            self.MODEL_CLASS.objects.create(
-                pos=EnumClass.FIVE
-            ),
-            self.MODEL_CLASS.objects.create(
-                pos=(
-                    EnumClass.ONE | EnumClass.TWO | EnumClass.THREE |
-                    EnumClass.FOUR | EnumClass.FIVE
+            objects = [
+                self.MODEL_CLASS.objects.create(
+                    **{field.name: EnumClass.TWO | EnumClass.FOUR | EnumClass.FIVE}
+                ),
+                self.MODEL_CLASS.objects.create(
+                    **{field.name: EnumClass.ONE | EnumClass.THREE}
+                ),
+                self.MODEL_CLASS.objects.create(
+                    **{field.name: EnumClass.TWO | EnumClass.FOUR}
+                ),
+                self.MODEL_CLASS.objects.create(**{field.name: EnumClass.FIVE}),
+                self.MODEL_CLASS.objects.create(
+                    **{
+                        field.name: (
+                            EnumClass.ONE | EnumClass.TWO | EnumClass.THREE |
+                            EnumClass.FOUR | EnumClass.FIVE
+                        )
+                    }
                 )
-            )
-        ]
+            ]
 
-        exact_matches = self.MODEL_CLASS.objects.filter(
-            pos__exact=OuterRef("pos")
-        ).order_by().annotate(
-            count=Func(F('id'), function='Count')
-        ).values('count')
+            exact_matches = self.MODEL_CLASS.objects.filter(
+                **{f'{field.name}__exact': OuterRef(field.name)}
+            ).order_by().annotate(
+                count=Func(F('id'), function='Count')
+            ).values('count')
 
-        any_matches = self.MODEL_CLASS.objects.filter(
-            pos__has_any=OuterRef("pos")
-        ).order_by().annotate(
-            count=Func(F('id'), function='Count')
-        ).values('count')
+            any_matches = self.MODEL_CLASS.objects.filter(
+                **{f'{field.name}__has_any': OuterRef(field.name)}
+            ).order_by().annotate(
+                count=Func(F('id'), function='Count')
+            ).values('count')
 
-        all_matches = self.MODEL_CLASS.objects.filter(
-            pos__has_all=OuterRef("pos")
-        ).order_by().annotate(
-            count=Func(F('id'), function='Count')
-        ).values('count')
+            all_matches = self.MODEL_CLASS.objects.filter(
+                **{f'{field.name}__has_all': OuterRef(field.name)}
+            ).order_by().annotate(
+                count=Func(F('id'), function='Count')
+            ).values('count')
 
-        for obj in self.MODEL_CLASS.objects.annotate(
-            exact_matches=Subquery(exact_matches)
-        ):
-            self.assertEqual(obj.exact_matches, 1)
+            for obj in self.MODEL_CLASS.objects.annotate(
+                exact_matches=Subquery(exact_matches)
+            ):
+                self.assertEqual(obj.exact_matches, 1)
 
-        for expected, obj in zip(
-            [2, 2, 3, 3, 1],
-            self.MODEL_CLASS.objects.annotate(
-                all_matches=Subquery(all_matches)
-            ).order_by('id')
-        ):
-            self.assertEqual(obj.all_matches, expected)
+            for expected, obj in zip(
+                [2, 2, 3, 3, 1],
+                self.MODEL_CLASS.objects.annotate(
+                    all_matches=Subquery(all_matches)
+                ).order_by('id')
+            ):
+                self.assertEqual(obj.all_matches, expected)
 
-        for expected, obj in zip(
-            [4, 2, 3, 3, 5],
-            self.MODEL_CLASS.objects.annotate(
-                any_matches=Subquery(any_matches)
-            ).order_by('id')
-        ):
-            self.assertEqual(obj.any_matches, expected)
+            for expected, obj in zip(
+                [4, 2, 3, 3, 5],
+                self.MODEL_CLASS.objects.annotate(
+                    any_matches=Subquery(any_matches)
+                ).order_by('id')
+            ):
+                self.assertEqual(obj.any_matches, expected)
 
     def test_unsupported_flags(self):
         obj = self.MODEL_CLASS.objects.create()
