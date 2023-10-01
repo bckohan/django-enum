@@ -10,9 +10,9 @@
 .. |PyPI pyversions| image:: https://img.shields.io/pypi/pyversions/django-enum.svg
    :target: https://pypi.python.org/pypi/django-enum/
 
-.. |PyPI djversions| image:: https://img.shields.io/pypi/djversions/your-package-name.svg
+.. |PyPI djversions| image:: https://img.shields.io/pypi/djversions/django-enum.svg
    :alt: Supported Django versions
-   :target: https://pypi.org/project/your-package-name/
+   :target: https://pypi.org/project/django-enum/
 
 .. |PyPI status| image:: https://img.shields.io/pypi/status/django-enum.svg
    :target: https://pypi.python.org/pypi/django-enum
