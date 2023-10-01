@@ -10,7 +10,7 @@ from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import Q
 from django.http import QueryDict
-from django.test import Client, TestCase
+from django.test import Client, TestCase, LiveServerTestCase
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import TextChoices
@@ -30,7 +30,7 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 #     ExternEnum
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
-from django_enum.tests.djenum.models import BadDefault, EnumTester
+from django_enum.tests.djenum.models import BadDefault, EnumTester, AdminDisplayBug35
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
@@ -964,6 +964,53 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
         self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, big_pos_int=type('WrongType')())
 
 
+class TestAdmin(EnumTypeMixin, LiveServerTestCase):
+
+    BUG35_CLASS = AdminDisplayBug35
+
+    def test_admin_list_display_bug35(self):
+        from django.contrib.auth import get_user_model
+
+        get_user_model().objects.create_superuser(
+            username='admin',
+            email='admin@django-enum.com',
+            password='admin_password',
+        )
+        self.client.login(username='admin', password='admin_password')
+
+        obj = self.BUG35_CLASS.objects.create()
+
+        resp = self.client.get(
+            reverse(f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_changelist')
+        )
+        self.assertContains(resp, '<td class="field-int_enum">Value 2</td>')
+        change_link = reverse(
+            f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_change',
+            args=[obj.id]
+        )
+        self.assertContains(resp, f'<a href="{change_link}">Value1</a>')
+
+    def test_admin_change_display_bug35(self):
+        from django.contrib.auth import get_user_model
+
+        get_user_model().objects.create_superuser(
+            username='admin',
+            email='admin@django-enum.com',
+            password='admin_password',
+        )
+        self.client.login(username='admin', password='admin_password')
+
+        obj = self.BUG35_CLASS.objects.create()
+        resp = self.client.get(
+            reverse(
+                f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_change',
+                args=[obj.id]
+            )
+        )
+        self.assertContains(resp, '<div class="readonly">Value1</div>')
+        self.assertContains(resp, '<div class="readonly">Value 2</div>')
+
+
 class TestFormField(EnumTypeMixin, TestCase):
 
     MODEL_CLASS = EnumTester
@@ -1788,6 +1835,7 @@ if ENUM_PROPERTIES_INSTALLED:
         SingleEnumPerf,
         SingleFieldPerf,
         SingleNoCoercePerf,
+        AdminDisplayBug35
     )
     from enum_properties import EnumProperties, s
 
@@ -2098,6 +2146,11 @@ if ENUM_PROPERTIES_INSTALLED:
             tester.text = None
             tester.save()
             self.assertEqual(tester.text, None)
+
+
+    class TestEnumPropAdmin(TestAdmin):
+
+        BUG35_CLASS = AdminDisplayBug35
 
 
     class TestSymmetricEmptyValEquivalency(TestCase):
