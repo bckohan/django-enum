@@ -68,6 +68,7 @@ importlib-metadata = [
     { version = "<5.0", markers = "python_version <= '3.7'" },
     { version = ">=5.0", markers = "python_version > '3.7'" },
 ]
+ipdb = "^0.13.13"
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]

@@ -2104,24 +2104,40 @@ if ENUM_PROPERTIES_INSTALLED:
 
         def test(self):
 
-            class EmptyEqEnum(TextChoices, s('prop', case_fold=True)):
+            # version 1.5.0 of enum_properties changed the default symmetricity
+            # of none values.
+            from enum_properties import VERSION
+            match_none = {} if VERSION < (1, 5, 0) else {'match_none': True}
 
-                A = 'A', 'ok'
-                B = 'B', 'none'
+            class EmptyEqEnum(EnumProperties, s('label', case_fold=True)):
+
+                A = 'A', 'A Label'
+                B = None, 'B Label'
 
             try:
                 form_field = EnumChoiceField(enum=EmptyEqEnum)
-                self.assertTrue(None not in form_field.empty_values)
-            except Exception:  # pragma: no cover
+            except Exception as err:  # pragma: no cover
                 self.fail(
                     "EnumChoiceField() raised value error with alternative"
                     "empty_value set."
                 )
 
-            # version 1.5.0 of enum_properties changed the default symmetricity
-            # of none values.
-            from enum_properties import VERSION
-            match_none = {} if VERSION < (1, 5, 0) else {'match_none': True}
+            self.assertTrue(None not in form_field.empty_values)
+
+            class EmptyEqEnum(EnumProperties, s('label', case_fold=True), s('prop', match_none=True)):
+
+                A = 'A', 'A Label', 4
+                B = 'B', 'B Label', None
+
+            try:
+                form_field = EnumChoiceField(enum=EmptyEqEnum)
+            except Exception as err:  # pragma: no cover
+                self.fail(
+                    "EnumChoiceField() raised value error with alternative"
+                    "empty_value set."
+                )
+
+            self.assertTrue(None not in form_field.empty_values)
             
             class EmptyEqEnum2(
                 TextChoices,
