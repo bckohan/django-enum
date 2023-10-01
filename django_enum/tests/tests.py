@@ -2128,6 +2128,7 @@ if ENUM_PROPERTIES_INSTALLED:
 
                 A = 'A', 'A Label', 4
                 B = 'B', 'B Label', None
+                C = 'C', 'C Label', ''
 
             try:
                 form_field = EnumChoiceField(enum=EmptyEqEnum)
@@ -2137,7 +2138,10 @@ if ENUM_PROPERTIES_INSTALLED:
                     "empty_value set."
                 )
 
+            # this is pathological
             self.assertTrue(None not in form_field.empty_values)
+            self.assertTrue('' not in form_field.empty_values)
+            self.assertTrue(form_field.empty_value == form_field.empty_values[0])
             
             class EmptyEqEnum2(
                 TextChoices,

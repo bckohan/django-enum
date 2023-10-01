@@ -98,7 +98,7 @@ class EnumChoiceField(TypedChoiceField):
                         empty for empty in self.empty_values
                         if empty != enum_val
                     ]
-                    if empty == self.empty_value:
+                    if enum_val == self.empty_value:
                         if self.empty_values:
                             self.empty_value = self.empty_values[0]
                         else:
