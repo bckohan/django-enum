@@ -193,6 +193,31 @@ try:
         color = EnumField(Color)
 
 
+    class AdminDisplayBug35(models.Model):
+
+        text_enum = EnumField(
+            TextEnum,
+            default=TextEnum.VALUE1
+        )
+
+        int_enum = EnumField(
+            SmallPosIntEnum,
+            default=SmallPosIntEnum.VAL2
+        )
+
+        blank_int = EnumField(
+            SmallPosIntEnum,
+            null=True,
+            default=None
+        )
+
+        blank_txt = EnumField(
+            TextEnum,
+            null=True,
+            default=None
+        )
+
+
     class PerfCompare(models.Model):
 
         small_pos_int = models.PositiveSmallIntegerField(choices=SmallPosIntEnum.choices, null=True, default=None, db_index=True, blank=True)

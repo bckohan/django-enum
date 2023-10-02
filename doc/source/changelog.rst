@@ -16,6 +16,12 @@ v2.0.0
 * Fixed `When coerce is false, to_python does not convert to the Enum's primitive type <https://github.com/bckohan/django-enum/issues/39>`_
 * Fixed `None should be an allowable enumeration value in enums of any primitive type. <https://github.com/bckohan/django-enum/issues/42>`_
 
+v1.2.2
+======
+
+* Added `Support python 3.12. <https://github.com/bckohan/django-enum/issues/52>`_
+* Fixed `EnumFields don't display correctly in the Admin when set to read_only. <https://github.com/bckohan/django-enum/issues/35>`_
+
 v1.2.1
 ======
 

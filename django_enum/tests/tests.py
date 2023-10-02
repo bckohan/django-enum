@@ -14,8 +14,8 @@ from django.db import connection, transaction
 from django.db.models import Count, F, Func, OuterRef, Q, Subquery
 from django.db.utils import DatabaseError
 from django.http import QueryDict
-from django.test import Client, TestCase
 from django.test.utils import CaptureQueriesContext
+from django.test import Client, LiveServerTestCase, TestCase
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
@@ -43,6 +43,7 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
 from django_enum.tests.djenum.models import (
+    AdminDisplayBug35,
     BadDefault,
     EnumFlagTester,
     EnumFlagTesterRelated,
@@ -1543,6 +1544,53 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
         self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, big_pos_int=type('WrongType')())
 
 
+class TestAdmin(EnumTypeMixin, LiveServerTestCase):
+
+    BUG35_CLASS = AdminDisplayBug35
+
+    def test_admin_list_display_bug35(self):
+        from django.contrib.auth import get_user_model
+
+        get_user_model().objects.create_superuser(
+            username='admin',
+            email='admin@django-enum.com',
+            password='admin_password',
+        )
+        self.client.login(username='admin', password='admin_password')
+
+        obj = self.BUG35_CLASS.objects.create()
+
+        resp = self.client.get(
+            reverse(f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_changelist')
+        )
+        self.assertContains(resp, '<td class="field-int_enum">Value 2</td>')
+        change_link = reverse(
+            f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_change',
+            args=[obj.id]
+        )
+        self.assertContains(resp, f'<a href="{change_link}">Value1</a>')
+
+    def test_admin_change_display_bug35(self):
+        from django.contrib.auth import get_user_model
+
+        get_user_model().objects.create_superuser(
+            username='admin',
+            email='admin@django-enum.com',
+            password='admin_password',
+        )
+        self.client.login(username='admin', password='admin_password')
+
+        obj = self.BUG35_CLASS.objects.create()
+        resp = self.client.get(
+            reverse(
+                f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_change',
+                args=[obj.id]
+            )
+        )
+        self.assertContains(resp, '<div class="readonly">Value1</div>')
+        self.assertContains(resp, '<div class="readonly">Value 2</div>')
+
+
 class TestFormField(EnumTypeMixin, TestCase):
 
     MODEL_CLASS = EnumTester
@@ -2989,6 +3037,7 @@ if ENUM_PROPERTIES_INSTALLED:
         BitFieldModel,
         EnumFlagPropTester,
         EnumFlagPropTesterRelated,
+        AdminDisplayBug35,
         EnumTester,
         MyModel,
     )
@@ -3313,6 +3362,11 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertEqual(tester.text, None)
 
 
+    class TestEnumPropAdmin(TestAdmin):
+
+        BUG35_CLASS = AdminDisplayBug35
+
+
     class TestSymmetricEmptyValEquivalency(TestCase):
 
         def test(self):
@@ -3345,6 +3399,40 @@ if ENUM_PROPERTIES_INSTALLED:
             # of none values.
             from enum_properties import VERSION
             match_none = {} if VERSION < (1, 5, 0) else {'match_none': True}
+
+            class EmptyEqEnum(EnumProperties, s('label', case_fold=True)):
+
+                A = 'A', 'A Label'
+                B = None, 'B Label'
+
+            try:
+                form_field = EnumChoiceField(enum=EmptyEqEnum)
+            except Exception as err:  # pragma: no cover
+                self.fail(
+                    "EnumChoiceField() raised value error with alternative"
+                    "empty_value set."
+                )
+
+            self.assertTrue(None not in form_field.empty_values)
+
+            class EmptyEqEnum(EnumProperties, s('label', case_fold=True), s('prop', match_none=True)):
+
+                A = 'A', 'A Label', 4
+                B = 'B', 'B Label', None
+                C = 'C', 'C Label', ''
+
+            try:
+                form_field = EnumChoiceField(enum=EmptyEqEnum)
+            except Exception as err:  # pragma: no cover
+                self.fail(
+                    "EnumChoiceField() raised value error with alternative"
+                    "empty_value set."
+                )
+
+            # this is pathological
+            self.assertTrue(None not in form_field.empty_values)
+            self.assertTrue('' not in form_field.empty_values)
+            self.assertTrue(form_field.empty_value == form_field.empty_values[0])
             
             class EmptyEqEnum2(
                 TextChoices,

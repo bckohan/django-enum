@@ -12,4 +12,7 @@ security: # configuration for the `safety check` command
             reason: dev dependency
         53269:
             reason: dev dependency
+            #expires: '2022-10-21' # datetime string - date this ignore will expire, best practice to use this variable
+        51499:
+            reason: dev dependency
     continue-on-vulnerability-error: False # Suppress non-zero exit codes when vulnerabilities are found. Enable this in pipelines and CI/CD processes if you want to pass builds that have vulnerabilities. We recommend you set this to False.

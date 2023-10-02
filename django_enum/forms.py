@@ -99,7 +99,7 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
     _primitive_: Optional[Type] = None
     _strict_: bool = True
     empty_value: Any = ''
-    empty_values: List[Any]
+    empty_values: List[Any] = TypedChoiceField.empty_values
     choices: Iterable[Tuple[Any, Any]]
 
     _empty_value_overridden_: bool = False

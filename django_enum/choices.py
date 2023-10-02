@@ -65,6 +65,9 @@ try:
         accepts enum-properties property lists.
         """
 
+        def __hash__(self):
+            return DjangoTextChoices.__hash__(self)
+
 
     class IntegerChoices(
         DjangoSymmetricMixin,
@@ -75,6 +78,9 @@ try:
         An integer enumeration type that extends Django's IntegerChoices and
         accepts enum-properties property lists.
         """
+
+        def __hash__(self):
+            return DjangoIntegerChoices.__hash__(self)
 
 
     class FloatChoices(
@@ -87,6 +93,10 @@ try:
         A floating point enumeration type that accepts enum-properties
         property lists.
         """
+
+        def __hash__(self):
+            return float.__hash__(self)
+
 
     # mult inheritance type hint bug
     class FlagChoices(  # type: ignore
@@ -107,6 +117,10 @@ try:
         An integer flag enumeration type that accepts enum-properties property
         lists.
         """
+
+        def __hash__(self):
+            return enum.IntFlag.__hash__(self)
+
 
 
 except (ImportError, ModuleNotFoundError):
