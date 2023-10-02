@@ -2,6 +2,12 @@
 Change Log
 ==========
 
+v1.2.2
+======
+
+* Added `Support python 3.12. <https://github.com/bckohan/django-enum/issues/52>`_
+* Fixed `EnumFields don't display correctly in the Admin when set to read_only. <https://github.com/bckohan/django-enum/issues/35>`_
+
 v1.2.1
 ======
 
