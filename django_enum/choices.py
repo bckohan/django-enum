@@ -130,7 +130,7 @@ try:
 
         def __hash__(self):
             return DjangoIntegerChoices.__hash__(self)
-        
+
 
     class FloatChoices(
         DjangoSymmetricMixin,
@@ -145,7 +145,7 @@ try:
 
         def __hash__(self):
             return float.__hash__(self)
-        
+
 
 except (ImportError, ModuleNotFoundError):
 

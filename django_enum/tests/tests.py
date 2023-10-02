@@ -10,7 +10,7 @@ from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import Q
 from django.http import QueryDict
-from django.test import Client, TestCase, LiveServerTestCase
+from django.test import Client, LiveServerTestCase, TestCase
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import TextChoices
@@ -30,7 +30,11 @@ from django_enum.forms import EnumChoiceField  # dont remove this
 #     ExternEnum
 # )
 from django_enum.tests.djenum.forms import EnumTesterForm
-from django_enum.tests.djenum.models import BadDefault, EnumTester, AdminDisplayBug35
+from django_enum.tests.djenum.models import (
+    AdminDisplayBug35,
+    BadDefault,
+    EnumTester,
+)
 from django_test_migrations.constants import MIGRATION_TEST_MARKER
 from django_test_migrations.contrib.unittest_case import MigratorTestCase
 
@@ -1828,6 +1832,7 @@ if ENUM_PROPERTIES_INSTALLED:
     )
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
+        AdminDisplayBug35,
         EnumTester,
         MyModel,
         NoCoercePerfCompare,
@@ -1835,7 +1840,6 @@ if ENUM_PROPERTIES_INSTALLED:
         SingleEnumPerf,
         SingleFieldPerf,
         SingleNoCoercePerf,
-        AdminDisplayBug35
     )
     from enum_properties import EnumProperties, s
 

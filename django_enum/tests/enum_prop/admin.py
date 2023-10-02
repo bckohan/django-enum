@@ -1,5 +1,5 @@
 from django.contrib import admin
-from django_enum.tests.enum_prop.models import EnumTester, AdminDisplayBug35
+from django_enum.tests.enum_prop.models import AdminDisplayBug35, EnumTester
 
 
 class AdminDisplayBug35Admin(admin.ModelAdmin):

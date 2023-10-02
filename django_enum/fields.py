@@ -94,7 +94,8 @@ class EnumMixin(
             return type(values(self.enum)[0])(value)
         # can't ever reach this - just here to make type checker happy
         return value  # pragma: no cover
-    
+
+
     def __init__(
             self,
             *args,
