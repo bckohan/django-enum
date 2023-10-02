@@ -1,6 +1,10 @@
 try:
     from django.contrib import admin
-    from django_enum.tests.enum_prop.models import BitFieldModel, AdminDisplayBug35, EnumTester
+    from django_enum.tests.enum_prop.models import (
+        AdminDisplayBug35,
+        BitFieldModel,
+        EnumTester,
+    )
 
     class AdminDisplayBug35Admin(admin.ModelAdmin):
 

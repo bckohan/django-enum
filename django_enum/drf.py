@@ -168,7 +168,7 @@ try:
                             return self.primitive_field.to_internal_value(data)
             return data
 
-        def to_representation(  # pylint: disable=R0201
+        def to_representation(
             self, value: Any
         ) -> Any:
             """

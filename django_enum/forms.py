@@ -310,7 +310,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
             *,
             empty_value: Any = _Unspecified,
             strict: bool = ChoiceFieldMixin._strict_,
-            empty_values: List[Any] = TypedChoiceField.empty_values,
+            empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
             choices: Iterable[Tuple[Any, str]] = (),
             **kwargs
     ):

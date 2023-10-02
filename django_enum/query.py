@@ -50,14 +50,19 @@ class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
 #     HasAllFlagsLookup
 # ):  # pylint: disable=W0223
 #     """
-#     Support for bitwise has_all lookup on extra big integers (>64 bits) stored
-#     as binary columns.
+#     Support for bitwise has_all lookup on extra big integers (>64 bits)
+#     stored as binary columns.
 #
 #     get_bit(, 0) AND get_bit(, 7) = 1;
 #     """
 #
 #     def process_lhs(self, compiler, connection, lhs=None):
-#         lhs_sql, lhs_params = Exact.process_lhs(self, compiler, connection, lhs)
+#         lhs_sql, lhs_params = Exact.process_lhs(
+#               self,
+#               compiler,
+#               connection,
+#               lhs
+#         )
 #         rhs_sql, rhs_params = Exact.process_rhs(self, compiler, connection)
 #         bits = get_set_bits(rhs_params[0])
 #         if self.rhs:
@@ -97,12 +102,17 @@ class HasAnyFlagsLookup(HasAllFlagsLookup):  # pylint: disable=W0223
 #     HasAnyFlagsLookup
 # ):  # pylint: disable=W0223
 #     """
-#     Support for bitwise has_any lookup on extra big integers (>64 bits) stored
-#     as binary columns.
+#     Support for bitwise has_any lookup on extra big integers (>64 bits)
+#     stored as binary columns.
 #     """
 #
 #     def process_lhs(self, compiler, connection, lhs=None):
-#         lhs_sql, lhs_params = Exact.process_lhs(self, compiler, connection, lhs)
+#         lhs_sql, lhs_params = Exact.process_lhs(
+#               self,
+#               compiler,
+#               connection,
+#               lhs
+#         )
 #         rhs_sql, rhs_params = Exact.process_rhs(self, compiler, connection)
 #         bits = get_set_bits(rhs_params[0])
 #         if self.rhs:

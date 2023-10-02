@@ -9,7 +9,7 @@ from time import perf_counter
 
 from django.db import connection
 from django.db.models import Q
-from django.test import TestCase, override_settings, SimpleTestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django_enum.tests.benchmark import enums as benchmark_enums
 from django_enum.tests.benchmark import models as benchmark_models

@@ -45,7 +45,7 @@ from django_enum.forms import (
     NonStrictSelect,
     NonStrictSelectMultiple,
 )
-from django_enum.query import (  # HasAllFlagsExtraBigLookup,; HasAnyFlagsExtraBigLookup
+from django_enum.query import (  # HasAllFlagsExtraBigLookup,
     HasAllFlagsLookup,
     HasAnyFlagsLookup,
 )
@@ -807,10 +807,10 @@ class EnumCharField(EnumField[Type[str]], CharField):
         if self.enum:
             kwargs.setdefault(
                 'max_length',
-                max([
+                max((
                     len(self._coerce_to_value_type(choice[0]) or '')
                     for choice in kwargs.get('choices', choices(enum))
-                ])
+                ))
             )
         super().__init__(enum=enum, primitive=primitive, **kwargs)
 

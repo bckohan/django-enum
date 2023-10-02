@@ -14,8 +14,8 @@ from django.db import connection, transaction
 from django.db.models import Count, F, Func, OuterRef, Q, Subquery
 from django.db.utils import DatabaseError
 from django.http import QueryDict
-from django.test.utils import CaptureQueriesContext
 from django.test import Client, LiveServerTestCase, TestCase
+from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
 from django.utils.functional import classproperty
 from django_enum import EnumField, TextChoices
@@ -3034,10 +3034,10 @@ if ENUM_PROPERTIES_INSTALLED:
     )
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import (
+        AdminDisplayBug35,
         BitFieldModel,
         EnumFlagPropTester,
         EnumFlagPropTesterRelated,
-        AdminDisplayBug35,
         EnumTester,
         MyModel,
     )
