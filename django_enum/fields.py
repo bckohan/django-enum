@@ -141,7 +141,8 @@ class EnumMixin(
                             type(values(self.enum)[0])
                         ):
                             raise ValueError(
-                                f"'{value}' is not a valid {self.enum.__name__} "
+                                f"'{value}' is not a valid "
+                                f"{self.enum.__name__} "
                                 f"required by field {self.name}."
                             ) from err
         return value

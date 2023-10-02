@@ -67,7 +67,7 @@ class EnumChoiceField(TypedChoiceField):
     enum_: Optional[Type[Enum]] = None
     strict_: bool = True
     empty_value: Any = ''
-    empty_values: List[Any]
+    empty_values: List[Any] = TypedChoiceField.empty_values
     choices: Iterable[Tuple[Any, Any]]
 
     @property
@@ -114,7 +114,7 @@ class EnumChoiceField(TypedChoiceField):
             *,
             empty_value: Any = _Unspecified,
             strict: bool = strict_,
-            empty_values: List[Any] = TypedChoiceField.empty_values,
+            empty_values: List[Any] = empty_values.copy(),
             choices: Iterable[Tuple[Any, str]] = (),
             **kwargs
     ):
