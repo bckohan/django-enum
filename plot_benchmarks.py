@@ -303,6 +303,7 @@ def plot_any_all_index_comparison(queries, rdbms='postgres', num_flags=16):
     bool_multiindex = None
     bool_colindex = None
     flags_singleidx = None
+    flags_noidx = None
     for plot, flag_metrics in plots.items():
         parsed = parse_plt(plot)
         if parsed == ('BOOL', 'MultiCol Index'):
@@ -311,6 +312,8 @@ def plot_any_all_index_comparison(queries, rdbms='postgres', num_flags=16):
             bool_colindex = flag_metrics.get(str(num_flags), {})
         if parsed == ('FLAG', 'Single Index'):  # todo change this to multi col
             flags_singleidx = flag_metrics.get(str(num_flags), {})
+        if parsed == ('FLAG', 'No Index'):  # todo change this to multi col
+            flags_noidx = flag_metrics.get(str(num_flags), {})
 
     if not (bool_multiindex and flags_singleidx):
         raise ValueError(
@@ -331,9 +334,10 @@ def plot_any_all_index_comparison(queries, rdbms='postgres', num_flags=16):
     handles = []
 
     for label, counts, style in [
-        ('BOOL', bool_multiindex, '--'),
-        ('BOOL', bool_colindex, '-.'),
-        ('FLAG', flags_singleidx, '-')
+        ('BOOL MultiCol Index', bool_multiindex, '--'),
+        #('BOOL Col Index', bool_colindex, '-.'),
+        ('FLAG Single Index', flags_singleidx, '-'),
+        ('FLAG No Index', flags_singleidx, '-.')
     ]:
         cnts = list(sorted((int(cnt) for cnt in counts.keys())))
         count_min = cnts[0] if count_min is None else min(cnts[0], count_min)

@@ -132,3 +132,4 @@ dmypy.json
 /poetry.lock
 test.db
 django_enum/tests/edit_tests/migrations/00*.py
+benchmark.db

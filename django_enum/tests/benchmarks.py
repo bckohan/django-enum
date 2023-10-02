@@ -9,7 +9,7 @@ from time import perf_counter
 
 from django.db import connection
 from django.db.models import Q
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, SimpleTestCase
 from django.test.utils import CaptureQueriesContext
 from django_enum.tests.benchmark import enums as benchmark_enums
 from django_enum.tests.benchmark import models as benchmark_models
@@ -28,6 +28,7 @@ BENCHMARK_FILE = Path(__file__).parent.parent.parent / 'benchmarks.json'
 
 patch_oracle()
 
+USE_CSV_IMPORT = os.environ.get('USE_CSV_IMPORT', 'True').lower() in ['1', 'yes', 'true']
 
 def get_table_size(cursor, table, total=True):
     if connection.vendor == 'postgresql':
@@ -599,14 +600,7 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
         print(has_all_load_tpl)
 
 
-class FlagIndexTests(BulkCreateMixin, TestCase):
-
-    CHECK_POINTS = [
-        *(int(10**i) for i in range(1, 7)),
-        *(int(i * ((10**7) / 5)) for i in range(1, 6)),
-        *(int(i * ((10**8) / 5)) for i in range(1, 6)),
-        #*(int(i * ((10**9) / 5)) for i in range(1, 6))
-    ]
+class CreateRowMixin(BulkCreateMixin):
 
     NUM_FLAGS = 16
 
@@ -614,20 +608,9 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
     EnumClass = FlagModel._meta.get_field('flags').enum
     BoolModel = getattr(benchmark_models, f'BoolTester{NUM_FLAGS-1:03d}')
 
-    flag_indexes = []
-    bool_indexes = []
-
     @property
     def num_flags(self):
         return self.NUM_FLAGS
-
-    def setUp(self):
-        self.FlagModel.objects.all().delete()
-        self.BoolModel.objects.all().delete()
-
-    def tearDown(self) -> None:
-        self.FlagModel.objects.all().delete()
-        self.BoolModel.objects.all().delete()
 
     def create_rows(self, total, pbar):
         """
@@ -638,16 +621,78 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
         b_cnt = self.BoolModel.objects.count()
         assert f_cnt == b_cnt
 
-        for idx in range(f_cnt, total+1):
-            mask = random.getrandbits(self.FlagModel.num_flags)
-            set_flags = get_set_bits(mask)
-            self.create(self.FlagModel(flags=mask))
-            self.create(self.BoolModel(**{
-                f'flg_{flg}': True for flg in set_flags
-            }))
-            pbar.update(n=1)
+        pbar.update(n=(f_cnt - pbar.n))
+
+        if connection.vendor == 'postgresql' and USE_CSV_IMPORT:
+            flg_file = Path(f'{self.FlagModel.__name__.lower()}.csv')
+            bln_file = Path(f'{self.BoolModel.__name__.lower()}.csv')
+            with open(flg_file, 'w') as flg_f:
+                with open(bln_file, 'w') as bln_f:
+                    flg_f.write('flags\n')
+                    bln_f.write(','.join(f'flg_{i}' for i in range(self.BoolModel.num_flags)) + '\n')
+                    for idx in range(f_cnt, total+1):
+                        mask = random.getrandbits(self.FlagModel.num_flags)
+                        set_flags = get_set_bits(mask)
+                        flg_f.write(f'{mask}\n')
+                        bln_f.write(','.join('TRUE' if i in set_flags else 'FALSE' for i in range(self.BoolModel.num_flags)) + '\n')
+                        pbar.update(n=1)
+
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    f"COPY {self.FlagModel._meta.db_table}(flags) FROM "
+                    f"'{flg_file.absolute()}' DELIMITER ',' CSV HEADER;"
+                )
+
+                cursor.execute(
+                    f"COPY {self.BoolModel._meta.db_table}"
+                    f"({','.join(f'flg_{i}' for i in range(self.BoolModel.num_flags))})"
+                    f" FROM '{bln_file.absolute()}' DELIMITER ',' CSV HEADER;"
+                )
+
+            flg_file.unlink()
+            bln_file.unlink()
+
+        else:
+            for idx in range(f_cnt, total+1):
+                mask = random.getrandbits(self.FlagModel.num_flags)
+                set_flags = get_set_bits(mask)
+                self.create(self.FlagModel(flags=mask))
+                self.create(self.BoolModel(**{
+                    f'flg_{flg}': True for flg in set_flags
+                }))
+                pbar.update(n=1)
 
         self.create()
+
+
+class FlagIndexTests(CreateRowMixin, SimpleTestCase):
+
+    databases = ('default',)
+
+    CHECK_POINTS = [
+        *(int(10**i) for i in range(1, 7)),
+        *(int(i * ((10**7) / 5)) for i in range(1, 6)),
+        *(int(i * ((10**8) / 5)) for i in range(1, 6)),
+        #*(int(i * ((10**9) / 5)) for i in range(1, 6))
+    ]
+
+    flag_indexes = []
+    bool_indexes = []
+
+    NUM_FLAGS = 16
+
+    FlagModel = getattr(benchmark_models, f'FlagTester{NUM_FLAGS - 1:03d}')
+    EnumClass = FlagModel._meta.get_field('flags').enum
+    BoolModel = getattr(benchmark_models, f'BoolTester{NUM_FLAGS - 1:03d}')
+
+    def setUp(self):
+        self.FlagModel.objects.all().delete()
+        self.BoolModel.objects.all().delete()
+
+    def tearDown(self) -> None:
+        pass
+        # self.FlagModel.objects.all().delete()
+        # self.BoolModel.objects.all().delete()
 
     def do_flag_query(self, masks):
 
@@ -659,6 +704,14 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
         flg_any_time = 0
         flg_exact_time = 0
 
+        any_explanation = None
+        all_explanation = None
+        exact_explanation = None
+
+        flg_all_ftr_time = None
+        flg_any_ftr_time = None
+        flg_exact_ftr_time = None
+
         for mask in masks:
 
             # dont change query order
@@ -667,13 +720,60 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
             flg_all.append(self.FlagModel.objects.filter(flags__has_all=mask).count())
             flg_all_time += perf_counter() - start
 
+            all_explanation = json.loads(
+                self.FlagModel.objects.filter(flags__has_all=mask).explain(
+                    format="json",
+                    analyze=True,
+                    buffers=True,
+                    verbose=True,
+                    settings=True,
+                    wal=True
+                )
+            )[0]
+            if flg_all_ftr_time is None:
+                flg_all_ftr_time = all_explanation.get('Execution Time', None)
+            elif all_explanation.get('Execution Time', None):
+                flg_all_ftr_time += all_explanation['Execution Time']
+
             start = perf_counter()
             flg_any.append(self.FlagModel.objects.filter(flags__has_any=mask).count())
             flg_any_time += perf_counter() - start
 
+            any_explanation = json.loads(
+                self.FlagModel.objects.filter(flags__has_any=mask).explain(
+                    format="json",
+                    analyze=True,
+                    buffers=True,
+                    verbose=True,
+                    settings=True,
+                    wal=True
+                )
+            )[0]
+
+            if flg_any_ftr_time is None:
+                flg_any_ftr_time = any_explanation.get('Execution Time', None)
+            elif any_explanation.get('Execution Time', None):
+                flg_any_ftr_time += any_explanation['Execution Time']
+
             start = perf_counter()
             flg_exact.append(self.FlagModel.objects.filter(flags=mask).count())
             flg_exact_time += perf_counter() - start
+
+            exact_explanation = json.loads(
+                self.FlagModel.objects.filter(flags=mask).explain(
+                    format="json",
+                    analyze=True,
+                    buffers=True,
+                    verbose=True,
+                    settings=True,
+                    wal=True
+                )
+            )[0]
+
+            if flg_exact_ftr_time is None:
+                flg_exact_ftr_time = exact_explanation.get('Execution Time', None)
+            elif exact_explanation.get('Execution Time', None):
+                flg_exact_ftr_time += exact_explanation['Execution Time']
 
         with connection.cursor() as cursor:
             table_size = get_table_size(
@@ -685,7 +785,11 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
             flg_any_time / len(masks),
             flg_exact_time / len(masks),
             flg_all, flg_any, flg_exact,
-            table_size
+            table_size,
+            all_explanation, any_explanation, exact_explanation,
+            flg_all_ftr_time / len(masks) / 1000 if flg_all_ftr_time else None,
+            flg_any_ftr_time / len(masks) / 1000 if flg_any_ftr_time else None, 
+            flg_exact_ftr_time / len(masks) / 1000 if flg_exact_ftr_time else None
         )
 
     def do_bool_query(self, masks, use_all=False):
@@ -697,6 +801,14 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
         bool_all_time = 0
         bool_any_time = 0
         bool_exact_time = 0
+
+        any_explanation = None
+        all_explanation = None
+        exact_explanation = None
+
+        bool_all_ftr_time = None
+        bool_any_ftr_time = None
+        bool_exact_ftr_time = None
 
         for mask in masks:
             set_bits = get_set_bits(mask)
@@ -737,18 +849,64 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
             bool_all.append(self.BoolModel.objects.filter(bq_all).count())
             bool_all_time += perf_counter() - start
 
+            all_explanation = json.loads(
+                self.BoolModel.objects.filter(bq_all).explain(
+                    format="json",
+                    analyze=True,
+                    buffers=True,
+                    verbose=True,
+                    settings=True,
+                    wal=True
+                )
+            )[0]
+            if bool_all_ftr_time is None:
+                bool_all_ftr_time = all_explanation.get('Execution Time', None)
+            elif all_explanation.get('Execution Time', None):
+                bool_all_ftr_time += all_explanation['Execution Time']
+
             start = perf_counter()
+            any_explanation = None
             if isinstance(bq_any, str):
                 with connection.cursor() as cursor:
                     cursor.execute(bq_any)
                     bool_any.append(int(cursor.fetchall()[0][0]))
             else:
                 bool_any.append(self.BoolModel.objects.filter(bq_any).count())
+                any_explanation = json.loads(
+                    self.BoolModel.objects.filter(bq_any).explain(
+                        format="json",
+                        analyze=True,
+                        buffers=True,
+                        verbose=True,
+                        settings=True,
+                        wal=True
+                    )
+                )[0]
+                if bool_any_ftr_time is None:
+                    bool_any_ftr_time = any_explanation.get('Execution Time', None)
+                elif any_explanation.get('Execution Time', None):
+                    bool_any_ftr_time += any_explanation['Execution Time']
+
             bool_any_time += perf_counter() - start
 
             start = perf_counter()
             bool_exact.append(self.BoolModel.objects.filter(exact_q).count())
             bool_exact_time += perf_counter() - start
+
+            exact_explanation = json.loads(
+                self.BoolModel.objects.filter(exact_q).explain(
+                    format="json",
+                    analyze=True,
+                    buffers=True,
+                    verbose=True,
+                    settings=True,
+                    wal=True
+                )
+            )[0]
+            if bool_exact_ftr_time is None:
+                bool_exact_ftr_time = exact_explanation.get('Execution Time', None)
+            elif exact_explanation.get('Execution Time', None):
+                bool_exact_ftr_time += exact_explanation['Execution Time']
 
         with connection.cursor() as cursor:
             table_size = get_table_size(
@@ -760,7 +918,11 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
             bool_any_time / len(masks),
             bool_exact_time / len(masks),
             bool_all, bool_any, bool_exact,
-            table_size
+            table_size,
+            all_explanation, any_explanation, exact_explanation,
+            bool_all_ftr_time / len(masks) / 1000 if bool_all_ftr_time else None,
+            bool_any_ftr_time / len(masks) / 1000 if bool_any_ftr_time else None,
+            bool_exact_ftr_time / len(masks) / 1000 if bool_exact_ftr_time else None
         )
 
     def test_indexes(self):
@@ -779,6 +941,23 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
         def no_index():
             pass
 
+        def optimize():
+            if connection.vendor == 'postgresql':
+                with connection.cursor() as cursor:
+                    cursor.execute('VACUUM FULL')
+            elif connection.vendor in ['mysql', 'mariadb']:
+                with connection.cursor() as cursor:
+                    cursor.execute(f'OPTIMIZE TABLE {self.BoolModel._meta.db_table}')
+                    cursor.execute(f'OPTIMIZE TABLE {self.FlagModel._meta.db_table}')
+            elif connection.vendor == 'oracle':
+                pass  # todo?
+            elif connection.vendor == 'sqlite':
+                pass  # todo?
+            else:
+                raise NotImplementedError(
+                    f'Unknown vendor for optimize() {connection.vendor}'
+                )
+
         queries = {}
         with tqdm(total=self.CHECK_POINTS[-1]) as pbar:
             for check_point in self.CHECK_POINTS:
@@ -792,44 +971,72 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
                 all_mask_counts = [[] for _ in range(len(masks))]
                 any_mask_counts = [[] for _ in range(len(masks))]
                 exact_mask_counts = [[] for _ in range(len(masks))]
-                for index, name, query in [
+
+                tests = [
                     (no_index, '[FLAG] No Index', self.do_flag_query),
                     (self.flag_single_index, '[FLAG] Single Index', self.do_flag_query),
                     (no_index, '[BOOL] No Index', self.do_bool_query),
                     (self.bool_column_indexes, '[BOOL] Col Index', self.do_bool_query),
                     (self.bool_multi_column_indexes, '[BOOL] MultiCol Index', partial(self.do_bool_query, use_all=True)),
                     #(self.postgres_gin, '[BOOL] GIN', self.do_bool_query),
-                ]:
-                    index()
+                ]
+                with tqdm(total=len(tests), leave=False) as pbar_checkpoint:
+                    for index, name, query in tests:
+                        pbar_checkpoint.set_postfix_str(name)
+                        start = perf_counter()
+                        index()
+                        index_time = perf_counter() - start
+                        pbar.refresh()
+                        optimize()
+                        pbar.refresh()
 
-                    with CaptureQueriesContext(connection) as ctx:
-                        (
-                            all_time, any_time, exact_time,
-                            all_cnts, any_cnts, exact_cnts,
-                            table_size
-                        ) = query(masks)
-                        queries[f'{name} has_all'] = ctx.captured_queries[0]['sql']
-                        queries[f'{name} has_any'] = ctx.captured_queries[1]['sql']
-                        queries[f'{name} has_exact'] = ctx.captured_queries[2]['sql']
+                        with CaptureQueriesContext(connection) as ctx:
+                            (
+                                all_time, any_time, exact_time,
+                                all_cnts, any_cnts, exact_cnts,
+                                table_size,
+                                all_explanation, any_explanation, exact_explanation,
+                                all_ftr_time, any_ftr_time, exact_ftr_time
+                            ) = query(masks)
+                            queries[f'{name} has_all'] = ctx.captured_queries[0]['sql']
+                            queries[f'{name} has_any'] = ctx.captured_queries[1]['sql']
+                            queries[f'{name} has_exact'] = ctx.captured_queries[2]['sql']
 
-                    for idx, (all_cnt, any_cnt, exact_cnt) in enumerate(
-                        zip(all_cnts, any_cnts, exact_cnts)
-                    ):
-                        all_mask_counts[idx].append(all_cnt)
-                        any_mask_counts[idx].append(any_cnt)
-                        exact_mask_counts[idx].append(exact_cnt)
+                        pbar.refresh()
 
-                    self.drop_indexes()
+                        for idx, (all_cnt, any_cnt, exact_cnt) in enumerate(
+                            zip(all_cnts, any_cnts, exact_cnts)
+                        ):
+                            all_mask_counts[idx].append(all_cnt)
+                            any_mask_counts[idx].append(any_cnt)
+                            exact_mask_counts[idx].append(exact_cnt)
 
-                    index_benchmarks = data['queries'][vendor].setdefault(
-                        name, {}
-                    ).setdefault(self.num_flags, {})
-                    index_benchmarks[check_point] = {
-                        'all_time': all_time,
-                        'any_time': any_time,
-                        'exact_time': exact_time,
-                        'table_size': table_size
-                    }
+                        self.drop_indexes()
+                        pbar.refresh()
+
+                        index_benchmarks = data['queries'][vendor].setdefault(
+                            name, {}
+                        ).setdefault(str(self.num_flags), {})
+                        index_benchmarks[str(check_point)] = {
+                            'all_time': all_time,
+                            'any_time': any_time,
+                            'exact_time': exact_time,
+                            'table_size': table_size,
+                            'index_time': index_time,
+                            'all_explanation': all_explanation,
+                            'any_explanation': any_explanation,
+                            'exact_explanation': exact_explanation
+                        }
+                        if all_ftr_time:
+                            index_benchmarks[str(check_point)]['all_ftr_time'] = all_ftr_time
+
+                        if any_ftr_time:
+                            index_benchmarks[str(check_point)]['any_ftr_time'] = any_ftr_time
+
+                        if exact_ftr_time:
+                            index_benchmarks[str(check_point)]['exact_ftr_time'] = exact_ftr_time
+
+                        pbar_checkpoint.update(1)
 
                 # sanity checks
                 for all_counts, any_counts, exact_counts in zip(
@@ -851,6 +1058,18 @@ class FlagIndexTests(BulkCreateMixin, TestCase):
 
         with open(BENCHMARK_FILE, 'w') as bf:
             bf.write(json.dumps(data, indent=4))
+
+    def test_indexes_final(self):
+        """
+        Run tests that only need to be run at the largest DB size, tests
+        are run in alphabetical order, so this can either be run solo or
+        after test_indexes and no new data need be loaded
+        """
+        with tqdm(total=self.CHECK_POINTS[-1]) as pbar:
+            check_point = self.CHECK_POINTS[-1]
+            self.create_rows(check_point, pbar)
+        import ipdb
+        ipdb.set_trace()
 
     def drop_indexes(self):
 
