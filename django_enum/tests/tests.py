@@ -3370,7 +3370,8 @@ if ENUM_PROPERTIES_INSTALLED:
     class TestSymmetricEmptyValEquivalency(TestCase):
 
         def test(self):
-
+            from enum_properties import EnumProperties
+            
             class EmptyEqEnum(TextChoices, s('prop', case_fold=True)):
 
                 A = 'A', 'ok'
