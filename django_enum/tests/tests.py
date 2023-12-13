@@ -4,11 +4,13 @@ from pathlib import Path
 from time import perf_counter
 
 from bs4 import BeautifulSoup as Soup
+from django import VERSION as django_version
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import Q
+from django.forms import Form, ModelForm
 from django.http import QueryDict
 from django.test import Client, LiveServerTestCase, TestCase
 from django.urls import reverse
@@ -16,8 +18,6 @@ from django.utils.functional import classproperty
 from django_enum import TextChoices
 from django_enum.choices import choices, labels, names, values
 from django_enum.forms import EnumChoiceField  # dont remove this
-from django.forms import Form, ModelForm
-from django import VERSION as django_version
 # from django_enum.tests.djenum.enums import (
 #     BigIntEnum,
 #     BigPosIntEnum,
@@ -1857,7 +1857,7 @@ class FormTests(EnumTypeMixin, TestCase):
 
     @property
     def basic_form_class(self):
-        from django.core.validators import MinValueValidator, MaxValueValidator
+        from django.core.validators import MaxValueValidator, MinValueValidator
 
         class BasicForm(Form):
             
@@ -3875,7 +3875,7 @@ else:  # pragma: no cover
     pass
 
 
-if django_version[0:2] >= (5, 0):
+if django_version[0:2] >= (5, 0):  # pragma: no cover
     from django_enum.tests.db_default.models import DBDefaultTester
 
     class DBDefaultTests(EnumTypeMixin, TestCase):

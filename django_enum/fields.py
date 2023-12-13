@@ -27,16 +27,17 @@ from django.db.models import (
     SmallIntegerField,
 )
 from django.db.models.query_utils import DeferredAttribute
-from django_enum.choices import choices, values
-from django_enum.forms import EnumChoiceField, NonStrictSelect
-
-T = TypeVar('T')  # pylint: disable=C0103
 
 try:
     from django.db.models.expressions import DatabaseDefault
 except ImportError:  # pragma: no cover
-    class DatabaseDefault:
-        pass
+    class DatabaseDefault:  # type: ignore
+        """Spoof DatabaseDefault for Django < 5.0"""
+
+from django_enum.choices import choices, values
+from django_enum.forms import EnumChoiceField, NonStrictSelect
+
+T = TypeVar('T')  # pylint: disable=C0103
 
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
@@ -124,7 +125,7 @@ class EnumMixin(
         """
         if self.enum is None:
             return value
-        
+
         if (self.coerce or force) and not isinstance(value, self.enum):
             try:
                 value = self.enum(value)
@@ -157,7 +158,7 @@ class EnumMixin(
                     f"'{value}' is not coercible to {self.primitive.__name__} "
                     f"required by field {self.name}."
                 ) from err
-            
+
         return value
 
     def deconstruct(self) -> Tuple[str, str, List, dict]:

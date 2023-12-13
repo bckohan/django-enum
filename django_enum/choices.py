@@ -108,7 +108,7 @@ try:
         _symmetric_builtins_ = ['name', 'label']
 
 
-    class TextChoices(
+    class TextChoices(  # pylint: disable=too-many-ancestors
         DjangoSymmetricMixin,
         DjangoTextChoices,
         metaclass=DjangoEnumPropertiesMeta
@@ -122,7 +122,7 @@ try:
             return DjangoTextChoices.__hash__(self)
 
 
-    class IntegerChoices(
+    class IntegerChoices(  # pylint: disable=too-many-ancestors
         DjangoSymmetricMixin,
         DjangoIntegerChoices,
         metaclass=DjangoEnumPropertiesMeta
@@ -149,6 +149,9 @@ try:
 
         def __hash__(self):
             return float.__hash__(self)
+
+        def __str__(self):
+            return str(self.value)
 
 
 except (ImportError, ModuleNotFoundError):
