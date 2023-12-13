@@ -5,7 +5,9 @@ from django.db.models.enums import Choices
 
 
 class FloatChoices(float, Choices):
-    pass
+    
+    def __str__(self):
+        return str(self.value)
 
 
 class DJIntEnum(IntegerChoices):

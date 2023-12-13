@@ -4,11 +4,13 @@ from pathlib import Path
 from time import perf_counter
 
 from bs4 import BeautifulSoup as Soup
+from django import VERSION as django_version
 from django.core import serializers
 from django.core.exceptions import ValidationError
 from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import Q
+from django.forms import Form, ModelForm
 from django.http import QueryDict
 from django.test import Client, LiveServerTestCase, TestCase
 from django.urls import reverse
@@ -413,6 +415,28 @@ class TestChoices(EnumTypeMixin, TestCase):
                 1
             )
         self.MODEL_CLASS.objects.all().delete()
+
+    def test_coerce_to_primitive(self):
+
+        create_params = {
+            **self.create_params,
+            'no_coerce': '32767'
+        }
+
+        tester = self.MODEL_CLASS.objects.create(**create_params)
+
+        self.assertIsInstance(tester.no_coerce, int)
+        self.assertEqual(tester.no_coerce, 32767)
+
+    def test_coerce_to_primitive_error(self):
+
+        create_params = {
+            **self.create_params,
+            'no_coerce': 'Value 32767'
+        }
+
+        with self.assertRaises(ValueError):
+            self.MODEL_CLASS.objects.create(**create_params)
 
     def test_to_python_deferred_attribute(self):
         obj = self.MODEL_CLASS.objects.create(**self.create_params)
@@ -1813,6 +1837,112 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
         )
 
 
+class FormTests(EnumTypeMixin, TestCase):
+    """
+    Some more explicit form tests that allow easier access to other internal workflows.
+    """
+
+    MODEL_CLASS = EnumTester
+
+    @property
+    def model_form_class(self):
+
+        class EnumTesterForm(ModelForm):
+
+            class Meta:
+                model = self.MODEL_CLASS
+                fields = '__all__'
+
+        return EnumTesterForm
+
+    @property
+    def basic_form_class(self):
+        from django.core.validators import MaxValueValidator, MinValueValidator
+
+        class BasicForm(Form):
+            
+            small_pos_int = EnumChoiceField(self.SmallPosIntEnum)
+            small_int = EnumChoiceField(self.SmallIntEnum)
+            pos_int = EnumChoiceField(self.PosIntEnum)
+            int = EnumChoiceField(self.IntEnum)
+            big_pos_int = EnumChoiceField(self.BigPosIntEnum)
+            big_int = EnumChoiceField(self.BigIntEnum)
+            constant = EnumChoiceField(self.Constants)
+            text = EnumChoiceField(self.TextEnum)
+            extern = EnumChoiceField(self.ExternEnum)
+            dj_int_enum = EnumChoiceField(self.DJIntEnum)
+            dj_text_enum = EnumChoiceField(self.DJTextEnum)
+            non_strict_int = EnumChoiceField(self.SmallPosIntEnum, strict=False)
+            non_strict_text = EnumChoiceField(self.TextEnum, strict=False)
+            no_coerce = EnumChoiceField(
+                self.SmallPosIntEnum,
+                validators=[MinValueValidator(0), MaxValueValidator(32767)]
+            )
+        
+        return BasicForm
+
+    @property
+    def test_params(self):
+        return {
+            'small_pos_int': self.SmallPosIntEnum.VAL2,
+            'small_int': self.SmallIntEnum.VALn1,
+            'pos_int': self.PosIntEnum.VAL3,
+            'int': self.IntEnum.VALn1,
+            'big_pos_int': self.BigPosIntEnum.VAL3,
+            'big_int': self.BigIntEnum.VAL2,
+            'constant': self.Constants.GOLDEN_RATIO,
+            'text': self.TextEnum.VALUE2,
+            'extern': self.ExternEnum.TWO,
+            'dj_int_enum': self.DJIntEnum.THREE,
+            'dj_text_enum': self.DJTextEnum.A,
+            'non_strict_int': '15',
+            'non_strict_text': 'arbitrary',
+            'no_coerce': self.SmallPosIntEnum.VAL3
+        }
+    
+    @property
+    def test_data_strings(self):
+        return {
+            **{key: str(value) for key, value in self.test_params.items()},
+            'extern': str(self.ExternEnum.TWO.value)
+        }
+
+    @property
+    def expected(self):
+        return {
+            **self.test_params,
+            'non_strict_int': int(self.test_params['non_strict_int']),
+        }
+
+    def test_modelform_binding(self):
+        form = self.model_form_class(data=self.test_data_strings)
+
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+
+        for key, value in self.expected.items():
+            self.assertEqual(form.cleaned_data[key], value)
+
+        self.assertIsInstance(form.cleaned_data['no_coerce'], int)
+        self.assertIsInstance(form.cleaned_data['non_strict_int'], int)
+
+        obj = form.save()
+
+        for key, value in self.expected.items():
+            self.assertEqual(getattr(obj, key), value)
+
+    def test_basicform_binding(self):
+        form = self.basic_form_class(data=self.test_data_strings)
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+
+        for key, value in self.expected.items():
+            self.assertEqual(form.cleaned_data[key], value)
+
+        self.assertIsInstance(form.cleaned_data['no_coerce'], int)
+        self.assertIsInstance(form.cleaned_data['non_strict_int'], int)
+
+
 if ENUM_PROPERTIES_INSTALLED:
 
     from django_enum.forms import EnumChoiceField
@@ -1843,6 +1973,9 @@ if ENUM_PROPERTIES_INSTALLED:
     )
     from enum_properties import EnumProperties, s
 
+    class EnumPropertiesFormTests(FormTests):
+
+        MODEL_CLASS = EnumTester
 
     class TestEnumPropertiesIntegration(TestCase):
 
@@ -3362,6 +3495,22 @@ if ENUM_PROPERTIES_INSTALLED:
             self.assertTrue(tester._meta.get_field('dj_text_enum').validate('A', tester) is None)
             self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
 
+        def test_coerce_to_primitive_error(self):
+            """
+            Override this base class test because this should work with symmetrical enum.
+            """
+            create_params = {
+                **self.create_params,
+                'no_coerce': 'Value 32767'
+            }
+
+            tester = self.MODEL_CLASS.objects.create(**create_params)
+            self.assertEqual(tester.no_coerce, self.SmallPosIntEnum.VAL3)
+            self.assertEqual(tester.no_coerce, 'Value 32767')
+
+            tester.refresh_from_db()
+            self.assertEqual(tester.no_coerce, 32767)
+            
     class PerformanceTest(TestCase):
         """
         We intentionally test bulk operations performance because thats what
@@ -3660,7 +3809,6 @@ if ENUM_PROPERTIES_INSTALLED:
                 ).first() == instance
             )
 
-            from django.forms import ModelForm
             from django_enum import EnumChoiceField
 
             class TextChoicesExampleForm(ModelForm):
@@ -3729,3 +3877,60 @@ if ENUM_PROPERTIES_INSTALLED:
 else:  # pragma: no cover
     pass
 
+
+if django_version[0:2] >= (5, 0):  # pragma: no cover
+    from django_enum.tests.db_default.models import DBDefaultTester
+
+    class DBDefaultTests(EnumTypeMixin, TestCase):
+
+        MODEL_CLASS = DBDefaultTester
+
+        @property
+        def defaults(self):
+            return {
+                'small_pos_int': None,
+                'small_int': self.SmallIntEnum.VAL3,
+                'pos_int': self.PosIntEnum.VAL3,
+                'int': self.IntEnum.VALn1,
+                'big_pos_int': None,
+                'big_int': self.BigIntEnum.VAL0,
+                'constant': self.Constants.GOLDEN_RATIO,
+                'char_field': 'db_default',
+                'doubled_char_field': 'default',
+                'text': '',
+                'doubled_text': '',
+                'doubled_text_strict': self.TextEnum.DEFAULT,
+                'extern': self.ExternEnum.THREE,
+                'dj_int_enum': self.DJIntEnum.ONE,
+                'dj_text_enum': self.DJTextEnum.A,
+                'non_strict_int': 5,
+                'non_strict_text': 'arbitrary',
+                'no_coerce': 2,
+                'no_coerce_value': 32767,
+                'no_coerce_none': None
+            }
+        
+        def test_db_defaults(self):
+            
+            obj = DBDefaultTester.objects.create()
+
+            for field, value in self.defaults.items():
+                obj_field = DBDefaultTester._meta.get_field(field)
+                obj_value = getattr(obj, field)
+                self.assertEqual(obj_value, value)
+                from django_enum.fields import EnumMixin
+                if (
+                    isinstance(obj_field, EnumMixin) and 
+                    obj_field.strict and 
+                    obj_field.coerce and 
+                    obj_value is not None
+                ):
+                    self.assertIsInstance(obj_value, obj_field.enum)
+
+        def test_db_defaults_not_coerced(self):
+            from django.db.models.expressions import DatabaseDefault
+            empty_inst = DBDefaultTester()
+
+            # check that the database default value fields are not coerced
+            for field in [field for field in self.defaults.keys() if not field.startswith('doubled')]:
+                self.assertIsInstance(getattr(empty_inst, field), DatabaseDefault)

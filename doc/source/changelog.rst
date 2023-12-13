@@ -2,6 +2,13 @@
 Change Log
 ==========
 
+v1.3.0
+======
+
+* Implemented `Support db_default <https://github.com/bckohan/django-enum/issues/56>`_
+* Fixed `When coerce=False, enum form fields and model fields should still coerce to the enum's primitive type. <https://github.com/bckohan/django-enum/issues/55>`_
+* Implemented `Support Django 5.0 <https://github.com/bckohan/django-enum/issues/54>`_
+
 v1.2.2
 ======
 
