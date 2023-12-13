@@ -91,7 +91,7 @@ class EnumMixin(
         """Coerce the value to the enumerations value type"""
         # note if enum type is int and a floating point is passed we could get
         # situations like X.xxx == X - this is acceptable
-        if self.enum:
+        if self.enum and self.primitive:
             return self.primitive(value)
         # can't ever reach this - just here to make type checker happy
         return value  # pragma: no cover
