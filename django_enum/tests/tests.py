@@ -1902,7 +1902,10 @@ class FormTests(EnumTypeMixin, TestCase):
     
     @property
     def test_data_strings(self):
-        return {key: str(value) for key, value in self.test_params.items()}
+        return {
+            **{key: str(value) for key, value in self.test_params.items()},
+            'extern': str(self.ExternEnum.TWO.value)
+        }
 
     @property
     def expected(self):
