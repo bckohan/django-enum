@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+v1.2.3
+======
+
+* Added `Support Django 5.0 <https://github.com/bckohan/django-enum/issues/54>`_
+
 v1.2.2
 ======
 

@@ -83,6 +83,7 @@ class EnumMixin(
     enum: Optional[Type[Enum]] = None
     strict: bool = True
     coerce: bool = True
+    primitive: Optional[Type[Any]] = None
 
     descriptor_class = ToPythonDeferredAttribute
 
@@ -91,7 +92,7 @@ class EnumMixin(
         # note if enum type is int and a floating point is passed we could get
         # situations like X.xxx == X - this is acceptable
         if self.enum:
-            return type(values(self.enum)[0])(value)
+            return self.primitive(value)
         # can't ever reach this - just here to make type checker happy
         return value  # pragma: no cover
 
@@ -109,6 +110,7 @@ class EnumMixin(
         self.coerce = coerce if enum else False
         if self.enum is not None:
             kwargs.setdefault('choices', choices(enum))
+            self.primitive = type(values(self.enum)[0])
         super().__init__(*args, **kwargs)
 
     def _try_coerce(
@@ -145,6 +147,18 @@ class EnumMixin(
                                 f"{self.enum.__name__} "
                                 f"required by field {self.name}."
                             ) from err
+        elif (
+            not self.coerce and self.primitive and
+            not isinstance(value, self.primitive) and
+            self.enum and not isinstance(value, self.enum)
+        ):
+            try:
+                value = self._coerce_to_value_type(value)
+            except (TypeError, ValueError) as err:
+                raise ValueError(
+                    f"'{value}' is not a valid {self.primitive} "
+                    f"required by field {self.name}."
+                ) from err
         return value
 
     def deconstruct(self) -> Tuple[str, str, List, dict]:

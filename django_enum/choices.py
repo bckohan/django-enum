@@ -9,7 +9,11 @@ from typing import Any, List, Optional, Tuple, Type
 from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
-from django.db.models.enums import ChoicesMeta
+
+try:
+    from django.db.models.enums import ChoicesType
+except ImportError:  # pragma: no cover
+    from django.db.models.enums import ChoicesMeta as ChoicesType
 
 
 def choices(enum: Optional[Type[Enum]]) -> List[Tuple[Any, str]]:
@@ -87,7 +91,7 @@ try:
     from enum_properties import EnumPropertiesMeta, SymmetricMixin
 
 
-    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesMeta):
+    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):
         """
         A composite meta class that combines Django's Choices metaclass with
         enum-properties metaclass. This metaclass will add Django's expected
@@ -162,7 +166,7 @@ except (ImportError, ModuleNotFoundError):
     DjangoSymmetricMixin = MissingEnumProperties  # type: ignore
 
 
-    class DjangoEnumPropertiesMeta(ChoicesMeta):  # type: ignore
+    class DjangoEnumPropertiesMeta(ChoicesType):  # type: ignore
         """
         Throw error if metaclass is used without enum-properties
 

@@ -48,6 +48,10 @@ class EnumTesterCreateView(URLMixin, CreateView):
     fields = '__all__'
 
 
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+    
+
 class EnumTesterUpdateView(URLMixin, UpdateView):
     model = EnumTester
     template_name = 'enumtester_form.html'
