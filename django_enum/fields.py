@@ -130,7 +130,8 @@ class EnumMixin(
                 value = self.enum(value)
             except (TypeError, ValueError):
                 try:
-                    value = self.enum(value:=self.primitive(value))
+                    value = self.primitive(value)
+                    value = self.enum(value)
                 except (TypeError, ValueError):
                     try:
                         value = self.enum[value]
