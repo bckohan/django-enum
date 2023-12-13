@@ -83,19 +83,9 @@ class EnumMixin(
     enum: Optional[Type[Enum]] = None
     strict: bool = True
     coerce: bool = True
-    primitive: Optional[Type[Any]] = None
+    primitive: Type[Any]
 
     descriptor_class = ToPythonDeferredAttribute
-
-    def _coerce_to_value_type(self, value: Any) -> Enum:
-        """Coerce the value to the enumerations value type"""
-        # note if enum type is int and a floating point is passed we could get
-        # situations like X.xxx == X - this is acceptable
-        if self.enum and self.primitive:
-            return self.primitive(value)
-        # can't ever reach this - just here to make type checker happy
-        return value  # pragma: no cover
-
 
     def __init__(
             self,
@@ -110,7 +100,6 @@ class EnumMixin(
         self.coerce = coerce if enum else False
         if self.enum is not None:
             kwargs.setdefault('choices', choices(enum))
-            self.primitive = type(values(self.enum)[0])
         super().__init__(*args, **kwargs)
 
     def _try_coerce(
@@ -123,24 +112,22 @@ class EnumMixin(
         and non-strict, coercion to enum's primitive type will be done,
         otherwise a ValueError is raised.
         """
-        if (
-            (self.coerce or force)
-            and self.enum is not None
-            and not isinstance(value, self.enum)
-        ):
+        if self.enum is None:
+            return value
+        
+        if (self.coerce or force) and not isinstance(value, self.enum):
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):
                 try:
-                    value = self._coerce_to_value_type(value)
-                    value = self.enum(value)
+                    value = self.enum(value:=self.primitive(value))
                 except (TypeError, ValueError):
                     try:
                         value = self.enum[value]
                     except KeyError as err:
                         if self.strict or not isinstance(
                             value,
-                            type(values(self.enum)[0])
+                            self.primitive
                         ):
                             raise ValueError(
                                 f"'{value}' is not a valid "
@@ -148,17 +135,18 @@ class EnumMixin(
                                 f"required by field {self.name}."
                             ) from err
         elif (
-            not self.coerce and self.primitive and
+            not self.coerce and
             not isinstance(value, self.primitive) and
-            self.enum and not isinstance(value, self.enum)
+            not isinstance(value, self.enum)
         ):
             try:
-                value = self._coerce_to_value_type(value)
+                return self.primitive(value)
             except (TypeError, ValueError) as err:
                 raise ValueError(
-                    f"'{value}' is not a valid {self.primitive} "
+                    f"'{value}' is not coercible to {self.primitive.__name__} "
                     f"required by field {self.name}."
                 ) from err
+            
         return value
 
     def deconstruct(self) -> Tuple[str, str, List, dict]:
@@ -320,6 +308,8 @@ class EnumCharField(EnumMixin, CharField):
     A database field supporting enumerations with character values.
     """
 
+    primitive = str
+
     def __init__(self, *args, enum=None, **kwargs):
         kwargs.setdefault(
             'max_length',
@@ -334,12 +324,16 @@ class EnumCharField(EnumMixin, CharField):
 class EnumFloatField(EnumMixin, FloatField):
     """A database field supporting enumerations with floating point values"""
 
+    primitive = float
+
 
 class EnumSmallIntegerField(EnumMixin, SmallIntegerField):
     """
     A database field supporting enumerations with integer values that fit into
     2 bytes or fewer
     """
+
+    primitive = int
 
 
 class EnumPositiveSmallIntegerField(EnumMixin, PositiveSmallIntegerField):
@@ -348,12 +342,15 @@ class EnumPositiveSmallIntegerField(EnumMixin, PositiveSmallIntegerField):
     values that fit into 2 bytes or fewer
     """
 
+    primitive = int
 
 class EnumIntegerField(EnumMixin, IntegerField):
     """
     A database field supporting enumerations with integer values that fit into
     32 bytes or fewer
     """
+
+    primitive = int
 
 
 class EnumPositiveIntegerField(EnumMixin, PositiveIntegerField):
@@ -362,6 +359,8 @@ class EnumPositiveIntegerField(EnumMixin, PositiveIntegerField):
     values that fit into 32 bytes or fewer
     """
 
+    primitive = int
+
 
 class EnumBigIntegerField(EnumMixin, BigIntegerField):
     """
@@ -369,12 +368,16 @@ class EnumBigIntegerField(EnumMixin, BigIntegerField):
     64 bytes or fewer
     """
 
+    primitive = int
+
 
 class EnumPositiveBigIntegerField(EnumMixin, PositiveBigIntegerField):
     """
     A database field supporting enumerations with positive (but signed) integer
     values that fit into 64 bytes or fewer
     """
+
+    primitive = int
 
 
 class _EnumFieldMetaClass(type):
