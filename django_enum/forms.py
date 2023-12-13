@@ -217,8 +217,3 @@ class EnumChoiceField(TypedChoiceField):
                 code='invalid_choice',
                 params={'value': value},
             )
-
-    def clean(self, value: Any) -> Union[Enum, Any]:
-        """Return the value as its full enumeration object"""
-        value = super().clean(value)
-        return value
