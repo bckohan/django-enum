@@ -32,6 +32,12 @@ from django_enum.forms import EnumChoiceField, NonStrictSelect
 
 T = TypeVar('T')  # pylint: disable=C0103
 
+try:
+    from django.db.models.expressions import DatabaseDefault
+except ImportError:  # pragma: no cover
+    class DatabaseDefault:
+        pass
+
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
     """
@@ -56,7 +62,11 @@ class ToPythonDeferredAttribute(DeferredAttribute):
 
     def __set__(self, instance: Model, value: Any):
         try:
-            instance.__dict__[self.field.name] = self.field.to_python(value)
+            instance.__dict__[self.field.name] = (
+                value
+                if isinstance(value, DatabaseDefault) else
+                self.field.to_python(value)
+            )
         except (ValidationError, ValueError):
             # Django core fields allow assignment of any value, we do the same
             instance.__dict__[self.field.name] = value

@@ -17,6 +17,7 @@ from django_enum import TextChoices
 from django_enum.choices import choices, labels, names, values
 from django_enum.forms import EnumChoiceField  # dont remove this
 from django.forms import Form, ModelForm
+from django import VERSION as django_version
 # from django_enum.tests.djenum.enums import (
 #     BigIntEnum,
 #     BigPosIntEnum,
@@ -3872,3 +3873,61 @@ if ENUM_PROPERTIES_INSTALLED:
 
 else:  # pragma: no cover
     pass
+
+
+if django_version[0:2] >= (5, 0):
+    from django_enum.tests.db_default.models import DBDefaultTester
+
+    class DBDefaultTests(EnumTypeMixin, TestCase):
+
+        MODEL_CLASS = DBDefaultTester
+
+        @property
+        def defaults(self):
+            return {
+                'small_pos_int': None,
+                'small_int': self.SmallIntEnum.VAL3,
+                'pos_int': self.PosIntEnum.VAL3,
+                'int': self.IntEnum.VALn1,
+                'big_pos_int': None,
+                'big_int': self.BigIntEnum.VAL0,
+                'constant': self.Constants.GOLDEN_RATIO,
+                'char_field': 'db_default',
+                'doubled_char_field': 'default',
+                'text': '',
+                'doubled_text': '',
+                'doubled_text_strict': self.TextEnum.DEFAULT,
+                'extern': self.ExternEnum.THREE,
+                'dj_int_enum': self.DJIntEnum.ONE,
+                'dj_text_enum': self.DJTextEnum.A,
+                'non_strict_int': 5,
+                'non_strict_text': 'arbitrary',
+                'no_coerce': 2,
+                'no_coerce_value': 32767,
+                'no_coerce_none': None
+            }
+        
+        def test_db_defaults(self):
+            
+            obj = DBDefaultTester.objects.create()
+
+            for field, value in self.defaults.items():
+                obj_field = DBDefaultTester._meta.get_field(field)
+                obj_value = getattr(obj, field)
+                self.assertEqual(obj_value, value)
+                from django_enum.fields import EnumMixin
+                if (
+                    isinstance(obj_field, EnumMixin) and 
+                    obj_field.strict and 
+                    obj_field.coerce and 
+                    obj_value is not None
+                ):
+                    self.assertIsInstance(obj_value, obj_field.enum)
+
+        def test_db_defaults_not_coerced(self):
+            from django.db.models.expressions import DatabaseDefault
+            empty_inst = DBDefaultTester()
+
+            # check that the database default value fields are not coerced
+            for field in [field for field in self.defaults.keys() if not field.startswith('doubled')]:
+                self.assertIsInstance(getattr(empty_inst, field), DatabaseDefault)
