@@ -218,7 +218,9 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
           poetry run pip install -U "Django~=${{ matrix.django-version }}"
-          poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
+      - name: Install mysqlclient if needed
+        if: ${{ matrix.mysqlclient-version != '' }}
+        run: poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         env:
           MYSQL_VERSION: ${{ matrix.mysql-version }}
@@ -293,7 +295,9 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
           poetry run pip install -U "Django~=${{ matrix.django-version }}"
-          poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
+      - name: Install mysqlclient if needed
+        if: ${{ matrix.mysqlclient-version != '' }}
+        run: poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         run: |
           poetry run pytest
