@@ -40,8 +40,8 @@ jobs:
           poetry run pip install -U "Django~=${{ matrix.django-version }}"
       - name: Run Static Analysis
         run: |
-          poetry run isort django_typer --check
-          poetry run black django_typer --check
+          poetry run isort django_enum --check
+          poetry run black django_enum --check
           poetry run pylint django_enum
           poetry run mypy django_enum
           poetry check
