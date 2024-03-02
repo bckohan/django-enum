@@ -8,8 +8,13 @@ import enum
 from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
-from django.db.models.enums import ChoicesMeta
 from django_enum.utils import choices, names
+
+try:
+    from django.db.models.enums import ChoicesType
+except ImportError:  # pragma: no cover
+    from django.db.models.enums import ChoicesMeta as ChoicesType
+
 
 DEFAULT_BOUNDARY = getattr(enum, 'KEEP', None)
 
@@ -22,7 +27,7 @@ try:
     )
 
 
-    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesMeta):
+    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):
         """
         A composite meta class that combines Django's Choices metaclass with
         enum-properties metaclass. This metaclass will add Django's expected
@@ -36,7 +41,7 @@ try:
             For some eccentric enums list(Enum) is empty, so we override names
             if empty
             """
-            return ChoicesMeta.names.fget(cls) or names(cls, override=True)
+            return ChoicesType.names.fget(cls) or names(cls, override=True)
 
         @property
         def choices(cls):
@@ -44,7 +49,7 @@ try:
             For some eccentric enums list(Enum) is empty, so we override
             choices if empty
             """
-            return ChoicesMeta.choices.fget(cls) or choices(cls, override=True)
+            return ChoicesType.choices.fget(cls) or choices(cls, override=True)
 
 
     class DjangoSymmetricMixin(SymmetricMixin):
@@ -55,7 +60,7 @@ try:
         _symmetric_builtins_ = ['name', 'label']
 
 
-    class TextChoices(
+    class TextChoices(  # pylint: disable=too-many-ancestors
         DjangoSymmetricMixin,
         DjangoTextChoices,
         metaclass=DjangoEnumPropertiesMeta
@@ -69,7 +74,7 @@ try:
             return DjangoTextChoices.__hash__(self)
 
 
-    class IntegerChoices(
+    class IntegerChoices(  # pylint: disable=too-many-ancestors
         DjangoSymmetricMixin,
         DjangoIntegerChoices,
         metaclass=DjangoEnumPropertiesMeta
@@ -96,6 +101,9 @@ try:
 
         def __hash__(self):
             return float.__hash__(self)
+
+        def __str__(self):
+            return str(self.value)
 
 
     # mult inheritance type hint bug
@@ -138,7 +146,7 @@ except (ImportError, ModuleNotFoundError):
     DjangoSymmetricMixin = MissingEnumProperties  # type: ignore
 
 
-    class DjangoEnumPropertiesMeta(ChoicesMeta):  # type: ignore
+    class DjangoEnumPropertiesMeta(ChoicesType):  # type: ignore
         """
         Throw error if metaclass is used without enum-properties
 

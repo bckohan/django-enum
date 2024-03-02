@@ -34,6 +34,7 @@ from django.db.models import (
 )
 from django.db.models.constraints import CheckConstraint
 from django.db.models.query_utils import DeferredAttribute
+
 from django.utils.deconstruct import deconstructible
 from django.utils.duration import duration_string
 from django.utils.functional import cached_property
@@ -57,6 +58,13 @@ from django_enum.utils import (
     values,
     with_typehint,
 )
+
+try:
+    from django.db.models.expressions import DatabaseDefault
+except ImportError:  # pragma: no cover
+    class DatabaseDefault:  # type: ignore
+        """Spoof DatabaseDefault for Django < 5.0"""
+
 
 CONFORM: Union[Enum, Type[NOT_PROVIDED]]
 EJECT: Union[Enum, Type[NOT_PROVIDED]]
@@ -112,7 +120,11 @@ class ToPythonDeferredAttribute(DeferredAttribute):
 
     def __set__(self, instance: Model, value: Any):
         try:
-            instance.__dict__[self.field.name] = self.field.to_python(value)
+            instance.__dict__[self.field.name] = (
+                value
+                if isinstance(value, DatabaseDefault) else
+                self.field.to_python(value)
+            )
         except (ValidationError, ValueError):
             # Django core fields allow assignment of any value, we do the same
             instance.__dict__[self.field.name] = value
@@ -488,15 +500,15 @@ class EnumField(
         and non-strict, coercion to enum's primitive type will be done,
         otherwise a ValueError is raised.
         """
-        if (
-            (self.coerce or force)
-            and self.enum is not None
-            and not isinstance(value, self.enum)
-        ):
+        if self.enum is None:
+            return value
+
+        if (self.coerce or force) and not isinstance(value, self.enum):
             try:
                 value = self.enum(value)  # pylint: disable=E1102
             except (TypeError, ValueError):
                 try:
+                    # value = self.primitive(value)
                     value = self._coerce_to_value_type(value)
                     value = self.enum(value)  # pylint: disable=E1102
                 except (TypeError, ValueError, DecimalException):
@@ -520,12 +532,13 @@ class EnumField(
                                 f"{self.enum.__name__} required by field "
                                 f"{self.name}."
                             ) from err
+
         elif not self.coerce:
             try:
                 return self._coerce_to_value_type(value)
             except (TypeError, ValueError, DecimalException) as err:
                 raise ValueError(
-                    f"'{value}' is not a valid {self.primitive} "
+                    f"'{value}' is not a valid {self.primitive.__name__} "
                     f"required by field {self.name}."
                 ) from err
         return value

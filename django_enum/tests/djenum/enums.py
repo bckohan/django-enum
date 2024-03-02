@@ -9,7 +9,9 @@ from django_enum.tests.utils import try_convert
 
 
 class FloatChoices(float, Choices):
-    pass
+    
+    def __str__(self):
+        return str(self.value)
 
 
 class DJIntEnum(IntegerChoices):

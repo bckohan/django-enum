@@ -4,15 +4,20 @@ import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from pathlib import Path
+from importlib import import_module
 
 import pytest
 from bs4 import BeautifulSoup as Soup
+from django import VERSION as django_version
 from django.core import serializers
 from django.core.exceptions import FieldError, ValidationError
 from django.core.management import call_command
 from django.db import connection, transaction
 from django.db.models import Count, F, Func, OuterRef, Q, Subquery
 from django.db.utils import DatabaseError
+from django.db.models import Q
+from django.db import migrations
+from django.forms import Form, ModelForm
 from django.http import QueryDict
 from django.test import Client, LiveServerTestCase, TestCase
 from django.test.utils import CaptureQueriesContext
@@ -133,6 +138,12 @@ def set_models(version):
 
 
 APP1_DIR = Path(__file__).parent / 'enum_prop'
+
+
+def import_migration(migration):
+    return import_module(
+        str(migration.relative_to(Path(__file__).parent.parent.parent)).replace('/', '.').replace('.py', '')
+    ).Migration
 
 
 class EnumTypeMixin:
@@ -744,6 +755,28 @@ class TestChoices(EnumTypeMixin, TestCase):
                 1
             )
         self.MODEL_CLASS.objects.all().delete()
+
+    def test_coerce_to_primitive(self):
+
+        create_params = {
+            **self.create_params,
+            'no_coerce': '32767'
+        }
+
+        tester = self.MODEL_CLASS.objects.create(**create_params)
+
+        self.assertIsInstance(tester.no_coerce, int)
+        self.assertEqual(tester.no_coerce, 32767)
+
+    def test_coerce_to_primitive_error(self):
+
+        create_params = {
+            **self.create_params,
+            'no_coerce': 'Value 32767'
+        }
+
+        with self.assertRaises(ValueError):
+            self.MODEL_CLASS.objects.create(**create_params)
 
     def test_to_python_deferred_attribute(self):
         try:
@@ -3022,6 +3055,111 @@ class FlagTests(TestCase):
                     **{'field__has_all': EnumClass.ONE}
                 )
 
+class FormTests(EnumTypeMixin, TestCase):
+    """
+    Some more explicit form tests that allow easier access to other internal workflows.
+    """
+
+    MODEL_CLASS = EnumTester
+
+    @property
+    def model_form_class(self):
+
+        class EnumTesterForm(ModelForm):
+
+            class Meta:
+                model = self.MODEL_CLASS
+                fields = '__all__'
+
+        return EnumTesterForm
+
+    @property
+    def basic_form_class(self):
+        from django.core.validators import MaxValueValidator, MinValueValidator
+
+        class BasicForm(Form):
+            
+            small_pos_int = EnumChoiceField(self.SmallPosIntEnum)
+            small_int = EnumChoiceField(self.SmallIntEnum)
+            pos_int = EnumChoiceField(self.PosIntEnum)
+            int = EnumChoiceField(self.IntEnum)
+            big_pos_int = EnumChoiceField(self.BigPosIntEnum)
+            big_int = EnumChoiceField(self.BigIntEnum)
+            constant = EnumChoiceField(self.Constants)
+            text = EnumChoiceField(self.TextEnum)
+            extern = EnumChoiceField(self.ExternEnum)
+            dj_int_enum = EnumChoiceField(self.DJIntEnum)
+            dj_text_enum = EnumChoiceField(self.DJTextEnum)
+            non_strict_int = EnumChoiceField(self.SmallPosIntEnum, strict=False)
+            non_strict_text = EnumChoiceField(self.TextEnum, strict=False)
+            no_coerce = EnumChoiceField(
+                self.SmallPosIntEnum,
+                validators=[MinValueValidator(0), MaxValueValidator(32767)]
+            )
+        
+        return BasicForm
+
+    @property
+    def test_params(self):
+        return {
+            'small_pos_int': self.SmallPosIntEnum.VAL2,
+            'small_int': self.SmallIntEnum.VALn1,
+            'pos_int': self.PosIntEnum.VAL3,
+            'int': self.IntEnum.VALn1,
+            'big_pos_int': self.BigPosIntEnum.VAL3,
+            'big_int': self.BigIntEnum.VAL2,
+            'constant': self.Constants.GOLDEN_RATIO,
+            'text': self.TextEnum.VALUE2,
+            'extern': self.ExternEnum.TWO,
+            'dj_int_enum': self.DJIntEnum.THREE,
+            'dj_text_enum': self.DJTextEnum.A,
+            'non_strict_int': '15',
+            'non_strict_text': 'arbitrary',
+            'no_coerce': self.SmallPosIntEnum.VAL3
+        }
+    
+    @property
+    def test_data_strings(self):
+        return {
+            **{key: str(value) for key, value in self.test_params.items()},
+            'extern': str(self.ExternEnum.TWO.value)
+        }
+
+    @property
+    def expected(self):
+        return {
+            **self.test_params,
+            'non_strict_int': int(self.test_params['non_strict_int']),
+        }
+
+    def test_modelform_binding(self):
+        form = self.model_form_class(data=self.test_data_strings)
+
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+
+        for key, value in self.expected.items():
+            self.assertEqual(form.cleaned_data[key], value)
+
+        self.assertIsInstance(form.cleaned_data['no_coerce'], int)
+        self.assertIsInstance(form.cleaned_data['non_strict_int'], int)
+
+        obj = form.save()
+
+        for key, value in self.expected.items():
+            self.assertEqual(getattr(obj, key), value)
+
+    def test_basicform_binding(self):
+        form = self.basic_form_class(data=self.test_data_strings)
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+
+        for key, value in self.expected.items():
+            self.assertEqual(form.cleaned_data[key], value)
+
+        self.assertIsInstance(form.cleaned_data['no_coerce'], int)
+        self.assertIsInstance(form.cleaned_data['non_strict_int'], int)
+
 
 if ENUM_PROPERTIES_INSTALLED:
 
@@ -3043,6 +3181,9 @@ if ENUM_PROPERTIES_INSTALLED:
     )
     from enum_properties import s
 
+    class EnumPropertiesFormTests(FormTests):
+
+        MODEL_CLASS = EnumTester
 
     class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
 
@@ -3881,11 +4022,13 @@ if ENUM_PROPERTIES_INSTALLED:
                     os.path.isfile(settings.TEST_MIGRATION_DIR / '0001_initial.py')
                 )
 
-                with open(settings.TEST_MIGRATION_DIR / '0001_initial.py', 'r') as inpt:
-                    contents = inpt.read()
-                    self.assertEqual(contents.count('AddConstraint'), 2)
-                    self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', [0, 1, 2]))"), 1)
-                    self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B', 'K']))"), 1)
+                migration = import_migration(settings.TEST_MIGRATION_DIR / '0001_initial.py')
+                self.assertIsInstance(migration.operations[1], migrations.AddConstraint)
+                self.assertEqual(migration.operations[1].constraint.check, Q(int_enum__in=[0, 1, 2]))
+                self.assertEqual(migration.operations[1].constraint.name, 'django_enum_tests_edit_tests_MigrationTester_int_enum_IntEnum')
+                self.assertIsInstance(migration.operations[2], migrations.AddConstraint)
+                self.assertEqual(migration.operations[2].constraint.check, Q(color__in=['R', 'G', 'B', 'K']))
+                self.assertEqual(migration.operations[2].constraint.name, 'django_enum_tests_edit_tests_MigrationTester_color_Color')
 
             def test_makemigrate_02(self):
                 import shutil
@@ -3946,11 +4089,12 @@ def revert_enum_values(apps, schema_editor):
                 with open(settings.TEST_MIGRATION_DIR / '0002_alter_values.py', 'w') as output:
                     output.write(new_contents)
 
-                with open(settings.TEST_MIGRATION_DIR / '0002_alter_values.py', 'r') as inpt:
-                    contents = inpt.read()
-                    self.assertEqual(contents.count('RemoveConstraint'), 1)
-                    self.assertEqual(contents.count('AddConstraint'), 1)
-                    self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', [1, 2, 3]))"), 1)
+                migration = import_migration(settings.TEST_MIGRATION_DIR / '0002_alter_values.py')
+
+                self.assertIsInstance(migration.operations[0], migrations.RemoveConstraint)
+                self.assertIsInstance(migration.operations[-1], migrations.AddConstraint)
+                self.assertEqual(migration.operations[-1].constraint.check, Q(int_enum__in=[1, 2, 3]))
+                self.assertEqual(migration.operations[-1].constraint.name, 'django_enum_tests_edit_tests_MigrationTester_int_enum_IntEnum')
 
             def test_makemigrate_03(self):
                 from django.conf import settings
@@ -3994,11 +4138,11 @@ def remove_color_values(apps, schema_editor):
                           'w') as output:
                     output.write(new_contents)
 
-                with open(settings.TEST_MIGRATION_DIR / '0003_remove_black.py', 'r') as inpt:
-                    contents = inpt.read()
-                    self.assertEqual(contents.count('RemoveConstraint'), 1)
-                    self.assertEqual(contents.count('AddConstraint'), 1)
-                    self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B']))"), 1)
+                migration = import_migration(settings.TEST_MIGRATION_DIR / '0003_remove_black.py')
+                self.assertIsInstance(migration.operations[0], migrations.RemoveConstraint)
+                self.assertIsInstance(migration.operations[-1], migrations.AddConstraint)
+                self.assertEqual(migration.operations[-1].constraint.check, Q(color__in=["R", "G", "B"]))
+                self.assertEqual(migration.operations[-1].constraint.name, 'django_enum_tests_edit_tests_MigrationTester_color_Color')
 
             def test_makemigrate_04(self):
                 from django.conf import settings
@@ -4085,12 +4229,14 @@ def remove_color_values(apps, schema_editor):
                         settings.TEST_MIGRATION_DIR / '0007_add_int_enum.py')
                 )
 
-                with open(settings.TEST_MIGRATION_DIR / '0007_add_int_enum.py', 'r') as inpt:
-                    contents = inpt.read()
-                    self.assertEqual(contents.count('RemoveConstraint'), 1)
-                    self.assertEqual(contents.count('AddConstraint'), 2)
-                    self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('int_enum__in', ['A', 'B', 'C'])"), 1)
-                    self.assertEqual(contents.count("constraint=models.CheckConstraint(check=models.Q(('color__in', ['R', 'G', 'B', 'K']))"), 1)
+                migration = import_migration(settings.TEST_MIGRATION_DIR / '0007_add_int_enum.py')
+                self.assertIsInstance(migration.operations[0], migrations.RemoveConstraint)
+                self.assertIsInstance(migration.operations[3], migrations.AddConstraint)
+                self.assertIsInstance(migration.operations[4], migrations.AddConstraint)
+                self.assertEqual(migration.operations[3].constraint.check, Q(int_enum__in=["A", "B", "C"]) | Q(int_enum__isnull=True))
+                self.assertEqual(migration.operations[4].constraint.check, Q(color__in=["R", "G", "B", "K"]))
+                self.assertEqual(migration.operations[3].constraint.name, 'django_enum_tests_edit_tests_MigrationTester_int_enum_IntEnum')
+                self.assertEqual(migration.operations[4].constraint.name, 'django_enum_tests_edit_tests_MigrationTester_color_Color')
 
             def test_makemigrate_09(self):
                 from django.conf import settings
@@ -4946,6 +5092,21 @@ def remove_color_values(apps, schema_editor):
             self.assertTrue(tester._meta.get_field('dj_text_enum').validate('A', tester) is None)
             self.assertTrue(tester._meta.get_field('non_strict_int').validate(20, tester) is None)
 
+        def test_coerce_to_primitive_error(self):
+            """
+            Override this base class test because this should work with symmetrical enum.
+            """
+            create_params = {
+                **self.create_params,
+                'no_coerce': 'Value 32767'
+            }
+
+            tester = self.MODEL_CLASS.objects.create(**create_params)
+            self.assertEqual(tester.no_coerce, self.SmallPosIntEnum.VAL3)
+            self.assertEqual(tester.no_coerce, 'Value 32767')
+
+            tester.refresh_from_db()
+            self.assertEqual(tester.no_coerce, 32767)
 
     class FlagTestsProp(FlagTests):
 
@@ -5049,7 +5210,6 @@ def remove_color_values(apps, schema_editor):
                 ).first() == instance
             )
 
-            from django.forms import ModelForm
             from django_enum import EnumChoiceField
 
             class TextChoicesExampleForm(ModelForm):
@@ -5640,3 +5800,60 @@ if not DISABLE_CONSTRAINT_TESTS:
                         ('NULL', None), ('0', StrictFlagEnum(0))
                     )
                 )
+
+if django_version[0:2] >= (5, 0):  # pragma: no cover
+    from django_enum.tests.db_default.models import DBDefaultTester
+
+    class DBDefaultTests(EnumTypeMixin, TestCase):
+
+        MODEL_CLASS = DBDefaultTester
+
+        @property
+        def defaults(self):
+            return {
+                'small_pos_int': None,
+                'small_int': self.SmallIntEnum.VAL3,
+                'pos_int': self.PosIntEnum.VAL3,
+                'int': self.IntEnum.VALn1,
+                'big_pos_int': None,
+                'big_int': self.BigIntEnum.VAL0,
+                'constant': self.Constants.GOLDEN_RATIO,
+                'char_field': 'db_default',
+                'doubled_char_field': 'default',
+                'text': '',
+                'doubled_text': '',
+                'doubled_text_strict': self.TextEnum.DEFAULT,
+                'extern': self.ExternEnum.THREE,
+                'dj_int_enum': self.DJIntEnum.ONE,
+                'dj_text_enum': self.DJTextEnum.A,
+                'non_strict_int': 5,
+                'non_strict_text': 'arbitrary',
+                'no_coerce': 2,
+                'no_coerce_value': 32767,
+                'no_coerce_none': None
+            }
+        
+        def test_db_defaults(self):
+            
+            obj = DBDefaultTester.objects.create()
+
+            for field, value in self.defaults.items():
+                obj_field = DBDefaultTester._meta.get_field(field)
+                obj_value = getattr(obj, field)
+                self.assertEqual(obj_value, value)
+                from django_enum.fields import EnumMixin
+                if (
+                    isinstance(obj_field, EnumMixin) and 
+                    obj_field.strict and 
+                    obj_field.coerce and 
+                    obj_value is not None
+                ):
+                    self.assertIsInstance(obj_value, obj_field.enum)
+
+        def test_db_defaults_not_coerced(self):
+            from django.db.models.expressions import DatabaseDefault
+            empty_inst = DBDefaultTester()
+
+            # check that the database default value fields are not coerced
+            for field in [field for field in self.defaults.keys() if not field.startswith('doubled')]:
+                self.assertIsInstance(getattr(empty_inst, field), DatabaseDefault)

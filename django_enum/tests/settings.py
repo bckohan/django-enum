@@ -2,6 +2,8 @@ import os
 import sys
 from pathlib import Path
 
+from django import VERSION as django_version
+
 SECRET_KEY = 'psst'
 SITE_ID = 1
 USE_TZ = False
@@ -117,6 +119,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django.contrib.admin',
 ]
+
+if django_version[0:2] >= (5, 0):  # pragma: no cover
+    INSTALLED_APPS.insert(0, 'django_enum.tests.db_default')
 
 try:
     import rest_framework

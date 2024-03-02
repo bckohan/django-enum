@@ -16,6 +16,14 @@ v2.0.0
 * Fixed `When coerce is false, to_python does not convert to the Enum's primitive type <https://github.com/bckohan/django-enum/issues/39>`_
 * Fixed `None should be an allowable enumeration value in enums of any primitive type. <https://github.com/bckohan/django-enum/issues/42>`_
 
+
+v1.3.0
+======
+
+* Implemented `Support db_default <https://github.com/bckohan/django-enum/issues/56>`_
+* Fixed `When coerce=False, enum form fields and model fields should still coerce to the enum's primitive type. <https://github.com/bckohan/django-enum/issues/55>`_
+* Implemented `Support Django 5.0 <https://github.com/bckohan/django-enum/issues/54>`_
+
 v1.2.2
 ======
 
