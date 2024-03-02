@@ -173,13 +173,17 @@ jobs:
             django-version: '3.2'
           - python-version: '3.8'
             django-version: '5.0'
-          - python-version: '3.8'
+
+          - django-version: '3.2'
             mysql-version: 'latest'
-          - python-version: '3.8'
-            mysqlclient-version: ''
-          - python-version: '3.12'
+          - django-version: '4.2'
             mysql-version: '5.7'
-          - python-version: '3.12'
+          - django-version: '5.0'
+            mysql-version: '5.7'
+
+          - mysql-version: '5.7'
+            mysqlclient-version: ''
+          - mysql-version: 'latest'
             mysqlclient-version: '1.4.3'
 
     services:
@@ -242,18 +246,23 @@ jobs:
           - '4.2' # LTS April 2026
           - '5.0' # April 2025
         exclude:
-          - python-version: '3.8'
-            django-version: '5.0'
-          - python-version: '3.8'
-            mariadb-version: 'latest'
-          - python-version: '3.8'
-            mysqlclient-version: ''
           - python-version: '3.12'
             django-version: '3.2'
-          - python-version: '3.12'
+          - python-version: '3.8'
+            django-version: '5.0'
+
+          - django-version: '3.2'
+            mariadb-version: 'latest'
+          - django-version: '4.2'
             mariadb-version: '10.2'
-          - python-version: '3.12'
+          - django-version: '5.0'
+            mariadb-version: '10.2'
+
+          - mariadb-version: '10.2'
+            mysqlclient-version: ''
+          - mariadb-version: 'latest'
             mysqlclient-version: '1.4.3'
+
           - mariadb-version: 'latest'
             mariadb-healthcheck: "mysqladmin ping"
           - mariadb-version: '10.2'
