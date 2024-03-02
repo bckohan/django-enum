@@ -1097,7 +1097,7 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
 
             if is_strict or is_conform or (is_eject and self.strict) and flags:
 
-                constraint = (
+                constraint = (  # pylint: disable=E1131
                     Q(**{f"{name}__gte": min(*flags)})
                     & Q(**{f"{name}__lte": reduce(or_, flags)})
                 ) | Q(**{name: 0})
