@@ -163,7 +163,7 @@ jobs:
       matrix:
         python-version: [ '3.8', '3.12']
         mysql-version: ['5.7', 'latest']
-        mysqlclient-version: ['==1.4.0', '']
+        mysqlclient-version: ['1.4.3', '']
         django-version:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
@@ -180,7 +180,7 @@ jobs:
           - python-version: '3.12'
             mysql-version: '5.7'
           - python-version: '3.12'
-            mysqlclient-version: '==1.4.0'
+            mysqlclient-version: '1.4.3'
 
     services:
       mysql:
@@ -218,7 +218,7 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
           poetry run pip install -U "Django~=${{ matrix.django-version }}"
-          poetry run pip install -U mysqlclient"${{ matrix.mysqlclient-version }}"
+          poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         env:
           MYSQL_VERSION: ${{ matrix.mysql-version }}
@@ -232,7 +232,7 @@ jobs:
     strategy:
       matrix:
         python-version: [ '3.8', '3.12']
-        mysqlclient-version: ['==1.4.0', '']
+        mysqlclient-version: ['1.4.3', '']
         mariadb-version: ['10.2', 'latest']
         mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
@@ -251,7 +251,7 @@ jobs:
           - python-version: '3.12'
             mariadb-version: '10.2'
           - python-version: '3.12'
-            mysqlclient-version: '==1.4.0'
+            mysqlclient-version: '1.4.3'
           - mariadb-version: 'latest'
             mariadb-healthcheck: "mysqladmin ping"
           - mariadb-version: '10.2'
@@ -293,7 +293,7 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
           poetry run pip install -U "Django~=${{ matrix.django-version }}"
-          poetry run pip install -U mysqlclient"${{ matrix.mysqlclient-version }}"
+          poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         run: |
           poetry run pytest
