@@ -26,7 +26,6 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
@@ -76,6 +75,8 @@ numpy = [
     {version = "<1.25", markers = "python_version < '3.9'"},
     {version = ">=1.25", markers = "python_version >= '3.9'"}
 ]
+pylint = "^3.1.0"
+black = "^24.2.0"
 
 [tool.poetry.group.psycopg2]
 optional = true
@@ -111,3 +112,96 @@ all = ["django-filter", "enum-properties", "djangorestframework"]
 properties = ["enum-properties"]
 filters = ["django-filter"]
 djangorestframework = ["djangorestframework"]
+
+
+[tool.mypy]
+# The mypy configurations: http://bit.ly/2zEl9WI
+allow_redefinition = false
+check_untyped_defs = true
+disallow_untyped_decorators = false
+disallow_any_explicit = false
+disallow_any_generics = false
+disallow_untyped_calls = true
+ignore_errors = false
+ignore_missing_imports = true
+implicit_reexport = false
+strict_optional = true
+strict_equality = true
+local_partial_types = true
+no_implicit_optional = true
+warn_unused_ignores = true
+warn_redundant_casts = true
+warn_unused_configs = true
+warn_unreachable = true
+warn_no_return = true
+exclude = [
+    "tests",
+]
+
+
+# todo doc8 configuration here is not being picked up and doesnt seem to be working
+# as expected - for now pass these parameters manually
+[tool.doc8]
+max-line-length = 100
+sphinx = true
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+include = '\.pyi?$'
+
+[pylint]
+output-format = "colorized"
+max-line-length = 88
+
+[tool.pylint.CLASSES]
+valid-metaclass-classmethod-first-arg = "mcs"
+
+[tool.pylint.'DESIGN']
+max-branches=15
+max-parents=12
+max-args=10
+max-statements=60
+
+[tool.pylint.'MASTER']
+ignore="tests"
+
+[tool.pylint.'MESSAGES CONTROL']
+disable = [
+    'R0903', # too few public methods - seriously?
+    'R0801'
+]
+
+[tool.pytest.ini_options]
+# py.test options:
+DJANGO_SETTINGS_MODULE = "django_enum.tests.settings"
+python_files = "tests.py"
+norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
+env = [
+    "TERMINAL_WIDTH=80",
+]
+
+addopts = [
+  "--strict-markers",
+  "--cov=django_enum",
+  "--cov-branch",
+  "--cov-report=term-missing:skip-covered"
+]
+
+[tool.coverage.run]
+omit = [
+  "django_enum/tests/**/*py"
+]
+branch = true
+source = ["django_enum"]
+concurrency = ["multiprocessing"]
+parallel = true
+relative_files = true
+command_line = "-m pytest --cov=django_enum"
+
+[tool.coverage.paths]
+source = [
+    "django_enum"
+]

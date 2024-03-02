@@ -3,34 +3,24 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum, IntFlag
-from typing import (
-    TYPE_CHECKING,
-    Any,
-    Dict,
-    List,
-    Optional,
-    Tuple,
-    Type,
-    TypeVar,
-    Union,
-)
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 from typing_extensions import get_args
 
 __all__ = [
-    'choices',
-    'names',
-    'labels',
-    'values',
-    'determine_primitive',
-    'with_typehint',
-    'SupportedPrimitive',
-    'decimal_params',
-    'get_set_bits'
+    "choices",
+    "names",
+    "labels",
+    "values",
+    "determine_primitive",
+    "with_typehint",
+    "SupportedPrimitive",
+    "decimal_params",
+    "get_set_bits",
 ]
 
 
-T = TypeVar('T')  # pylint: disable=C0103
+T = TypeVar("T")  # pylint: disable=C0103
 
 SupportedPrimitive = Union[
     int,
@@ -41,7 +31,7 @@ SupportedPrimitive = Union[
     datetime,
     time,
     timedelta,
-    Decimal
+    Decimal,
 ]
 
 
@@ -60,8 +50,7 @@ def with_typehint(baseclass: Type[T]) -> Type[T]:
 
 
 def choices(
-    enum_cls: Optional[Type[Enum]],
-    override: bool = False
+    enum_cls: Optional[Type[Enum]], override: bool = False
 ) -> List[Tuple[Any, str]]:
     """
     Get the Django choices for an enumeration type. If the enum type has a
@@ -76,21 +65,24 @@ def choices(
     :param override: Do not defer to choices attribute on the class if True
     :return: A list of (value, label) pairs
     """
-    return (getattr(enum_cls, 'choices', []) if not override else []) or (
-        [
-            *(
-                [(None, enum_cls.__empty__)]
-                if hasattr(enum_cls, '__empty__') else []
-            ),
-            *[
-                (
-                    member.value,
-                    getattr(member, 'label', getattr(member, 'name'))
-                )
-                for member in list(enum_cls) or enum_cls.__members__.values()
+    return (
+        (getattr(enum_cls, "choices", []) if not override else [])
+        or (
+            [
+                *(
+                    [(None, enum_cls.__empty__)]
+                    if hasattr(enum_cls, "__empty__")
+                    else []
+                ),
+                *[
+                    (member.value, getattr(member, "label", getattr(member, "name")))
+                    for member in list(enum_cls) or enum_cls.__members__.values()
+                ],
             ]
-        ]
-    ) if enum_cls else []
+        )
+        if enum_cls
+        else []
+    )
 
 
 def names(enum_cls: Optional[Type[Enum]], override: bool = False) -> List[Any]:
@@ -102,15 +94,20 @@ def names(enum_cls: Optional[Type[Enum]], override: bool = False) -> List[Any]:
     :param override: Do not defer to names attribute on the class if True
     :return: A list of labels
     """
-    return (getattr(enum_cls, 'names', []) if not override else []) or (
-        [
-            *(['__empty__'] if hasattr(enum_cls, '__empty__') else []),
-            *[
-                member.name
-                for member in list(enum_cls) or enum_cls.__members__.values()
+    return (
+        (getattr(enum_cls, "names", []) if not override else [])
+        or (
+            [
+                *(["__empty__"] if hasattr(enum_cls, "__empty__") else []),
+                *[
+                    member.name
+                    for member in list(enum_cls) or enum_cls.__members__.values()
+                ],
             ]
-        ]
-    ) if enum_cls else []
+        )
+        if enum_cls
+        else []
+    )
 
 
 def labels(enum_cls: Optional[Type[Enum]]) -> List[Any]:
@@ -123,11 +120,7 @@ def labels(enum_cls: Optional[Type[Enum]]) -> List[Any]:
     :param enum_cls: The enumeration type
     :return: A list of labels
     """
-    return getattr(
-        enum_cls,
-        'labels',
-        [label for _, label in choices(enum_cls)]
-    )
+    return getattr(enum_cls, "labels", [label for _, label in choices(enum_cls)])
 
 
 def values(enum_cls: Optional[Type[Enum]]) -> List[Any]:
@@ -140,11 +133,7 @@ def values(enum_cls: Optional[Type[Enum]]) -> List[Any]:
     :param enum_cls: The enumeration type
     :return: A list of values
     """
-    return getattr(
-        enum_cls,
-        'values',
-        [value for value, _ in choices(enum_cls)]
-    )
+    return getattr(enum_cls, "values", [value for value, _ in choices(enum_cls)])
 
 
 def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
@@ -199,7 +188,7 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
 def decimal_params(
     enum: Optional[Type[Enum]],
     decimal_places: Optional[int] = None,
-    max_digits: Optional[int] = None
+    max_digits: Optional[int] = None,
 ) -> Dict[str, int]:
     """
     Determine the maximum number of digits and decimal places required to
@@ -213,24 +202,16 @@ def decimal_params(
     :return: A tuple of (max_digits, decimal_places)
     """
     decimal_places = decimal_places or max(
-        [0] + [
-            len(str(value).split('.')[1])
-            for value in values(enum)
-            if '.' in str(value)
-        ]
+        [0]
+        + [len(str(value).split(".")[1]) for value in values(enum) if "." in str(value)]
     )
     max_digits = max_digits or (
-        decimal_places + max(
-            [0] + [
-                len(str(value).split('.', maxsplit=1)[0])
-                for value in values(enum)
-            ]
+        decimal_places
+        + max(
+            [0] + [len(str(value).split(".", maxsplit=1)[0]) for value in values(enum)]
         )
     )
-    return {
-        'max_digits': max_digits,
-        'decimal_places': decimal_places
-    }
+    return {"max_digits": max_digits, "decimal_places": decimal_places}
 
 
 def get_set_bits(flag: Union[int, IntFlag]) -> List[int]:

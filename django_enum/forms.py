@@ -1,4 +1,5 @@
 """Enumeration support for django model forms"""
+
 from copy import copy
 from decimal import DecimalException
 from enum import Enum
@@ -6,21 +7,18 @@ from typing import Any, Iterable, List, Optional, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
-from django.forms.fields import (
-    Field,
-    TypedChoiceField,
-    TypedMultipleChoiceField,
-)
+from django.forms.fields import Field, TypedChoiceField, TypedMultipleChoiceField
 from django.forms.widgets import Select, SelectMultiple
+
 from django_enum.utils import choices as get_choices
 from django_enum.utils import determine_primitive
 
 __all__ = [
-    'NonStrictSelect',
-    'NonStrictSelectMultiple',
-    'FlagSelectMultiple',
-    'EnumChoiceField',
-    'EnumFlagField'
+    "NonStrictSelect",
+    "NonStrictSelectMultiple",
+    "FlagSelectMultiple",
+    "EnumChoiceField",
+    "EnumFlagField",
 ]
 
 
@@ -45,12 +43,9 @@ class NonStrictMixin:
         one of our choices, we add it as an option.
         """
 
-        value: Any = getattr(kwargs.get('value'), 'value', kwargs.get('value'))
-        if (
-            value not in EnumChoiceField.empty_values
-            and value not in (
-                choice[0] for choice in self.choices
-            )
+        value: Any = getattr(kwargs.get("value"), "value", kwargs.get("value"))
+        if value not in EnumChoiceField.empty_values and value not in (
+            choice[0] for choice in self.choices
         ):
             self.choices = list(self.choices) + [(value, str(value))]
         return super().render(*args, **kwargs)  # type: ignore
@@ -98,7 +93,7 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
     _enum_: Optional[Type[Enum]] = None
     _primitive_: Optional[Type] = None
     _strict_: bool = True
-    empty_value: Any = ''
+    empty_value: Any = ""
     empty_values: List[Any] = TypedChoiceField.empty_values
     choices: Iterable[Tuple[Any, Any]]
 
@@ -106,20 +101,20 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
     _empty_values_overridden_: bool = False
 
     def __init__(
-            self,
-            enum: Optional[Type[Enum]] = _enum_,
-            primitive: Optional[Type] = _primitive_,
-            *,
-            empty_value: Any = _Unspecified,
-            strict: bool = _strict_,
-            empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
-            choices: Iterable[Tuple[Any, str]] = (),
-            **kwargs
+        self,
+        enum: Optional[Type[Enum]] = _enum_,
+        primitive: Optional[Type] = _primitive_,
+        *,
+        empty_value: Any = _Unspecified,
+        strict: bool = _strict_,
+        empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
+        choices: Iterable[Tuple[Any, str]] = (),
+        **kwargs,
     ):
         self._strict_ = strict
         self._primitive_ = primitive
         if not self.strict:
-            kwargs.setdefault('widget', NonStrictSelect)
+            kwargs.setdefault("widget", NonStrictSelect)
 
         if empty_values is _Unspecified:
             self.empty_values = copy(TypedChoiceField.empty_values)
@@ -128,9 +123,9 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
             self._empty_values_overridden_ = True
 
         super().__init__(  # type: ignore
-            choices=choices or getattr(self.enum, 'choices', choices),
-            coerce=kwargs.pop('coerce', self.coerce),
-            **kwargs
+            choices=choices or getattr(self.enum, "choices", choices),
+            coerce=kwargs.pop("coerce", self.coerce),
+            **kwargs,
         )
 
         if empty_value is not _Unspecified:
@@ -180,35 +175,30 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
         # from our empty value list if there exists an equivalency
         if not self._empty_values_overridden_:
             members = self.enum.__members__.values()
-            self.empty_values = [
-                val for val in self.empty_values
-                if val not in members
-            ]
+            self.empty_values = [val for val in self.empty_values if val not in members]
         if (
-            not self._empty_value_overridden_ and
-            self.empty_value not in self.empty_values
+            not self._empty_value_overridden_
+            and self.empty_value not in self.empty_values
             and self.empty_values
         ):
             self.empty_value = self.empty_values[0]
 
         if self.empty_value not in self.empty_values:
             raise ValueError(
-                f'Enumeration value {repr(self.empty_value)} is'
-                f'equivalent to {self.empty_value}, you must '
-                f'specify a non-conflicting empty_value.'
+                f"Enumeration value {repr(self.empty_value)} is"
+                f"equivalent to {self.empty_value}, you must "
+                f"specify a non-conflicting empty_value."
             )
 
     def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
-        return self.primitive(value)   # pylint: disable=E1102
+        return self.primitive(value)  # pylint: disable=E1102
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""
         value = self._coerce(value)  # type: ignore
         return super().prepare_value(  # type: ignore
-            value.value
-            if isinstance(value, self.enum)
-            else value
+            value.value if isinstance(value, self.enum) else value
         )
 
     def to_python(self, value: Any) -> Union[Choices, Any]:
@@ -223,9 +213,7 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
         except ValidationError:
             return False
 
-    def coerce(  # pylint: disable=E0202
-            self, value: Any
-    ) -> Union[Enum, Any]:
+    def coerce(self, value: Any) -> Union[Enum, Any]:  # pylint: disable=E0202
         """
         Attempt conversion of value to an enumeration value and return it
         if successful.
@@ -241,10 +229,9 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
             one of our empty_values, or the value itself if this is a
             non-strict field and the value is of a matching primitive type
         """
-        if (
-            self.enum is not None and
-            not isinstance(value, self.enum)  # pylint: disable=R0801
-        ):
+        if self.enum is not None and not isinstance(
+            value, self.enum
+        ):  # pylint: disable=R0801
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):
@@ -255,14 +242,11 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
                     try:
                         value = self.enum[value]
                     except KeyError as err:
-                        if self.strict or not isinstance(
-                            value,
-                            self.primitive
-                        ):
+                        if self.strict or not isinstance(value, self.primitive):
                             raise ValidationError(
-                                f'{value} is not a valid {self.enum}.',
-                                code='invalid_choice',
-                                params={'value': value},
+                                f"{value} is not a valid {self.enum}.",
+                                code="invalid_choice",
+                                params={"value": value},
                             ) from err
         return value
 
@@ -273,9 +257,9 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
         Field.validate(self, value)
         if value not in self.empty_values and not self.valid_value(value):
             raise ValidationError(
-                self.error_messages['invalid_choice'],  # type: ignore
-                code='invalid_choice',
-                params={'value': value},
+                self.error_messages["invalid_choice"],  # type: ignore
+                code="invalid_choice",
+                params={"value": value},
             )
 
 
@@ -305,23 +289,22 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
     """
 
     def __init__(
-            self,
-            enum: Optional[Type[Choices]] = None,
-            *,
-            empty_value: Any = _Unspecified,
-            strict: bool = ChoiceFieldMixin._strict_,
-            empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
-            choices: Iterable[Tuple[Any, str]] = (),
-            **kwargs
+        self,
+        enum: Optional[Type[Choices]] = None,
+        *,
+        empty_value: Any = _Unspecified,
+        strict: bool = ChoiceFieldMixin._strict_,
+        empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
+        choices: Iterable[Tuple[Any, str]] = (),
+        **kwargs,
     ):
         super().__init__(
             enum=enum,
             empty_value=(
-                enum(0) if enum and empty_value is _Unspecified
-                else empty_value
+                enum(0) if enum and empty_value is _Unspecified else empty_value
             ),
             strict=strict,
             empty_values=empty_values,
             choices=choices,
-            **kwargs
+            **kwargs,
         )

@@ -1,5 +1,5 @@
 |MIT license| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status| |Documentation Status|
-|Code Cov| |Test Status|
+|Code Cov| |Test Status| |Lint Status| |Code Style|
 
 .. |MIT license| image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://lbesson.mit-license.org/
@@ -24,6 +24,12 @@
 
 .. |Test Status| image:: https://github.com/bckohan/django-enum/workflows/test/badge.svg
    :target: https://github.com/bckohan/django-enum/actions
+
+.. |Lint Status| image:: https://github.com/bckohan/django-enum/workflows/lint/badge.svg
+   :target: https://github.com/bckohan/django-enum/actions/workflows/lint.yml
+
+.. |Code Style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
+   :target: https://github.com/psf/black
 
 
 .. _Django: https://www.djangoproject.com/

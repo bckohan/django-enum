@@ -4,6 +4,7 @@ from typing import Tuple, Type
 
 from django.db.models import Field as ModelField
 from django.forms.fields import Field as FormField
+
 from django_enum.forms import EnumChoiceField
 from django_enum.utils import choices
 
@@ -38,15 +39,16 @@ try:
             be searchable.
         :param kwargs: Any additional arguments for base classes
         """
+
         field_class: FormField = EnumChoiceField
 
         def __init__(self, *, enum, strict=False, **kwargs):
             self.enum = enum
             super().__init__(
                 enum=enum,
-                choices=kwargs.pop('choices', choices(self.enum)),
+                choices=kwargs.pop("choices", choices(self.enum)),
                 strict=strict,
-                **kwargs
+                **kwargs,
             )
 
     class FilterSet(filterset.FilterSet):
@@ -55,20 +57,18 @@ try:
         automatically set all ``EnumField`` filters to ``EnumFilter`` by
         default instead of ``ChoiceFilter``.
         """
+
         @classmethod
         def filter_for_lookup(
-                cls,
-                field: ModelField,
-                lookup_type: str
+            cls, field: ModelField, lookup_type: str
         ) -> Tuple[Type[Filter], dict]:
             """For EnumFields use the EnumFilter class by default"""
-            if hasattr(field, 'enum'):
+            if hasattr(field, "enum"):
                 return EnumFilter, {
-                    'enum': field.enum,
-                    'strict': getattr(field, 'strict', False)
+                    "enum": field.enum,
+                    "strict": getattr(field, "strict", False),
                 }
             return super().filter_for_lookup(field, lookup_type)
-
 
 except (ImportError, ModuleNotFoundError):
 
@@ -77,8 +77,7 @@ except (ImportError, ModuleNotFoundError):
 
         def __init__(self, *args, **kwargs):
             raise ImportError(
-                f'{self.__class__.__name__} requires django-filter to be '
-                f'installed.'
+                f"{self.__class__.__name__} requires django-filter to be " f"installed."
             )
 
     EnumFilter = _MissingDjangoFilters  # type: ignore

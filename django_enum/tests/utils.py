@@ -6,12 +6,10 @@ from dateutil import parser
 from dateutil.parser import ParserError
 
 duration_rgx1 = re.compile(
-    r'(-)?(\d+) (?:days?, )?(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?',
-    re.IGNORECASE
+    r"(-)?(\d+) (?:days?, )?(\d{1,2}):(\d{2}):(\d{2})(?:\.(\d+))?", re.IGNORECASE
 )
 duration_rgx2 = re.compile(
-    r'(-)?P(\d+)DT(\d{2})H(\d{2})M(\d{2})(?:\.(\d+))?S',
-    re.IGNORECASE
+    r"(-)?P(\d+)DT(\d{2})H(\d{2})M(\d{2})(?:\.(\d+))?S", re.IGNORECASE
 )
 
 
@@ -36,7 +34,7 @@ def str_to_timedelta(value):
                 hours=int(hours),
                 minutes=int(minutes),
                 seconds=int(seconds),
-                microseconds=int(microseconds or 0)
+                microseconds=int(microseconds or 0),
             )
         raise
 
@@ -46,7 +44,7 @@ def str_to_decimal(value):
         return Decimal(str(value))
     if isinstance(value, str) and value:
         return Decimal(value)
-    raise ValueError('Invalid decimal value')
+    raise ValueError("Invalid decimal value")
 
 
 CONVERTERS = {
@@ -54,5 +52,5 @@ CONVERTERS = {
     datetime: lambda value: parser.parse(value),
     time: lambda value: parser.parse(value).time(),
     timedelta: str_to_timedelta,
-    Decimal: str_to_decimal
+    Decimal: str_to_decimal,
 }

@@ -8,6 +8,7 @@ r"""
 
 *******************************************************************************
 """
+
 from django_enum.choices import (
     DjangoEnumPropertiesMeta,
     FlagChoices,
@@ -26,26 +27,26 @@ from django_enum.forms import (
 )
 
 __all__ = [
-    'EnumField',
-    'FlagField',
-    'TextChoices',
-    'IntegerChoices',
-    'FlagChoices',
-    'FloatChoices',
-    'DjangoEnumPropertiesMeta',
-    'EnumChoiceField',
-    'EnumFlagField',
-    'FilterSet',
-    'EnumFilter',
-    'NonStrictSelect',
-    'NonStrictSelectMultiple',
-    'register_enum_converter'
+    "EnumField",
+    "FlagField",
+    "TextChoices",
+    "IntegerChoices",
+    "FlagChoices",
+    "FloatChoices",
+    "DjangoEnumPropertiesMeta",
+    "EnumChoiceField",
+    "EnumFlagField",
+    "FilterSet",
+    "EnumFilter",
+    "NonStrictSelect",
+    "NonStrictSelectMultiple",
+    "register_enum_converter",
 ]
 
 VERSION = (2, 0, 0)
 
-__title__ = 'Django Enum'
-__version__ = '.'.join(str(i) for i in VERSION)
-__author__ = 'Brian Kohan'
-__license__ = 'MIT'
-__copyright__ = 'Copyright 2022-2024 Brian Kohan'
+__title__ = "Django Enum"
+__version__ = ".".join(str(i) for i in VERSION)
+__author__ = "Brian Kohan"
+__license__ = "MIT"
+__copyright__ = "Copyright 2022-2024 Brian Kohan"

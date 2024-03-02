@@ -5,35 +5,36 @@ from pathlib import Path
 
 from django.db.models import IntegerChoices, TextChoices
 from django.db.models.enums import Choices
+
 from django_enum.tests.utils import try_convert
 
 
 class FloatChoices(float, Choices):
-    
+
     def __str__(self):
         return str(self.value)
 
 
 class DJIntEnum(IntegerChoices):
 
-    ONE = 1, 'One'
-    TWO = 2, 'Two'
-    THREE = 3, 'Three'
+    ONE = 1, "One"
+    TWO = 2, "Two"
+    THREE = 3, "Three"
 
 
 class DJTextEnum(TextChoices):
 
-    A = 'A', 'Label A'
-    B = 'B', 'Label B'
-    C = 'C', 'Label C'
+    A = "A", "Label A"
+    B = "B", "Label B"
+    C = "C", "Label C"
 
 
 class TextEnum(TextChoices):
 
-    VALUE1 = 'V1', 'Value1'
-    VALUE2 = 'V22', 'Value2'
-    VALUE3 = 'V333', 'Value3'
-    DEFAULT = 'D', 'Default'
+    VALUE1 = "V1", "Value1"
+    VALUE2 = "V22", "Value2"
+    VALUE3 = "V333", "Value3"
+    DEFAULT = "D", "Default"
 
 
 class ExternEnum(IntEnum):
@@ -41,8 +42,9 @@ class ExternEnum(IntEnum):
     Tests that externally defined (i.e. not deriving from choices enums
     are supported.
     """
-    ONE   = 1
-    TWO   = 2
+
+    ONE = 1
+    TWO = 2
     THREE = 3
 
     def __str__(self):
@@ -51,58 +53,58 @@ class ExternEnum(IntEnum):
 
 class Constants(FloatChoices):
 
-    PI = 3.14159265358979323846264338327950288, 'Pi'
+    PI = 3.14159265358979323846264338327950288, "Pi"
     e = 2.71828, "Euler's Number"
-    GOLDEN_RATIO = 1.61803398874989484820458683436563811, 'Golden Ratio'
+    GOLDEN_RATIO = 1.61803398874989484820458683436563811, "Golden Ratio"
 
 
 class SmallPosIntEnum(IntegerChoices):
 
-    VAL1 = 0, 'Value 1'
-    VAL2 = 2, 'Value 2'
-    VAL3 = 32767, 'Value 32767'
+    VAL1 = 0, "Value 1"
+    VAL2 = 2, "Value 2"
+    VAL3 = 32767, "Value 32767"
 
 
 class SmallIntEnum(IntegerChoices):
 
-    VALn1 = -32768, 'Value -32768'
-    VAL0 = 0, 'Value 0'
-    VAL1 = 1, 'Value 1'
-    VAL2 = 2, 'Value 2'
-    VAL3 = 32767, 'Value 32767'
+    VALn1 = -32768, "Value -32768"
+    VAL0 = 0, "Value 0"
+    VAL1 = 1, "Value 1"
+    VAL2 = 2, "Value 2"
+    VAL3 = 32767, "Value 32767"
 
 
 class IntEnum(IntegerChoices):
 
-    VALn1 = -2147483648, 'Value -2147483648'
-    VAL0 = 0, 'Value 0'
-    VAL1 = 1, 'Value 1'
-    VAL2 = 2, 'Value 2'
-    VAL3 = 2147483647, 'Value 2147483647'
+    VALn1 = -2147483648, "Value -2147483648"
+    VAL0 = 0, "Value 0"
+    VAL1 = 1, "Value 1"
+    VAL2 = 2, "Value 2"
+    VAL3 = 2147483647, "Value 2147483647"
 
 
 class PosIntEnum(IntegerChoices):
 
-    VAL0 = 0, 'Value 0'
-    VAL1 = 1, 'Value 1'
-    VAL2 = 2, 'Value 2'
-    VAL3 = 2147483647, 'Value 2147483647'
+    VAL0 = 0, "Value 0"
+    VAL1 = 1, "Value 1"
+    VAL2 = 2, "Value 2"
+    VAL3 = 2147483647, "Value 2147483647"
 
 
 class BigPosIntEnum(IntegerChoices):
 
-    VAL0 = 0, 'Value 0'
-    VAL1 = 1, 'Value 1'
-    VAL2 = 2, 'Value 2'
-    VAL3 = 2147483648, 'Value 2147483648'
+    VAL0 = 0, "Value 0"
+    VAL1 = 1, "Value 1"
+    VAL2 = 2, "Value 2"
+    VAL3 = 2147483648, "Value 2147483648"
 
 
 class BigIntEnum(IntegerChoices):
 
-    VAL0 = -2147483649, 'Value -2147483649'
-    VAL1 = 1, 'Value 1'
-    VAL2 = 2, 'Value 2'
-    VAL3 = 2147483648, 'Value 2147483648'
+    VAL0 = -2147483649, "Value -2147483649"
+    VAL1 = 1, "Value 1"
+    VAL2 = 2, "Value 2"
+    VAL3 = 2147483648, "Value 2147483648"
 
 
 class DateEnum(Enum):
@@ -211,11 +213,11 @@ class DurationEnum(Enum):
 
 class DecimalEnum(Enum):
 
-    ONE   = Decimal('0.99')
-    TWO   = Decimal('0.999')
-    THREE = Decimal('0.9999')
-    FOUR  = Decimal('99.9999')
-    FIVE  = Decimal('999')
+    ONE = Decimal("0.99")
+    TWO = Decimal("0.999")
+    THREE = Decimal("0.9999")
+    FOUR = Decimal("99.9999")
+    FIVE = Decimal("999")
 
     @classmethod
     def _missing_(cls, value):
@@ -266,11 +268,11 @@ class BigPositiveFlagEnum(IntFlag):
 
 class ExtraBigPositiveFlagEnum(IntFlag):
 
-    ONE = 2 ** 0
-    TWO = 2 ** 1
-    THREE = 2 ** 63
-    FOUR = 2 ** 64
-    FIVE = 2 ** 65
+    ONE = 2**0
+    TWO = 2**1
+    THREE = 2**63
+    FOUR = 2**64
+    FIVE = 2**65
 
 
 # its possible to make negative valued flag enums, but the bitwise operations
@@ -278,13 +280,14 @@ class ExtraBigPositiveFlagEnum(IntFlag):
 # the DB level they behave like normal enumerations with a flag enumeration's
 # check constraint by range instead of by value
 
+
 class SmallNegativeFlagEnum(IntFlag):
 
-    ONE = -(2 ** 11)
-    TWO = -(2 ** 12)
-    THREE = -(2 ** 13)
-    FOUR = -(2 ** 14)
-    FIVE = -(2 ** 15)
+    ONE = -(2**11)
+    TWO = -(2**12)
+    THREE = -(2**13)
+    FOUR = -(2**14)
+    FIVE = -(2**15)
 
 
 class NegativeFlagEnum(IntFlag):
@@ -317,25 +320,25 @@ class ExtraBigNegativeFlagEnum(IntFlag):
 class MultiPrimitiveEnum(Enum):
 
     VAL1 = 1
-    VAL2 = '2.0'
+    VAL2 = "2.0"
     VAL3 = 3.0
-    VAL4 = Decimal('4.5')
+    VAL4 = Decimal("4.5")
 
 
 class MultiWithNone(Enum):
 
     NONE = None
     VAL1 = 1
-    VAL2 = '2.0'
+    VAL2 = "2.0"
     VAL3 = 3.0
-    VAL4 = Decimal('4.5')
+    VAL4 = Decimal("4.5")
 
 
 class PathEnum(Enum):
 
-    USR = Path('/usr')
-    USR_LOCAL = Path('/usr/local')
-    USR_LOCAL_BIN = Path('/usr/local/bin')
+    USR = Path("/usr")
+    USR_LOCAL = Path("/usr/local")
+    USR_LOCAL_BIN = Path("/usr/local/bin")
 
 
 class StrProps:
@@ -343,7 +346,7 @@ class StrProps:
     Wrap a string with some properties.
     """
 
-    _str = ''
+    _str = ""
 
     def __init__(self, string):
         self._str = string
@@ -367,11 +370,11 @@ class StrProps:
         return False
 
     def deconstruct(self):
-        return 'django_enum.tests.djenum.enums.StrProps', (self._str,), {}
+        return "django_enum.tests.djenum.enums.StrProps", (self._str,), {}
 
 
 class StrPropsEnum(Enum):
 
-    STR1 = StrProps('str1')
-    STR2 = StrProps('str2')
-    STR3 = StrProps('str3')
+    STR1 = StrProps("str1")
+    STR2 = StrProps("str2")
+    STR3 = StrProps("str3")

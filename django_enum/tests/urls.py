@@ -3,13 +3,10 @@ from django.contrib import admin
 from django.urls import include, path
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('djenum/', include('django_enum.tests.djenum.urls')),
-    path('', include('django_enum.tests.converters.urls'))
+    path("admin/", admin.site.urls),
+    path("djenum/", include("django_enum.tests.djenum.urls")),
+    path("", include("django_enum.tests.converters.urls")),
 ]
 
-if 'django_enum.tests.enum_prop' in settings.INSTALLED_APPS:  # pragma: no cover
-    urlpatterns.append(
-        path('enum_prop/', include('django_enum.tests.enum_prop.urls'))
-    )
-
+if "django_enum.tests.enum_prop" in settings.INSTALLED_APPS:  # pragma: no cover
+    urlpatterns.append(path("enum_prop/", include("django_enum.tests.enum_prop.urls")))

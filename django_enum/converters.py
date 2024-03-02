@@ -2,19 +2,21 @@
 A metaclass and converter for Django's URL dispatcher to use with Python's
 Enum class.
 """
+
 from enum import Enum
 from typing import Dict, Type
 
 from django.urls.converters import register_converter
+
 from django_enum.utils import determine_primitive
 
-__all__ = ['register_enum_converter']
+__all__ = ["register_enum_converter"]
 
 
 class _EnumConverter:
 
     enum: Type[Enum]
-    prop: str = 'value'
+    prop: str = "value"
     primitive: type
 
     _lookup_: Dict[str, Enum]
@@ -35,7 +37,7 @@ class _EnumConverter:
         return str(getattr(value, self.prop))
 
 
-def register_enum_converter(enum: Type[Enum], type_name='', prop='value'):
+def register_enum_converter(enum: Type[Enum], type_name="", prop="value"):
     """
     Register an enum converter for Django's URL dispatcher.
 
@@ -46,17 +48,15 @@ def register_enum_converter(enum: Type[Enum], type_name='', prop='value'):
     """
     register_converter(
         type(
-            f'{enum.__name__}Converter',
+            f"{enum.__name__}Converter",
             (_EnumConverter,),
             {
-                'enum': enum,
-                'prop': prop,
-                'primitive': determine_primitive(enum),
-                'regex': '|'.join([str(getattr(env, prop)) for env in enum]),
-                '_lookup_': {
-                    str(getattr(env, prop)): env for env in enum
-                }
-            }
+                "enum": enum,
+                "prop": prop,
+                "primitive": determine_primitive(enum),
+                "regex": "|".join([str(getattr(env, prop)) for env in enum]),
+                "_lookup_": {str(getattr(env, prop)): env for env in enum},
+            },
         ),
-        type_name or enum.__name__
+        type_name or enum.__name__,
     )

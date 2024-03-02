@@ -1,4 +1,5 @@
 from django.contrib import admin
+
 from django_enum.tests.examples.models import (
     BitFieldExample,
     Map,

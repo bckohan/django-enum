@@ -1,6 +1,7 @@
 try:
     from django.urls import reverse, reverse_lazy
     from django.views.generic import CreateView, DeleteView, UpdateView
+
     from django_enum.filters import FilterSet as EnumFilterSet
     from django_enum.tests.djenum import views
     from django_enum.tests.enum_prop import enums as prop_enums
@@ -20,60 +21,55 @@ try:
     from django_enum.tests.enum_prop.forms import EnumTesterForm
     from django_enum.tests.enum_prop.models import EnumTester
 
-
     class EnumTesterDetailView(views.EnumTesterDetailView):
         model = EnumTester
-        NAMESPACE = 'django_enum_tests_enum_prop'
+        NAMESPACE = "django_enum_tests_enum_prop"
         enums = prop_enums
-
 
     class EnumTesterListView(views.EnumTesterListView):
         model = EnumTester
-        NAMESPACE = 'django_enum_tests_enum_prop'
+        NAMESPACE = "django_enum_tests_enum_prop"
         enums = prop_enums
-
 
     class EnumTesterCreateView(views.URLMixin, CreateView):
         model = EnumTester
-        template_name = 'enumtester_form.html'
-        NAMESPACE = 'django_enum_tests_enum_prop'
+        template_name = "enumtester_form.html"
+        NAMESPACE = "django_enum_tests_enum_prop"
         enums = prop_enums
         form_class = EnumTesterForm
-
 
     class EnumTesterUpdateView(views.URLMixin, UpdateView):
         model = EnumTester
-        template_name = 'enumtester_form.html'
-        NAMESPACE = 'django_enum_tests_enum_prop'
+        template_name = "enumtester_form.html"
+        NAMESPACE = "django_enum_tests_enum_prop"
         enums = prop_enums
         form_class = EnumTesterForm
 
         def get_success_url(self):  # pragma: no cover
-            return reverse(f'{self.NAMESPACE}:enum-update',
-                           kwargs={'pk': self.object.pk})
-
+            return reverse(
+                f"{self.NAMESPACE}:enum-update", kwargs={"pk": self.object.pk}
+            )
 
     class EnumTesterDeleteView(views.URLMixin, DeleteView):
-        NAMESPACE = 'django_enum_tests_enum_prop'
+        NAMESPACE = "django_enum_tests_enum_prop"
         model = EnumTester
-        template_name = 'enumtester_form.html'
+        template_name = "enumtester_form.html"
         enums = prop_enums
         form_class = EnumTesterForm
 
         def get_success_url(self):  # pragma: no cover
-            return reverse(f'{self.NAMESPACE}:enum-list')
-
+            return reverse(f"{self.NAMESPACE}:enum-list")
 
     try:
-        from django_enum.drf import EnumFieldMixin
         from rest_framework import serializers, viewsets
+
+        from django_enum.drf import EnumFieldMixin
 
         class EnumTesterSerializer(EnumFieldMixin, serializers.ModelSerializer):
 
             class Meta:
                 model = EnumTester
-                fields = '__all__'
-
+                fields = "__all__"
 
         class DRFView(viewsets.ModelViewSet):
             queryset = EnumTester.objects.all()
@@ -93,10 +89,11 @@ try:
             class EnumTesterFilter(EnumFilterSet):
                 class Meta:
                     model = EnumTester
-                    fields = '__all__'
+                    fields = "__all__"
 
             filterset_class = EnumTesterFilter
             model = EnumTester
+
     except (ImportError, ModuleNotFoundError):  # pragma: no cover
         pass
 

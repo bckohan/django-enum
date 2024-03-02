@@ -4,54 +4,6 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
 
-  static-analysis:
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        # run static analysis on bleeding and trailing edges
-        python-version: [ '3.7', '3.12' ]
-        django-version:
-          - 'Django~=3.2.0' # LTS April 2024
-          - 'Django~=4.2.0' # LTS April 2026
-          - 'Django~=5.0.0' # April 2025
-        exclude:
-          - python-version: '3.7'
-            django-version: 'Django~=5.0.0'
-          - python-version: '3.7'
-            django-version: 'Django~=4.2.0'
-          - python-version: '3.12'
-            django-version: 'Django~=3.2.0'
-
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        uses: snok/install-poetry@v1
-        with:
-          version: 1.5.1
-          virtualenvs-create: true
-          virtualenvs-in-project: true
-      - name: Install Dependencies
-        run: |
-          poetry config virtualenvs.in-project true
-          poetry run pip install --upgrade pip
-          poetry install -E all
-          poetry run pip install -U "${{ matrix.django-version }}"
-      - name: Run Static Analysis
-        run: |
-          poetry run pylint django_enum
-          poetry run mypy django_enum
-          poetry run doc8 -q doc
-          poetry check
-          poetry run pip check
-          poetry run safety check --full-report
-          poetry run python -m readme_renderer ./README.rst -o /tmp/README.html
-
-
   postgres:
     runs-on: ubuntu-latest
     # Service containers to run with `container-job`
@@ -63,32 +15,28 @@ jobs:
       POSTGRES_PORT: 5432
     strategy:
       matrix:
-        python-version: ['3.7', '3.8', '3.9', '3.10', '3.11']
+        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
         postgres-version: ['12', 'latest']
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
-          - 'Django~=3.2.0' # LTS April 2024
-          - 'Django~=4.1.0' # December 2023
-          - 'Django~=4.2.0' # LTS April 2026
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.0' # April 2025
         exclude:
+          - python-version: '3.11'
+            django-version: '3.2'
+          - python-version: '3.12'
+            django-version: '3.2'
           - postgres-version: '12'
             psycopg-version: 'psycopg3'
-          - django-version: 'Django~=4.1.0'
+          - django-version: '3.2'
             psycopg-version: 'psycopg3'
-          - django-version: 'Django~=3.2.0'
-            psycopg-version: 'psycopg3'
-          - python-version: '3.7'
-            django-version: 'Django~=4.1.0'
-          - django-version: 'Django~=3.2.0'
+          - python-version: '3.8'
+            django-version: '5.0'
+          - python-version: '3.9'
+            django-version: '5.0'
+          - django-version: '3.2'
             postgres-version: 'latest'
-          - django-version: 'Django~=4.1.0'
-            postgres-version: '12'
-          - django-version: 'Django~=4.2.0'
-            postgres-version: '12'
-          - python-version: '3.7'
-            django-version: 'Django~=4.2.0'
-          - python-version: '3.11'
-            django-version: 'Django~=3.2.0'
 
     # Service containers to run with `runner-job`
     services:
@@ -110,17 +58,15 @@ jobs:
           - 5432:5432
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
     - name: Install Poetry
       uses: snok/install-poetry@v1
       with:
-        version: 1.5.1
         virtualenvs-create: true
         virtualenvs-in-project: true
     - name: Install Basic Dependencies
@@ -128,44 +74,43 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry run pip install --upgrade pip
         poetry install --with ${{ matrix.psycopg-version }}
-        poetry run pip install -U "${{ matrix.django-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}"
     - name: No Optional Dependency Unit Tests
       run: |
-        poetry run pytest --cov-fail-under=30
+        poetry run pytest --cov-append
     - name: Install enum-properties
       run: |
         poetry install -E properties
-        poetry run pip install -U "${{ matrix.django-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}"
     - name: Unit Tests w/ enum-properties
       run: |
-        poetry run pytest --cov-fail-under=30
+        poetry run pytest --cov-append
     - name: Remove enum-properties
       run: |
         poetry run pip uninstall -y enum-properties
     - name: Install djangorestframework
       run: |
         poetry install -E djangorestframework
-        poetry run pip install -U "${{ matrix.django-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}"
     - name: Run Unit Tests w/ djangorestframework
       run: |
-        poetry run pytest --cov-fail-under=30
+        poetry run pytest --cov-append
     - name: Install django-filters
       run: |
         poetry install -E filters
-        poetry run pip install -U "${{ matrix.django-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}"
     - name: Run Unit Tests w/ django-filter
       run: |
-        poetry run pytest --cov-fail-under=30
+        poetry run pytest --cov-append
     - name: Install all deps
       run: |
         poetry install -E all
-        poetry run pip install -U "${{ matrix.django-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}"
     - name: Run Full Unit Tests
       run: |
-        poetry run pytest
+        poetry run pytest --cov-append
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v3
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         token: ${{ secrets.CODECOV_TOKEN }}
         file: ./coverage.xml
@@ -176,28 +121,28 @@ jobs:
       RDBMS: sqlite
     strategy:
       matrix:
-        python-version: [ '3.7', '3.11']
+        python-version: [ '3.8', '3.12']
         mysqlclient-version: ['^1.0.3']
         django-version:
-          - 'Django~=3.2.0' # LTS April 2024
-          - 'Django~=4.2.0' # LTS April 2026
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.0' # LTS April 2026
         exclude:
-          - python-version: '3.7'
-            django-version: 'Django~=4.2.0'
-          - python-version: '3.11'
-            django-version: 'Django~=3.2.0'
+          - python-version: '3.8'
+            django-version: '5.0'
+          - python-version: '3.12'
+            django-version: '3.2'
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.5.1
           virtualenvs-create: true
           virtualenvs-in-project: true
       - name: Install Dependencies
@@ -205,7 +150,7 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry install -E all
-          poetry run pip install -U "${{ matrix.django-version }}"
+          poetry run pip install -U "Django~=${{ matrix.django-version }}"
       - name: Run Full Unit Tests
         run: |
           poetry run pytest
@@ -216,24 +161,25 @@ jobs:
       RDBMS: mysql
     strategy:
       matrix:
-        python-version: [ '3.7', '3.11']
+        python-version: [ '3.8', '3.12']
         mysql-version: ['5.7', 'latest']
         mysqlclient-version: ['==1.4.0', '']
         django-version:
-          - 'Django~=3.2.0' # LTS April 2024
-          - 'Django~=4.2.0' # LTS April 2026
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.0' # April 2025
         exclude:
-          - python-version: '3.7'
-            django-version: 'Django~=4.2.0'
-          - python-version: '3.7'
+          - python-version: '3.12'
+            django-version: '3.2'
+          - python-version: '3.8'
+            django-version: '5.0'
+          - python-version: '3.8'
             mysql-version: 'latest'
-          - python-version: '3.7'
+          - python-version: '3.8'
             mysqlclient-version: ''
-          - python-version: '3.11'
-            django-version: 'Django~=3.2.0'
-          - python-version: '3.11'
+          - python-version: '3.12'
             mysql-version: '5.7'
-          - python-version: '3.11'
+          - python-version: '3.12'
             mysqlclient-version: '==1.4.0'
 
     services:
@@ -255,16 +201,15 @@ jobs:
           - 3306:3306
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.5.1
           virtualenvs-create: true
           virtualenvs-in-project: true
       - name: Install Dependencies
@@ -272,7 +217,7 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
-          poetry run pip install -U "${{ matrix.django-version }}"
+          poetry run pip install -U "Django~=${{ matrix.django-version }}"
           poetry run pip install -U mysqlclient"${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         env:
@@ -286,25 +231,26 @@ jobs:
       RDBMS: mariadb
     strategy:
       matrix:
-        python-version: [ '3.7', '3.11']
+        python-version: [ '3.8', '3.12']
         mysqlclient-version: ['==1.4.0', '']
         mariadb-version: ['10.2', 'latest']
         mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
-          - 'Django~=3.2.0' # LTS April 2024
-          - 'Django~=4.2.0' # LTS April 2026
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.0' # April 2025
         exclude:
-          - python-version: '3.7'
-            django-version: 'Django~=4.2.0'
-          - python-version: '3.7'
+          - python-version: '3.8'
+            django-version: '5.0'
+          - python-version: '3.8'
             mariadb-version: 'latest'
-          - python-version: '3.7'
+          - python-version: '3.8'
             mysqlclient-version: ''
-          - python-version: '3.11'
-            django-version: 'Django~=3.2.0'
-          - python-version: '3.11'
+          - python-version: '3.12'
+            django-version: '3.2'
+          - python-version: '3.12'
             mariadb-version: '10.2'
-          - python-version: '3.11'
+          - python-version: '3.12'
             mysqlclient-version: '==1.4.0'
           - mariadb-version: 'latest'
             mariadb-healthcheck: "mysqladmin ping"
@@ -330,16 +276,15 @@ jobs:
           - 3306:3306
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.5.1
           virtualenvs-create: true
           virtualenvs-in-project: true
       - name: Install Dependencies
@@ -347,7 +292,7 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry install -E all --with mysql
-          poetry run pip install -U "${{ matrix.django-version }}"
+          poetry run pip install -U "Django~=${{ matrix.django-version }}"
           poetry run pip install -U mysqlclient"${{ matrix.mysqlclient-version }}"
       - name: Run Full Unit Tests
         run: |
@@ -359,23 +304,22 @@ jobs:
       RDBMS: oracle
     strategy:
       matrix:
-        python-version:
-          - '3.7'
-          - '3.11'
+        python-version: ['3.8', '3.12']
         django-version:
-          - 'Django~=3.2.0' # LTS April 2024
-          - 'Django~=4.2.0' # LTS April 2026
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.0' # April 2025
         oracle-version:
           - '18'
           - 'latest'
         exclude:
-          - python-version: '3.7'
-            django-version: 'Django~=4.2.0'
-          - python-version: '3.11'
-            django-version: 'Django~=3.2.0'
-          - django-version: 'Django~=3.2.0'
+          - python-version: '3.8'
+            django-version: '5.0'
+          - python-version: '3.12'
+            django-version: '3.2'
+          - django-version: '3.2'
             oracle-version: 'latest'
-          - django-version: 'Django~=4.2.0'
+          - django-version: '5.0'
             oracle-version: '18'
 
     services:
@@ -398,9 +342,9 @@ jobs:
           --health-retries 10
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
       - name: Set Variables
@@ -410,7 +354,6 @@ jobs:
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
-          version: 1.5.1
           virtualenvs-create: true
           virtualenvs-in-project: true
       - name: Install Oracle Client
@@ -425,7 +368,7 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry install -E all --with oracle
-          poetry run pip install -U "${{ matrix.django-version }}"
+          poetry run pip install -U "Django~=${{ matrix.django-version }}"
       - name: Run Full Unit Tests
         run: |
           poetry run pytest

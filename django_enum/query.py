@@ -1,10 +1,11 @@
 """
 Specialized has_any and has_all query lookups for flag enumerations.
 """
-#from django.core.exceptions import FieldError
+
+# from django.core.exceptions import FieldError
 from django.db.models.lookups import Exact
 
-#from django_enum.utils import get_set_bits
+# from django_enum.utils import get_set_bits
 
 
 class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
@@ -14,21 +15,19 @@ class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
     to the lookup value.
     """
 
-    lookup_name = 'has_all'
+    lookup_name = "has_all"
 
     def process_lhs(self, compiler, connection, lhs=None):
         lhs_sql, lhs_params = super().process_lhs(compiler, connection, lhs)
         rhs_sql, rhs_params = super().process_rhs(compiler, connection)
         if self.rhs:
             return (
-                'BITAND(%s, %s)'
-                if connection.vendor == 'oracle'
-                else '%s & %s'
+                "BITAND(%s, %s)" if connection.vendor == "oracle" else "%s & %s"
             ) % (lhs_sql, rhs_sql), [*lhs_params, *rhs_params]
         return lhs_sql, lhs_params
 
     def get_rhs_op(self, connection, rhs):
-        return connection.operators['exact'] % rhs
+        return connection.operators["exact"] % rhs
 
 
 # class ExtraBigFlagMixin:
@@ -83,18 +82,18 @@ class HasAnyFlagsLookup(HasAllFlagsLookup):  # pylint: disable=W0223
     than zero.
     """
 
-    lookup_name = 'has_any'
+    lookup_name = "has_any"
 
     def process_rhs(self, compiler, connection):
         rhs_sql, rhs_params = super().process_rhs(compiler, connection)
         if rhs_params:
             rhs_params[0] = 0
         else:
-            rhs_sql = '0'
+            rhs_sql = "0"
         return rhs_sql, rhs_params
 
     def get_rhs_op(self, connection, rhs):
-        return connection.operators['gt' if self.rhs else 'exact'] % rhs
+        return connection.operators["gt" if self.rhs else "exact"] % rhs
 
 
 # class HasAnyFlagsExtraBigLookup(

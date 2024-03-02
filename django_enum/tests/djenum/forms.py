@@ -1,4 +1,5 @@
 from django.forms import ModelForm
+
 from django_enum.tests.djenum.models import EnumTester
 
 
@@ -6,4 +7,4 @@ class EnumTesterForm(ModelForm):
 
     class Meta:
         model = EnumTester
-        fields = '__all__'
+        fields = "__all__"

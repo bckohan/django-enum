@@ -6,6 +6,7 @@ because those tests block the normal tests just based on how the test suite is
 put together. So to do any significant testing on Oracle, this monkey patch is
 necessary - remove when there is an upstream fix.
 """
+
 from datetime import date, datetime, timedelta
 
 from django.db.backends.oracle.schema import DatabaseSchemaEditor

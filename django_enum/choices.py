@@ -3,29 +3,25 @@ Support for symmetrical property enumeration types derived from Django choice
 types. These choices types are drop in replacements for the Django
 IntegerChoices and TextChoices.
 """
+
 import enum
 
 from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
-from django_enum.utils import choices, names
 
 try:
     from django.db.models.enums import ChoicesType
 except ImportError:  # pragma: no cover
     from django.db.models.enums import ChoicesMeta as ChoicesType
 
+from django_enum.utils import choices, names
 
-DEFAULT_BOUNDARY = getattr(enum, 'KEEP', None)
+DEFAULT_BOUNDARY = getattr(enum, "KEEP", None)
 
 
 try:
-    from enum_properties import (
-        DecomposeMixin,
-        EnumPropertiesMeta,
-        SymmetricMixin,
-    )
-
+    from enum_properties import DecomposeMixin, EnumPropertiesMeta, SymmetricMixin
 
     class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):
         """
@@ -51,19 +47,16 @@ try:
             """
             return ChoicesType.choices.fget(cls) or choices(cls, override=True)
 
-
     class DjangoSymmetricMixin(SymmetricMixin):
         """
         An enumeration mixin that makes Django's Choices type label field
         symmetric.
         """
-        _symmetric_builtins_ = ['name', 'label']
 
+        _symmetric_builtins_ = ["name", "label"]
 
     class TextChoices(  # pylint: disable=too-many-ancestors
-        DjangoSymmetricMixin,
-        DjangoTextChoices,
-        metaclass=DjangoEnumPropertiesMeta
+        DjangoSymmetricMixin, DjangoTextChoices, metaclass=DjangoEnumPropertiesMeta
     ):
         """
         A character enumeration type that extends Django's TextChoices and
@@ -73,11 +66,8 @@ try:
         def __hash__(self):
             return DjangoTextChoices.__hash__(self)
 
-
     class IntegerChoices(  # pylint: disable=too-many-ancestors
-        DjangoSymmetricMixin,
-        DjangoIntegerChoices,
-        metaclass=DjangoEnumPropertiesMeta
+        DjangoSymmetricMixin, DjangoIntegerChoices, metaclass=DjangoEnumPropertiesMeta
     ):
         """
         An integer enumeration type that extends Django's IntegerChoices and
@@ -87,12 +77,8 @@ try:
         def __hash__(self):
             return DjangoIntegerChoices.__hash__(self)
 
-
     class FloatChoices(
-        DjangoSymmetricMixin,
-        float,
-        Choices,
-        metaclass=DjangoEnumPropertiesMeta
+        DjangoSymmetricMixin, float, Choices, metaclass=DjangoEnumPropertiesMeta
     ):
         """
         A floating point enumeration type that accepts enum-properties
@@ -105,7 +91,6 @@ try:
         def __str__(self):
             return str(self.value)
 
-
     # mult inheritance type hint bug
     class FlagChoices(  # type: ignore
         DecomposeMixin,
@@ -115,11 +100,7 @@ try:
         metaclass=DjangoEnumPropertiesMeta,
         # default boundary argument gets lost in the inheritance when choices
         # is included if it is not explicitly specified
-        **(
-            {'boundary': DEFAULT_BOUNDARY}
-            if DEFAULT_BOUNDARY is not None
-            else {}
-        )
+        **({"boundary": DEFAULT_BOUNDARY} if DEFAULT_BOUNDARY is not None else {}),
     ):
         """
         An integer flag enumeration type that accepts enum-properties property
@@ -129,8 +110,6 @@ try:
         def __hash__(self):
             return enum.IntFlag.__hash__(self)
 
-
-
 except (ImportError, ModuleNotFoundError):
 
     # 3.11 - extend from Enum so base type check does not throw type error
@@ -139,12 +118,11 @@ except (ImportError, ModuleNotFoundError):
 
         def __init__(self, *args, **kwargs):  # pylint: disable=W0231
             raise ImportError(
-                f'{self.__class__.__name__} requires enum-properties to be '
-                f'installed.'
+                f"{self.__class__.__name__} requires enum-properties to be "
+                f"installed."
             )
 
     DjangoSymmetricMixin = MissingEnumProperties  # type: ignore
-
 
     class DjangoEnumPropertiesMeta(ChoicesType):  # type: ignore
         """
@@ -153,36 +131,21 @@ except (ImportError, ModuleNotFoundError):
         Needs to be strict subclass of same metaclass as Enum to make it to
         the ImportError.
         """
+
         def __init__(cls, *args, **kwargs):  # pylint: disable=W0231
             raise ImportError(
-                f'{cls.__class__.__name__} requires enum-properties to be '
-                f'installed.'
+                f"{cls.__class__.__name__} requires enum-properties to be "
+                f"installed."
             )
 
-    class TextChoices(  # type: ignore
-        DjangoSymmetricMixin,
-        str,
-        Choices
-    ):
+    class TextChoices(DjangoSymmetricMixin, str, Choices):  # type: ignore
         """Raises ImportError on class definition"""
 
-    class IntegerChoices(  # type: ignore
-        DjangoSymmetricMixin,
-        int,
-        Choices
-    ):
+    class IntegerChoices(DjangoSymmetricMixin, int, Choices):  # type: ignore
         """Raises ImportError on class definition"""
 
-    class FloatChoices(  # type: ignore
-        DjangoSymmetricMixin,
-        float,
-        Choices
-    ):
+    class FloatChoices(DjangoSymmetricMixin, float, Choices):  # type: ignore
         """Raises ImportError on class definition"""
 
-    class FlagChoices(  # type: ignore
-        DjangoSymmetricMixin,
-        enum.IntFlag,
-        Choices
-    ):
+    class FlagChoices(DjangoSymmetricMixin, enum.IntFlag, Choices):  # type: ignore
         """Raises ImportError on class definition"""
