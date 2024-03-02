@@ -23,7 +23,7 @@
    :target: https://codecov.io/gh/bckohan/django-enum
 
 .. |Test Status| image:: https://github.com/bckohan/django-enum/workflows/test/badge.svg
-   :target: https://github.com/bckohan/django-enum/actions
+   :target: https://github.com/bckohan/django-enum/actions/workflows/test.yml
 
 .. |Lint Status| image:: https://github.com/bckohan/django-enum/workflows/lint/badge.svg
    :target: https://github.com/bckohan/django-enum/actions/workflows/lint.yml
