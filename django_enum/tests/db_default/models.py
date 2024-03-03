@@ -14,6 +14,8 @@ from django_enum.tests.djenum.enums import (
     SmallPosIntEnum,
     TextEnum,
 )
+from django.db.models.functions import Concat
+from django.db.models.expressions import Value
 
 
 class DBDefaultTester(models.Model):
@@ -30,7 +32,7 @@ class DBDefaultTester(models.Model):
     constant = EnumField(Constants, null=True, db_default=Constants.GOLDEN_RATIO, blank=True)
 
     text = EnumField(TextEnum, db_default='', blank=True, strict=False)
-    doubled_text = EnumField(TextEnum, default='', db_default='db_default', blank=True, max_length=10, strict=False)
+    doubled_text = EnumField(TextEnum, default='', db_default=Concat(Value('db'), Value('_default')), blank=True, max_length=10, strict=False)
     doubled_text_strict = EnumField(TextEnum, default=TextEnum.DEFAULT, db_default=TextEnum.VALUE2, blank=True, max_length=10)
     
     char_field = models.CharField(db_default='db_default', blank=True, max_length=10)
