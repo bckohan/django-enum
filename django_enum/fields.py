@@ -190,7 +190,7 @@ class EnumMixin(
                 )
             except ValidationError:
                 pass
-        
+
         if 'default' in kwargs:
             # ensure default in deconstructed fields is always the primitive
             # value type
