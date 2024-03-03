@@ -324,6 +324,7 @@ jobs:
           - '5.0' # April 2025
         oracle-version:
           - '18'
+          - '19'
           - 'latest'
         exclude:
           - python-version: '3.8'
@@ -332,9 +333,16 @@ jobs:
             django-version: '3.2'
           - django-version: '3.2'
             oracle-version: 'latest'
+          - django-version: '3.2'
+            oracle-version: '19'
+          - django-version: '4.2'
+            oracle-version: '18'
+          - django-version: '4.2'
+            oracle-version: 'latest'
           - django-version: '5.0'
             oracle-version: '18'
-
+          - django-version: '5.0'
+            oracle-version: '19'
     services:
       oracle:
 
