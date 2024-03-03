@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+v1.3.1
+======
+
+* Fixed `db_default produces expressions instead of primitives when given enum value instances. <https://github.com/bckohan/django-enum/issues/59>`_
+
 v1.3.0
 ======
 
