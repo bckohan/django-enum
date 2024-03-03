@@ -1,4 +1,6 @@
 from django.db import models
+from django.db.models.expressions import Value
+from django.db.models.functions import Concat
 from django.urls import reverse
 
 from django_enum import EnumField
@@ -38,7 +40,7 @@ class DBDefaultTester(models.Model):
     doubled_text = EnumField(
         TextEnum,
         default="",
-        db_default="db_default",
+        db_default=Concat(Value('db'), Value('_default')),
         blank=True,
         max_length=10,
         strict=False,
