@@ -317,7 +317,7 @@ jobs:
       RDBMS: oracle
     strategy:
       matrix:
-        python-version: ['3.8', '3.12']
+        python-version: ['3.8', '3.10', '3.12']
         django-version:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
@@ -328,8 +328,16 @@ jobs:
         exclude:
           - python-version: '3.8'
             django-version: '5.0'
+          - python-version: '3.10'
+            django-version: '5.0'
+          - python-version: '3.10'
+            django-version: '3.2'
           - python-version: '3.12'
             django-version: '3.2'
+          - python-version: '3.12'
+            django-version: '4.2'
+          - python-version: '3.8'
+            django-version: '4.2'
           - django-version: '3.2'
             oracle-version: 'latest'
           - django-version: '4.2'
