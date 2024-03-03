@@ -40,7 +40,7 @@ class DBDefaultTester(models.Model):
     doubled_text = EnumField(
         TextEnum,
         default="",
-        db_default=Concat(Value('db'), Value('_default')),
+        db_default=Concat(Value("db"), Value("_default")),
         blank=True,
         max_length=10,
         strict=False,
