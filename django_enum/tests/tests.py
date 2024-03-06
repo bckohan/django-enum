@@ -6210,7 +6210,10 @@ if django_version[0:2] >= (5, 0):  # pragma: no cover
         def test_db_defaults(self):
 
             obj = DBDefaultTester.objects.create()
-            obj.refresh_from_db()  # check if this fixes mysql bug
+            # TODO - there seems to be a mysql bug here where DatabaseDefaults
+            # are not refreshed from the db after creation - works on all other platforms
+            if connection.vendor == "mysql":
+                obj.refresh_from_db()
 
             for field, value in self.defaults.items():
                 obj_field = DBDefaultTester._meta.get_field(field)
