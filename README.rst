@@ -31,7 +31,9 @@
 .. |Code Style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
 
-.. |Postgres| image:: https://img.shields.io/badge/Postgres-9.5%2B-blue
+---------------------------------------------------------------------------------------------------
+
+.. |Postgres| image:: https://img.shields.io/badge/Postgres-9.6%2B-blue
    :target: https://www.postgresql.org/
 
 .. |MySQL| image:: https://img.shields.io/badge/MySQL-5.7%2B-blue

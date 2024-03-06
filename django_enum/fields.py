@@ -453,6 +453,10 @@ class EnumField(
         obj.__dict__ = self.__dict__.copy()
         return obj
 
+    def _fallback(self, value: Any) -> Any:
+        """Allow deriving classes to implement a final fallback coercion attempt."""
+        return value
+
     def _try_coerce(self, value: Any, force: bool = False) -> Union[Enum, Any]:
         """
         Attempt coercion of value to enumeration type instance, if unsuccessful
@@ -482,7 +486,10 @@ class EnumField(
                                     )
                                 except Exception:  # pylint: disable=W0703
                                     pass
-                        if self.strict or not isinstance(value, self.primitive):
+                        value = self._fallback(value)
+                        if not isinstance(value, self.enum) and (
+                            self.strict or not isinstance(value, self.primitive)
+                        ):
                             raise ValueError(
                                 f"'{value}' is not a valid "
                                 f"{self.enum.__name__} required by field "
@@ -774,9 +781,51 @@ class EnumCharField(EnumField[Type[str]], CharField):
 class EnumFloatField(EnumField[Type[float]], FloatField):
     """A database field supporting enumerations with floating point values"""
 
+    _tolerance_: float
+    _value_primitives_: List[Tuple[float, Enum]]
+
     @property
     def primitive(self):
         return EnumField.primitive.fget(self) or float  # type: ignore
+
+    def _fallback(self, value: Any) -> Any:
+        if value and isinstance(value, float):
+            for en_value, en in self._value_primitives_:
+                if abs(en_value - value) < self._tolerance_:
+                    return en
+        return value
+
+    def __init__(
+        self,
+        enum: Optional[Type[Enum]] = None,
+        primitive: Optional[Type[float]] = None,
+        strict: bool = EnumField._strict_,
+        coerce: bool = EnumField._coerce_,
+        constrained: Optional[bool] = None,
+        **kwargs,
+    ):
+        super().__init__(
+            enum=enum,
+            primitive=primitive,
+            strict=strict,
+            coerce=coerce,
+            constrained=constrained,
+            **kwargs,
+        )
+        # some database backends (earlier supported versions of Postgres)
+        # can't rely on straight equality because of floating point imprecision
+        if self.enum:
+            self._value_primitives_ = []
+            for en in self.enum:
+                if en.value is not None:
+                    self._value_primitives_.append(
+                        (self._coerce_to_value_type(en.value), en)
+                    )
+            self._tolerance_ = (
+                min((prim[0] * 1e-6 for prim in self._value_primitives_))
+                if self._value_primitives_
+                else 0.0
+            )
 
 
 class IntEnumField(EnumField[Type[int]]):
