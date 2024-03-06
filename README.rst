@@ -1,5 +1,9 @@
 |MIT license| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status| |Documentation Status|
-|Code Cov| |Test Status| |Lint Status| |Code Style| |Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
+|Code Cov| |Test Status| |Lint Status| |Code Style|
+
+---------------------------------------------------------------------------------------------------
+
+|Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
 
 .. |MIT license| image:: https://img.shields.io/badge/License-MIT-blue.svg
    :target: https://lbesson.mit-license.org/
@@ -30,8 +34,6 @@
 
 .. |Code Style| image:: https://img.shields.io/badge/code%20style-black-000000.svg
    :target: https://github.com/psf/black
-
----------------------------------------------------------------------------------------------------
 
 .. |Postgres| image:: https://img.shields.io/badge/Postgres-9.6%2B-blue
    :target: https://www.postgresql.org/
