@@ -6210,6 +6210,7 @@ if django_version[0:2] >= (5, 0):  # pragma: no cover
         def test_db_defaults(self):
 
             obj = DBDefaultTester.objects.create()
+            obj.refresh_from_db()  # check if this fixes mysql bug
 
             for field, value in self.defaults.items():
                 obj_field = DBDefaultTester._meta.get_field(field)
