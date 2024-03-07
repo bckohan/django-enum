@@ -398,3 +398,8 @@ jobs:
       - name: Run Full Unit Tests
         run: |
           poetry run pytest
+      - name: Setup tmate session
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+        timeout-minutes: 60
