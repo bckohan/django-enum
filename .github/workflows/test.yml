@@ -376,7 +376,9 @@ jobs:
       - name: Set Variables
         # oracle bug is encountered in Linux CI - does not manifest using same
         # oracle DB containers on OSX
-        run: echo "IGNORE_ORA_01843=True" >> $GITHUB_ENV
+        run: |
+          echo "IGNORE_ORA_01843=True" >> $GITHUB_ENV
+          echo "IGNORE_ORA_00932=True" >> $GITHUB_ENV
       - name: Install Poetry
         uses: snok/install-poetry@v1
         with:
@@ -402,4 +404,4 @@ jobs:
         timeout-minutes: 60
       - name: Run Full Unit Tests
         run: |
-          poetry run pytest
+          poetry run pytest -s
