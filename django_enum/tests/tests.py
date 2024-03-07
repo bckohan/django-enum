@@ -3219,7 +3219,9 @@ class FlagTests(TestCase):
                 for obj in self.MODEL_CLASS.objects.annotate(
                     exact_matches=Count(
                         "related_flags__id",
-                        filter=Q(**{f"related_flags__{field.name}__exact": F(field.name)}),
+                        filter=Q(
+                            **{f"related_flags__{field.name}__exact": F(field.name)}
+                        ),
                     )
                 ):
                     self.assertEqual(obj.exact_matches, 1)
@@ -3233,7 +3235,7 @@ class FlagTests(TestCase):
                     # this is an oracle bug - intermittent failure on
                     # perfectly fine date format in SQL
                     # TODO - remove when fixed
-                    #pytest.skip("Oracle bug ORA-00932 encountered - skipping")
+                    # pytest.skip("Oracle bug ORA-00932 encountered - skipping")
                     not_working.append(field.name)
                     continue
                 raise
@@ -3279,8 +3281,8 @@ class FlagTests(TestCase):
                 self.assertEqual(obj.any_matches, expected)
 
         if not_working:
-            print(f'Fields not working: {not_working}')
-            print(f'Fields working: {working}')
+            print(f"Fields not working: {not_working}")
+            print(f"Fields working: {working}")
 
     def test_unsupported_flags(self):
         obj = self.MODEL_CLASS.objects.create()
