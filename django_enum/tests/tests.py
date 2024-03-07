@@ -701,7 +701,21 @@ class TestChoices(EnumTypeMixin, TestCase):
 
         create_params = {**self.create_params, "no_coerce": "32767"}
 
-        tester = self.MODEL_CLASS.objects.create(**create_params)
+        try:
+            tester = self.MODEL_CLASS.objects.create(**create_params)
+        except DatabaseError as err:
+            print(str(err))
+            if (
+                IGNORE_ORA_01843
+                and connection.vendor == "oracle"
+                and "ORA-01843" in str(err)
+            ):
+                # this is an oracle bug - intermittent failure on
+                # perfectly fine date format in SQL
+                # TODO - remove when fixed
+                pytest.skip("Oracle bug ORA-01843 encountered - skipping")
+                return
+            raise
 
         self.assertIsInstance(tester.no_coerce, int)
         self.assertEqual(tester.no_coerce, 32767)

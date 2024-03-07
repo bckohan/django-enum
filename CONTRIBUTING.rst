@@ -56,6 +56,7 @@ justified is acceptable:
 
 .. code-block::
 
+    poetry run black django_enum
     poetry run isort django_enum
     poetry run pylint django_enum
     poetry run mypy django_enum
