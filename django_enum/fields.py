@@ -31,21 +31,15 @@ from django.db.models import (
     Q,
     SmallIntegerField,
     TimeField,
+    expressions,
 )
 from django.db.models.constraints import CheckConstraint
+from django.db.models.fields import BLANK_CHOICE_DASH
 from django.db.models.query_utils import DeferredAttribute
 from django.utils.deconstruct import deconstructible
 from django.utils.duration import duration_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
-
-try:
-    from django.db.models.expressions import DatabaseDefault
-except ImportError:  # pragma: no cover
-
-    class DatabaseDefault:  # type: ignore
-        """Spoof DatabaseDefault for Django < 5.0"""
-
 
 from django_enum.forms import (
     EnumChoiceField,
@@ -67,14 +61,21 @@ from django_enum.utils import (
     with_typehint,
 )
 
+
+class _DatabaseDefault:
+    """Spoof DatabaseDefault for Django < 5.0"""
+
+
+DatabaseDefault = getattr(expressions, "DatabaseDefault", _DatabaseDefault)
+
 CONFORM: Union[Enum, Type[NOT_PROVIDED]]
 EJECT: Union[Enum, Type[NOT_PROVIDED]]
 STRICT: Union[Enum, Type[NOT_PROVIDED]]
 
-if sys.version_info >= (3, 11):  # pragma: no cover
+if sys.version_info >= (3, 11):
     from enum import CONFORM, EJECT, STRICT
 else:
-    CONFORM = EJECT = STRICT = NOT_PROVIDED  # pragma: no cover
+    CONFORM = EJECT = STRICT = NOT_PROVIDED
 
 
 MAX_CONSTRAINT_NAME_LENGTH = 64
@@ -624,7 +625,7 @@ class EnumField(
             return 0
         return super().get_default()
 
-    def validate(self, value: Any, model_instance: Model):
+    def validate(self, value: Any, model_instance: Optional[Model]):
         """
         Validates the field as part of model clean routines. Runs super class
         validation routines then tries to convert the value to a valid
@@ -683,14 +684,23 @@ class EnumField(
         form_field.primitive = self.primitive
         return form_field
 
-    def get_choices(self, **kwargs):  # pylint: disable=W0221
+    def get_choices(
+        self,
+        include_blank=True,
+        blank_choice=tuple(BLANK_CHOICE_DASH),
+        limit_choices_to=None,
+        ordering=(),
+    ):  # pylint: disable=W0221
         if self.enum and issubclass(self.enum, Flag):
-            kwargs["blank_choice"] = [
-                (self.enum(0), "---------")  # pylint: disable=E1102
-            ]
+            blank_choice = [(self.enum(0), "---------")]  # pylint: disable=E1102
         return [
             (getattr(choice, "value", choice), label)
-            for choice, label in super().get_choices(**kwargs)
+            for choice, label in super().get_choices(
+                include_blank=include_blank,
+                blank_choice=list(blank_choice),
+                limit_choices_to=limit_choices_to,
+                ordering=ordering,
+            )
         ]
 
     @staticmethod
@@ -716,15 +726,17 @@ class EnumField(
             return name[len(name) - MAX_CONSTRAINT_NAME_LENGTH :]
         return name
 
-    def contribute_to_class(self, cls, name, **kwargs):  # pylint: disable=W0221
-        super().contribute_to_class(cls, name, **kwargs)
+    def contribute_to_class(
+        self, cls: Type[Model], name: str, private_only: bool = False
+    ):  # pylint: disable=W0221
+        super().contribute_to_class(cls, name, private_only=private_only)
         if self.constrained and self.enum and issubclass(self.enum, IntFlag):
             # It's possible to declare an IntFlag field with negative values -
             # these enums do not behave has expected and flag-like DB
             # operations are not supported, so they are treated as normal
             # IntEnum fields, but the check constraints are flag-like range
             # constraints, so we bring those in here
-            FlagField.contribute_to_class(self, cls, name, call_base=False, **kwargs)
+            FlagField.contribute_to_class(self, cls, name, private_only=private_only)
         elif self.constrained and self.enum:
             constraint = Q(
                 **{
@@ -1113,7 +1125,7 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
     enum: Type[Flag]
 
     def contribute_to_class(
-        self, cls: Type[EnumField], name: str, call_base: bool = True, **kwargs
+        self, cls: Type[Model], name: str, private_only: bool = False
     ) -> None:
         """
         Add check constraints that honor flag fields range and boundary
@@ -1175,8 +1187,10 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                 cls._meta.original_attrs.setdefault(  # pylint: disable=W0212
                     "constraints", cls._meta.constraints  # pylint: disable=W0212
                 )
-        if call_base:
-            IntegerField.contribute_to_class(self, cls, name, **kwargs)
+        if isinstance(self, FlagField):
+            # this may have been called by a normal EnumField to bring in flag-like constraints
+            # for non flag fields
+            IntegerField.contribute_to_class(self, cls, name, private_only=private_only)
 
 
 class SmallIntegerFlagField(FlagField, EnumPositiveSmallIntegerField):
@@ -1275,8 +1289,8 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
             connection,
         )
 
-    def contribute_to_class(self, cls, name, **kwargs):
-        BinaryField.contribute_to_class(self, cls, name, **kwargs)
+    def contribute_to_class(self, cls, name, private_only: bool = False):
+        BinaryField.contribute_to_class(self, cls, name, private_only=private_only)
 
 
 class ExtraBigIntegerFlagField(FlagField, EnumExtraBigIntegerField):
@@ -1284,8 +1298,8 @@ class ExtraBigIntegerFlagField(FlagField, EnumExtraBigIntegerField):
     Flag fields that require more than 64 bits.
     """
 
-    def contribute_to_class(self, cls, name, call_base=True, **kwargs):
-        BinaryField.contribute_to_class(self, cls, name, **kwargs)
+    def contribute_to_class(self, cls, name, private_only: bool = False):
+        BinaryField.contribute_to_class(self, cls, name, private_only=private_only)
 
 
 # ExtraBigIntegerFlagField.register_lookup(HasAnyFlagsExtraBigLookup)

@@ -133,3 +133,4 @@ dmypy.json
 test.db
 django_enum/tests/edit_tests/migrations/00*.py
 benchmark.db
+type_check.py

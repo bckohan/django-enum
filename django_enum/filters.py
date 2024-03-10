@@ -3,7 +3,6 @@
 from typing import Tuple, Type
 
 from django.db.models import Field as ModelField
-from django.forms.fields import Field as FormField
 
 from django_enum.forms import EnumChoiceField
 from django_enum.utils import choices
@@ -40,7 +39,7 @@ try:
         :param kwargs: Any additional arguments for base classes
         """
 
-        field_class: FormField = EnumChoiceField
+        field_class = EnumChoiceField
 
         def __init__(self, *, enum, strict=False, **kwargs):
             self.enum = enum

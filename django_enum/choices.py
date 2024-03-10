@@ -9,13 +9,11 @@ import enum
 from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
-
-try:
-    from django.db.models.enums import ChoicesType
-except ImportError:  # pragma: no cover
-    from django.db.models.enums import ChoicesMeta as ChoicesType
+from django.db.models import enums as model_enums
 
 from django_enum.utils import choices, names
+
+ChoicesType = getattr(model_enums, "ChoicesType", getattr(model_enums, "ChoicesMeta"))
 
 DEFAULT_BOUNDARY = getattr(enum, "KEEP", None)
 
@@ -23,7 +21,7 @@ DEFAULT_BOUNDARY = getattr(enum, "KEEP", None)
 try:
     from enum_properties import DecomposeMixin, EnumPropertiesMeta, SymmetricMixin
 
-    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):
+    class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):  # type: ignore
         """
         A composite meta class that combines Django's Choices metaclass with
         enum-properties metaclass. This metaclass will add Django's expected
@@ -37,7 +35,7 @@ try:
             For some eccentric enums list(Enum) is empty, so we override names
             if empty
             """
-            return ChoicesType.names.fget(cls) or names(cls, override=True)
+            return super().names or names(cls, override=True)
 
         @property
         def choices(cls):
@@ -45,7 +43,7 @@ try:
             For some eccentric enums list(Enum) is empty, so we override
             choices if empty
             """
-            return ChoicesType.choices.fget(cls) or choices(cls, override=True)
+            return super().choices or choices(cls, override=True)
 
     class DjangoSymmetricMixin(SymmetricMixin):
         """

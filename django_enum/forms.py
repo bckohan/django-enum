@@ -3,7 +3,18 @@
 from copy import copy
 from decimal import DecimalException
 from enum import Enum
-from typing import Any, Iterable, List, Optional, Tuple, Type, Union
+from typing import (
+    Any,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Sequence,
+    Tuple,
+    Type,
+    TypeAlias,
+    Union,
+)
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
@@ -11,7 +22,7 @@ from django.forms.fields import Field, TypedChoiceField, TypedMultipleChoiceFiel
 from django.forms.widgets import Select, SelectMultiple
 
 from django_enum.utils import choices as get_choices
-from django_enum.utils import determine_primitive
+from django_enum.utils import determine_primitive, with_typehint
 
 __all__ = [
     "NonStrictSelect",
@@ -22,6 +33,26 @@ __all__ = [
 ]
 
 
+_SelectChoices: TypeAlias = Iterable[
+    Union[Tuple[Any, Any], Tuple[str, Iterable[Tuple[Any, Any]]]]
+]
+
+_Choice: TypeAlias = Tuple[Any, Any]
+_ChoiceNamedGroup: TypeAlias = Tuple[str, Iterable[_Choice]]
+_FieldChoices: TypeAlias = Iterable[_Choice | _ChoiceNamedGroup]
+
+
+class _ChoicesCallable(Protocol):
+    def __call__(self) -> _FieldChoices: ...
+
+
+_ChoicesParameter: TypeAlias = Union[_FieldChoices, _ChoicesCallable]
+
+
+class _CoerceCallable(Protocol):
+    def __call__(self, value: Any, /) -> Any: ...
+
+
 class _Unspecified:
     """
     Marker used by EnumChoiceField to determine if empty_value
@@ -29,13 +60,13 @@ class _Unspecified:
     """
 
 
-class NonStrictMixin:
+class NonStrictMixin(with_typehint(Select)):  # type: ignore
     """
     Mixin to add non-strict behavior to a widget, this makes sure the set value
     appears as a choice if it is not one of the enumeration choices.
     """
 
-    choices: Iterable[Tuple[Any, str]]
+    choices: _SelectChoices
 
     def render(self, *args, **kwargs):
         """
@@ -48,7 +79,7 @@ class NonStrictMixin:
             choice[0] for choice in self.choices
         ):
             self.choices = list(self.choices) + [(value, str(value))]
-        return super().render(*args, **kwargs)  # type: ignore
+        return super().render(*args, **kwargs)
 
 
 class NonStrictSelect(NonStrictMixin, Select):
@@ -71,7 +102,9 @@ class NonStrictSelectMultiple(NonStrictMixin, SelectMultiple):
     """
 
 
-class ChoiceFieldMixin:  # pylint: disable=R0902
+class ChoiceFieldMixin(
+    with_typehint(TypedChoiceField)  # type: ignore
+):  # pylint: disable=R0902
     """
     Mixin to adapt base model form ChoiceFields to use on EnumFields.
 
@@ -94,11 +127,12 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
     _primitive_: Optional[Type] = None
     _strict_: bool = True
     empty_value: Any = ""
-    empty_values: List[Any] = TypedChoiceField.empty_values
-    choices: Iterable[Tuple[Any, Any]]
+    empty_values: Sequence[Any] = list(TypedChoiceField.empty_values)
 
     _empty_value_overridden_: bool = False
     _empty_values_overridden_: bool = False
+
+    # choices: _ChoicesProperty
 
     def __init__(
         self,
@@ -108,7 +142,8 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
         empty_value: Any = _Unspecified,
         strict: bool = _strict_,
         empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
-        choices: Iterable[Tuple[Any, str]] = (),
+        choices: _ChoicesParameter = (),
+        coerce: Optional[_CoerceCallable] = None,
         **kwargs,
     ):
         self._strict_ = strict
@@ -117,14 +152,15 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
             kwargs.setdefault("widget", NonStrictSelect)
 
         if empty_values is _Unspecified:
-            self.empty_values = copy(TypedChoiceField.empty_values)
+            self.empty_values = copy(list(TypedChoiceField.empty_values))
         else:
-            self.empty_values = empty_values  # type: ignore
+            assert isinstance(empty_values, list)
+            self.empty_values = empty_values
             self._empty_values_overridden_ = True
 
-        super().__init__(  # type: ignore
+        super().__init__(
             choices=choices or getattr(self.enum, "choices", choices),
-            coerce=kwargs.pop("coerce", self.coerce),
+            coerce=coerce or self.default_coerce,
             **kwargs,
         )
 
@@ -134,7 +170,7 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
                 empty_value not in self.empty_values
                 and not self._empty_values_overridden_
             ):
-                self.empty_values.insert(0, empty_value)
+                self.empty_values = [empty_value, *self.empty_values]
             self.empty_value = empty_value
 
         if enum:
@@ -170,7 +206,7 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
     def enum(self, enum):
         self._enum_ = enum
         self._primitive_ = self._primitive_ or determine_primitive(enum)
-        self.choices = self.choices or get_choices(self.enum)
+        self.choices = self.choices or get_choices(self.enum)  # type: ignore[has-type]
         # remove any of our valid enumeration values or symmetric properties
         # from our empty value list if there exists an equivalency
         if not self._empty_values_overridden_:
@@ -196,24 +232,24 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""
-        value = self._coerce(value)  # type: ignore
-        return super().prepare_value(  # type: ignore
+        value = self._coerce(value)
+        return super().prepare_value(
             value.value if isinstance(value, self.enum) else value
         )
 
-    def to_python(self, value: Any) -> Union[Choices, Any]:
+    def to_python(self, value: Any) -> Any:
         """Return the value as its full enumeration object"""
-        return self._coerce(value)  # type: ignore
+        return self._coerce(value)
 
     def valid_value(self, value: Any) -> bool:
         """Return false if this value is not valid"""
         try:
-            self._coerce(value)  # type: ignore
+            self._coerce(value)
             return True
         except ValidationError:
             return False
 
-    def coerce(self, value: Any) -> Union[Enum, Any]:  # pylint: disable=E0202
+    def default_coerce(self, value: Any) -> Any:  # pylint: disable=E0202
         """
         Attempt conversion of value to an enumeration value and return it
         if successful.
@@ -257,13 +293,18 @@ class ChoiceFieldMixin:  # pylint: disable=R0902
         Field.validate(self, value)
         if value not in self.empty_values and not self.valid_value(value):
             raise ValidationError(
-                self.error_messages["invalid_choice"],  # type: ignore
+                self.error_messages["invalid_choice"],
                 code="invalid_choice",
                 params={"value": value},
             )
 
 
-class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):
+# seems to be a type hinting bug when django-stubs and mypy are used together where
+# these classes are confused about what type the choices property is - hence the ignore
+# comments - these comments are unnecessary when django-stubs is not installed
+
+
+class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
     """
     The default ``ChoiceField`` will only accept the base enumeration values.
     Use this field on forms to accept any value mappable to an enumeration
@@ -271,7 +312,7 @@ class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):
     """
 
 
-class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
+class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     """
     The default ``TypedMultipleChoiceField`` will only accept the base
     enumeration values. Use this field on forms to accept any value mappable
@@ -295,7 +336,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
         empty_value: Any = _Unspecified,
         strict: bool = ChoiceFieldMixin._strict_,
         empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
-        choices: Iterable[Tuple[Any, str]] = (),
+        choices: _ChoicesParameter = (),
         **kwargs,
     ):
         super().__init__(
