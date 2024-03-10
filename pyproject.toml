@@ -210,3 +210,12 @@ command_line = "-m pytest --cov=django_enum"
 source = [
     "django_enum"
 ]
+
+
+[tool.pyright]
+exclude = [
+    "django_enum/tests/**/*"
+]
+include = [
+    "django_enum"
+]

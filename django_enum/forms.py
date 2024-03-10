@@ -3,18 +3,7 @@
 from copy import copy
 from decimal import DecimalException
 from enum import Enum
-from typing import (
-    Any,
-    Iterable,
-    List,
-    Optional,
-    Protocol,
-    Sequence,
-    Tuple,
-    Type,
-    TypeAlias,
-    Union,
-)
+from typing import Any, Iterable, List, Optional, Protocol, Sequence, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
@@ -33,20 +22,18 @@ __all__ = [
 ]
 
 
-_SelectChoices: TypeAlias = Iterable[
-    Union[Tuple[Any, Any], Tuple[str, Iterable[Tuple[Any, Any]]]]
-]
+_SelectChoices = Iterable[Union[Tuple[Any, Any], Tuple[str, Iterable[Tuple[Any, Any]]]]]
 
-_Choice: TypeAlias = Tuple[Any, Any]
-_ChoiceNamedGroup: TypeAlias = Tuple[str, Iterable[_Choice]]
-_FieldChoices: TypeAlias = Iterable[_Choice | _ChoiceNamedGroup]
+_Choice = Tuple[Any, Any]
+_ChoiceNamedGroup = Tuple[str, Iterable[_Choice]]
+_FieldChoices = Iterable[_Choice | _ChoiceNamedGroup]
 
 
 class _ChoicesCallable(Protocol):
     def __call__(self) -> _FieldChoices: ...
 
 
-_ChoicesParameter: TypeAlias = Union[_FieldChoices, _ChoicesCallable]
+_ChoicesParameter = Union[_FieldChoices, _ChoicesCallable]
 
 
 class _CoerceCallable(Protocol):
