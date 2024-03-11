@@ -46,6 +46,11 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all
           poetry run pip install -U "Django~=${{ matrix.django-version }}"
+      - name: Conditionally Install django-filter
+        run: |
+          if [ $(echo "${{ matrix.django-version }}" | awk '{print ($1 < 4.2)}') -eq 1 ]; then
+            poetry run pip install -U "django-filter~=23.5"
+          fi
       - name: Run Static Analysis
         run: |
           poetry run isort django_enum --check
