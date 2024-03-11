@@ -402,11 +402,11 @@ jobs:
           poetry run pip install --upgrade pip
           poetry install -E all --with oracle
           poetry run pip install -U "Django~=${{ matrix.django-version }}"
-      - name: Setup tmate session
-        uses: mxschmitt/action-tmate@v3
-        with:
-          detached: true
-        timeout-minutes: 60
+      # - name: Setup tmate session
+      #   uses: mxschmitt/action-tmate@v3
+      #   with:
+      #     detached: true
+      #   timeout-minutes: 60
       - name: Run Full Unit Tests
         run: |
           poetry run pytest -s

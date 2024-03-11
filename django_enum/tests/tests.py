@@ -3237,7 +3237,8 @@ class FlagTests(TestCase):
                     # TODO - remove when fixed
                     # pytest.skip("Oracle bug ORA-00932 encountered - skipping")
                     not_working.append(field.name)
-                    continue
+                    # continue
+                    pytest.skip("Oracle bug ORA-00932 encountered - skipping")
                 raise
 
             working.append(field.name)
