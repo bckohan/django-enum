@@ -26,7 +26,7 @@ _SelectChoices = Iterable[Union[Tuple[Any, Any], Tuple[str, Iterable[Tuple[Any, 
 
 _Choice = Tuple[Any, Any]
 _ChoiceNamedGroup = Tuple[str, Iterable[_Choice]]
-_FieldChoices = Iterable[_Choice | _ChoiceNamedGroup]
+_FieldChoices = Iterable[Union[_Choice, _ChoiceNamedGroup]]
 
 
 class _ChoicesCallable(Protocol):
@@ -286,12 +286,7 @@ class ChoiceFieldMixin(
             )
 
 
-# seems to be a type hinting bug when django-stubs and mypy are used together where
-# these classes are confused about what type the choices property is - hence the ignore
-# comments - these comments are unnecessary when django-stubs is not installed
-
-
-class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
+class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):
     """
     The default ``ChoiceField`` will only accept the base enumeration values.
     Use this field on forms to accept any value mappable to an enumeration
@@ -299,7 +294,7 @@ class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
     """
 
 
-class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
+class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
     """
     The default ``TypedMultipleChoiceField`` will only accept the base
     enumeration values. Use this field on forms to accept any value mappable

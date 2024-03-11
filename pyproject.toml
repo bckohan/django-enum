@@ -77,7 +77,7 @@ numpy = [
 ]
 pylint = "^3.1.0"
 black = "^24.2.0"
-django-stubs = {extras = ["compatible-mypy"], version = "^4.2.7"}
+# django-stubs = {extras = ["compatible-mypy"], version = "^4.2.7"}
 
 [tool.poetry.group.psycopg2]
 optional = true
@@ -138,7 +138,7 @@ warn_no_return = true
 exclude = [
     "tests",
 ]
-plugins = ["mypy_django_plugin.main"]
+# plugins = ["mypy_django_plugin.main"]
 
 
 # todo doc8 configuration here is not being picked up and doesnt seem to be working
@@ -176,8 +176,8 @@ disable = [
     'R0801'
 ]
 
-[tool.django-stubs]
-django_settings_module = "django_enum.tests.settings"
+# [tool.django-stubs]
+# django_settings_module = "django_enum.tests.settings"
 
 [tool.pytest.ini_options]
 # py.test options:
