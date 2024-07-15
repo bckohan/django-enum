@@ -62,7 +62,6 @@ pylint = [
 ]
 sphinx-argparse = "^0.3.0"
 deepdiff = ">=5.2.3,<7.0.0"
-safety = "^2.0.0"
 readme-renderer = ">=34,<38"
 pygount = "^1.2.4"
 types-PyYAML = "^6.0"
