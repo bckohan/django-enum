@@ -181,6 +181,16 @@ class EnumMixin(
         if self.enum is not None:
             kwargs['choices'] = choices(self.enum)
 
+        if 'db_default' in kwargs:
+            try:
+                kwargs['db_default'] = getattr(
+                    self.to_python(kwargs['db_default']),
+                    'value',
+                    kwargs['db_default']
+                )
+            except ValidationError:
+                pass
+
         if 'default' in kwargs:
             # ensure default in deconstructed fields is always the primitive
             # value type
