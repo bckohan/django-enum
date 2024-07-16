@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+v1.3.2
+======
+
+* Fixed `Support Django 5.1 <https://github.com/bckohan/django-enum/issues/63>`_
+
 v1.3.1
 ======
 
