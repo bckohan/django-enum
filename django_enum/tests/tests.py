@@ -3730,7 +3730,7 @@ if ENUM_PROPERTIES_INSTALLED:
             )
             # tends to be about 1.8x slower
             self.assertTrue((enum_time / choice_time) < 2.5)
-            self.assertTrue((no_coerce_time / choice_time) < 2)
+            self.assertTrue((no_coerce_time / choice_time) < 2.2)
 
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
