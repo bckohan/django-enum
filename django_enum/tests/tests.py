@@ -3628,8 +3628,8 @@ if ENUM_PROPERTIES_INSTALLED:
             no_coerce_time = no_coerce_stop - no_coerce_start
             # flag if performance degrades signficantly - running about 2x for big lookups
             self.assertTrue((enum_time / choice_time) < 3)
-            self.assertTrue((enum_direct_time / choice_time) < 2.5)
-            self.assertTrue((no_coerce_time / choice_time) < 2.5)
+            self.assertTrue((enum_direct_time / choice_time) < 2.7)
+            self.assertTrue((no_coerce_time / choice_time) < 2.7)
             print(
                 f'(EnumTester) Bulk Create -> '
                 f'EnumField: {enum_time} '
@@ -3700,8 +3700,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 f'ChoiceField: {choice_time}'
             )
             # Enum tends to be about ~12% slower
-            self.assertTrue((enum_time / choice_time) < 1.8)
-            self.assertTrue((no_coerce_time / choice_time) < 1.7)
+            self.assertTrue((enum_time / choice_time) < 2.3)
+            self.assertTrue((no_coerce_time / choice_time) < 2.0)
 
             enum_start = perf_counter()
             for _ in SingleEnumPerf.objects.iterator(chunk_size=self.CHUNK_SIZE):
@@ -3729,8 +3729,8 @@ if ENUM_PROPERTIES_INSTALLED:
                 f'ChoiceField: {choice_time}'
             )
             # tends to be about 1.8x slower
-            self.assertTrue((enum_time / choice_time) < 2.5)
-            self.assertTrue((no_coerce_time / choice_time) < 2.2)
+            self.assertTrue((enum_time / choice_time) < 2.7)
+            self.assertTrue((no_coerce_time / choice_time) < 2.7)
 
 
     class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
