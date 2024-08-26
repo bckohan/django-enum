@@ -69,6 +69,10 @@ jobs:
       run: |
         poetry install -E djangorestframework
         poetry run pip install -U "Django~=${{ matrix.django-version }}"
+        # Check if Django version is 4.2 or higher
+        if [[ "${{ matrix.django-version }}" =~ ^4\.2|^4\.3 ]]; then
+          poetry run pip install "djangorestframework<3.15"
+        fi
     - name: Run Unit Tests w/ djangorestframework
       run: |
         poetry run pytest --cov-fail-under=30
@@ -76,6 +80,10 @@ jobs:
       run: |
         poetry install -E filters
         poetry run pip install -U "Django~=${{ matrix.django-version }}"
+        # Check if Django version is 4.2 or higher
+        if [[ "${{ matrix.django-version }}" =~ ^4\.2|^4\.3 ]]; then
+          poetry run pip install "djangorestframework<3.15"
+        fi
     - name: Run Unit Tests w/ django-filter
       run: |
         poetry run pytest --cov-fail-under=30
@@ -83,6 +91,10 @@ jobs:
       run: |
         poetry install -E all
         poetry run pip install -U "Django~=${{ matrix.django-version }}"
+        # Check if Django version is 4.2 or higher
+        if [[ "${{ matrix.django-version }}" =~ ^4\.2|^4\.3 ]]; then
+          poetry run pip install "djangorestframework<3.15"
+        fi
     - name: Run Full Unit Tests
       run: |
         poetry run pytest
