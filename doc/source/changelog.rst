@@ -2,6 +2,11 @@
 Change Log
 ==========
 
+v1.3.3
+======
+
+* Implemented `Support python 3.13 <https://github.com/bckohan/django-enum/issues/673>`_
+
 v1.3.2
 ======
 
