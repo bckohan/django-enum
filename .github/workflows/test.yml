@@ -46,7 +46,7 @@ jobs:
             drf-version: '3.14'
           - django-version: '5.1'
             drf-version: '3.14'
-            
+
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
@@ -81,24 +81,21 @@ jobs:
     - name: Install djangorestframework
       run: |
         poetry install -E djangorestframework
-        poetry run pip install -U "Django~=${{ matrix.django-version }}"
-        poetry run pip install -U "djangorestframework~=${{ matrix.drf-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}" "djangorestframework~=${{ matrix.drf-version }}"
     - name: Run Unit Tests w/ djangorestframework
       run: |
         poetry run pytest --cov-fail-under=30
     - name: Install django-filters
       run: |
         poetry install -E filters
-        poetry run pip install -U "Django~=${{ matrix.django-version }}"
-        poetry run pip install -U "djangorestframework~=${{ matrix.drf-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}" "djangorestframework~=${{ matrix.drf-version }}"
     - name: Run Unit Tests w/ django-filter
       run: |
         poetry run pytest --cov-fail-under=30
     - name: Install all deps
       run: |
         poetry install -E all
-        poetry run pip install -U "Django~=${{ matrix.django-version }}"
-        poetry run pip install -U "djangorestframework~=${{ matrix.drf-version }}"
+        poetry run pip install -U "Django~=${{ matrix.django-version }}" "djangorestframework~=${{ matrix.drf-version }}"
     - name: Run Full Unit Tests
       run: |
         poetry run pytest
