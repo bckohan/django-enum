@@ -132,9 +132,7 @@ warn_redundant_casts = true
 warn_unused_configs = true
 warn_unreachable = true
 warn_no_return = true
-exclude = [
-    "tests",
-]
+exclude = ["tests"]
 # plugins = ["mypy_django_plugin.main"]
 
 
@@ -152,9 +150,7 @@ sphinx = true
 DJANGO_SETTINGS_MODULE = "tests.settings"
 python_files = "tests.py"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
-env = [
-    "TERMINAL_WIDTH=80",
-]
+env = ["TERMINAL_WIDTH=80"]
 
 addopts = [
   "--strict-markers",
@@ -164,9 +160,7 @@ addopts = [
 ]
 
 [tool.coverage.run]
-omit = [
-  "tests/**/*py"
-]
+omit = ["tests/**/*py"]
 branch = true
 source = ["django_enum"]
 concurrency = ["multiprocessing"]
@@ -175,18 +169,12 @@ relative_files = true
 command_line = "-m pytest --cov=django_enum"
 
 [tool.coverage.paths]
-source = [
-    "django_enum"
-]
+source = ["django_enum"]
 
 
 [tool.pyright]
-exclude = [
-    "tests/**/*"
-]
-include = [
-    "django_enum"
-]
+exclude = ["tests/**/*"]
+include = ["django_enum"]
 
 [tool.ruff]
 line-length = 88
@@ -197,6 +185,4 @@ exclude = [
 ]
 
 [tool.ruff.lint]
-exclude = [
-    "tests/**/*"
-]
+exclude = ["tests/**/*"]
