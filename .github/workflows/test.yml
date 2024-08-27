@@ -24,8 +24,8 @@ jobs:
           - '5.0' # April 2025
           - '5.1' # December 2025
         drf-version:
-          - '3.14'
-          - '3.15'
+          - '>=3.14.0,<3.15.0'
+          - '^3.15'
         filter-version:
           - '23.5'
           - '24.0'
@@ -61,7 +61,7 @@ jobs:
             django-version: '5.0'
           
           - django-version: '3.2'
-            drf-version: '3.15'
+            drf-version: '^3.15'
           - django-version: '4.2'
             drf-version: '>=3.14.0,<3.15.0'
           - django-version: '5.0'
@@ -114,8 +114,8 @@ jobs:
         poetry config virtualenvs.in-project true
         poetry run pip install --upgrade pip
         poetry add django@^${{ matrix.django-version }}
-        poetry add django-filter@^${{ matrix.filter-version }}
-        poetry add djangorestframework@${{ matrix.drf-version }}
+        poetry add django-filter@^${{ matrix.filter-version }} --optional
+        poetry add djangorestframework@${{ matrix.drf-version }} --optional
         poetry install --no-interaction --with ${{ matrix.psycopg-version }}
     - name: No Optional Dependency Unit Tests
       run: |
@@ -166,8 +166,8 @@ jobs:
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
         drf-version:
-          - '3.14'
-          - '3.15'
+          - '>=3.14.0,<3.15.0'
+          - '^3.15'
         filter-version:
           - '23.5'
           - '24.0'
@@ -177,7 +177,7 @@ jobs:
           - python-version: '3.12'
             django-version: '3.2'
           - django-version: '3.2'
-            drf-version: '3.15'
+            drf-version: '^3.15'
           - django-version: '3.2'
             filter-version: '24.0'
           - django-version: '4.2'
@@ -206,8 +206,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }}
-          poetry add djangorestframework@${{ matrix.drf-version }}
+          poetry add django-filter@^${{ matrix.filter-version }} --optional
+          poetry add djangorestframework@${{ matrix.drf-version }} --optional
           poetry install --no-interaction -E all
       - name: Run Full Unit Tests
         run: |
@@ -227,8 +227,8 @@ jobs:
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
         drf-version:
-          - '3.14'
-          - '3.15'
+          - '>=3.14.0,<3.15.0'
+          - '^3.15'
         filter-version:
           - '23.5'
           - '24.0'
@@ -251,7 +251,7 @@ jobs:
             mysqlclient-version: '1.4.3'
 
           - django-version: '3.2'
-            drf-version: '3.15'
+            drf-version: '^3.15'
           - django-version: '3.2'
             filter-version: '24.0'
           - django-version: '4.2'
@@ -298,8 +298,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }}
-          poetry add djangorestframework@${{ matrix.drf-version }}
+          poetry add django-filter@^${{ matrix.filter-version }} --optional
+          poetry add djangorestframework@${{ matrix.drf-version }} --optional
           poetry install -E all --with mysql
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -325,8 +325,8 @@ jobs:
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
         drf-version:
-          - '3.14'
-          - '3.15'
+          - '>=3.14.0,<3.15.0'
+          - '^3.15'
         filter-version:
           - '23.5'
           - '24.0'
@@ -354,7 +354,7 @@ jobs:
             mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
 
           - django-version: '3.2'
-            drf-version: '3.15'
+            drf-version: '^3.15'
           - django-version: '3.2'
             filter-version: '24.0'
           - django-version: '4.2'
@@ -401,8 +401,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }}
-          poetry add djangorestframework@${{ matrix.drf-version }}
+          poetry add django-filter@^${{ matrix.filter-version }} --optional
+          poetry add djangorestframework@${{ matrix.drf-version }} --optional
           poetry install -E all --with mysql
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -426,8 +426,8 @@ jobs:
           - '18'
           - 'latest'
         drf-version:
-          - '3.14'
-          - '3.15'
+          - '>=3.14.0,<3.15.0'
+          - '^3.15'
         filter-version:
           - '23.5'
           - '24.0'
@@ -452,7 +452,7 @@ jobs:
             oracle-version: '18'
           
           - django-version: '3.2'
-            drf-version: '3.15'
+            drf-version: '^3.15'
           - django-version: '3.2'
             filter-version: '24.0'
           - django-version: '4.2'
@@ -512,8 +512,8 @@ jobs:
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }}
-          poetry add djangorestframework@${{ matrix.drf-version }}
+          poetry add django-filter@^${{ matrix.filter-version }} --optional
+          poetry add djangorestframework@${{ matrix.drf-version }} --optional
           poetry install -E all --with oracle
       # - name: Setup tmate session
       #   uses: mxschmitt/action-tmate@v3
