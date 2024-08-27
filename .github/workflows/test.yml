@@ -113,6 +113,7 @@ jobs:
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install --upgrade pip
+        poetry add python@^${{ matrix.python-version }}
         poetry add django@^${{ matrix.django-version }}
         poetry add django-filter@^${{ matrix.filter-version }} --optional
         poetry add djangorestframework@${{ matrix.drf-version }} --optional
@@ -205,6 +206,7 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
+          poetry add python@^${{ matrix.python-version }}
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
           poetry add djangorestframework@${{ matrix.drf-version }} --optional
@@ -297,6 +299,7 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
+          poetry add python@^${{ matrix.python-version }}
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
           poetry add djangorestframework@${{ matrix.drf-version }} --optional
@@ -400,6 +403,7 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
+          poetry add python@^${{ matrix.python-version }}
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
           poetry add djangorestframework@${{ matrix.drf-version }} --optional
@@ -511,6 +515,7 @@ jobs:
         run: |
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
+          poetry add python@^${{ matrix.python-version }}
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
           poetry add djangorestframework@${{ matrix.drf-version }} --optional
