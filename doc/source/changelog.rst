@@ -16,6 +16,19 @@ v2.0.0
 * Fixed `When coerce is false, to_python does not convert to the Enum's primitive type <https://github.com/bckohan/django-enum/issues/39>`_
 * Fixed `None should be an allowable enumeration value in enums of any primitive type. <https://github.com/bckohan/django-enum/issues/42>`_
 
+
+v1.3.3
+======
+
+* Implemented `Support python 3.13 <https://github.com/bckohan/django-enum/issues/67>`_
+* Implemented `Drop support for Python 3.7 <https://github.com/bckohan/django-enum/issues/68>`_
+
+v1.3.2
+======
+
+* Fixed `Support Django 5.1 <https://github.com/bckohan/django-enum/issues/63>`_
+
+
 v1.3.1
 ======
 

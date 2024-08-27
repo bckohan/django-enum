@@ -711,7 +711,7 @@ class EnumField(
         Get a check constraint name for the given enumeration field on the
         given model class. Check constraint names are limited to
         MAX_CONSTRAINT_NAME_LENGTH. The beginning parts of the name will be
-        reduced to small hashes until the size of the name is under threshold.
+        chopped off if it is too long.
 
         :param model_class: The class of the Model the field is on
         :param field_name: The name of the field

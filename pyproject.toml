@@ -22,6 +22,7 @@ classifiers = [
     "Framework :: Django :: 4.1",
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
+    "Framework :: Django :: 5.1",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
@@ -31,6 +32,7 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Internet :: WWW/HTTP :: Site Management",
     "Topic :: Software Development :: Libraries",
@@ -40,7 +42,6 @@ classifiers = [
 packages = [
     { include = "django_enum" }
 ]
-exclude = ["django_enum/tests"]
 
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
@@ -50,34 +51,30 @@ django-filter = {version = ">=21", optional = true}
 djangorestframework = {version = "^3.9", optional = true}
 
 [tool.poetry.group.dev.dependencies]
-pytest = "^7.0"
-Sphinx = "^5.0.2"
-sphinx-rtd-theme = "^1.0.0"
-mypy = "^1.0"
-isort = "^5.6.4"
-doc8 = "^0.11.0"
-darglint = "^1.5.7"
-pytest-cov = "^4.0.0"
-deepdiff = ">=5.2.3,<7.0.0"
-safety = "^2.0.0"
-readme-renderer = ">=34,<38"
-pygount = "^1.2.4"
-types-PyYAML = "^6.0"
+pytest = ">=7.0"
+Sphinx = ">=7.0"
+mypy = ">=1.0"
+doc8 = ">=0.11.0"
+darglint = ">=1.5.7"
+pytest-cov = ">=4.0.0"
+deepdiff = ">=5.2.3"
+readme-renderer = ">=42"
+pygount = ">=1.2.4"
+types-PyYAML = ">=6.0"
 coverage = ">=6.2,<8.0"
-beautifulsoup4 = "^4.11.1"
-pytest-django = "^4.5.2"
-django-test-migrations = "^1.2.0"
-python-dateutil = "^2.8.2"
-ipdb = "^0.13.13"
-tqdm = "^4.65.0"
-matplotlib = "^3.7.5"
+beautifulsoup4 = ">=4.11.1"
+pytest-django = ">=4.5.2"
+django-test-migrations = ">=1.2.0"
+python-dateutil = ">=2.8.2"
+ipdb = ">=0.13.13"
+tqdm = ">=4.65.0"
+matplotlib = ">=3.7.5"
 numpy = [
     {version = "<1.25", markers = "python_version < '3.9'"},
     {version = ">=1.25", markers = "python_version >= '3.9'"}
 ]
-pylint = "^3.1.0"
-black = "^24.2.0"
 # django-stubs = {extras = ["compatible-mypy"], version = "^4.2.7"}
+furo = "^2024.8.6"
 
 [tool.poetry.group.psycopg2]
 optional = true
@@ -147,41 +144,12 @@ exclude = [
 max-line-length = 100
 sphinx = true
 
-[tool.isort]
-profile = "black"
-
-[tool.black]
-target-version = ["py38", "py39", "py310", "py311", "py312"]
-include = '\.pyi?$'
-
-[pylint]
-output-format = "colorized"
-max-line-length = 88
-
-[tool.pylint.CLASSES]
-valid-metaclass-classmethod-first-arg = "mcs"
-
-[tool.pylint.'DESIGN']
-max-branches=15
-max-parents=12
-max-args=10
-max-statements=60
-
-[tool.pylint.'MASTER']
-ignore="tests"
-
-[tool.pylint.'MESSAGES CONTROL']
-disable = [
-    'R0903', # too few public methods - seriously?
-    'R0801'
-]
-
 # [tool.django-stubs]
 # django_settings_module = "django_enum.tests.settings"
 
 [tool.pytest.ini_options]
 # py.test options:
-DJANGO_SETTINGS_MODULE = "django_enum.tests.settings"
+DJANGO_SETTINGS_MODULE = "tests.settings"
 python_files = "tests.py"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
 env = [
@@ -197,7 +165,7 @@ addopts = [
 
 [tool.coverage.run]
 omit = [
-  "django_enum/tests/**/*py"
+  "tests/**/*py"
 ]
 branch = true
 source = ["django_enum"]
@@ -214,8 +182,21 @@ source = [
 
 [tool.pyright]
 exclude = [
-    "django_enum/tests/**/*"
+    "tests/**/*"
 ]
 include = [
     "django_enum"
+]
+
+[tool.ruff]
+line-length = 88
+exclude = [
+    "doc",
+    "dist",
+    "examples"
+]
+
+[tool.ruff.lint]
+exclude = [
+    "tests/**/*"
 ]
