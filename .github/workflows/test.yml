@@ -109,6 +109,16 @@ jobs:
       with:
         virtualenvs-create: true
         virtualenvs-in-project: true
+    - name: Install Emacs
+      if: ${{ github.event.inputs.debug == 'on' }}
+      run: |
+        sudo apt install emacs
+    - name: Setup tmate session
+      if: ${{ github.event.inputs.debug == 'on' }}
+      uses: mxschmitt/action-tmate@v3
+      with:
+        detached: true
+      timeout-minutes: 60
     - name: Install Basic Dependencies
       run: |
         poetry config virtualenvs.in-project true
@@ -202,6 +212,16 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
+      - name: Install Emacs
+        if: ${{ github.event.inputs.debug == 'on' }}
+        run: |
+          sudo apt install emacs
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'on' }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+        timeout-minutes: 60
       - name: Install Dependencies
         run: |
           poetry config virtualenvs.in-project true
@@ -295,6 +315,16 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
+      - name: Install Emacs
+        if: ${{ github.event.inputs.debug == 'on' }}
+        run: |
+          sudo apt install emacs
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'on' }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+        timeout-minutes: 60
       - name: Install Dependencies
         run: |
           poetry config virtualenvs.in-project true
@@ -399,6 +429,16 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
+      - name: Install Emacs
+        if: ${{ github.event.inputs.debug == 'on' }}
+        run: |
+          sudo apt install emacs
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'on' }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+        timeout-minutes: 60
       - name: Install Dependencies
         run: |
           poetry config virtualenvs.in-project true
@@ -504,6 +544,16 @@ jobs:
         with:
           virtualenvs-create: true
           virtualenvs-in-project: true
+      - name: Install Emacs
+        if: ${{ github.event.inputs.debug == 'on' }}
+        run: |
+          sudo apt install emacs
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'on' }}
+        uses: mxschmitt/action-tmate@v3
+        with:
+          detached: true
+        timeout-minutes: 60
       - name: Install Oracle Client
         run: |
           curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2111000/oracle-instantclient-basiclite-21.11.0.0.0-1.el8.x86_64.rpm
@@ -520,11 +570,6 @@ jobs:
           poetry add django-filter@^${{ matrix.filter-version }} --optional
           poetry add djangorestframework@${{ matrix.drf-version }} --optional
           poetry install -E all --with oracle
-      # - name: Setup tmate session
-      #   uses: mxschmitt/action-tmate@v3
-      #   with:
-      #     detached: true
-      #   timeout-minutes: 60
       - name: Run Full Unit Tests
         run: |
           poetry run pytest -s
