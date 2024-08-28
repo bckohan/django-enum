@@ -143,7 +143,7 @@ jobs:
         sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
         poetry add django@^${{ matrix.django-version }}
         poetry add django-filter@^${{ matrix.filter-version }} --optional
-        poetry add djangorestframework@${{ matrix.drf-version }} --optional
+        poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
         poetry install --no-interaction --with ${{ matrix.psycopg-version }}
     - name: No Optional Dependency Unit Tests
       run: |
@@ -246,7 +246,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@${{ matrix.drf-version }} --optional
+          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install --no-interaction -E all
       - name: Run Full Unit Tests
         run: |
@@ -349,7 +349,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@${{ matrix.drf-version }} --optional
+          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install -E all --with mysql
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -463,7 +463,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@${{ matrix.drf-version }} --optional
+          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install -E all --with mysql
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -585,7 +585,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@${{ matrix.drf-version }} --optional
+          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install -E all --with oracle
       - name: Run Full Unit Tests
         run: |
