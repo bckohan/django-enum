@@ -4360,23 +4360,43 @@ if ENUM_PROPERTIES_INSTALLED:
                 migration = import_migration(
                     settings.TEST_MIGRATION_DIR / "0001_initial.py"
                 )
-                self.assertIsInstance(migration.operations[1], migrations.AddConstraint)
-                self.assertEqual(
-                    migration.operations[1].constraint.check, Q(int_enum__in=[0, 1, 2])
-                )
-                self.assertEqual(
-                    migration.operations[1].constraint.name,
-                    "tests_edit_tests_MigrationTester_int_enum_IntEnum",
-                )
-                self.assertIsInstance(migration.operations[2], migrations.AddConstraint)
-                self.assertEqual(
-                    migration.operations[2].constraint.check,
-                    Q(color__in=["R", "G", "B", "K"]),
-                )
-                self.assertEqual(
-                    migration.operations[2].constraint.name,
-                    "tests_edit_tests_MigrationTester_color_Color",
-                )
+                if django_version >= (5, 1):
+                    self.assertIsInstance(migration.operations[0], migrations.CreateModel)
+                    self.assertEqual(len(migration.operations[0].options['constraints']), 2)
+                    self.assertEqual(
+                        migration.operations[0].options['constraints'][0].name,
+                        "tests_edit_tests_MigrationTester_int_enum_IntEnum",
+                    )
+                    self.assertEqual(
+                        migration.operations[0].options['constraints'][0].check,
+                        Q(int_enum__in=[0, 1, 2])
+                    )
+                    self.assertEqual(
+                        migration.operations[0].options['constraints'][1].name,
+                        "tests_edit_tests_MigrationTester_color_Color",
+                    )
+                    self.assertEqual(
+                        migration.operations[0].options['constraints'][1].check,
+                        Q(color__in=["R", "G", "B", "K"])
+                    )
+                else:
+                    self.assertIsInstance(migration.operations[1], migrations.AddConstraint)
+                    self.assertEqual(
+                        migration.operations[1].constraint.check, Q(int_enum__in=[0, 1, 2])
+                    )
+                    self.assertEqual(
+                        migration.operations[1].constraint.name,
+                        "tests_edit_tests_MigrationTester_int_enum_IntEnum",
+                    )
+                    self.assertIsInstance(migration.operations[2], migrations.AddConstraint)
+                    self.assertEqual(
+                        migration.operations[2].constraint.check,
+                        Q(color__in=["R", "G", "B", "K"]),
+                    )
+                    self.assertEqual(
+                        migration.operations[2].constraint.name,
+                        "tests_edit_tests_MigrationTester_color_Color",
+                    )
 
             def test_makemigrate_02(self):
                 import shutil
