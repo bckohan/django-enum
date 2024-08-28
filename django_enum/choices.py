@@ -6,6 +6,7 @@ IntegerChoices and TextChoices.
 
 import enum
 
+from django import VERSION as django_version
 from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
@@ -13,7 +14,12 @@ from django.db.models import enums as model_enums
 
 from django_enum.utils import choices, names
 
-ChoicesType = getattr(model_enums, "ChoicesType", getattr(model_enums, "ChoicesMeta"))
+
+ChoicesType = (
+    model_enums.ChoicesType
+    if django_version[0:2] >= (5, 0) else
+    model_enums.ChoicesMeta
+)
 
 DEFAULT_BOUNDARY = getattr(enum, "KEEP", None)
 

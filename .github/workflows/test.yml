@@ -123,6 +123,7 @@ jobs:
         poetry install -E properties
     - name: Unit Tests w/ enum-properties
       run: |
+        poetry run ./manage.py makemigrations
         poetry run pytest --cov-append
     - name: Remove enum-properties
       run: |
@@ -141,6 +142,7 @@ jobs:
         poetry run pytest --cov-append
     - name: Install all deps
       run: |
+        poetry run ./manage.py makemigrations
         poetry install -E all
     - name: Run Full Unit Tests
       run: |
