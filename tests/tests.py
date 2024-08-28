@@ -35,6 +35,8 @@ from django_enum.fields import (
 )
 from django_enum.forms import EnumChoiceField  # dont remove this
 
+condition = "condition" if django_version[0:2] >= (5, 1) else "check"
+    
 # from tests.djenum.enums import (
 #     BigIntEnum,
 #     BigPosIntEnum,
@@ -4368,7 +4370,7 @@ if ENUM_PROPERTIES_INSTALLED:
                         "tests_edit_tests_MigrationTester_int_enum_IntEnum",
                     )
                     self.assertEqual(
-                        migration.operations[0].options['constraints'][0].check,
+                        migration.operations[0].options['constraints'][0].condition,
                         Q(int_enum__in=[0, 1, 2])
                     )
                     self.assertEqual(
@@ -4376,7 +4378,7 @@ if ENUM_PROPERTIES_INSTALLED:
                         "tests_edit_tests_MigrationTester_color_Color",
                     )
                     self.assertEqual(
-                        migration.operations[0].options['constraints'][1].check,
+                        migration.operations[0].options['constraints'][1].condition,
                         Q(color__in=["R", "G", "B", "K"])
                     )
                 else:
@@ -4471,7 +4473,7 @@ def revert_enum_values(apps, schema_editor):
                     migration.operations[-1], migrations.AddConstraint
                 )
                 self.assertEqual(
-                    migration.operations[-1].constraint.check, Q(int_enum__in=[1, 2, 3])
+                    getattr(migration.operations[-1].constraint, condition), Q(int_enum__in=[1, 2, 3])
                 )
                 self.assertEqual(
                     migration.operations[-1].constraint.name,
@@ -4531,7 +4533,7 @@ def remove_color_values(apps, schema_editor):
                     migration.operations[-1], migrations.AddConstraint
                 )
                 self.assertEqual(
-                    migration.operations[-1].constraint.check,
+                    getattr(migration.operations[-1].constraint, condition),
                     Q(color__in=["R", "G", "B"]),
                 )
                 self.assertEqual(
@@ -4642,11 +4644,11 @@ def remove_color_values(apps, schema_editor):
                 self.assertIsInstance(migration.operations[3], migrations.AddConstraint)
                 self.assertIsInstance(migration.operations[4], migrations.AddConstraint)
                 self.assertEqual(
-                    migration.operations[3].constraint.check,
+                    getattr(migration.operations[3].constraint, condition),
                     Q(int_enum__in=["A", "B", "C"]) | Q(int_enum__isnull=True),
                 )
                 self.assertEqual(
-                    migration.operations[4].constraint.check,
+                    getattr(migration.operations[4].constraint, condition),
                     Q(color__in=["R", "G", "B", "K"]),
                 )
                 self.assertEqual(

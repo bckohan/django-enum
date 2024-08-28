@@ -107,6 +107,7 @@ jobs:
         detached: true
       timeout-minutes: 60
     - name: Install Basic Dependencies
+      # it'd be great if you could just tell poetry to lock to specific versions
       run: |
         poetry config virtualenvs.in-project true
         poetry run pip install --upgrade pip
@@ -143,7 +144,7 @@ jobs:
     - name: Run Full Unit Tests
       run: |
         poetry run pytest --cov-append
-        mv py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}.coverage
+        mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}.coverage
 
     - name: Store coverage files
       uses: actions/upload-artifact@v4
@@ -158,34 +159,16 @@ jobs:
     strategy:
       matrix:
         python-version: [ '3.8', '3.12']
-        mysqlclient-version: ['^1.0.3']
+        #mysqlclient-version: ['^1.0.3']
         django-version:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
-        drf-version:
-          - '>=3.14.0,<3.15.0'
-          - '^3.15'
-        filter-version:
-          - '23.5'
-          - '24.0'
         exclude:
           - python-version: '3.8'
             django-version: '5.1'
           - python-version: '3.12'
             django-version: '3.2'
-          - django-version: '3.2'
-            drf-version: '^3.15'
-          - django-version: '3.2'
-            filter-version: '24.0'
-          - django-version: '4.2'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '4.2'
-            filter-version: '23.5'
-          - django-version: '5.1'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '5.1'
-            filter-version: '23.5'
 
     steps:
       - uses: actions/checkout@v4
@@ -215,12 +198,18 @@ jobs:
           poetry run pip install --upgrade pip
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install --no-interaction -E all
       - name: Run Full Unit Tests
         run: |
           poetry run pytest
+          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+
+      - name: Store coverage files
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite
+          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+
 
   mysql:
     runs-on: ubuntu-latest
@@ -235,12 +224,6 @@ jobs:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
-        drf-version:
-          - '>=3.14.0,<3.15.0'
-          - '^3.15'
-        filter-version:
-          - '23.5'
-          - '24.0'
         exclude:
           - python-version: '3.12'
             django-version: '3.2'
@@ -259,18 +242,6 @@ jobs:
           - mysql-version: 'latest'
             mysqlclient-version: '1.4.3'
 
-          - django-version: '3.2'
-            drf-version: '^3.15'
-          - django-version: '3.2'
-            filter-version: '24.0'
-          - django-version: '4.2'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '4.2'
-            filter-version: '23.5'
-          - django-version: '5.1'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '5.1'
-            filter-version: '23.5'
 
     services:
       mysql:
@@ -318,8 +289,6 @@ jobs:
           poetry run pip install --upgrade pip
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install -E all --with mysql
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -329,6 +298,14 @@ jobs:
           MYSQL_VERSION: ${{ matrix.mysql-version }}
         run: |
           poetry run pytest
+          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}.coverage
+
+      - name: Store coverage files
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}
+          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}.coverage
+
 
   mariadb:
     runs-on: ubuntu-latest
@@ -344,12 +321,6 @@ jobs:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
-        drf-version:
-          - '>=3.14.0,<3.15.0'
-          - '^3.15'
-        filter-version:
-          - '23.5'
-          - '24.0'
         exclude:
           - python-version: '3.12'
             django-version: '3.2'
@@ -372,19 +343,6 @@ jobs:
             mariadb-healthcheck: "mysqladmin ping"
           - mariadb-version: '10.2'
             mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
-
-          - django-version: '3.2'
-            drf-version: '^3.15'
-          - django-version: '3.2'
-            filter-version: '24.0'
-          - django-version: '4.2'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '4.2'
-            filter-version: '23.5'
-          - django-version: '5.1'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '5.1'
-            filter-version: '23.5'
 
     services:
       mysql:
@@ -432,8 +390,6 @@ jobs:
           poetry run pip install --upgrade pip
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install -E all --with mysql
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
@@ -441,6 +397,14 @@ jobs:
       - name: Run Full Unit Tests
         run: |
           poetry run pytest
+          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
+
+      - name: Store coverage files
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}
+          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
+
 
   oracle:
     runs-on: ubuntu-latest
@@ -456,12 +420,6 @@ jobs:
         oracle-version:
           - '18'
           - 'latest'
-        drf-version:
-          - '>=3.14.0,<3.15.0'
-          - '^3.15'
-        filter-version:
-          - '23.5'
-          - '24.0'
         exclude:
           - python-version: '3.8'
             django-version: '5.1'
@@ -481,19 +439,6 @@ jobs:
             oracle-version: '18'
           - django-version: '5.1'
             oracle-version: '18'
-          
-          - django-version: '3.2'
-            drf-version: '^3.15'
-          - django-version: '3.2'
-            filter-version: '24.0'
-          - django-version: '4.2'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '4.2'
-            filter-version: '23.5'
-          - django-version: '5.1'
-            drf-version: '>=3.14.0,<3.15.0'
-          - django-version: '5.1'
-            filter-version: '23.5'
 
     services:
       oracle:
@@ -554,12 +499,17 @@ jobs:
           poetry run pip install --upgrade pip
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
-          poetry add django-filter@^${{ matrix.filter-version }} --optional
-          poetry add djangorestframework@"${{ matrix.drf-version }}" --optional
           poetry install -E all --with oracle
       - name: Run Full Unit Tests
         run: |
           poetry run pytest -s
+          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}.coverage
+
+      - name: Store coverage files
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}
+          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}.coverage
 
 
   coverage-combine:
