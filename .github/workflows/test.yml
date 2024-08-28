@@ -114,6 +114,7 @@ jobs:
         sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
         poetry add django@^${{ matrix.django-version }}
         poetry install --no-interaction --with ${{ matrix.psycopg-version }}
+        poetry run ./manage.py makemigrations
     - name: No Optional Dependency Unit Tests
       run: |
         poetry run pytest --cov-append
@@ -199,6 +200,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry install --no-interaction -E all
+          poetry run ./manage.py makemigrations
       - name: Run Full Unit Tests
         run: |
           poetry run pytest
@@ -290,6 +292,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry install -E all --with mysql
+          poetry run ./manage.py makemigrations
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
         run: poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
@@ -391,6 +394,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry install -E all --with mysql
+          poetry run ./manage.py makemigrations
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
         run: poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
@@ -500,6 +504,7 @@ jobs:
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
           poetry install -E all --with oracle
+          poetry run ./manage.py makemigrations
       - name: Run Full Unit Tests
         run: |
           poetry run pytest -s
