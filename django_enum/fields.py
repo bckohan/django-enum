@@ -9,7 +9,7 @@ from enum import Enum, Flag, IntFlag
 from functools import reduce
 from operator import or_
 from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, Union
-
+from django import VERSION as django_version
 from django.core.exceptions import ValidationError
 from django.core.validators import DecimalValidator
 from django.db.models import (
@@ -82,6 +82,9 @@ MAX_CONSTRAINT_NAME_LENGTH = 64
 
 
 PrimitiveT = TypeVar("PrimitiveT", bound=Type[SupportedPrimitive])
+
+
+condition = "check" if django_version[0:2] < (5, 1) else "condition"
 
 
 @deconstructible
@@ -749,9 +752,10 @@ class EnumField(
                 constraint |= Q(**{f"{name}__isnull": True})
             cls._meta.constraints = [  # pylint: disable=W0212
                 *cls._meta.constraints,  # pylint: disable=W0212
-                CheckConstraint(
-                    check=constraint, name=self.constraint_name(cls, name, self.enum)
-                ),
+                CheckConstraint(**{
+                    condition: constraint,
+                    "name": self.constraint_name(cls, name, self.enum)
+                }),
             ]  # pylint: disable=protected-access
             # this dictionary is used to serialize the model, so if constraints
             # is not present - they will not be added to migrations
@@ -1176,10 +1180,10 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
 
                 cls._meta.constraints = [  # pylint: disable=W0212
                     *cls._meta.constraints,  # pylint: disable=W0212
-                    CheckConstraint(
-                        check=constraint,
-                        name=self.constraint_name(cls, name, self.enum),
-                    ),
+                    CheckConstraint(**{
+                        condition: constraint,
+                        "name": self.constraint_name(cls, name, self.enum),
+                    }),
                 ]
                 # this dictionary is used to serialize the model, so if
                 # constraints is not present - they will not be added to
