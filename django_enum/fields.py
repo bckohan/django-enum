@@ -1,4 +1,3 @@
-# pylint: disable=C0302
 """
 Support for Django model fields built from enumeration types.
 """
@@ -85,7 +84,6 @@ MAX_CONSTRAINT_NAME_LENGTH = 64
 
 PrimitiveT = TypeVar("PrimitiveT", bound=Type[SupportedPrimitive])
 
-
 condition = "check" if django_version[0:2] < (5, 1) else "condition"
 
 
@@ -143,7 +141,7 @@ class EnumFieldFactory(type):
     based on their python Enum class types.
     """
 
-    def __call__(  # pylint: disable=C0103, R0912, R0911
+    def __call__(
         cls,
         enum: Optional[Type[Enum]] = None,
         primitive: Optional[Type[SupportedPrimitive]] = None,
@@ -225,7 +223,7 @@ class EnumFieldFactory(type):
         # make sure all enumeration values are symmetrically coercible to
         # the primitive, if they are not this could cause some strange behavior
         for value in values(enum):
-            if value is None or type(value) is primitive:  # pylint: disable=C0123
+            if value is None or type(value) is primitive:
                 continue
             try:
                 assert type(value)(primitive(value)) == value  # type: ignore
@@ -418,7 +416,7 @@ class EnumField(
             and self.primitive
             and not isinstance(value, self.primitive)
         ):
-            return self.primitive(value)  # pylint: disable=E1102
+            return self.primitive(value)
         return value
 
     def __init__(
@@ -474,12 +472,12 @@ class EnumField(
 
         if (self.coerce or force) and not isinstance(value, self.enum):
             try:
-                value = self.enum(value)  # pylint: disable=E1102
+                value = self.enum(value)
             except (TypeError, ValueError):
                 try:
                     # value = self.primitive(value)
                     value = self._coerce_to_value_type(value)
-                    value = self.enum(value)  # pylint: disable=E1102
+                    value = self.enum(value)
                 except (TypeError, ValueError, DecimalException):
                     try:
                         value = self.enum[value]
@@ -487,10 +485,8 @@ class EnumField(
                         if len(self._value_primitives_) > 1:
                             for primitive in self._value_primitives_:
                                 try:
-                                    return self.enum(  # pylint: disable=E1102
-                                        primitive(value)
-                                    )
-                                except Exception:  # pylint: disable=W0703
+                                    return self.enum(primitive(value))
+                                except Exception:
                                     pass
                         value = self._fallback(value)
                         if not isinstance(value, self.enum) and (
@@ -578,8 +574,8 @@ class EnumField(
     def from_db_value(
         self,
         value: Any,
-        expression,  # pylint: disable=W0613
-        connection,  # pylint: disable=W0613
+        expression,
+        connection,
     ) -> Any:
         """
         Convert the database field value into the Enum type.
@@ -663,7 +659,7 @@ class EnumField(
 
         is_multi = self.enum and issubclass(self.enum, Flag)
         if is_multi and self.enum:
-            kwargs["empty_value"] = self.enum(0)  # pylint: disable=E1102
+            kwargs["empty_value"] = self.enum(0)
             # why fail? - does this fail for single select too?
             # kwargs['show_hidden_initial'] = True
 
@@ -694,9 +690,9 @@ class EnumField(
         blank_choice=tuple(BLANK_CHOICE_DASH),
         limit_choices_to=None,
         ordering=(),
-    ):  # pylint: disable=W0221
+    ):
         if self.enum and issubclass(self.enum, Flag):
-            blank_choice = [(self.enum(0), "---------")]  # pylint: disable=E1102
+            blank_choice = [(self.enum(0), "---------")]
         return [
             (getattr(choice, "value", choice), label)
             for choice, label in super().get_choices(
@@ -722,7 +718,7 @@ class EnumField(
         :param enum: The enumeration type of the EnumField
         """
         name = (
-            f"{model_class._meta.app_label}_"  # pylint: disable=W0212
+            f"{model_class._meta.app_label}_"
             f"{model_class.__name__}_{field_name}_"
             f"{enum.__name__}"
         )
@@ -732,7 +728,7 @@ class EnumField(
 
     def contribute_to_class(
         self, cls: Type[Model], name: str, private_only: bool = False
-    ):  # pylint: disable=W0221
+    ):
         super().contribute_to_class(cls, name, private_only=private_only)
         if self.constrained and self.enum and issubclass(self.enum, IntFlag):
             # It's possible to declare an IntFlag field with negative values -
@@ -751,20 +747,20 @@ class EnumField(
             )
             if self.null:
                 constraint |= Q(**{f"{name}__isnull": True})
-            cls._meta.constraints = [  # pylint: disable=W0212
-                *cls._meta.constraints,  # pylint: disable=W0212
+            cls._meta.constraints = [
+                *cls._meta.constraints,
                 CheckConstraint(
-                    **{
+                    **{  # type: ignore[arg-type]
                         condition: constraint,
                         "name": self.constraint_name(cls, name, self.enum),
                     }
                 ),
-            ]  # pylint: disable=protected-access
+            ]
             # this dictionary is used to serialize the model, so if constraints
             # is not present - they will not be added to migrations
-            cls._meta.original_attrs.setdefault(  # pylint: disable=W0212
+            cls._meta.original_attrs.setdefault(
                 "constraints",
-                cls._meta.constraints,  # pylint: disable=W0212
+                cls._meta.constraints,
             )
 
 
@@ -1173,7 +1169,7 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             ]
 
             if is_strict or is_conform or (is_eject and self.strict) and flags:
-                constraint = (  # pylint: disable=E1131
+                constraint = (
                     Q(**{f"{name}__gte": min(*flags)})
                     & Q(**{f"{name}__lte": reduce(or_, flags)})
                 ) | Q(**{name: 0})
@@ -1181,8 +1177,8 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                 if self.null:
                     constraint |= Q(**{f"{name}__isnull": True})
 
-                cls._meta.constraints = [  # pylint: disable=W0212
-                    *cls._meta.constraints,  # pylint: disable=W0212
+                cls._meta.constraints = [
+                    *cls._meta.constraints,
                     CheckConstraint(
                         **{
                             condition: constraint,
@@ -1193,9 +1189,9 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
                 # this dictionary is used to serialize the model, so if
                 # constraints is not present - they will not be added to
                 # migrations
-                cls._meta.original_attrs.setdefault(  # pylint: disable=W0212
+                cls._meta.original_attrs.setdefault(
                     "constraints",
-                    cls._meta.constraints,  # pylint: disable=W0212
+                    cls._meta.constraints,
                 )
         if isinstance(self, FlagField):
             # this may have been called by a normal EnumField to bring in flag-like constraints
@@ -1283,8 +1279,8 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
     def from_db_value(
         self,
         value: Any,
-        expression,  # pylint: disable=W0613
-        connection,  # pylint: disable=W0613
+        expression,
+        connection,
     ) -> Any:
         """
         Convert the database field value into the Enum type.

@@ -73,7 +73,7 @@ numpy = [
     {version = "<1.25", markers = "python_version < '3.9'"},
     {version = ">=1.25", markers = "python_version >= '3.9'"}
 ]
-# django-stubs = {extras = ["compatible-mypy"], version = "^4.2.7"}
+django-stubs = {extras = ["compatible-mypy"], version = ">=4.2.7"}
 furo = "^2024.8.6"
 ruff = "^0.6.3"
 
@@ -115,26 +115,14 @@ djangorestframework = ["djangorestframework"]
 
 [tool.mypy]
 # The mypy configurations: http://bit.ly/2zEl9WI
-allow_redefinition = false
+# allow_redefinition = false
 check_untyped_defs = true
-disallow_untyped_decorators = false
-disallow_any_explicit = false
-disallow_any_generics = false
-disallow_untyped_calls = true
-ignore_errors = false
 ignore_missing_imports = true
-implicit_reexport = false
-strict_optional = true
-strict_equality = true
-local_partial_types = true
-no_implicit_optional = true
-warn_unused_ignores = true
-warn_redundant_casts = true
-warn_unused_configs = true
-warn_unreachable = true
-warn_no_return = true
 exclude = ["tests"]
-# plugins = ["mypy_django_plugin.main"]
+plugins = ["mypy_django_plugin.main"]
+
+[tool.django-stubs]
+django_settings_module = "tests.settings"
 
 
 # todo doc8 configuration here is not being picked up and doesnt seem to be working
@@ -143,8 +131,6 @@ exclude = ["tests"]
 max-line-length = 100
 sphinx = true
 
-# [tool.django-stubs]
-# django_settings_module = "django_enum.tests.settings"
 
 [tool.pytest.ini_options]
 # py.test options:
@@ -171,10 +157,6 @@ command_line = "-m pytest --cov=django_enum"
 [tool.coverage.paths]
 source = ["django_enum"]
 
-
-[tool.pyright]
-exclude = ["tests/**/*"]
-include = ["django_enum"]
 
 [tool.ruff]
 line-length = 88

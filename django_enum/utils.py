@@ -20,7 +20,7 @@ __all__ = [
 ]
 
 
-T = TypeVar("T")  # pylint: disable=C0103
+T = TypeVar("T")
 
 SupportedPrimitive = Union[
     int,
@@ -176,7 +176,7 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
                 try:
                     # test symmetric coercibility
                     works &= type(value)(candidate(value)) == value
-                except Exception:  # pylint: disable=W0703
+                except Exception:
                     works = False
             if works:
                 return candidate

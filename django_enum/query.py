@@ -8,7 +8,7 @@ from django.db.models.lookups import Exact
 # from django_enum.utils import get_set_bits
 
 
-class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
+class HasAllFlagsLookup(Exact):
     """
     Extend Exact lookup to support lookup on has all flags. This lookup bitwise
     ANDs the column with the lookup value and checks that the result is equal
@@ -47,7 +47,7 @@ class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
 # class HasAllFlagsExtraBigLookup(
 #     ExtraBigFlagMixin,
 #     HasAllFlagsLookup
-# ):  # pylint: disable=W0223
+# ):
 #     """
 #     Support for bitwise has_all lookup on extra big integers (>64 bits)
 #     stored as binary columns.
@@ -75,7 +75,7 @@ class HasAllFlagsLookup(Exact):  # pylint: disable=W0223
 #         return lhs_sql, lhs_params
 
 
-class HasAnyFlagsLookup(HasAllFlagsLookup):  # pylint: disable=W0223
+class HasAnyFlagsLookup(HasAllFlagsLookup):
     """
     Extend Exact lookup to support lookup on has any flags. This bitwise ANDs
     the column with the lookup value and checks that the result is greater
@@ -99,7 +99,7 @@ class HasAnyFlagsLookup(HasAllFlagsLookup):  # pylint: disable=W0223
 # class HasAnyFlagsExtraBigLookup(
 #     ExtraBigFlagMixin,
 #     HasAnyFlagsLookup
-# ):  # pylint: disable=W0223
+# ):
 #     """
 #     Support for bitwise has_any lookup on extra big integers (>64 bits)
 #     stored as binary columns.

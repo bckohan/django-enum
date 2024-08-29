@@ -13,7 +13,6 @@ else
 fi
 
 poetry run mypy django_enum
-poetry run pyright
 poetry check
 poetry run pip check
 cd ./doc

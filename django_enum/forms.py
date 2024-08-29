@@ -7,7 +7,11 @@ from typing import Any, Iterable, List, Optional, Protocol, Sequence, Tuple, Typ
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
-from django.forms.fields import Field, TypedChoiceField, TypedMultipleChoiceField
+from django.forms.fields import (
+    Field,
+    TypedChoiceField,
+    TypedMultipleChoiceField,
+)
 from django.forms.widgets import Select, SelectMultiple
 
 from django_enum.utils import choices as get_choices
@@ -91,7 +95,7 @@ class NonStrictSelectMultiple(NonStrictMixin, SelectMultiple):
 
 class ChoiceFieldMixin(
     with_typehint(TypedChoiceField)  # type: ignore
-):  # pylint: disable=R0902
+):
     """
     Mixin to adapt base model form ChoiceFields to use on EnumFields.
 
@@ -119,7 +123,7 @@ class ChoiceFieldMixin(
     _empty_value_overridden_: bool = False
     _empty_values_overridden_: bool = False
 
-    # choices: _ChoicesProperty
+    choices: _ChoicesParameter
 
     def __init__(
         self,
@@ -193,7 +197,7 @@ class ChoiceFieldMixin(
     def enum(self, enum):
         self._enum_ = enum
         self._primitive_ = self._primitive_ or determine_primitive(enum)
-        self.choices = self.choices or get_choices(self.enum)  # type: ignore[has-type]
+        self.choices = self.choices or get_choices(self.enum)
         # remove any of our valid enumeration values or symmetric properties
         # from our empty value list if there exists an equivalency
         if not self._empty_values_overridden_:
@@ -215,7 +219,7 @@ class ChoiceFieldMixin(
 
     def _coerce_to_value_type(self, value: Any) -> Any:
         """Coerce the value to the enumerations value type"""
-        return self.primitive(value)  # pylint: disable=E1102
+        return self.primitive(value)
 
     def prepare_value(self, value: Any) -> Any:
         """Must return the raw enumeration value type"""
@@ -236,7 +240,7 @@ class ChoiceFieldMixin(
         except ValidationError:
             return False
 
-    def default_coerce(self, value: Any) -> Any:  # pylint: disable=E0202
+    def default_coerce(self, value: Any) -> Any:
         """
         Attempt conversion of value to an enumeration value and return it
         if successful.
@@ -252,7 +256,7 @@ class ChoiceFieldMixin(
             one of our empty_values, or the value itself if this is a
             non-strict field and the value is of a matching primitive type
         """
-        if self.enum is not None and not isinstance(value, self.enum):  # pylint: disable=R0801
+        if self.enum is not None and not isinstance(value, self.enum):
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):
@@ -263,6 +267,7 @@ class ChoiceFieldMixin(
                     try:
                         value = self.enum[value]
                     except KeyError as err:
+                        assert self.primitive
                         if self.strict or not isinstance(value, self.primitive):
                             raise ValidationError(
                                 f"{value} is not a valid {self.enum}.",
@@ -284,7 +289,7 @@ class ChoiceFieldMixin(
             )
 
 
-class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):
+class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
     """
     The default ``ChoiceField`` will only accept the base enumeration values.
     Use this field on forms to accept any value mappable to an enumeration
@@ -292,7 +297,7 @@ class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):
     """
 
 
-class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):
+class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     """
     The default ``TypedMultipleChoiceField`` will only accept the base
     enumeration values. Use this field on forms to accept any value mappable

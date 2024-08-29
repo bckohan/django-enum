@@ -35,20 +35,20 @@ try:
         """
 
         @property
-        def names(cls):
+        def names(self):
             """
             For some eccentric enums list(Enum) is empty, so we override names
             if empty
             """
-            return super().names or names(cls, override=True)
+            return super().names or names(self, override=True)
 
         @property
-        def choices(cls):
+        def choices(self):
             """
             For some eccentric enums list(Enum) is empty, so we override
             choices if empty
             """
-            return super().choices or choices(cls, override=True)
+            return super().choices or choices(self, override=True)
 
     class DjangoSymmetricMixin(SymmetricMixin):
         """
@@ -58,7 +58,7 @@ try:
 
         _symmetric_builtins_ = ["name", "label"]
 
-    class TextChoices(  # pylint: disable=too-many-ancestors
+    class TextChoices(
         DjangoSymmetricMixin, DjangoTextChoices, metaclass=DjangoEnumPropertiesMeta
     ):
         """
@@ -69,7 +69,7 @@ try:
         def __hash__(self):
             return DjangoTextChoices.__hash__(self)
 
-    class IntegerChoices(  # pylint: disable=too-many-ancestors
+    class IntegerChoices(
         DjangoSymmetricMixin, DjangoIntegerChoices, metaclass=DjangoEnumPropertiesMeta
     ):
         """
@@ -118,7 +118,7 @@ except (ImportError, ModuleNotFoundError):
     class MissingEnumProperties(enum.Enum):
         """Throw error if choice types are used without enum-properties"""
 
-        def __init__(self, *args, **kwargs):  # pylint: disable=W0231
+        def __init__(self, *args, **kwargs):
             raise ImportError(
                 f"{self.__class__.__name__} requires enum-properties to be "
                 f"installed."
@@ -134,7 +134,7 @@ except (ImportError, ModuleNotFoundError):
         the ImportError.
         """
 
-        def __init__(cls, *args, **kwargs):  # pylint: disable=W0231
+        def __init__(cls, *args, **kwargs):
             raise ImportError(
                 f"{cls.__class__.__name__} requires enum-properties to be "
                 f"installed."
