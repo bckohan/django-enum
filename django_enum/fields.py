@@ -1287,7 +1287,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
 
         See from_db_value_
         """
-        if value is None:  # pragma: no cover
+        if value is None:
             return value
         return super().from_db_value(
             int.from_bytes(value, byteorder="big", signed=self.signed),

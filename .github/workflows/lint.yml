@@ -52,4 +52,5 @@ jobs:
         run: |
           source .venv/bin/activate
           ./check.sh --no-fix
+          python -m readme_renderer ./README.md -o /tmp/README.html
           echo "$(poetry env info --path)/bin" >> $GITHUB_PATH

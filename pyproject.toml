@@ -5,8 +5,8 @@ description = "Full and natural support for enumerations as Django model fields.
 authors = ["Brian Kohan <bckohan@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/bckohan/django-enum"
-homepage = "https://django-enum.readthedocs.io"
-readme = "README.rst"
+homepage = "https://django-enum.rtfd.io"
+readme = "README.md"
 keywords = [
     "enum",  "properties", "defines", "field", "django", "database",
     "bitmask", "mask", "bitfield", "flags"
@@ -58,7 +58,7 @@ doc8 = ">=0.11.0"
 darglint = ">=1.5.7"
 pytest-cov = ">=4.0.0"
 deepdiff = ">=5.2.3"
-readme-renderer = ">=42"
+readme-renderer = {extras = ["md"], version = ">=42.0"}
 pygount = ">=1.2.4"
 types-PyYAML = ">=6.0"
 coverage = ">=6.2,<8.0"
