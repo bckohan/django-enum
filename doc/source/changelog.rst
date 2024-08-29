@@ -5,6 +5,7 @@ Change Log
 v2.0.0
 ======
 
+* Completed `Reorganize tests <https://github.com/bckohan/django-enum/issues/70>`_
 * Implemented `Add database constraints on enum fields by default. <https://github.com/bckohan/django-enum/issues/45>`_
 * Implemented `Provide an optional enum path converter. <https://github.com/bckohan/django-enum/issues/22>`_
 * Implemented `Supply a mixin for DRF ModelSerializers that instantiates the provided DRF EnumField type for model EnumFields. <https://github.com/bckohan/django-enum/issues/47>`_

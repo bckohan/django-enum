@@ -1,7 +1,10 @@
 import re
+import os
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
+from pathlib import Path
 
+from tests.oracle_patch import patch_oracle
 from dateutil import parser
 from dateutil.parser import ParserError
 
@@ -54,3 +57,160 @@ CONVERTERS = {
     timedelta: str_to_timedelta,
     Decimal: str_to_decimal,
 }
+
+
+
+###############################################################################
+# ORACLE is buggy!
+
+IGNORE_ORA_01843 = os.environ.get("IGNORE_ORA_01843", False) in [
+    "true",
+    "True",
+    "1",
+    "yes",
+    "YES",
+]
+IGNORE_ORA_00932 = os.environ.get("IGNORE_ORA_00932", False) in [
+    "true",
+    "True",
+    "1",
+    "yes",
+    "YES",
+]
+print(f"IGNORE_ORA_01843: {IGNORE_ORA_01843}")
+print(f"IGNORE_ORA_00932: {IGNORE_ORA_00932}")
+patch_oracle()
+###############################################################################
+
+
+
+APP1_DIR = Path(__file__).parent / "enum_prop"
+
+
+class EnumTypeMixin:
+    """
+    We make use of inheritance to re-run lots of tests with vanilla Django choices
+    enumerations and enumerations defined with integration with enum-properties.
+
+    Since most of this code is identical, we use this mixin to resolve the correct
+    type at the specific test in question.
+    """
+
+    fields = [
+        "small_pos_int",
+        "small_int",
+        "pos_int",
+        "int",
+        "big_pos_int",
+        "big_int",
+        "constant",
+        "text",
+        "extern",
+        "date_enum",
+        "datetime_enum",
+        "duration_enum",
+        "time_enum",
+        "decimal_enum",
+        "dj_int_enum",
+        "dj_text_enum",
+        "non_strict_int",
+        "non_strict_text",
+        "no_coerce",
+    ]
+
+    @property
+    def SmallPosIntEnum(self):
+        return self.MODEL_CLASS._meta.get_field("small_pos_int").enum
+
+    @property
+    def SmallIntEnum(self):
+        return self.MODEL_CLASS._meta.get_field("small_int").enum
+
+    @property
+    def PosIntEnum(self):
+        return self.MODEL_CLASS._meta.get_field("pos_int").enum
+
+    @property
+    def IntEnum(self):
+        return self.MODEL_CLASS._meta.get_field("int").enum
+
+    @property
+    def BigPosIntEnum(self):
+        return self.MODEL_CLASS._meta.get_field("big_pos_int").enum
+
+    @property
+    def BigIntEnum(self):
+        return self.MODEL_CLASS._meta.get_field("big_int").enum
+
+    @property
+    def Constants(self):
+        return self.MODEL_CLASS._meta.get_field("constant").enum
+
+    @property
+    def TextEnum(self):
+        return self.MODEL_CLASS._meta.get_field("text").enum
+
+    @property
+    def ExternEnum(self):
+        return self.MODEL_CLASS._meta.get_field("extern").enum
+
+    @property
+    def DJIntEnum(self):
+        return self.MODEL_CLASS._meta.get_field("dj_int_enum").enum
+
+    @property
+    def DJTextEnum(self):
+        return self.MODEL_CLASS._meta.get_field("dj_text_enum").enum
+
+    def enum_type(self, field_name):
+        return self.MODEL_CLASS._meta.get_field(field_name).enum
+
+    @property
+    def DateEnum(self):
+        return self.MODEL_CLASS._meta.get_field("date_enum").enum
+
+    @property
+    def DateTimeEnum(self):
+        return self.MODEL_CLASS._meta.get_field("datetime_enum").enum
+
+    @property
+    def DurationEnum(self):
+        return self.MODEL_CLASS._meta.get_field("duration_enum").enum
+
+    @property
+    def TimeEnum(self):
+        return self.MODEL_CLASS._meta.get_field("time_enum").enum
+
+    @property
+    def DecimalEnum(self):
+        return self.MODEL_CLASS._meta.get_field("decimal_enum").enum
+
+    def enum_primitive(self, field_name):
+        enum_type = self.enum_type(field_name)
+        if enum_type in {
+            self.SmallPosIntEnum,
+            self.SmallIntEnum,
+            self.IntEnum,
+            self.PosIntEnum,
+            self.BigIntEnum,
+            self.BigPosIntEnum,
+            self.DJIntEnum,
+            self.ExternEnum,
+        }:
+            return int
+        elif enum_type is self.Constants:
+            return float
+        elif enum_type in {self.TextEnum, self.DJTextEnum}:
+            return str
+        elif enum_type is self.DateEnum:
+            return date
+        elif enum_type is self.DateTimeEnum:
+            return datetime
+        elif enum_type is self.DurationEnum:
+            return timedelta
+        elif enum_type is self.TimeEnum:
+            return time
+        elif enum_type is self.DecimalEnum:
+            return Decimal
+        else:  # pragma: no cover
+            raise RuntimeError(f"Missing enum type primitive for {enum_type}")

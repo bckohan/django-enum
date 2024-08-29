@@ -148,7 +148,7 @@ sphinx = true
 [tool.pytest.ini_options]
 # py.test options:
 DJANGO_SETTINGS_MODULE = "tests.settings"
-python_files = "tests.py"
+python_files = "test*.py"
 norecursedirs = "*.egg .eggs dist build docs .tox .git __pycache__"
 
 addopts = [
