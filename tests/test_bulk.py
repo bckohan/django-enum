@@ -53,15 +53,29 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
         }
 
     def test_bulk_create(self):
-        objects = []
-        for obj in range(0, self.NUMBER):
-            objects.append(self.MODEL_CLASS(**self.create_params))
+        try:
+            objects = []
+            for _ in range(0, self.NUMBER):
+                objects.append(self.MODEL_CLASS(**self.create_params))
 
-        self.MODEL_CLASS.objects.bulk_create(objects)
+            self.MODEL_CLASS.objects.bulk_create(objects)
 
-        self.assertEqual(
-            self.MODEL_CLASS.objects.filter(**self.create_params).count(), self.NUMBER
-        )
+            self.assertEqual(
+                self.MODEL_CLASS.objects.filter(**self.create_params).count(),
+                self.NUMBER,
+            )
+        except DatabaseError as err:
+            print(str(err))
+            if (
+                IGNORE_ORA_01843
+                and connection.vendor == "oracle"
+                and "ORA-01843" in str(err)
+            ):
+                # this is an oracle bug - intermittent failure on
+                # perfectly fine date format in SQL
+                # continue
+                pytest.skip("Oracle bug ORA-01843 encountered - skipping")
+            raise
 
     def test_bulk_update(self):
         try:
