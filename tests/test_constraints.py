@@ -8,7 +8,9 @@ import pytest
 # 8 becomes the lowest version Django supports
 DISABLE_CONSTRAINT_TESTS = os.environ.get("MYSQL_VERSION", "") == "5.7"
 if DISABLE_CONSTRAINT_TESTS:
-    pytest.skip(reason="MySQL 5.7 does not support check constraints", allow_module_level=True)
+    pytest.skip(
+        reason="MySQL 5.7 does not support check constraints", allow_module_level=True
+    )
 
 
 from django.test import TestCase
@@ -32,13 +34,13 @@ class ConstraintTests(EnumTypeMixin, TestCase):
             EnumField.constraint_name(
                 self.MODEL_CLASS, "small_pos_int", self.SmallPosIntEnum
             ),
-            name if len(name) <= MAX_CONSTRAINT_NAME_LENGTH else name[len(name) - MAX_CONSTRAINT_NAME_LENGTH :],
+            name
+            if len(name) <= MAX_CONSTRAINT_NAME_LENGTH
+            else name[len(name) - MAX_CONSTRAINT_NAME_LENGTH :],
         )
 
         self.assertEqual(
-            EnumField.constraint_name(
-                self.MODEL_CLASS, "small_int", self.SmallIntEnum
-            ),
+            EnumField.constraint_name(self.MODEL_CLASS, "small_int", self.SmallIntEnum),
             f"{self.MODEL_CLASS._meta.app_label}_EnumTester_small_int_SmallIntEnum",
         )
 
@@ -157,7 +159,6 @@ class ConstraintTests(EnumTypeMixin, TestCase):
         ]:
             with connection.cursor() as cursor:
                 for value in vals:
-
                     # TODO it seems like Oracle allows nulls to be inserted
                     #   directly when null=False??
                     if (
@@ -234,9 +235,7 @@ class ConstraintTests(EnumTypeMixin, TestCase):
                     None,
                 ]:
                     columns.append(field.column)
-                    values.append(
-                        str(getattr(field.default, "value", field.default))
-                    )
+                    values.append(str(getattr(field.default, "value", field.default)))
 
             with transaction.atomic():
                 return db_cursor.execute(
@@ -263,12 +262,9 @@ class ConstraintTests(EnumTypeMixin, TestCase):
                 self.assertEqual(qry.count(), 1)
 
                 self.assertEqual(getattr(qry.first(), field.name), value)
-                self.assertIsInstance(
-                    getattr(qry.first(), field.name), value.__class__
-                )
+                self.assertIsInstance(getattr(qry.first(), field.name), value.__class__)
 
     def test_default_flag_constraints(self):
-
         from tests.constraints.enums import IntFlagEnum
         from tests.constraints.models import FlagConstraintTestModel
 
@@ -393,11 +389,7 @@ class ConstraintTests(EnumTypeMixin, TestCase):
                     ("'16384'", EjectFlagEnum.VAL3),
                     (
                         "'28672'",
-                        (
-                            EjectFlagEnum.VAL1
-                            | EjectFlagEnum.VAL2
-                            | EjectFlagEnum.VAL3
-                        ),
+                        (EjectFlagEnum.VAL1 | EjectFlagEnum.VAL2 | EjectFlagEnum.VAL3),
                     ),
                     ("28673", IntegrityError),
                     ("32767", IntegrityError),
@@ -415,11 +407,7 @@ class ConstraintTests(EnumTypeMixin, TestCase):
                     ("'16384'", EjectFlagEnum.VAL3),
                     (
                         "'28672'",
-                        (
-                            EjectFlagEnum.VAL1
-                            | EjectFlagEnum.VAL2
-                            | EjectFlagEnum.VAL3
-                        ),
+                        (EjectFlagEnum.VAL1 | EjectFlagEnum.VAL2 | EjectFlagEnum.VAL3),
                     ),
                     ("28673", 28673),
                     ("32767", 32767),
@@ -429,12 +417,8 @@ class ConstraintTests(EnumTypeMixin, TestCase):
             )
 
             FlagConstraintTestModel.objects.all().delete()
-            FlagConstraintTestModel.objects.create(
-                eject_non_strict=EjectFlagEnum(2048)
-            )
-            FlagConstraintTestModel.objects.create(
-                eject_non_strict=EjectFlagEnum(15)
-            )
+            FlagConstraintTestModel.objects.create(eject_non_strict=EjectFlagEnum(2048))
+            FlagConstraintTestModel.objects.create(eject_non_strict=EjectFlagEnum(15))
             FlagConstraintTestModel.objects.create(
                 eject_non_strict=EjectFlagEnum(32767)
             )
@@ -538,4 +522,3 @@ class ConstraintTests(EnumTypeMixin, TestCase):
                     ("0", StrictFlagEnum(0)),
                 ),
             )
-

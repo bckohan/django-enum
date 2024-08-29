@@ -35,7 +35,6 @@ def invert_flags(en):
 
 
 class FlagTests(TestCase):
-
     MODEL_CLASS = EnumFlagTester
     RELATED_CLASS = EnumFlagTesterRelated
 

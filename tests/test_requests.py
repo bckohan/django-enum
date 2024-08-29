@@ -10,9 +10,7 @@ from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 
 
-
 class TestRequests(EnumTypeMixin, TestCase):
-
     MODEL_CLASS = EnumTester
     NAMESPACE = "tests_djenum"
 
@@ -239,7 +237,6 @@ class TestRequests(EnumTypeMixin, TestCase):
             from enum import Enum
 
             class UnsupportedPrimitiveEnum(Enum):
-
                 VAL1 = (1,)
                 VAL2 = (1, 2)
                 VAL3 = (1, 2, 3)
@@ -258,13 +255,11 @@ class TestRequests(EnumTypeMixin, TestCase):
             self.assertIsNone(field.primitive_field)
 
         def test_drf_serializer(self):
-
             from rest_framework import serializers
 
             from django_enum.drf import EnumField
 
             class TestSerializer(serializers.ModelSerializer):
-
                 small_pos_int = EnumField(self.SmallPosIntEnum)
                 small_int = EnumField(self.SmallIntEnum)
                 pos_int = EnumField(self.PosIntEnum)
@@ -531,7 +526,6 @@ class TestRequests(EnumTypeMixin, TestCase):
 
             null_opt = False
             for option in soup.find("select", id=f"id_{field.name}").find_all("option"):
-
                 if (
                     option["value"] is None or option["value"] == ""
                 ) and option.text.count("-") >= 2:
@@ -562,8 +556,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                         self.assertEqual(getattr(obj, field.name), value)
                     if getattr(obj, field.name) == value and not (
                         # problem if our enum compares equal to null
-                        getattr(obj, field.name) is None
-                        and field.null
+                        getattr(obj, field.name) is None and field.null
                     ):
                         self.assertTrue(option.has_attr("selected"))
                     del expected[value]

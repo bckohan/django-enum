@@ -10,27 +10,23 @@ from tests.utils import try_convert
 
 
 class FloatChoices(float, Choices):
-
     def __str__(self):
         return str(self.value)
 
 
 class DJIntEnum(IntegerChoices):
-
     ONE = 1, "One"
     TWO = 2, "Two"
     THREE = 3, "Three"
 
 
 class DJTextEnum(TextChoices):
-
     A = "A", "Label A"
     B = "B", "Label B"
     C = "C", "Label C"
 
 
 class TextEnum(TextChoices):
-
     VALUE1 = "V1", "Value1"
     VALUE2 = "V22", "Value2"
     VALUE3 = "V333", "Value3"
@@ -52,21 +48,18 @@ class ExternEnum(IntEnum):
 
 
 class Constants(FloatChoices):
-
     PI = 3.14159265358979323846264338327950288, "Pi"
     e = 2.71828, "Euler's Number"
     GOLDEN_RATIO = 1.61803398874989484820458683436563811, "Golden Ratio"
 
 
 class SmallPosIntEnum(IntegerChoices):
-
     VAL1 = 0, "Value 1"
     VAL2 = 2, "Value 2"
     VAL3 = 32767, "Value 32767"
 
 
 class SmallIntEnum(IntegerChoices):
-
     VALn1 = -32768, "Value -32768"
     VAL0 = 0, "Value 0"
     VAL1 = 1, "Value 1"
@@ -75,7 +68,6 @@ class SmallIntEnum(IntegerChoices):
 
 
 class IntEnum(IntegerChoices):
-
     VALn1 = -2147483648, "Value -2147483648"
     VAL0 = 0, "Value 0"
     VAL1 = 1, "Value 1"
@@ -84,7 +76,6 @@ class IntEnum(IntegerChoices):
 
 
 class PosIntEnum(IntegerChoices):
-
     VAL0 = 0, "Value 0"
     VAL1 = 1, "Value 1"
     VAL2 = 2, "Value 2"
@@ -92,7 +83,6 @@ class PosIntEnum(IntegerChoices):
 
 
 class BigPosIntEnum(IntegerChoices):
-
     VAL0 = 0, "Value 0"
     VAL1 = 1, "Value 1"
     VAL2 = 2, "Value 2"
@@ -100,7 +90,6 @@ class BigPosIntEnum(IntegerChoices):
 
 
 class BigIntEnum(IntegerChoices):
-
     VAL0 = -2147483649, "Value -2147483649"
     VAL1 = 1, "Value 1"
     VAL2 = 2, "Value 2"
@@ -108,7 +97,6 @@ class BigIntEnum(IntegerChoices):
 
 
 class DateEnum(Enum):
-
     BRIAN = date(1984, 8, 7)
     EMMA = date(1989, 7, 27)
     HUGO = date(2016, 9, 9)
@@ -134,7 +122,6 @@ class DateEnum(Enum):
 
 
 class DateTimeEnum(Enum):
-
     ST_HELENS = datetime(1980, 5, 18, 8, 32, 0)
     PINATUBO = datetime(1991, 6, 15, 20, 9, 0)
     KATRINA = datetime(2005, 8, 29, 5, 10, 0)
@@ -160,7 +147,6 @@ class DateTimeEnum(Enum):
 
 
 class TimeEnum(Enum):
-
     COB = time(17, 0, 0)
     LUNCH = time(12, 30, 0)
     MORNING = time(9, 0, 0)
@@ -186,7 +172,6 @@ class TimeEnum(Enum):
 
 
 class DurationEnum(Enum):
-
     DAY = timedelta(days=1)
     WEEK = timedelta(weeks=1)
     FORTNIGHT = timedelta(weeks=2)
@@ -212,7 +197,6 @@ class DurationEnum(Enum):
 
 
 class DecimalEnum(Enum):
-
     ONE = Decimal("0.99")
     TWO = Decimal("0.999")
     THREE = Decimal("0.9999")
@@ -240,7 +224,6 @@ class DecimalEnum(Enum):
 
 
 class SmallPositiveFlagEnum(IntFlag):
-
     ONE = 2**10
     TWO = 2**11
     THREE = 2**12
@@ -249,7 +232,6 @@ class SmallPositiveFlagEnum(IntFlag):
 
 
 class PositiveFlagEnum(IntFlag):
-
     ONE = 2**26
     TWO = 2**27
     THREE = 2**28
@@ -258,7 +240,6 @@ class PositiveFlagEnum(IntFlag):
 
 
 class BigPositiveFlagEnum(IntFlag):
-
     ONE = 2**58
     TWO = 2**59
     THREE = 2**60
@@ -267,7 +248,6 @@ class BigPositiveFlagEnum(IntFlag):
 
 
 class ExtraBigPositiveFlagEnum(IntFlag):
-
     ONE = 2**0
     TWO = 2**1
     THREE = 2**63
@@ -282,7 +262,6 @@ class ExtraBigPositiveFlagEnum(IntFlag):
 
 
 class SmallNegativeFlagEnum(IntFlag):
-
     ONE = -(2**11)
     TWO = -(2**12)
     THREE = -(2**13)
@@ -291,7 +270,6 @@ class SmallNegativeFlagEnum(IntFlag):
 
 
 class NegativeFlagEnum(IntFlag):
-
     ONE = -(2**27)
     TWO = -(2**28)
     THREE = -(2**29)
@@ -300,7 +278,6 @@ class NegativeFlagEnum(IntFlag):
 
 
 class BigNegativeFlagEnum(IntFlag):
-
     ONE = -(2**59)
     TWO = -(2**60)
     THREE = -(2**61)
@@ -309,7 +286,6 @@ class BigNegativeFlagEnum(IntFlag):
 
 
 class ExtraBigNegativeFlagEnum(IntFlag):
-
     ONE = -(2**0)
     TWO = -(2**1)
     THREE = -(2**64)
@@ -318,7 +294,6 @@ class ExtraBigNegativeFlagEnum(IntFlag):
 
 
 class MultiPrimitiveEnum(Enum):
-
     VAL1 = 1
     VAL2 = "2.0"
     VAL3 = 3.0
@@ -326,7 +301,6 @@ class MultiPrimitiveEnum(Enum):
 
 
 class MultiWithNone(Enum):
-
     NONE = None
     VAL1 = 1
     VAL2 = "2.0"
@@ -335,7 +309,6 @@ class MultiWithNone(Enum):
 
 
 class PathEnum(Enum):
-
     USR = Path("/usr")
     USR_LOCAL = Path("/usr/local")
     USR_LOCAL_BIN = Path("/usr/local/bin")
@@ -374,7 +347,6 @@ class StrProps:
 
 
 class StrPropsEnum(Enum):
-
     STR1 = StrProps("str1")
     STR2 = StrProps("str2")
     STR3 = StrProps("str3")

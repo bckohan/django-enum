@@ -5,13 +5,12 @@ from tests.test_forms import FormTests, TestFormField
 from tests.enum_prop.models import EnumTester
 from tests.enum_prop.forms import EnumTesterForm
 
-class EnumPropertiesFormTests(FormTests):
 
+class EnumPropertiesFormTests(FormTests):
     MODEL_CLASS = EnumTester
 
 
 class TestFormFieldSymmetric(TestFormField):
-
     MODEL_CLASS = EnumTester
     FORM_CLASS = EnumTesterForm
     form_type = None
@@ -33,7 +32,8 @@ class TestFormFieldSymmetric(TestFormField):
             "non_strict_int": 1,
             "non_strict_text": "arbitrary",
             "no_coerce": "Value 1",
-        }    
+        }
+
 
 FormTests = None
 TestFormField = None

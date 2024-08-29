@@ -252,9 +252,7 @@ class ChoiceFieldMixin(
             one of our empty_values, or the value itself if this is a
             non-strict field and the value is of a matching primitive type
         """
-        if self.enum is not None and not isinstance(
-            value, self.enum
-        ):  # pylint: disable=R0801
+        if self.enum is not None and not isinstance(value, self.enum):  # pylint: disable=R0801
             try:
                 value = self.enum(value)
             except (TypeError, ValueError):

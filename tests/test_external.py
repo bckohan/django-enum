@@ -14,7 +14,6 @@ class TestEnumCompat(TestCase):
         VAL2 = 2
 
     class IntEnumWithLabels(enum.IntEnum):
-
         __empty__ = 0
 
         VAL1 = 1
@@ -28,7 +27,6 @@ class TestEnumCompat(TestCase):
             }.get(self)
 
     class ChoicesIntEnum(DJIntegerChoices):
-
         __empty__ = 0
 
         VAL1 = 1, "Label 1"
@@ -43,7 +41,6 @@ class TestEnumCompat(TestCase):
             return [(self.VAL1.value, "Label 1"), (self.VAL2.value, "Label 2")]
 
     def test_choices(self):
-
         self.assertEqual(
             choices(TestEnumCompat.NormalIntEnum), [(1, "VAL1"), (2, "VAL2")]
         )
@@ -86,4 +83,3 @@ class TestEnumCompat(TestCase):
             names(TestEnumCompat.EnumWithChoicesProperty), ["VAL1", "VAL2"]
         )
         self.assertEqual(names(None), [])
-

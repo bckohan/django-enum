@@ -2,6 +2,7 @@
 """
 Support for Django model fields built from enumeration types.
 """
+
 import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
@@ -9,6 +10,7 @@ from enum import Enum, Flag, IntFlag
 from functools import reduce
 from operator import or_
 from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, Union
+
 from django import VERSION as django_version
 from django.core.exceptions import ValidationError
 from django.core.validators import DecimalValidator
@@ -654,7 +656,6 @@ class EnumField(
             ) from err
 
     def formfield(self, form_class=None, choices_form_class=None, **kwargs):
-
         # super().formfield deletes anything unrecognized from kwargs that
         #   we try to pass in. Very annoying because we have to
         #   un-encapsulate some of this initialization logic, this makes our
@@ -752,15 +753,18 @@ class EnumField(
                 constraint |= Q(**{f"{name}__isnull": True})
             cls._meta.constraints = [  # pylint: disable=W0212
                 *cls._meta.constraints,  # pylint: disable=W0212
-                CheckConstraint(**{
-                    condition: constraint,
-                    "name": self.constraint_name(cls, name, self.enum)
-                }),
+                CheckConstraint(
+                    **{
+                        condition: constraint,
+                        "name": self.constraint_name(cls, name, self.enum),
+                    }
+                ),
             ]  # pylint: disable=protected-access
             # this dictionary is used to serialize the model, so if constraints
             # is not present - they will not be added to migrations
             cls._meta.original_attrs.setdefault(  # pylint: disable=W0212
-                "constraints", cls._meta.constraints  # pylint: disable=W0212
+                "constraints",
+                cls._meta.constraints,  # pylint: disable=W0212
             )
 
 
@@ -1169,7 +1173,6 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             ]
 
             if is_strict or is_conform or (is_eject and self.strict) and flags:
-
                 constraint = (  # pylint: disable=E1131
                     Q(**{f"{name}__gte": min(*flags)})
                     & Q(**{f"{name}__lte": reduce(or_, flags)})
@@ -1180,16 +1183,19 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
 
                 cls._meta.constraints = [  # pylint: disable=W0212
                     *cls._meta.constraints,  # pylint: disable=W0212
-                    CheckConstraint(**{
-                        condition: constraint,
-                        "name": self.constraint_name(cls, name, self.enum),
-                    }),
+                    CheckConstraint(
+                        **{
+                            condition: constraint,
+                            "name": self.constraint_name(cls, name, self.enum),
+                        }
+                    ),
                 ]
                 # this dictionary is used to serialize the model, so if
                 # constraints is not present - they will not be added to
                 # migrations
                 cls._meta.original_attrs.setdefault(  # pylint: disable=W0212
-                    "constraints", cls._meta.constraints  # pylint: disable=W0212
+                    "constraints",
+                    cls._meta.constraints,  # pylint: disable=W0212
                 )
         if isinstance(self, FlagField):
             # this may have been called by a normal EnumField to bring in flag-like constraints

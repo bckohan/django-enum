@@ -66,7 +66,6 @@ try:
         from django_enum.drf import EnumFieldMixin
 
         class EnumTesterSerializer(EnumFieldMixin, serializers.ModelSerializer):
-
             class Meta:
                 model = EnumTester
                 fields = "__all__"
@@ -79,11 +78,9 @@ try:
         pass
 
     try:
-
         from tests.djenum.views import EnumTesterFilterViewSet
 
         class EnumTesterFilterViewSet(EnumTesterFilterViewSet):
-
             enums = prop_enums
 
             class EnumTesterFilter(EnumFilterSet):

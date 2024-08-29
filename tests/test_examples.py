@@ -10,7 +10,6 @@ from django.forms import ModelForm
 
 
 class TestExamples(TestCase):
-
     def test_readme(self):
         instance = MyModel.objects.create(
             txt_enum=MyModel.TextEnum.VALUE1,
@@ -51,7 +50,6 @@ class TestExamples(TestCase):
 
 
 class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
-
     def test_mapboxstyle(self):
         from tests.examples.models import Map
 
@@ -166,9 +164,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
         self.assertTrue(instance.int_enum == MyModel.IntEnum["THREE"])
         self.assertTrue(instance.int_enum.value == 3)
 
-        self.assertRaises(
-            ValueError, MyModel.objects.create, txt_enum="AA", int_enum=3
-        )
+        self.assertRaises(ValueError, MyModel.objects.create, txt_enum="AA", int_enum=3)
 
         instance.txt_enum = "AA"
         self.assertRaises(ValidationError, instance.full_clean)
@@ -185,4 +181,3 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
         self.assertTrue(obj.non_strict == "1")
         self.assertTrue(isinstance(obj.non_strict, str))
         self.assertFalse(isinstance(obj.non_strict, NoCoerceExample.EnumType))
-

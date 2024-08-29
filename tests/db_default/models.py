@@ -20,7 +20,6 @@ from tests.djenum.enums import (
 
 
 class DBDefaultTester(models.Model):
-
     small_pos_int = EnumField(SmallPosIntEnum, null=True, db_default=None, blank=True)
     small_int = EnumField(
         SmallIntEnum, null=False, db_default=SmallIntEnum.VAL3, blank=True

@@ -97,7 +97,6 @@ def get_column_size(cursor, table, column):
 
 
 class BulkCreateMixin:
-
     CHUNK_SIZE = 8196
 
     create_queue = {}
@@ -112,7 +111,6 @@ class BulkCreateMixin:
 
 
 if ENUM_PROPERTIES_INSTALLED:
-
     from tests.enum_prop.enums import (
         BigIntEnum,
         BigPosIntEnum,
@@ -285,7 +283,6 @@ if ENUM_PROPERTIES_INSTALLED:
             )
 
         def test_single_field_benchmark(self):
-
             enum_start = perf_counter()
             for idx in range(0, self.COUNT):
                 self.create(SingleEnumPerf(small_pos_int=0))
@@ -362,7 +359,6 @@ if ENUM_PROPERTIES_INSTALLED:
     ],
 )
 class FlagBenchmarks(BulkCreateMixin, TestCase):
-
     COUNT = 1000
 
     FLAG_MODELS = [
@@ -373,7 +369,6 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
     ]
 
     def setUp(self):
-
         for FlagModel, BoolModel in zip(self.FLAG_MODELS, self.BOOL_MODELS):
             for idx in range(0, self.COUNT):
                 assert FlagModel.num_flags == BoolModel.num_flags
@@ -391,7 +386,6 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
         self.create()
 
     def test_size_benchmark(self):
-
         flag_totals = []
         flag_table = []
         flag_column = []
@@ -467,7 +461,6 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
             bf.write(json.dumps(data, indent=4))
 
     def test_query_performance(self):
-
         has_any_flag_count = {}
         has_all_flag_count = {}
         has_any_flag_load = {}
@@ -605,7 +598,6 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
 
 
 class CreateRowMixin(BulkCreateMixin):
-
     NUM_FLAGS = 16
 
     FlagModel = getattr(benchmark_models, f"FlagTester{NUM_FLAGS-1:03d}")
@@ -677,7 +669,6 @@ class CreateRowMixin(BulkCreateMixin):
 
 
 class FlagIndexTests(CreateRowMixin, SimpleTestCase):
-
     databases = ("default",)
 
     CHECK_POINTS = [
@@ -706,7 +697,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
         # self.BoolModel.objects.all().delete()
 
     def do_flag_query(self, masks):
-
         flg_all = []
         flg_any = []
         flg_exact = []
@@ -724,7 +714,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
         flg_exact_ftr_time = None
 
         for mask in masks:
-
             # dont change query order
 
             start = perf_counter()
@@ -808,7 +797,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
         )
 
     def do_bool_query(self, masks, use_all=False):
-
         bool_all = []
         bool_any = []
         bool_exact = []
@@ -945,7 +933,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
         )
 
     def test_indexes(self):
-
         vendor = os.environ.get("RDBMS", connection.vendor)
 
         data = {}
@@ -1063,19 +1050,19 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
                             "exact_explanation": exact_explanation,
                         }
                         if all_ftr_time:
-                            index_benchmarks[str(check_point)][
-                                "all_ftr_time"
-                            ] = all_ftr_time
+                            index_benchmarks[str(check_point)]["all_ftr_time"] = (
+                                all_ftr_time
+                            )
 
                         if any_ftr_time:
-                            index_benchmarks[str(check_point)][
-                                "any_ftr_time"
-                            ] = any_ftr_time
+                            index_benchmarks[str(check_point)]["any_ftr_time"] = (
+                                any_ftr_time
+                            )
 
                         if exact_ftr_time:
-                            index_benchmarks[str(check_point)][
-                                "exact_ftr_time"
-                            ] = exact_ftr_time
+                            index_benchmarks[str(check_point)]["exact_ftr_time"] = (
+                                exact_ftr_time
+                            )
 
                         pbar_checkpoint.update(1)
 
@@ -1113,7 +1100,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
         ipdb.set_trace()
 
     def drop_indexes(self):
-
         def drop_index(table, index):
             if connection.vendor in ["oracle", "postgresql", "sqlite"]:
                 cursor.execute(f"DROP INDEX {index}")
@@ -1125,7 +1111,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
                 )
 
         with connection.cursor() as cursor:
-
             for idx in self.flag_indexes:
                 drop_index(self.FlagModel._meta.db_table, idx)
             self.flag_indexes.clear()
@@ -1135,7 +1120,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
             self.bool_indexes.clear()
 
     def postgres_gin(self):
-
         with connection.cursor() as cursor:
             """
             Need a GIN operator for boolean columns
@@ -1147,9 +1131,7 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
             self.bool_indexes.append("bool_gin_index")
 
     def bool_column_indexes(self):
-
         with connection.cursor() as cursor:
-
             for idx in range(self.num_flags):
                 idx_name = f"bool_{idx}"
                 cursor.execute(
@@ -1158,9 +1140,7 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
                 self.bool_indexes.append(idx_name)
 
     def bool_multi_column_indexes(self):
-
         with connection.cursor() as cursor:
-
             idx_name = "bool_multi"
             columns = ",".join([f"flg_{idx}" for idx in range(self.num_flags)])
             cursor.execute(
@@ -1170,7 +1150,6 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
             self.bool_indexes.append(idx_name)
 
     def flag_single_index(self):
-
         with connection.cursor() as cursor:
             idx_name = f"flag_idx"
             cursor.execute(

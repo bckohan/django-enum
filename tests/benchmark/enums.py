@@ -12,7 +12,6 @@ for num_flags in range(0, 63):
 
 
 class Index16(IntFlag):
-
     FLG_0 = 1
     FLG_1 = 2
     FLG_2 = 4

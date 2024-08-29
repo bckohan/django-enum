@@ -5,7 +5,6 @@ from django_enum import EnumField, TextChoices
 
 
 class MigrationTester(models.Model):
-
     class IntEnum(models.IntegerChoices):
         ONE = 0, "One"
         TWO = (
@@ -15,7 +14,6 @@ class MigrationTester(models.Model):
         THREE = 2, "Three"
 
     class Color(TextChoices, s("rgb"), s("hex", case_fold=True)):
-
         RED = "R", "Red", (1, 0, 0), "ff0000"
         GREEN = "G", "Green", (0, 1, 0), "00ff00"
         BLUE = "B", "Blue", (0, 0, 1), "0000ff"

@@ -59,7 +59,6 @@ CONVERTERS = {
 }
 
 
-
 ###############################################################################
 # ORACLE is buggy!
 
@@ -81,7 +80,6 @@ print(f"IGNORE_ORA_01843: {IGNORE_ORA_01843}")
 print(f"IGNORE_ORA_00932: {IGNORE_ORA_00932}")
 patch_oracle()
 ###############################################################################
-
 
 
 APP1_DIR = Path(__file__).parent / "enum_prop"

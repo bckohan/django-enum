@@ -7,7 +7,6 @@ from tests.enum_prop.models import EnumTester
 
 
 class TestEnumQueriesProps(TestEnumQueries):
-
     MODEL_CLASS = EnumTester
 
     def test_query(self):
@@ -47,9 +46,7 @@ class TestEnumQueriesProps(TestEnumQueries):
             ).count(),
             2,
         )
-        self.assertEqual(
-            self.MODEL_CLASS.objects.filter(big_pos_int=None).count(), 1
-        )
+        self.assertEqual(self.MODEL_CLASS.objects.filter(big_pos_int=None).count(), 1)
 
         self.assertEqual(
             self.MODEL_CLASS.objects.filter(
@@ -92,16 +89,10 @@ class TestEnumQueriesProps(TestEnumQueries):
         self.assertEqual(self.MODEL_CLASS.objects.filter(extern="One").count(), 2)
         self.assertEqual(self.MODEL_CLASS.objects.filter(extern="Two").count(), 0)
 
-        self.assertRaises(
-            ValueError, self.MODEL_CLASS.objects.filter, int_field="a"
-        )
-        self.assertRaises(
-            ValueError, self.MODEL_CLASS.objects.filter, float_field="a"
-        )
+        self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, int_field="a")
+        self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, float_field="a")
         self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, constant="p")
-        self.assertRaises(
-            ValueError, self.MODEL_CLASS.objects.filter, big_pos_int="p"
-        )
+        self.assertRaises(ValueError, self.MODEL_CLASS.objects.filter, big_pos_int="p")
         self.assertRaises(
             ValueError,
             self.MODEL_CLASS.objects.filter,

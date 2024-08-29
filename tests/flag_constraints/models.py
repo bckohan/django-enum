@@ -13,7 +13,6 @@ if sys.version_info >= (3, 11):
     )
 
     class FlagConstraintTestModel(models.Model):
-
         keep = EnumField(KeepFlagEnum, null=True, default=None, blank=True)
         eject = EnumField(
             EjectFlagEnum, null=False, default=EjectFlagEnum(0), blank=True

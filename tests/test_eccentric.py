@@ -6,7 +6,6 @@ from django_enum.utils import choices
 
 
 class TestEccentricEnums(TestCase):
-
     def test_primitive_resolution(self):
         from tests.djenum.models import MultiPrimitiveTestModel
 

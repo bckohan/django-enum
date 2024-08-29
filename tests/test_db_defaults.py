@@ -1,6 +1,6 @@
-
 from django import VERSION as django_version
 import pytest
+
 if django_version[0:2] < (5, 0):
     pytest.skip(reason="Requires Django >= 5.0", allow_module_level=True)
 
@@ -11,7 +11,6 @@ from django.db import connection
 
 
 class DBDefaultTests(EnumTypeMixin, TestCase):
-
     MODEL_CLASS = DBDefaultTester
 
     @property
@@ -40,7 +39,6 @@ class DBDefaultTests(EnumTypeMixin, TestCase):
         }
 
     def test_db_defaults(self):
-
         obj = DBDefaultTester.objects.create()
         # TODO - there seems to be a mysql bug here where DatabaseDefaults
         # are not refreshed from the db after creation - works on all other platforms
@@ -68,8 +66,6 @@ class DBDefaultTests(EnumTypeMixin, TestCase):
 
         # check that the database default value fields are not coerced
         for field in [
-            field
-            for field in self.defaults.keys()
-            if not field.startswith("doubled")
+            field for field in self.defaults.keys() if not field.startswith("doubled")
         ]:
             self.assertIsInstance(getattr(empty_inst, field), DatabaseDefault)

@@ -97,4 +97,5 @@ class TestRequestsProps(TestRequests):
     else:
         pass  # pragma: no cover
 
+
 TestRequests = None

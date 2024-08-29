@@ -75,6 +75,7 @@ numpy = [
 ]
 # django-stubs = {extras = ["compatible-mypy"], version = "^4.2.7"}
 furo = "^2024.8.6"
+ruff = "^0.6.3"
 
 [tool.poetry.group.psycopg2]
 optional = true
@@ -180,7 +181,8 @@ line-length = 88
 exclude = [
     "doc",
     "dist",
-    "examples"
+    "examples",
+    "plot_benchmarks.py"
 ]
 
 [tool.ruff.lint]

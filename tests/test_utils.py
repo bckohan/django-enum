@@ -3,9 +3,7 @@ from django_enum.utils import get_set_bits
 
 
 class UtilsTests(TestCase):
-
     def test_get_set_bits(self):
-
         from tests.djenum.enums import SmallPositiveFlagEnum
 
         self.assertEqual(

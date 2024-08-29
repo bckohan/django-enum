@@ -4,7 +4,6 @@ from django.core.exceptions import ValidationError
 
 
 class TestValidatorAdapter(TestCase):
-
     def test(self):
         from django.core.validators import DecimalValidator
 
@@ -22,4 +21,3 @@ class TestValidatorAdapter(TestCase):
         self.assertIsNone(adapted(ok))
         self.assertRaises(ValidationError, validator, bad)
         self.assertRaises(ValidationError, adapted, bad)
-

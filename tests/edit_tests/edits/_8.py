@@ -5,7 +5,6 @@ from django_enum import EnumField, TextChoices
 
 
 class MigrationTester(models.Model):
-
     # add enum back w/ same name but different type
     class IntEnum(models.TextChoices):
         A = "A", "One"

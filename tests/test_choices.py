@@ -158,7 +158,6 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.MODEL_CLASS.objects.all().delete()
 
     def test_coerce_to_primitive(self):
-
         create_params = {**self.create_params, "no_coerce": "32767"}
 
         try:
@@ -181,7 +180,6 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.assertEqual(tester.no_coerce, 32767)
 
     def test_coerce_to_primitive_error(self):
-
         create_params = {**self.create_params, "no_coerce": "Value 32767"}
 
         with self.assertRaises(ValueError):
@@ -255,7 +253,6 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.do_test_integer_choices()
 
     def do_test_integer_choices(self):
-
         self.MODEL_CLASS.objects.create(dj_int_enum=self.DJIntEnum.ONE)
         self.MODEL_CLASS.objects.create(dj_int_enum=self.DJIntEnum.TWO)
         self.MODEL_CLASS.objects.create(dj_int_enum=self.DJIntEnum.THREE)
@@ -519,7 +516,6 @@ class TestChoices(EnumTypeMixin, TestCase):
         )
 
     def test_max_length_override(self):
-
         self.assertEqual(
             self.MODEL_CLASS._meta.get_field("non_strict_text").max_length, 12
         )
@@ -540,7 +536,6 @@ class TestChoices(EnumTypeMixin, TestCase):
         with CaptureQueriesContext(connection) as ctx:
             # code that runs SQL queries
             try:
-
                 tester = self.MODEL_CLASS.objects.create(**self.values_params)
             except DatabaseError as err:
                 print(str(err))
@@ -704,7 +699,6 @@ class TestChoices(EnumTypeMixin, TestCase):
         self.do_test_validate()
 
     def test_clean(self):
-
         tester = self.MODEL_CLASS(
             small_pos_int=666,
             small_int=666,
@@ -842,4 +836,3 @@ class TestChoices(EnumTypeMixin, TestCase):
             reload(sys.modules["django_enum.choices"])
         else:
             self.do_enum_properties_missing()  # pragma: no cover
-

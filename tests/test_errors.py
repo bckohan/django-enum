@@ -3,7 +3,6 @@ from django_enum import EnumField
 
 
 class MiscOffNominalTests(TestCase):
-
     def test_field_def_errors(self):
         from django.db.models import Model
 
@@ -103,7 +102,6 @@ class MiscOffNominalTests(TestCase):
 
 
 class TestEmptyEnumValues(TestCase):
-
     def test_none_enum_values(self):
         # TODO??
         pass

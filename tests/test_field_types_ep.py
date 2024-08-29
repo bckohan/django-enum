@@ -6,22 +6,14 @@ from django.core.exceptions import FieldError
 from django.db.models import F
 from tests.test_field_types import TestFieldTypeResolution
 from tests.enum_prop.models import EnumTester
-from tests.enum_prop.enums import (
-    GNSSConstellation,
-    LargeBitField,
-    LargeNegativeField
-)
-from tests.enum_prop.models import (
-    BitFieldModel,
-    EnumTester
-)
+from tests.enum_prop.enums import GNSSConstellation, LargeBitField, LargeNegativeField
+from tests.enum_prop.models import BitFieldModel, EnumTester
 
 
 class TestFieldTypeResolutionProps(TestFieldTypeResolution):
     MODEL_CLASS = EnumTester
 
     def test_large_bitfields(self):
-
         tester = BitFieldModel.objects.create(
             bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS
         )
@@ -30,9 +22,7 @@ class TestFieldTypeResolutionProps(TestFieldTypeResolution):
         self.assertIsInstance(
             tester._meta.get_field("bit_field_small"), PositiveSmallIntegerField
         )
-        self.assertIsInstance(
-            tester._meta.get_field("bit_field_large"), BinaryField
-        )
+        self.assertIsInstance(tester._meta.get_field("bit_field_large"), BinaryField)
         self.assertIsInstance(
             tester._meta.get_field("bit_field_large_neg"), BinaryField
         )
@@ -97,9 +87,7 @@ class TestFieldTypeResolutionProps(TestFieldTypeResolution):
         )
 
         self.assertEqual(
-            BitFieldModel.objects.filter(
-                bit_field_small=GNSSConstellation.GPS
-            ).count(),
+            BitFieldModel.objects.filter(bit_field_small=GNSSConstellation.GPS).count(),
             1,
         )
 
@@ -128,5 +116,6 @@ class TestFieldTypeResolutionProps(TestFieldTypeResolution):
                 bit_field_large_neg__has_all=LargeNegativeField.NEG_ONE
                 | LargeNegativeField.ZERO
             )
+
 
 TestFieldTypeResolution = None

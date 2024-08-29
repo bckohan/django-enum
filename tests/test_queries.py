@@ -4,7 +4,6 @@ from tests.djenum.models import EnumTester
 
 
 class TestEnumQueries(EnumTypeMixin, TestCase):
-
     MODEL_CLASS = EnumTester
 
     def setUp(self):
@@ -36,7 +35,6 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
         self.MODEL_CLASS.objects.create()
 
     def test_query(self):
-
         self.assertEqual(
             self.MODEL_CLASS.objects.filter(
                 small_pos_int=self.SmallPosIntEnum.VAL2
@@ -94,4 +92,3 @@ class TestEnumQueries(EnumTypeMixin, TestCase):
         self.assertRaises(
             ValueError, self.MODEL_CLASS.objects.filter, big_pos_int=type("WrongType")()
         )
-

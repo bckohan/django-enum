@@ -7,7 +7,6 @@ from django_enum.fields import *
 
 
 class TestFieldTypeResolution(EnumTypeMixin, TestCase):
-
     MODEL_CLASS = EnumTester
     MODEL_FLAG_CLASS = EnumFlagTester
 
@@ -231,4 +230,3 @@ class TestFieldTypeResolution(EnumTypeMixin, TestCase):
         self.assertIsNone(tester.text)
 
         self.assertIsNone(tester.extern)
-

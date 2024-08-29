@@ -5,7 +5,6 @@ from django.urls import reverse
 
 
 class TestAdmin(EnumTypeMixin, LiveServerTestCase):
-
     BUG35_CLASS = AdminDisplayBug35
 
     def test_admin_list_display_bug35(self):

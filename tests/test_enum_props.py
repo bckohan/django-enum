@@ -13,7 +13,6 @@ from tests.enum_prop.enums import PrecedenceTest
 
 
 class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
-
     MODEL_CLASS = EnumTester
 
     def test_properties_and_symmetry(self):
@@ -28,15 +27,11 @@ class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
 
         self.assertEqual(self.Constants.PI, self.Constants("PI"))
         self.assertEqual(self.Constants.e, self.Constants("e"))
-        self.assertEqual(
-            self.Constants.GOLDEN_RATIO, self.Constants("GOLDEN_RATIO")
-        )
+        self.assertEqual(self.Constants.GOLDEN_RATIO, self.Constants("GOLDEN_RATIO"))
 
         self.assertEqual(self.Constants.PI, self.Constants("Pi"))
         self.assertEqual(self.Constants.e, self.Constants("Euler's Number"))
-        self.assertEqual(
-            self.Constants.GOLDEN_RATIO, self.Constants("Golden Ratio")
-        )
+        self.assertEqual(self.Constants.GOLDEN_RATIO, self.Constants("Golden Ratio"))
 
         self.assertEqual(self.TextEnum.VALUE1.version, 0)
         self.assertEqual(self.TextEnum.VALUE2.version, 1)
@@ -46,9 +41,7 @@ class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
         self.assertEqual(self.TextEnum.VALUE1.help, "Some help text about value1.")
         self.assertEqual(self.TextEnum.VALUE2.help, "Some help text about value2.")
         self.assertEqual(self.TextEnum.VALUE3.help, "Some help text about value3.")
-        self.assertEqual(
-            self.TextEnum.DEFAULT.help, "Some help text about default."
-        )
+        self.assertEqual(self.TextEnum.DEFAULT.help, "Some help text about default.")
 
         self.assertEqual(self.TextEnum.VALUE1, self.TextEnum("VALUE1"))
         self.assertEqual(self.TextEnum.VALUE2, self.TextEnum("VALUE2"))
@@ -70,9 +63,7 @@ class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
         self.assertRaises(ValueError, self.TextEnum, "Some help text about value1.")
         self.assertRaises(ValueError, self.TextEnum, "Some help text about value2.")
         self.assertRaises(ValueError, self.TextEnum, "Some help text about value3.")
-        self.assertRaises(
-            ValueError, self.TextEnum, "Some help text about default."
-        )
+        self.assertRaises(ValueError, self.TextEnum, "Some help text about default.")
 
         # test basic case insensitive iterable symmetry
         self.assertEqual(self.TextEnum.VALUE1, self.TextEnum("val1"))
@@ -148,18 +139,10 @@ class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
 
     def test_symmetric_type_coercion(self):
         """test that symmetric properties have types coerced"""
-        self.assertEqual(
-            self.BigIntEnum.VAL0, self.BigIntEnum(self.BigPosIntEnum.VAL0)
-        )
-        self.assertEqual(
-            self.BigIntEnum.VAL1, self.BigIntEnum(self.BigPosIntEnum.VAL1)
-        )
-        self.assertEqual(
-            self.BigIntEnum.VAL2, self.BigIntEnum(self.BigPosIntEnum.VAL2)
-        )
-        self.assertEqual(
-            self.BigIntEnum.VAL3, self.BigIntEnum(self.BigPosIntEnum.VAL3)
-        )
+        self.assertEqual(self.BigIntEnum.VAL0, self.BigIntEnum(self.BigPosIntEnum.VAL0))
+        self.assertEqual(self.BigIntEnum.VAL1, self.BigIntEnum(self.BigPosIntEnum.VAL1))
+        self.assertEqual(self.BigIntEnum.VAL2, self.BigIntEnum(self.BigPosIntEnum.VAL2))
+        self.assertEqual(self.BigIntEnum.VAL3, self.BigIntEnum(self.BigPosIntEnum.VAL3))
 
         self.assertEqual(self.BigIntEnum.VAL0, self.BigIntEnum(0))
         self.assertEqual(self.BigIntEnum.VAL0, self.BigIntEnum("0"))
@@ -343,12 +326,10 @@ class TestEnumPropertiesIntegration(EnumTypeMixin, TestCase):
 
 
 class TestSymmetricEmptyValEquivalency(TestCase):
-
     def test(self):
         from enum_properties import EnumProperties
 
         class EmptyEqEnum(TextChoices, s("prop", case_fold=True)):
-
             A = "A", "ok"
             B = "B", "none"
 
@@ -356,7 +337,6 @@ class TestSymmetricEmptyValEquivalency(TestCase):
         self.assertTrue(None in form_field.empty_values)
 
         class EmptyEqEnum(TextChoices, s("prop", case_fold=True)):
-
             A = "A", "ok"
             B = "B", None
 
@@ -364,7 +344,6 @@ class TestSymmetricEmptyValEquivalency(TestCase):
         self.assertTrue(None in form_field.empty_values)
 
         class EmptyEqEnum(TextChoices, s("prop", match_none=True)):
-
             A = "A", "ok"
             B = "B", None
 
@@ -378,7 +357,6 @@ class TestSymmetricEmptyValEquivalency(TestCase):
         match_none = {} if VERSION < (1, 5, 0) else {"match_none": True}
 
         class EmptyEqEnum(EnumProperties, s("label", case_fold=True)):
-
             A = "A", "A Label"
             B = None, "B Label"
 
@@ -395,7 +373,6 @@ class TestSymmetricEmptyValEquivalency(TestCase):
         class EmptyEqEnum(
             EnumProperties, s("label", case_fold=True), s("prop", match_none=True)
         ):
-
             A = "A", "A Label", 4
             B = "B", "B Label", None
             C = "C", "C Label", ""
@@ -414,7 +391,6 @@ class TestSymmetricEmptyValEquivalency(TestCase):
         self.assertTrue(form_field.empty_value == form_field.empty_values[0])
 
         class EmptyEqEnum2(TextChoices, s("prop", case_fold=True, **match_none)):
-
             A = "A", [None, "", ()]
             B = "B", "ok"
 
@@ -453,45 +429,45 @@ class TestSymmetricEmptyValEquivalency(TestCase):
                 "empty_value set."
             )
 
+
 class PrecedenceTestCase(TestCase):
+    def test_precedence(self):
+        """
+        test that symmetric properties with non-hashable iterable values treat each iterable as a separate
+        symmetric value
+        """
+        self.assertEqual(PrecedenceTest.P1, PrecedenceTest(0))
+        self.assertEqual(PrecedenceTest.P2, PrecedenceTest(1))
+        self.assertEqual(PrecedenceTest.P3, PrecedenceTest(2))
+        self.assertEqual(PrecedenceTest.P4, PrecedenceTest(3))
 
-        def test_precedence(self):
-            """
-            test that symmetric properties with non-hashable iterable values treat each iterable as a separate
-            symmetric value
-            """
-            self.assertEqual(PrecedenceTest.P1, PrecedenceTest(0))
-            self.assertEqual(PrecedenceTest.P2, PrecedenceTest(1))
-            self.assertEqual(PrecedenceTest.P3, PrecedenceTest(2))
-            self.assertEqual(PrecedenceTest.P4, PrecedenceTest(3))
+        self.assertEqual(PrecedenceTest.P1, PrecedenceTest("Precedence 1"))
+        self.assertEqual(PrecedenceTest.P2, PrecedenceTest("Precedence 2"))
+        self.assertEqual(PrecedenceTest.P3, PrecedenceTest("Precedence 3"))
+        self.assertEqual(PrecedenceTest.P4, PrecedenceTest("Precedence 4"))
 
-            self.assertEqual(PrecedenceTest.P1, PrecedenceTest("Precedence 1"))
-            self.assertEqual(PrecedenceTest.P2, PrecedenceTest("Precedence 2"))
-            self.assertEqual(PrecedenceTest.P3, PrecedenceTest("Precedence 3"))
-            self.assertEqual(PrecedenceTest.P4, PrecedenceTest("Precedence 4"))
+        # type match takes precedence
+        self.assertEqual(PrecedenceTest.P3, PrecedenceTest("1"))
+        self.assertEqual(PrecedenceTest.P1, PrecedenceTest("0.4"))
+        self.assertEqual(PrecedenceTest.P2, PrecedenceTest("0.3"))
 
-            # type match takes precedence
-            self.assertEqual(PrecedenceTest.P3, PrecedenceTest("1"))
-            self.assertEqual(PrecedenceTest.P1, PrecedenceTest("0.4"))
-            self.assertEqual(PrecedenceTest.P2, PrecedenceTest("0.3"))
+        self.assertEqual(PrecedenceTest.P1, PrecedenceTest(0.1))
+        self.assertEqual(PrecedenceTest.P2, PrecedenceTest(0.2))
+        self.assertEqual(PrecedenceTest.P1, PrecedenceTest("0.1"))
+        self.assertEqual(PrecedenceTest.P2, PrecedenceTest("0.2"))
+        self.assertEqual(PrecedenceTest.P3, PrecedenceTest(0.3))
+        self.assertEqual(PrecedenceTest.P4, PrecedenceTest(0.4))
 
-            self.assertEqual(PrecedenceTest.P1, PrecedenceTest(0.1))
-            self.assertEqual(PrecedenceTest.P2, PrecedenceTest(0.2))
-            self.assertEqual(PrecedenceTest.P1, PrecedenceTest("0.1"))
-            self.assertEqual(PrecedenceTest.P2, PrecedenceTest("0.2"))
-            self.assertEqual(PrecedenceTest.P3, PrecedenceTest(0.3))
-            self.assertEqual(PrecedenceTest.P4, PrecedenceTest(0.4))
+        self.assertEqual(PrecedenceTest.P1, PrecedenceTest("First"))
+        self.assertEqual(PrecedenceTest.P2, PrecedenceTest("Second"))
+        self.assertEqual(PrecedenceTest.P3, PrecedenceTest("Third"))
+        self.assertEqual(PrecedenceTest.P4, PrecedenceTest("Fourth"))
 
-            self.assertEqual(PrecedenceTest.P1, PrecedenceTest("First"))
-            self.assertEqual(PrecedenceTest.P2, PrecedenceTest("Second"))
-            self.assertEqual(PrecedenceTest.P3, PrecedenceTest("Third"))
-            self.assertEqual(PrecedenceTest.P4, PrecedenceTest("Fourth"))
+        # lower priority case insensitive match
+        self.assertEqual(PrecedenceTest.P4, PrecedenceTest("FIRST"))
+        self.assertEqual(PrecedenceTest.P3, PrecedenceTest("SECOND"))
+        self.assertEqual(PrecedenceTest.P2, PrecedenceTest("THIRD"))
+        self.assertEqual(PrecedenceTest.P1, PrecedenceTest("FOURTH"))
 
-            # lower priority case insensitive match
-            self.assertEqual(PrecedenceTest.P4, PrecedenceTest("FIRST"))
-            self.assertEqual(PrecedenceTest.P3, PrecedenceTest("SECOND"))
-            self.assertEqual(PrecedenceTest.P2, PrecedenceTest("THIRD"))
-            self.assertEqual(PrecedenceTest.P1, PrecedenceTest("FOURTH"))
-
-            self.assertEqual(PrecedenceTest.P4, PrecedenceTest(4))
-            self.assertEqual(PrecedenceTest.P4, PrecedenceTest("4"))
+        self.assertEqual(PrecedenceTest.P4, PrecedenceTest(4))
+        self.assertEqual(PrecedenceTest.P4, PrecedenceTest("4"))

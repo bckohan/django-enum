@@ -7,7 +7,7 @@ if [ "$1" == "--no-fix" ]; then
     poetry run ruff check
 else
     poetry run ruff format
-    poetry run ruff format --line-length 80 examples
+    #poetry run ruff format --line-length 80 examples
     poetry run ruff check --fix --select I
     poetry run ruff check --fix
 fi

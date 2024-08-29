@@ -50,7 +50,6 @@ class TestBulkOperations(EnumTypeMixin, TestCase):
         }
 
     def test_bulk_create(self):
-
         objects = []
         for obj in range(0, self.NUMBER):
             objects.append(self.MODEL_CLASS(**self.create_params))

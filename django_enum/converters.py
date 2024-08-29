@@ -14,7 +14,6 @@ __all__ = ["register_enum_converter"]
 
 
 class _EnumConverter:
-
     enum: Type[Enum]
     prop: str = "value"
     primitive: type

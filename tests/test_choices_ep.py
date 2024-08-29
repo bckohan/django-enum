@@ -9,7 +9,6 @@ from decimal import Decimal
 
 
 class TestChoicesEnumProp(BaseTestChoices):
-
     MODEL_CLASS = EnumTester
 
     @property
@@ -86,25 +85,18 @@ class TestChoicesEnumProp(BaseTestChoices):
         tester = super().do_test_validate()
 
         self.assertTrue(
-            tester._meta.get_field("small_int").validate("Value -32768", tester)
-            is None
+            tester._meta.get_field("small_int").validate("Value -32768", tester) is None
         )
         self.assertTrue(
             tester._meta.get_field("pos_int").validate(2147483647, tester) is None
         )
+        self.assertTrue(tester._meta.get_field("int").validate("VALn1", tester) is None)
         self.assertTrue(
-            tester._meta.get_field("int").validate("VALn1", tester) is None
-        )
-        self.assertTrue(
-            tester._meta.get_field("big_pos_int").validate(
-                "Value 2147483648", tester
-            )
+            tester._meta.get_field("big_pos_int").validate("Value 2147483648", tester)
             is None
         )
         self.assertTrue(
-            tester._meta.get_field("big_int").validate(
-                self.BigPosIntEnum.VAL2, tester
-            )
+            tester._meta.get_field("big_int").validate(self.BigPosIntEnum.VAL2, tester)
             is None
         )
         self.assertTrue(

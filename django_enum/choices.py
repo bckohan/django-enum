@@ -14,11 +14,10 @@ from django.db.models import enums as model_enums
 
 from django_enum.utils import choices, names
 
-
 ChoicesType = (
     model_enums.ChoicesType
-    if django_version[0:2] >= (5, 0) else
-    model_enums.ChoicesMeta
+    if django_version[0:2] >= (5, 0)
+    else model_enums.ChoicesMeta
 )
 
 DEFAULT_BOUNDARY = getattr(enum, "KEEP", None)
@@ -115,7 +114,6 @@ try:
             return enum.IntFlag.__hash__(self)
 
 except (ImportError, ModuleNotFoundError):
-
     # 3.11 - extend from Enum so base type check does not throw type error
     class MissingEnumProperties(enum.Enum):
         """Throw error if choice types are used without enum-properties"""

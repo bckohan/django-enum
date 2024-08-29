@@ -1,5 +1,4 @@
 try:
-
     from django.db.models import BLANK_CHOICE_DASH
     from django.forms import ModelForm
 

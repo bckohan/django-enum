@@ -18,9 +18,7 @@ class FormTests(EnumTypeMixin, TestCase):
 
     @property
     def model_form_class(self):
-
         class EnumTesterForm(ModelForm):
-
             class Meta:
                 model = self.MODEL_CLASS
                 fields = "__all__"
@@ -32,7 +30,6 @@ class FormTests(EnumTypeMixin, TestCase):
         from django.core.validators import MaxValueValidator, MinValueValidator
 
         class BasicForm(Form):
-
             small_pos_int = EnumChoiceField(self.SmallPosIntEnum)
             small_int = EnumChoiceField(self.SmallIntEnum)
             pos_int = EnumChoiceField(self.PosIntEnum)
@@ -115,10 +112,7 @@ class FormTests(EnumTypeMixin, TestCase):
         self.assertIsInstance(form.cleaned_data["non_strict_int"], int)
 
 
-
-
 class TestFormField(EnumTypeMixin, TestCase):
-
     MODEL_CLASS = EnumTester
     FORM_CLASS = EnumTesterForm
     form_type = None
@@ -289,4 +283,3 @@ class TestFormField(EnumTypeMixin, TestCase):
             form["non_strict_int"].field.to_python(form["non_strict_int"].value()),
             self.enum_primitive("non_strict_int"),
         )
-

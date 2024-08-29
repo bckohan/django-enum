@@ -5,7 +5,6 @@ from django_enum import EnumField, TextChoices
 
 
 class MigrationTester(models.Model):
-
     # remove enumeration
 
     # no change

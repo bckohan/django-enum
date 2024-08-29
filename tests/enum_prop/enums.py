@@ -1,5 +1,4 @@
 try:
-
     from datetime import date, datetime, time, timedelta
     from decimal import Decimal, DecimalException
 
@@ -18,19 +17,16 @@ try:
     from tests.utils import try_convert
 
     class DJIntEnum(DjangoIntegerChoices):
-
         ONE = 1, "One"
         TWO = 2, "Two"
         THREE = 3, "Three"
 
     class DJTextEnum(DjangoTextChoices):
-
         A = "A", "Label A"
         B = "B", "Label B"
         C = "C", "Label C"
 
     class TextEnum(TextChoices, p("version"), p("help"), s("aliases", case_fold=True)):
-
         VALUE1 = (
             "V1",
             "Value1",
@@ -61,19 +57,16 @@ try:
         )
 
     class Constants(FloatChoices, s("symbol")):
-
         PI = 3.14159265358979323846264338327950288, "Pi", "π"
         e = 2.71828, "Euler's Number", "e"
         GOLDEN_RATIO = 1.61803398874989484820458683436563811, "Golden Ratio", "φ"
 
     class SmallPosIntEnum(IntegerChoices):
-
         VAL1 = 0, "Value 1"
         VAL2 = 2, "Value 2"
         VAL3 = 32767, "Value 32767"
 
     class SmallIntEnum(IntegerChoices):
-
         VALn1 = -32768, "Value -32768"
         VAL0 = 0, "Value 0"
         VAL1 = 1, "Value 1"
@@ -81,7 +74,6 @@ try:
         VAL3 = 32767, "Value 32767"
 
     class IntEnum(IntegerChoices):
-
         VALn1 = -2147483648, "Value -2147483648"
         VAL0 = 0, "Value 0"
         VAL1 = 1, "Value 1"
@@ -89,21 +81,18 @@ try:
         VAL3 = 2147483647, "Value 2147483647"
 
     class PosIntEnum(IntegerChoices):
-
         VAL0 = 0, "Value 0"
         VAL1 = 1, "Value 1"
         VAL2 = 2, "Value 2"
         VAL3 = 2147483647, "Value 2147483647"
 
     class BigPosIntEnum(IntegerChoices):
-
         VAL0 = 0, "Value 0"
         VAL1 = 1, "Value 1"
         VAL2 = 2, "Value 2"
         VAL3 = 2147483648, "Value 2147483648"
 
     class BigIntEnum(IntegerChoices, s("pos"), p("help")):
-
         VAL0 = (
             -2147483649,
             "Value -2147483649",
@@ -120,7 +109,6 @@ try:
         )
 
     class DateEnum(EnumProperties, s("label")):
-
         BRIAN = date(1984, 8, 7), "Brian"
         EMMA = date(1989, 7, 27), "Emma"
         HUGO = date(2016, 9, 9), "Hugo"
@@ -143,7 +131,6 @@ try:
             return super().__hash__()
 
     class DateTimeEnum(EnumProperties, s("label")):
-
         ST_HELENS = datetime(1980, 5, 18, 8, 32, 0), "Mount St. Helens"
         PINATUBO = datetime(1991, 6, 15, 20, 9, 0), "Pinatubo"
         KATRINA = datetime(2005, 8, 29, 5, 10, 0), "Katrina"
@@ -166,7 +153,6 @@ try:
             return super().__hash__()
 
     class TimeEnum(EnumProperties, s("label")):
-
         COB = time(17, 0, 0), "Close of Business"
         LUNCH = time(12, 30, 0), "Lunch"
         MORNING = time(9, 0, 0), "Morning"
@@ -189,7 +175,6 @@ try:
             return super().__hash__()
 
     class DurationEnum(EnumProperties, s("label", case_fold=True)):
-
         DAY = timedelta(days=1), "DAY"
         WEEK = timedelta(weeks=1), "WEEK"
         FORTNIGHT = timedelta(weeks=2), "FORTNIGHT"
@@ -212,7 +197,6 @@ try:
             return super().__hash__()
 
     class DecimalEnum(EnumProperties, s("label", case_fold=True)):
-
         ONE = Decimal("0.99"), "One"
         TWO = Decimal("0.999"), "Two"
         THREE = Decimal("0.9999"), "Three"
@@ -251,7 +235,6 @@ try:
         P4 = 3, "Precedence 4", 0, 0.4, _("Fourth"), {0.1, "First", 4}
 
     class CarrierFrequency(FlagChoices, p("mhz")):
-
         L1 = 1, 1575.420
         L2 = 2, 1227.600
         L5 = 4, 1176.450
@@ -272,7 +255,6 @@ try:
     class GNSSConstellation(
         FlagChoices, s("country"), p("satellites"), p("frequencies")
     ):
-
         _symmetric_builtins_ = [s("label", case_fold=True)]
 
         GPS = (
@@ -306,12 +288,10 @@ try:
         )
 
     class LargeBitField(FlagChoices):
-
         ONE = 2**0, "One"
         TWO = 2**128, "Two"
 
     class LargeNegativeField(IntegerChoices):
-
         NEG_ONE = -(2**128), "Negative One"
         ZERO = -1, "ZERO"
 
@@ -326,7 +306,6 @@ try:
         THREE = 3, "Three"
 
     class SmallPositiveFlagEnum(FlagChoices):
-
         ONE = 2**10, "One"
         TWO = 2**11, "Two"
         THREE = 2**12, "Three"
@@ -334,7 +313,6 @@ try:
         FIVE = 2**14, "Five"
 
     class PositiveFlagEnum(FlagChoices):
-
         ONE = 2**26, "One"
         TWO = 2**27, "Two"
         THREE = 2**28, "Three"
@@ -342,7 +320,6 @@ try:
         FIVE = 2**30, "Five"
 
     class BigPositiveFlagEnum(FlagChoices):
-
         ONE = 2**58, "One"
         TWO = 2**59, "Two"
         THREE = 2**60, "Three"
@@ -350,7 +327,6 @@ try:
         FIVE = 2**62, "Five"
 
     class ExtraBigPositiveFlagEnum(FlagChoices):
-
         ONE = 2**61, "One"
         TWO = 2**62, "Two"
         THREE = 2**63, "Three"
@@ -358,7 +334,6 @@ try:
         FIVE = 2**65, "Five"
 
     class SmallNegativeFlagEnum(FlagChoices):
-
         ONE = -(2**11), "One"
         TWO = -(2**12), "Two"
         THREE = -(2**13), "Three"
@@ -366,7 +341,6 @@ try:
         FIVE = -(2**15), "Five"
 
     class NegativeFlagEnum(FlagChoices):
-
         ONE = -(2**27), "One"
         TWO = -(2**28), "Two"
         THREE = -(2**29), "Three"
@@ -374,7 +348,6 @@ try:
         FIVE = -(2**31), "Five"
 
     class BigNegativeFlagEnum(FlagChoices):
-
         ONE = -(2**59), "One"
         TWO = -(2**60), "Two"
         THREE = -(2**61), "Three"
@@ -382,7 +355,6 @@ try:
         FIVE = -(2**63), "Five"
 
     class ExtraBigNegativeFlagEnum(FlagChoices):
-
         ONE = -(2**62), "One"
         TWO = -(2**63), "Two"
         THREE = -(2**64), "Three"

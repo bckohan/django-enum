@@ -5,7 +5,6 @@ from tests.constraints.enums import IntFlagEnum
 
 
 class FlagConstraintTestModel(models.Model):
-
     flag_field = EnumField(IntFlagEnum, null=True, default=None, blank=True)
 
     flag_field_non_strict = EnumField(

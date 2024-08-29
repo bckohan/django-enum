@@ -40,7 +40,6 @@ from tests.djenum.enums import (
 
 
 class EnumTester(models.Model):
-
     small_pos_int = EnumField(
         SmallPosIntEnum, null=True, default=None, db_index=True, blank=True
     )
@@ -142,13 +141,11 @@ class EnumTester(models.Model):
 
 
 class BadDefault(models.Model):
-
     # Non-strict
     non_strict_int = EnumField(SmallPosIntEnum, null=True, default=5, blank=True)
 
 
 class AdminDisplayBug35(models.Model):
-
     text_enum = EnumField(TextEnum, default=TextEnum.VALUE1)
 
     int_enum = EnumField(SmallPosIntEnum, default=SmallPosIntEnum.VAL2)
@@ -159,7 +156,6 @@ class AdminDisplayBug35(models.Model):
 
 
 class EmptyEnumValueTester(models.Model):
-
     class BlankTextEnum(TextChoices):
         VALUE1 = "", "Value1"
         VALUE2 = "V22", "Value2"
@@ -176,7 +172,6 @@ class EmptyEnumValueTester(models.Model):
 
 
 class EnumFlagTesterBase(models.Model):
-
     small_pos = EnumField(
         SmallPositiveFlagEnum, default=None, null=True, db_index=True, blank=True
     )
@@ -234,7 +229,6 @@ class EnumFlagTesterBase(models.Model):
 
 
 class EnumFlagTester(EnumFlagTesterBase):
-
     small_pos = EnumField(
         SmallPositiveFlagEnum, default=None, null=True, db_index=True, blank=True
     )
@@ -289,12 +283,10 @@ class EnumFlagTester(EnumFlagTesterBase):
 
 
 class EnumFlagTesterRelated(EnumFlagTesterBase):
-
     related_flags = models.ManyToManyField(EnumFlagTester, related_name="related_flags")
 
 
 class MultiPrimitiveTestModel(models.Model):
-
     # primitive will default to string
     multi = EnumField(MultiPrimitiveEnum, null=True, default=None, blank=True)
 
@@ -319,7 +311,6 @@ class MultiPrimitiveTestModel(models.Model):
 
 
 class CustomPrimitiveTestModel(models.Model):
-
     path = EnumField(PathEnum, primitive=str)
 
     str_props = EnumField(StrPropsEnum, primitive=str)

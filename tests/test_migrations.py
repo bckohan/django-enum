@@ -48,14 +48,11 @@ def set_models(version):
 
 
 class ResetModelsMixin:
-
     @classmethod
     def tearDownClass(cls):
         from django.conf import settings
 
-        with open(
-            settings.TEST_MIGRATION_DIR.parent / "models.py", "w"
-        ) as models_file:
+        with open(settings.TEST_MIGRATION_DIR.parent / "models.py", "w") as models_file:
             models_file.write("")
 
         super().tearDownClass()
@@ -85,31 +82,27 @@ class TestMigrations(ResetModelsMixin, TestCase):
 
         call_command("makemigrations")
 
-        self.assertTrue(
-            os.path.isfile(settings.TEST_MIGRATION_DIR / "0001_initial.py")
-        )
+        self.assertTrue(os.path.isfile(settings.TEST_MIGRATION_DIR / "0001_initial.py"))
 
-        migration = import_migration(
-            settings.TEST_MIGRATION_DIR / "0001_initial.py"
-        )
+        migration = import_migration(settings.TEST_MIGRATION_DIR / "0001_initial.py")
         if django_version >= (5, 1):
             self.assertIsInstance(migration.operations[0], migrations.CreateModel)
-            self.assertEqual(len(migration.operations[0].options['constraints']), 2)
+            self.assertEqual(len(migration.operations[0].options["constraints"]), 2)
             self.assertEqual(
-                migration.operations[0].options['constraints'][0].name,
+                migration.operations[0].options["constraints"][0].name,
                 "tests_edit_tests_MigrationTester_int_enum_IntEnum",
             )
             self.assertEqual(
-                migration.operations[0].options['constraints'][0].condition,
-                Q(int_enum__in=[0, 1, 2])
+                migration.operations[0].options["constraints"][0].condition,
+                Q(int_enum__in=[0, 1, 2]),
             )
             self.assertEqual(
-                migration.operations[0].options['constraints'][1].name,
+                migration.operations[0].options["constraints"][1].name,
                 "tests_edit_tests_MigrationTester_color_Color",
             )
             self.assertEqual(
-                migration.operations[0].options['constraints'][1].condition,
-                Q(color__in=["R", "G", "B", "K"])
+                migration.operations[0].options["constraints"][1].condition,
+                Q(color__in=["R", "G", "B", "K"]),
             )
         else:
             self.assertIsInstance(migration.operations[1], migrations.AddConstraint)
@@ -174,12 +167,12 @@ def revert_enum_values(apps, schema_editor):
         obj.save()
         \n\n"""
 
-        data_edit_operations = "        migrations.RunPython(migrate_enum_values, revert_enum_values),\n"
+        data_edit_operations = (
+            "        migrations.RunPython(migrate_enum_values, revert_enum_values),\n"
+        )
 
         new_contents = ""
-        with open(
-            settings.TEST_MIGRATION_DIR / "0002_alter_values.py", "r"
-        ) as inpt:
+        with open(settings.TEST_MIGRATION_DIR / "0002_alter_values.py", "r") as inpt:
             for line in inpt.readlines():
                 if "class Migration" in line:
                     new_contents += data_edit_functions
@@ -187,23 +180,18 @@ def revert_enum_values(apps, schema_editor):
                     new_contents += data_edit_operations
                 new_contents += line
 
-        with open(
-            settings.TEST_MIGRATION_DIR / "0002_alter_values.py", "w"
-        ) as output:
+        with open(settings.TEST_MIGRATION_DIR / "0002_alter_values.py", "w") as output:
             output.write(new_contents)
 
         migration = import_migration(
             settings.TEST_MIGRATION_DIR / "0002_alter_values.py"
         )
 
-        self.assertIsInstance(
-            migration.operations[0], migrations.RemoveConstraint
-        )
-        self.assertIsInstance(
-            migration.operations[-1], migrations.AddConstraint
-        )
+        self.assertIsInstance(migration.operations[0], migrations.RemoveConstraint)
+        self.assertIsInstance(migration.operations[-1], migrations.AddConstraint)
         self.assertEqual(
-            getattr(migration.operations[-1].constraint, condition), Q(int_enum__in=[1, 2, 3])
+            getattr(migration.operations[-1].constraint, condition),
+            Q(int_enum__in=[1, 2, 3]),
         )
         self.assertEqual(
             migration.operations[-1].constraint.name,
@@ -238,9 +226,7 @@ def remove_color_values(apps, schema_editor):
         data_edit_operations = "        migrations.RunPython(remove_color_values, migrations.RunPython.noop),\n"
 
         new_contents = ""
-        with open(
-            settings.TEST_MIGRATION_DIR / "0003_remove_black.py", "r"
-        ) as inpt:
+        with open(settings.TEST_MIGRATION_DIR / "0003_remove_black.py", "r") as inpt:
             for line in inpt.readlines():
                 if "class Migration" in line:
                     new_contents += data_edit_functions
@@ -248,20 +234,14 @@ def remove_color_values(apps, schema_editor):
                     new_contents += data_edit_operations
                 new_contents += line
 
-        with open(
-            settings.TEST_MIGRATION_DIR / "0003_remove_black.py", "w"
-        ) as output:
+        with open(settings.TEST_MIGRATION_DIR / "0003_remove_black.py", "w") as output:
             output.write(new_contents)
 
         migration = import_migration(
             settings.TEST_MIGRATION_DIR / "0003_remove_black.py"
         )
-        self.assertIsInstance(
-            migration.operations[0], migrations.RemoveConstraint
-        )
-        self.assertIsInstance(
-            migration.operations[-1], migrations.AddConstraint
-        )
+        self.assertIsInstance(migration.operations[0], migrations.RemoveConstraint)
+        self.assertIsInstance(migration.operations[-1], migrations.AddConstraint)
         self.assertEqual(
             getattr(migration.operations[-1].constraint, condition),
             Q(color__in=["R", "G", "B"]),
@@ -291,18 +271,14 @@ def remove_color_values(apps, schema_editor):
 
         set_models(5)
         self.assertFalse(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0004_remove_constraint.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0004_remove_constraint.py")
         )
 
         call_command("makemigrations", name="remove_constraint")
 
         # should not exist!
         self.assertTrue(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0004_remove_constraint.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0004_remove_constraint.py")
         )
 
         with open(
@@ -317,18 +293,14 @@ def remove_color_values(apps, schema_editor):
 
         set_models(6)
         self.assertFalse(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0005_expand_int_enum.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0005_expand_int_enum.py")
         )
 
         call_command("makemigrations", name="expand_int_enum")
 
         # should exist!
         self.assertTrue(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0005_expand_int_enum.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0005_expand_int_enum.py")
         )
 
     def test_makemigrate_07(self):
@@ -336,18 +308,14 @@ def remove_color_values(apps, schema_editor):
 
         set_models(7)
         self.assertFalse(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0006_remove_int_enum.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0006_remove_int_enum.py")
         )
 
         call_command("makemigrations", name="remove_int_enum")
 
         # should exist!
         self.assertTrue(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0006_remove_int_enum.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0006_remove_int_enum.py")
         )
 
     def test_makemigrate_08(self):
@@ -368,9 +336,7 @@ def remove_color_values(apps, schema_editor):
         migration = import_migration(
             settings.TEST_MIGRATION_DIR / "0007_add_int_enum.py"
         )
-        self.assertIsInstance(
-            migration.operations[0], migrations.RemoveConstraint
-        )
+        self.assertIsInstance(migration.operations[0], migrations.RemoveConstraint)
         self.assertIsInstance(migration.operations[3], migrations.AddConstraint)
         self.assertIsInstance(migration.operations[4], migrations.AddConstraint)
         self.assertEqual(
@@ -410,22 +376,18 @@ def remove_color_values(apps, schema_editor):
 
         set_models(10)
         self.assertFalse(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0009_change_default.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0009_change_default.py")
         )
 
         call_command("makemigrations", name="change_default")
 
         # should exist!
         self.assertTrue(
-            os.path.isfile(
-                settings.TEST_MIGRATION_DIR / "0009_change_default.py"
-            )
+            os.path.isfile(settings.TEST_MIGRATION_DIR / "0009_change_default.py")
         )
 
-class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0001_initial")
     migrate_to = ("tests_edit_tests", "0001_initial")
 
@@ -435,7 +397,6 @@ class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
         super().setUpClass()
 
     def test_0001_initial(self):
-
         MigrationTester = self.new_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
@@ -486,9 +447,7 @@ class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
             2,
         )
         self.assertEqual(
-            MigrationTester.objects.filter(
-                int_enum=MigrationTester.IntEnum(1)
-            ).count(),
+            MigrationTester.objects.filter(int_enum=MigrationTester.IntEnum(1)).count(),
             1,
         )
         self.assertEqual(
@@ -498,23 +457,15 @@ class TestInitialMigration(ResetModelsMixin, MigratorTestCase):
             1,
         )
 
-        self.assertEqual(
-            MigrationTester.objects.filter(color=(1, 0, 0)).count(), 1
-        )
-        self.assertEqual(
-            MigrationTester.objects.filter(color="GREEN").count(), 1
-        )
-        self.assertEqual(
-            MigrationTester.objects.filter(color="Blue").count(), 1
-        )
-        self.assertEqual(
-            MigrationTester.objects.filter(color="000000").count(), 1
-        )
+        self.assertEqual(MigrationTester.objects.filter(color=(1, 0, 0)).count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(color="GREEN").count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(color="Blue").count(), 1)
+        self.assertEqual(MigrationTester.objects.filter(color="000000").count(), 1)
 
         MigrationTester.objects.all().delete()
 
-class TestAlterValuesMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestAlterValuesMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0001_initial")
     migrate_to = ("tests_edit_tests", "0002_alter_values")
 
@@ -524,7 +475,6 @@ class TestAlterValuesMigration(ResetModelsMixin, MigratorTestCase):
         super().setUpClass()
 
     def prepare(self):
-
         MigrationTester = self.old_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
@@ -539,36 +489,19 @@ class TestAlterValuesMigration(ResetModelsMixin, MigratorTestCase):
             MigrationTester.objects.create(int_enum=int_enum, color=color)
 
     def test_0002_alter_values(self):
-
         MigrationTesterNew = self.new_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
 
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=0).count(), 0
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=1).count(), 2
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=2).count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=3).count(), 1
-        )
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=0).count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=1).count(), 2)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=2).count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=3).count(), 1)
 
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="R").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="G").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="B").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="K").count(), 1
-        )
+        self.assertEqual(MigrationTesterNew.objects.filter(color="R").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="G").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="B").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="K").count(), 1)
 
     def test_0002_code(self):
         from .edit_tests.models import MigrationTester
@@ -616,8 +549,8 @@ class TestAlterValuesMigration(ResetModelsMixin, MigratorTestCase):
 
         MigrationTester.objects.all().delete()
 
-class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0002_alter_values")
     migrate_to = ("tests_edit_tests", "0003_remove_black")
 
@@ -627,7 +560,6 @@ class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
         super().setUpClass()
 
     def prepare(self):
-
         MigrationTester = self.old_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
@@ -642,36 +574,19 @@ class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
             MigrationTester.objects.create(int_enum=int_enum, color=color)
 
     def test_0003_remove_black(self):
-
         MigrationTesterNew = self.new_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
 
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=0).count(), 0
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=1).count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=2).count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum=3).count(), 1
-        )
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=0).count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=1).count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=2).count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum=3).count(), 1)
 
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="R").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="G").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="B").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="K").count(), 0
-        )
+        self.assertEqual(MigrationTesterNew.objects.filter(color="R").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="G").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="B").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="K").count(), 0)
 
     def test_0003_code(self):
         from .edit_tests.models import MigrationTester
@@ -714,8 +629,8 @@ class TestRemoveBlackMigration(ResetModelsMixin, MigratorTestCase):
 
         MigrationTester.objects.all().delete()
 
-class TestConstrainedButNonStrict(ResetModelsMixin, MigratorTestCase):
 
+class TestConstrainedButNonStrict(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0002_alter_values")
     migrate_to = ("tests_edit_tests", "0003_remove_black")
 
@@ -737,8 +652,8 @@ class TestConstrainedButNonStrict(ResetModelsMixin, MigratorTestCase):
             color="R",
         )
 
-class TestRemoveConstraintMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestRemoveConstraintMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0003_remove_black")
     migrate_to = ("tests_edit_tests", "0004_remove_constraint")
 
@@ -809,8 +724,8 @@ class TestRemoveConstraintMigration(ResetModelsMixin, MigratorTestCase):
             PositiveSmallIntegerField,
         )
 
-class TestExpandIntEnumMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestExpandIntEnumMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0003_remove_black")
     migrate_to = ("tests_edit_tests", "0005_expand_int_enum")
 
@@ -853,13 +768,11 @@ class TestExpandIntEnumMigration(ResetModelsMixin, MigratorTestCase):
         from .edit_tests.models import MigrationTester
 
         MigrationTester.objects.create(int_enum=32768, color="B")
-        self.assertEqual(
-            MigrationTester.objects.filter(int_enum=32768).count(), 1
-        )
+        self.assertEqual(MigrationTester.objects.filter(int_enum=32768).count(), 1)
         self.assertEqual(MigrationTester.objects.count(), 4)
 
-class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0005_expand_int_enum")
     migrate_to = ("tests_edit_tests", "0006_remove_int_enum")
 
@@ -869,7 +782,6 @@ class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
         super().setUpClass()
 
     def prepare(self):
-
         MigrationTester = self.old_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
@@ -913,9 +825,7 @@ class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
             self.assertIsInstance(obj.color, MigrationTester.Color)
 
         self.assertEqual(
-            MigrationTester.objects.filter(
-                color=MigrationTester.Color("RD")
-            ).count(),
+            MigrationTester.objects.filter(color=MigrationTester.Color("RD")).count(),
             1,
         )
 
@@ -927,9 +837,7 @@ class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
         )
 
         self.assertEqual(
-            MigrationTester.objects.filter(
-                color=MigrationTester.Color("Blue")
-            ).count(),
+            MigrationTester.objects.filter(color=MigrationTester.Color("Blue")).count(),
             1,
         )
 
@@ -937,8 +845,8 @@ class TestRemoveIntEnumMigration(ResetModelsMixin, MigratorTestCase):
 
         MigrationTester.objects.all().delete()
 
-class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0006_remove_int_enum")
     migrate_to = ("tests_edit_tests", "0007_add_int_enum")
 
@@ -948,7 +856,6 @@ class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
         super().setUpClass()
 
     def prepare(self):
-
         MigrationTester = self.old_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
@@ -972,38 +879,18 @@ class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
         MigrationTesterNew.objects.filter(color="G").update(int_enum="B")
         MigrationTesterNew.objects.filter(color="B").update(int_enum="C")
 
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum="0").count(), 0
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum="1").count(), 0
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum="2").count(), 0
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum="3").count(), 0
-        )
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum="0").count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum="1").count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum="2").count(), 0)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum="3").count(), 0)
 
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum="A").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum="B").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(int_enum="C").count(), 1
-        )
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum="A").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum="B").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(int_enum="C").count(), 1)
 
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="R").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="G").count(), 1
-        )
-        self.assertEqual(
-            MigrationTesterNew.objects.filter(color="B").count(), 1
-        )
+        self.assertEqual(MigrationTesterNew.objects.filter(color="R").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="G").count(), 1)
+        self.assertEqual(MigrationTesterNew.objects.filter(color="B").count(), 1)
 
     def test_0007_code(self):
         from .edit_tests.models import MigrationTester
@@ -1056,8 +943,8 @@ class TestAddIntEnumMigration(ResetModelsMixin, MigratorTestCase):
 
         MigrationTester.objects.all().delete()
 
-class TestChangeDefaultIndirectlyMigration(ResetModelsMixin, MigratorTestCase):
 
+class TestChangeDefaultIndirectlyMigration(ResetModelsMixin, MigratorTestCase):
     migrate_from = ("tests_edit_tests", "0008_set_default")
     migrate_to = ("tests_edit_tests", "0009_change_default")
 
@@ -1067,7 +954,6 @@ class TestChangeDefaultIndirectlyMigration(ResetModelsMixin, MigratorTestCase):
         super().setUpClass()
 
     def prepare(self):
-
         MigrationTester = self.old_state.apps.get_model(
             "tests_edit_tests", "MigrationTester"
         )
@@ -1084,6 +970,7 @@ class TestChangeDefaultIndirectlyMigration(ResetModelsMixin, MigratorTestCase):
         self.assertEqual(MigrationTesterNew.objects.first().color, "K")
 
         self.assertEqual(MigrationTesterNew.objects.create().color, "B")
+
 
 def test_migration_test_marker_tag():
     """Ensure ``MigratorTestCase`` sublasses are properly tagged."""

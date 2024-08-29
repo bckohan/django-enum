@@ -5,7 +5,6 @@ from django_enum import EnumField, TextChoices
 
 
 class MigrationTester(models.Model):
-
     # unchanged
     class IntEnum(models.IntegerChoices):
         ONE = 1, "One"

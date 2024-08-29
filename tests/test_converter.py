@@ -1,8 +1,8 @@
 from django.test import TestCase
 from decimal import Decimal
 
-class TestEnumConverter(TestCase):
 
+class TestEnumConverter(TestCase):
     def test_enum_converter(self):
         from django.urls import reverse
         from django.urls.converters import get_converters
@@ -57,4 +57,3 @@ class TestEnumConverter(TestCase):
         response = self.client.get("/Euler's Number")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(record[2], Constants.e)
-

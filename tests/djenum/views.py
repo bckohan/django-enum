@@ -8,7 +8,6 @@ from tests.djenum.models import EnumTester
 
 
 class URLMixin:
-
     NAMESPACE = "tests_djenum"
     enums = dj_enums
 
@@ -81,7 +80,6 @@ try:
     from django_enum.drf import EnumFieldMixin
 
     class EnumTesterSerializer(EnumFieldMixin, serializers.ModelSerializer):
-
         class Meta:
             model = EnumTester
             fields = "__all__"
@@ -100,7 +98,6 @@ try:
     from django_enum.filters import FilterSet as EnumFilterSet
 
     class EnumTesterFilterViewSet(URLMixin, FilterView):
-
         class EnumTesterFilter(EnumFilterSet):
             class Meta:
                 model = EnumTester

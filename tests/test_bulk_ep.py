@@ -5,7 +5,7 @@ pytest.importorskip("enum_properties")
 from tests.test_bulk import TestBulkOperations
 from tests.enum_prop.models import EnumTester
 
-    
+
 class TestBulkOperationsProps(TestBulkOperations):
     MODEL_CLASS = EnumTester
 
@@ -37,5 +37,6 @@ class TestBulkOperationsProps(TestBulkOperations):
             "big_int": -2147483649,
             "coerce": 2,
         }
+
 
 TestBulkOperations = None

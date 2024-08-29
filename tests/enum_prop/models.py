@@ -35,7 +35,6 @@ try:
     )
 
     class EnumTester(models.Model):
-
         small_pos_int = EnumField(
             SmallPosIntEnum, null=True, default=None, db_index=True, blank=True
         )
@@ -125,24 +124,19 @@ try:
         )
 
         def get_absolute_url(self):
-            return reverse(
-                "tests_enum_prop:enum-detail", kwargs={"pk": self.pk}
-            )
+            return reverse("tests_enum_prop:enum-detail", kwargs={"pk": self.pk})
 
         class Meta:
             ordering = ("id",)
             # constraints = []
 
     class MyModel(models.Model):
-
         class TextEnum(models.TextChoices):
-
             VALUE0 = "V0", "Value 0"
             VALUE1 = "V1", "Value 1"
             VALUE2 = "V2", "Value 2"
 
         class IntEnum(models.IntegerChoices):
-
             ONE = 1, "One"
             TWO = (
                 2,
@@ -161,7 +155,6 @@ try:
         color = EnumField(Color)
 
     class AdminDisplayBug35(models.Model):
-
         text_enum = EnumField(TextEnum, default=TextEnum.VALUE1)
 
         int_enum = EnumField(SmallPosIntEnum, default=SmallPosIntEnum.VAL2)
@@ -171,7 +164,6 @@ try:
         blank_txt = EnumField(TextEnum, null=True, default=None)
 
     class PerfCompare(models.Model):
-
         small_pos_int = models.PositiveSmallIntegerField(
             choices=SmallPosIntEnum.choices,
             null=True,
@@ -265,7 +257,6 @@ try:
             ordering = ("id",)
 
     class NoCoercePerfCompare(models.Model):
-
         small_pos_int = EnumField(
             SmallPosIntEnum,
             coerce=False,
@@ -352,13 +343,11 @@ try:
             ordering = ("id",)
 
     class SingleEnumPerf(models.Model):
-
         small_pos_int = EnumField(
             enum=SmallPosIntEnum, null=True, default=None, db_index=True, blank=True
         )
 
     class SingleFieldPerf(models.Model):
-
         small_pos_int = models.PositiveSmallIntegerField(
             choices=SmallPosIntEnum.choices,
             null=True,
@@ -368,7 +357,6 @@ try:
         )
 
     class SingleNoCoercePerf(models.Model):
-
         small_pos_int = EnumField(
             enum=SmallPosIntEnum,
             coerce=False,
@@ -379,7 +367,6 @@ try:
         )
 
     class BitFieldModel(models.Model):
-
         bit_field_small = EnumField(GNSSConstellation)
         bit_field_large = EnumField(LargeBitField, null=True, default=None, blank=True)
         bit_field_large_neg = EnumField(
@@ -388,7 +375,6 @@ try:
         no_default = EnumField(LargeBitField)
 
     class BaseEnumFlagPropTester(models.Model):
-
         small_pos = EnumField(
             SmallPositiveFlagEnum, default=None, null=True, db_index=True, blank=True
         )
@@ -454,7 +440,6 @@ try:
         pass
 
     class EnumFlagPropTesterRelated(BaseEnumFlagPropTester):
-
         related_flags = models.ManyToManyField(
             EnumFlagPropTester, related_name="related_flags"
         )
