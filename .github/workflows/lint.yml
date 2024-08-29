@@ -13,12 +13,12 @@ jobs:
         django-version:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
-          - '5.0' # April 2025
+          - '5.1' # December 2025
         exclude:
           - python-version: '3.8'
-            django-version: '5.0'
+            django-version: '5.1'
           - python-version: '3.10'
-            django-version: '5.0'
+            django-version: '5.1'
           - python-version: '3.12'
             django-version: '3.2'
           - python-version: '3.10'
@@ -46,7 +46,7 @@ jobs:
           poetry run pip install --upgrade pip
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
           poetry add django@^${{ matrix.django-version }}
-          poetry install --no-interaction -E all
+          poetry install --no-interaction -E all --with psycopg2
 
       - name: Run Static Analysis
         run: |
