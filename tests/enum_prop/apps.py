@@ -1,10 +1,7 @@
-try:
-    import enum_properties
-    from django.apps import AppConfig
+import enum_properties
+from django.apps import AppConfig
 
-    class EnumPropConfig(AppConfig):
-        name = "tests.enum_prop"
-        label = name.replace(".", "_")
 
-except (ImportError, ModuleNotFoundError):  # pragma: no cover
-    pass
+class EnumPropConfig(AppConfig):
+    name = "tests.enum_prop"
+    label = name.replace(".", "_")

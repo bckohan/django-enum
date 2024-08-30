@@ -40,7 +40,6 @@ release = django_enum.__version__
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinxarg.ext',
     'sphinx.ext.todo'
 ]
 

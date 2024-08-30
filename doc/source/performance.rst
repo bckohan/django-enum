@@ -16,13 +16,13 @@ An effort is made to characterize and monitor the performance penalty of
 using ``EnumFields`` over a Django_ native field with choices and benchmark
 tests ensure performance of future releases will remain stable or improve.
 
-For the nominal case the deserialization penalty is roughly equivalent to a map
+For the nominal case the marshalling penalty is roughly equivalent to a map
 lookup, but may involve several exception stack unwinds in unusual non-strict
 or eccentric enumeration cases.
 
 .. note::
 
-    The deserialization penalty can be eliminated by setting ``coerce`` to
+    The marshalling penalty can be eliminated by setting ``coerce`` to
     ``False``. This will require the developer to manually coerce the
     ``EnumField`` value to an Enum_ type object and is therefore usually
     not recommended - but may be appropriate if the dominate use case involves
