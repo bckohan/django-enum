@@ -127,8 +127,15 @@ class TestRequests(EnumTypeMixin, TestCase):
 
         for obj in self.objects:
             for attr in self.values.keys():
-                self.values[attr].setdefault(getattr(obj, attr), [])
-                self.values[attr][getattr(obj, attr)].append(obj.pk)
+                try:
+                    val = getattr(obj, attr)
+                    if val is not None and obj._meta.get_field(attr).value_getter and not isinstance(val, obj._meta.get_field(attr).primitive):
+                        val = obj._meta.get_field(attr).value_getter(val)
+                    self.values[attr].setdefault(val, [])
+                    self.values[attr][val].append(obj.pk)
+                except TypeError:
+                    import ipdb
+                    ipdb.set_trace()
 
     def tearDown(self):
         self.MODEL_CLASS.objects.all().delete()

@@ -3,7 +3,17 @@
 from copy import copy
 from decimal import DecimalException
 from enum import Enum
-from typing import Any, Iterable, List, Optional, Protocol, Sequence, Tuple, Type, Union
+from typing import (
+    Any,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 from django.core.exceptions import ValidationError
 from django.db.models import Choices
@@ -14,8 +24,8 @@ from django.forms.fields import (
 )
 from django.forms.widgets import Select, SelectMultiple
 
+from django_enum.utils import ValueGetter, determine_primitive, with_typehint
 from django_enum.utils import choices as get_choices
-from django_enum.utils import determine_primitive, with_typehint
 
 __all__ = [
     "NonStrictSelect",
@@ -117,6 +127,7 @@ class ChoiceFieldMixin(
     _enum_: Optional[Type[Enum]] = None
     _primitive_: Optional[Type] = None
     _strict_: bool = True
+    _value_getter_: Optional[ValueGetter] = None
     empty_value: Any = ""
     empty_values: Sequence[Any] = list(TypedChoiceField.empty_values)
 
@@ -135,10 +146,12 @@ class ChoiceFieldMixin(
         empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
         choices: _ChoicesParameter = (),
         coerce: Optional[_CoerceCallable] = None,
+        value: Optional[ValueGetter] = None,
         **kwargs,
     ):
         self._strict_ = strict
         self._primitive_ = primitive
+        self.value_getter = value
         if not self.strict:
             kwargs.setdefault("widget", NonStrictSelect)
 
@@ -150,7 +163,9 @@ class ChoiceFieldMixin(
             self._empty_values_overridden_ = True
 
         super().__init__(
-            choices=choices or getattr(self.enum, "choices", choices),
+            choices=choices
+            or getattr(self.enum, "choices", [])
+            or get_choices(self.enum, value=self.value_getter),
             coerce=coerce or self.default_coerce,
             **kwargs,
         )
@@ -189,6 +204,15 @@ class ChoiceFieldMixin(
         self._primitive_ = primitive
 
     @property
+    def value_getter(self):
+        """The function to get the value from the enumeration"""
+        return self._value_getter_
+
+    @value_getter.setter
+    def value_getter(self, value_getter):
+        self._value_getter_ = value_getter
+
+    @property
     def enum(self):
         """the class of the enumeration"""
         return self._enum_
@@ -196,8 +220,10 @@ class ChoiceFieldMixin(
     @enum.setter
     def enum(self, enum):
         self._enum_ = enum
-        self._primitive_ = self._primitive_ or determine_primitive(enum)
-        self.choices = self.choices or get_choices(self.enum)
+        self._primitive_ = self._primitive_ or determine_primitive(
+            enum, value=self.value_getter
+        )
+        self.choices = self.choices or get_choices(self.enum, value=self.value_getter)
         # remove any of our valid enumeration values or symmetric properties
         # from our empty value list if there exists an equivalency
         if not self._empty_values_overridden_:
@@ -225,7 +251,9 @@ class ChoiceFieldMixin(
         """Must return the raw enumeration value type"""
         value = self._coerce(value)
         return super().prepare_value(
-            value.value if isinstance(value, self.enum) else value
+            (self.value_getter(value) if self.value_getter else value.value)
+            if isinstance(value, self.enum)
+            else value
         )
 
     def to_python(self, value: Any) -> Any:

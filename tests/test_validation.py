@@ -10,7 +10,7 @@ class TestValidatorAdapter(TestCase):
         from django_enum.fields import EnumValidatorAdapter
 
         validator = DecimalValidator(max_digits=5, decimal_places=2)
-        adapted = EnumValidatorAdapter(validator)
+        adapted = EnumValidatorAdapter(validator, None)
         self.assertEqual(adapted.max_digits, validator.max_digits)
         self.assertEqual(adapted.decimal_places, validator.decimal_places)
         self.assertEqual(adapted, validator)

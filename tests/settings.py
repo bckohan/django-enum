@@ -104,6 +104,7 @@ MIDDLEWARE = (
 INSTALLED_APPS = [
     "tests.benchmark",
     *(["tests.flag_constraints"] if sys.version_info >= (3, 11) else []),
+    *(["tests.dataclass"] if sys.version_info >= (3, 12) else []),
     "tests.constraints",
     "tests.converters",
     "tests.djenum",

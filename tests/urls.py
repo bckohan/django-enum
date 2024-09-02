@@ -10,3 +10,6 @@ urlpatterns = [
 
 if "tests.enum_prop" in settings.INSTALLED_APPS:  # pragma: no cover
     urlpatterns.append(path("enum_prop/", include("tests.enum_prop.urls")))
+
+if "tests.dataclass" in settings.INSTALLED_APPS:  # pragma: no cover
+    urlpatterns.append(path("dataclass/", include("tests.dataclass.urls")))

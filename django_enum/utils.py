@@ -3,8 +3,19 @@
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum, IntFlag
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
-
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
+from django.utils.translation import gettext as _
 from typing_extensions import get_args
 
 __all__ = [
@@ -34,6 +45,8 @@ SupportedPrimitive = Union[
     Decimal,
 ]
 
+ValueGetter = Callable[[Enum], SupportedPrimitive]
+
 
 def with_typehint(baseclass: Type[T]) -> Type[T]:
     """
@@ -50,7 +63,9 @@ def with_typehint(baseclass: Type[T]) -> Type[T]:
 
 
 def choices(
-    enum_cls: Optional[Type[Enum]], override: bool = False
+    enum_cls: Optional[Type[Enum]],
+    override: bool = False,
+    value: Optional[ValueGetter] = None,
 ) -> List[Tuple[Any, str]]:
     """
     Get the Django choices for an enumeration type. If the enum type has a
@@ -63,6 +78,7 @@ def choices(
 
     :param enum_cls: The enumeration type
     :param override: Do not defer to choices attribute on the class if True
+    :param get_value: A function to get the value from the enumeration member
     :return: A list of (value, label) pairs
     """
     return (
@@ -75,7 +91,10 @@ def choices(
                     else []
                 ),
                 *[
-                    (member.value, getattr(member, "label", getattr(member, "name")))
+                    (
+                        value(member) if value else member.value,
+                        getattr(member, "label", getattr(member, "name")),
+                    )
                     for member in list(enum_cls) or enum_cls.__members__.values()
                 ],
             ]
@@ -110,7 +129,9 @@ def names(enum_cls: Optional[Type[Enum]], override: bool = False) -> List[Any]:
     )
 
 
-def labels(enum_cls: Optional[Type[Enum]]) -> List[Any]:
+def labels(
+    enum_cls: Optional[Type[Enum]], value: Optional[ValueGetter] = None
+) -> List[Any]:
     """
     Return a list of labels to use for the enumeration type. See choices.
 
@@ -120,10 +141,14 @@ def labels(enum_cls: Optional[Type[Enum]]) -> List[Any]:
     :param enum_cls: The enumeration type
     :return: A list of labels
     """
-    return getattr(enum_cls, "labels", [label for _, label in choices(enum_cls)])
+    return getattr(
+        enum_cls, "labels", [label for _, label in choices(enum_cls, value=value)]
+    )
 
 
-def values(enum_cls: Optional[Type[Enum]]) -> List[Any]:
+def values(
+    enum_cls: Optional[Type[Enum]], value: Optional[ValueGetter] = None
+) -> List[Any]:
     """
     Return a list of the values of an enumeration type.
 
@@ -133,10 +158,14 @@ def values(enum_cls: Optional[Type[Enum]]) -> List[Any]:
     :param enum_cls: The enumeration type
     :return: A list of values
     """
-    return getattr(enum_cls, "values", [value for value, _ in choices(enum_cls)])
+    return getattr(
+        enum_cls, "values", [value for value, _ in choices(enum_cls, value=value)]
+    )
 
 
-def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
+def determine_primitive(
+    enum: Type[Enum], value: Optional[ValueGetter] = None
+) -> Optional[Type]:
     """
     Determine the python type most appropriate to represent all values of the
     enumeration class. The primitive type determination algorithm is thus:
@@ -155,6 +184,8 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
     may be coerced to the primitive type and vice-versa.
 
     :param enum: The enumeration class to determine the primitive type for
+    :param value: A function to get the primitive value from the enumeration member
+        if other than the 'value' attribute
     :return: A python type or None if no primitive type could be determined
     """
     primitive = None
@@ -163,19 +194,19 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
             primitive = prim
             break
     value_types = set()
-    for value in values(enum):
+    for value in values(enum, value=value):
         if value is not None:
             value_types.add(type(value))
 
     if len(value_types) > 1 and primitive is None:
         for candidate in get_args(SupportedPrimitive):
             works = True
-            for value in values(enum):
-                if value is None:
+            for v in values(enum):
+                if v is None:
                     continue
                 try:
                     # test symmetric coercibility
-                    works &= type(value)(candidate(value)) == value
+                    works &= type(v)(candidate(v)) == v
                 except Exception:
                     works = False
             if works:
@@ -189,6 +220,7 @@ def decimal_params(
     enum: Optional[Type[Enum]],
     decimal_places: Optional[int] = None,
     max_digits: Optional[int] = None,
+    value: Optional[ValueGetter] = None,
 ) -> Dict[str, int]:
     """
     Determine the maximum number of digits and decimal places required to
@@ -203,12 +235,17 @@ def decimal_params(
     """
     decimal_places = decimal_places or max(
         [0]
-        + [len(str(value).split(".")[1]) for value in values(enum) if "." in str(value)]
+        + [
+            len(str(v).split(".")[1])
+            for v in values(enum, value=value)
+            if "." in str(v)
+        ]
     )
     max_digits = max_digits or (
         decimal_places
         + max(
-            [0] + [len(str(value).split(".", maxsplit=1)[0]) for value in values(enum)]
+            [0]
+            + [len(str(v).split(".", maxsplit=1)[0]) for v in values(enum, value=value)]
         )
     )
     return {"max_digits": max_digits, "decimal_places": decimal_places}
@@ -222,3 +259,51 @@ def get_set_bits(flag: Union[int, IntFlag]) -> List[int]:
     :return: A list of indices of the set bits
     """
     return [i for i in range(flag.bit_length()) if flag & (1 << i)]
+
+
+def to_primitive(value: Any, enum: Type[Enum], primitive: Type, value_getter: Optional[ValueGetter]) -> Any:
+    """
+    A function that takes a value which could either be an enumeration instance,
+    or its complex value (dataclass) and returns the primitive value type expected.
+
+    .. warning::
+
+        This function should not be used in high throughput operations (e.g. requests) because
+        it tries really hard to convert the value to the primitive type and may be expensive
+        (e.g. O(n) complexity where n is the size of the enum). Its main purpose is to sanitize
+        defaults during deconstruction in migration file generation.
+
+    :param value: The value to convert, could be the value, or the enumeration instance
+        or the complex value of an enumeration that needs to be converted to the primitive
+        type via the value_getter function.
+    :param enum: The enumeration class the conversion is happening for.
+    :param primitive: The primitive type to convert the value to, if unable to convert
+        to this value an assertion will fail
+    :param value_getter: A function to get the value from the enumeration member
+        if other than the 'value' attribute or None
+    :raises: ValueError if the value cannot be converted to the primitive type
+    """
+    try:
+        if value_getter:
+            if isinstance(value, Enum):
+                value = value_getter(value)
+            if not isinstance(value, primitive):
+                value = value_getter(enum(value))
+        if isinstance(value, Enum):
+            value = value.value
+        elif not isinstance(value, primitive):
+            value = enum(value).value
+        if not isinstance(value, primitive):
+            value = primitive(value)
+    except Exception as e:
+        raise ValueError(
+            _("Could not convert {value} to {primitive} for {enum}").format(
+                value=value,
+                primitive=primitive,
+                enum=enum
+            )
+        ) from e
+    if not isinstance(value, primitive):
+        import ipdb
+        ipdb.set_trace()
+    return value
