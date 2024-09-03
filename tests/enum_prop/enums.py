@@ -1,16 +1,11 @@
 from datetime import date, datetime, time, timedelta
-from decimal import Decimal, DecimalException
-
+from decimal import Decimal
+import typing as t
+from typing_extensions import Annotated
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.utils.translation import gettext as _
-from enum_properties import (
-    EnumProperties,
-    IntEnumProperties,
-    IntFlagProperties,
-    p,
-    s,
-)
+from enum_properties import EnumProperties, IntEnumProperties, Symmetric, s
 
 from django_enum import FlagChoices, FloatChoices, IntegerChoices, TextChoices
 from tests.utils import try_convert
@@ -28,7 +23,11 @@ class DJTextEnum(DjangoTextChoices):
     C = "C", "Label C"
 
 
-class TextEnum(TextChoices, p("version"), p("help"), s("aliases", case_fold=True)):
+class TextEnum(TextChoices):
+    version: int
+    help: str
+    aliases: Annotated[t.List[str], Symmetric(case_fold=True)]
+
     VALUE1 = (
         "V1",
         "Value1",
@@ -59,7 +58,9 @@ class TextEnum(TextChoices, p("version"), p("help"), s("aliases", case_fold=True
     )
 
 
-class Constants(FloatChoices, s("symbol")):
+class Constants(FloatChoices):
+    symbol: Annotated[str, Symmetric()]
+
     PI = 3.14159265358979323846264338327950288, "Pi", "π"
     e = 2.71828, "Euler's Number", "e"
     GOLDEN_RATIO = 1.61803398874989484820458683436563811, "Golden Ratio", "φ"
@@ -101,7 +102,10 @@ class BigPosIntEnum(IntegerChoices):
     VAL3 = 2147483648, "Value 2147483648"
 
 
-class BigIntEnum(IntegerChoices, s("pos"), p("help")):
+class BigIntEnum(IntegerChoices):
+    pos: Annotated[BigPosIntEnum, Symmetric()]
+    help: str
+
     VAL0 = (
         -2147483649,
         "Value -2147483649",
@@ -118,7 +122,9 @@ class BigIntEnum(IntegerChoices, s("pos"), p("help")):
     )
 
 
-class DateEnum(EnumProperties, s("label")):
+class DateEnum(EnumProperties):
+    label: Annotated[str, Symmetric()]
+
     BRIAN = date(1984, 8, 7), "Brian"
     EMMA = date(1989, 7, 27), "Emma"
     HUGO = date(2016, 9, 9), "Hugo"
@@ -141,7 +147,9 @@ class DateEnum(EnumProperties, s("label")):
         return super().__hash__()
 
 
-class DateTimeEnum(EnumProperties, s("label")):
+class DateTimeEnum(EnumProperties):
+    label: Annotated[str, Symmetric()]
+
     ST_HELENS = datetime(1980, 5, 18, 8, 32, 0), "Mount St. Helens"
     PINATUBO = datetime(1991, 6, 15, 20, 9, 0), "Pinatubo"
     KATRINA = datetime(2005, 8, 29, 5, 10, 0), "Katrina"
@@ -164,7 +172,9 @@ class DateTimeEnum(EnumProperties, s("label")):
         return super().__hash__()
 
 
-class TimeEnum(EnumProperties, s("label")):
+class TimeEnum(EnumProperties):
+    label: Annotated[str, Symmetric()]
+
     COB = time(17, 0, 0), "Close of Business"
     LUNCH = time(12, 30, 0), "Lunch"
     MORNING = time(9, 0, 0), "Morning"
@@ -187,7 +197,9 @@ class TimeEnum(EnumProperties, s("label")):
         return super().__hash__()
 
 
-class DurationEnum(EnumProperties, s("label", case_fold=True)):
+class DurationEnum(EnumProperties):
+    label: Annotated[str, Symmetric(case_fold=True)]
+
     DAY = timedelta(days=1), "DAY"
     WEEK = timedelta(weeks=1), "WEEK"
     FORTNIGHT = timedelta(weeks=2), "FORTNIGHT"
@@ -210,7 +222,9 @@ class DurationEnum(EnumProperties, s("label", case_fold=True)):
         return super().__hash__()
 
 
-class DecimalEnum(EnumProperties, s("label", case_fold=True)):
+class DecimalEnum(EnumProperties):
+    label: Annotated[str, Symmetric(case_fold=True)]
+
     ONE = Decimal("0.99"), "One"
     TWO = Decimal("0.999"), "Two"
     THREE = Decimal("0.9999"), "Three"
@@ -237,20 +251,21 @@ class DecimalEnum(EnumProperties, s("label", case_fold=True)):
         return super().__hash__()
 
 
-class PrecedenceTest(
-    s("prop1"),
-    s("prop2"),
-    IntegerChoices,
-    s("prop3", case_fold=False),
-    s("prop4", case_fold=True),
-):
+class PrecedenceTest(IntegerChoices):
+    prop1: Annotated[t.Union[int, str], Symmetric()]
+    prop2: Annotated[float, Symmetric()]
+    prop3: Annotated[str, Symmetric(case_fold=False)]
+    prop4: Annotated[t.List[t.Union[str, float, int]], Symmetric(case_fold=True)]
+
     P1 = 0, "Precedence 1", 3, 0.1, _("First"), ["0.4", "Fourth", 1]
-    P2 = 1, "Precedence 2", 2, 0.2, _("Second"), {"0.3", "Third", 2}
+    P2 = 1, "Precedence 2", 2, 0.2, _("Second"), ["0.3", "Third", 2]
     P3 = 2, "Precedence 3", "1", 0.3, _("Third"), [0.2, "Second", 3]
-    P4 = 3, "Precedence 4", 0, 0.4, _("Fourth"), {0.1, "First", 4}
+    P4 = 3, "Precedence 4", 0, 0.4, _("Fourth"), [0.1, "First", 4]
 
 
-class CarrierFrequency(FlagChoices, p("mhz")):
+class CarrierFrequency(FlagChoices):
+    mhz: float
+
     L1 = 1, 1575.420
     L2 = 2, 1227.600
     L5 = 4, 1176.450
@@ -269,8 +284,12 @@ class CarrierFrequency(FlagChoices, p("mhz")):
     B3 = 4096, 1268.520
 
 
-class GNSSConstellation(FlagChoices, s("country"), p("satellites"), p("frequencies")):
-    _symmetric_builtins_ = [s("label", case_fold=True)]
+class GNSSConstellation(FlagChoices):
+    _symmetric_builtins_ = ["name", s("label", Symmetric(case_fold=True))]
+
+    country: Annotated[str, Symmetric()]
+    satellites: int
+    frequencies: CarrierFrequency
 
     GPS = (
         1,
@@ -313,11 +332,13 @@ class LargeNegativeField(IntegerChoices):
     ZERO = -1, "ZERO"
 
 
-class ExternEnum(IntEnumProperties, s("label", case_fold=True)):
+class ExternEnum(IntEnumProperties):
     """
     Tests that externally defined (i.e. not deriving from choices enums
     are supported.
     """
+
+    label: Annotated[str, Symmetric(case_fold=True)]
 
     ONE = 1, "One"
     TWO = 2, "Two"

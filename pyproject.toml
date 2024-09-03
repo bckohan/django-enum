@@ -46,7 +46,7 @@ packages = [
 [tool.poetry.dependencies]
 python = ">=3.8,<4.0"
 Django = ">=3.2,<6.0"
-enum-properties = {version = "^1.7.0", optional = true}
+enum-properties = {version = ">=2.0.0", optional = true}
 django-filter = {version = ">=21", optional = true}
 djangorestframework = {version = "^3.9", optional = true}
 
@@ -76,6 +76,7 @@ numpy = [
 django-stubs = {extras = ["compatible-mypy"], version = ">=4.2.7"}
 furo = "^2024.8.6"
 ruff = "^0.6.3"
+typing-extensions = "^4.12.2"
 
 [tool.poetry.group.psycopg2]
 optional = true

@@ -68,6 +68,8 @@ try:
 
         def __hash__(self):
             return DjangoTextChoices.__hash__(self)
+        
+        label: str
 
     class IntegerChoices(
         DjangoSymmetricMixin, DjangoIntegerChoices, metaclass=DjangoEnumPropertiesMeta
@@ -79,6 +81,8 @@ try:
 
         def __hash__(self):
             return DjangoIntegerChoices.__hash__(self)
+        
+        label: str
 
     class FloatChoices(
         DjangoSymmetricMixin, float, Choices, metaclass=DjangoEnumPropertiesMeta
@@ -93,6 +97,8 @@ try:
 
         def __str__(self):
             return str(self.value)
+
+        label: str
 
     # mult inheritance type hint bug
     class FlagChoices(  # type: ignore
@@ -112,6 +118,8 @@ try:
 
         def __hash__(self):
             return enum.IntFlag.__hash__(self)
+        
+        label: str
 
 except (ImportError, ModuleNotFoundError):
     # 3.11 - extend from Enum so base type check does not throw type error
