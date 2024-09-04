@@ -68,7 +68,7 @@ try:
 
         def __hash__(self):
             return DjangoTextChoices.__hash__(self)
-        
+
         label: str
 
     class IntegerChoices(
@@ -81,7 +81,7 @@ try:
 
         def __hash__(self):
             return DjangoIntegerChoices.__hash__(self)
-        
+
         label: str
 
     class FloatChoices(
@@ -118,7 +118,7 @@ try:
 
         def __hash__(self):
             return enum.IntFlag.__hash__(self)
-        
+
         label: str
 
 except (ImportError, ModuleNotFoundError):
