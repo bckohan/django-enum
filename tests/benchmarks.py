@@ -461,15 +461,15 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
             bf.write(json.dumps(data, indent=4))
 
     def test_query_performance(self):
-        has_any_flag_count = {}
-        has_all_flag_count = {}
-        has_any_flag_load = {}
-        has_all_flag_load = {}
+        any_flag_count = {}
+        all_flag_count = {}
+        any_flag_load = {}
+        all_flag_load = {}
 
-        has_any_bool_count = {}
-        has_all_bool_count = {}
-        has_any_bool_load = {}
-        has_all_bool_load = {}
+        any_bool_count = {}
+        all_bool_count = {}
+        any_bool_load = {}
+        all_bool_load = {}
 
         with connection.cursor() as cursor:
             for FlagModel, BoolModel in zip(self.FLAG_MODELS, self.BOOL_MODELS):
@@ -480,8 +480,8 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
                     mask = 1
                 mask_en = FlagModel._meta.get_field("flags").enum(mask)
 
-                flag_any_q = FlagModel.objects.filter(flags__has_any=mask_en)
-                flag_all_q = FlagModel.objects.filter(flags__has_all=mask_en)
+                flag_any_q = FlagModel.objects.filter(flags__any=mask_en)
+                flag_all_q = FlagModel.objects.filter(flags__all=mask_en)
 
                 bool_q = [
                     Q(**{f"flg_{flg}": bool(mask & (1 << flg) != 0)})
@@ -502,11 +502,11 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
 
                 start = perf_counter()
                 flag_any_count = flag_any_q.count()
-                has_any_flag_count[FlagModel.num_flags] = perf_counter() - start
+                any_flag_count[FlagModel.num_flags] = perf_counter() - start
 
                 start = perf_counter()
                 bool_any_count = bool_any_q.count()
-                has_any_bool_count[BoolModel.num_flags] = perf_counter() - start
+                any_bool_count[BoolModel.num_flags] = perf_counter() - start
 
                 try:
                     # make sure our queries are equivalent
@@ -518,83 +518,75 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
 
                 start = perf_counter()
                 flag_all_count = flag_all_q.count()
-                has_all_flag_count[FlagModel.num_flags] = perf_counter() - start
+                all_flag_count[FlagModel.num_flags] = perf_counter() - start
 
                 start = perf_counter()
                 bool_all_count = bool_all_q.count()
-                has_all_bool_count[BoolModel.num_flags] = perf_counter() - start
+                all_bool_count[BoolModel.num_flags] = perf_counter() - start
 
                 # make sure our queries are equivalent
                 self.assertEqual(flag_all_count, bool_all_count)
 
                 start = perf_counter()
                 flag_any_list = list(flag_any_q.all())
-                has_any_flag_load[FlagModel.num_flags] = perf_counter() - start
+                any_flag_load[FlagModel.num_flags] = perf_counter() - start
 
                 start = perf_counter()
                 bool_any_list = list(bool_any_q.all())
-                has_any_bool_load[BoolModel.num_flags] = perf_counter() - start
+                any_bool_load[BoolModel.num_flags] = perf_counter() - start
 
                 # make sure our queries are equivalent
                 self.assertEqual(len(flag_any_list), len(bool_any_list))
 
                 start = perf_counter()
                 flag_all_list = list(flag_all_q.all())
-                has_all_flag_load[FlagModel.num_flags] = perf_counter() - start
+                all_flag_load[FlagModel.num_flags] = perf_counter() - start
 
                 start = perf_counter()
                 bool_all_list = list(bool_all_q.all())
-                has_all_bool_load[BoolModel.num_flags] = perf_counter() - start
+                all_bool_load[BoolModel.num_flags] = perf_counter() - start
 
                 # make sure our queries are equivalent
                 self.assertEqual(len(flag_all_list), len(bool_all_list))
 
-        num_flags = sorted(has_any_flag_count.keys())
+        num_flags = sorted(any_flag_count.keys())
 
-        has_any_count_diff = [
-            has_any_bool_count[flg] - has_any_flag_count[flg] for flg in num_flags
+        any_count_diff = [
+            any_bool_count[flg] - any_flag_count[flg] for flg in num_flags
         ]
-        has_all_count_diff = [
-            has_all_bool_count[flg] - has_all_flag_count[flg] for flg in num_flags
-        ]
-
-        has_any_load_diff = [
-            has_any_bool_load[flg] - has_any_flag_load[flg] for flg in num_flags
-        ]
-        has_all_load_diff = [
-            has_all_bool_load[flg] - has_all_flag_load[flg] for flg in num_flags
+        all_count_diff = [
+            all_bool_count[flg] - all_flag_count[flg] for flg in num_flags
         ]
 
-        # print(has_any_count_diff)
+        any_load_diff = [any_bool_load[flg] - any_flag_load[flg] for flg in num_flags]
+        all_load_diff = [all_bool_load[flg] - all_flag_load[flg] for flg in num_flags]
+
+        # print(any_count_diff)
         # print('--------------------------------')
-        # print(has_all_count_diff)
+        # print(all_count_diff)
         # print('--------------------------------')
-        # print(has_any_load_diff)
+        # print(any_load_diff)
         # print('--------------------------------')
-        # print(has_all_load_diff)
+        # print(all_load_diff)
 
-        has_any_count_tpl = [
-            (has_any_bool_count[flg], has_any_flag_count[flg]) for flg in num_flags
+        any_count_tpl = [
+            (any_bool_count[flg], any_flag_count[flg]) for flg in num_flags
         ]
-        has_all_count_tpl = [
-            (has_all_bool_count[flg], has_all_flag_count[flg]) for flg in num_flags
-        ]
-
-        has_any_load_tpl = [
-            (has_any_bool_load[flg], has_any_flag_load[flg]) for flg in num_flags
-        ]
-        has_all_load_tpl = [
-            (has_all_bool_load[flg], has_all_flag_load[flg]) for flg in num_flags
+        all_count_tpl = [
+            (all_bool_count[flg], all_flag_count[flg]) for flg in num_flags
         ]
 
-        print("------------ has_any_cnt ----------------")
-        print(has_any_count_tpl)
-        print("------------ has_all_cnt ----------------")
-        print(has_all_count_tpl)
-        print("------------ has_any_load ---------------")
-        print(has_any_load_tpl)
-        print("------------ has_all_load ---------------")
-        print(has_all_load_tpl)
+        any_load_tpl = [(any_bool_load[flg], any_flag_load[flg]) for flg in num_flags]
+        all_load_tpl = [(all_bool_load[flg], all_flag_load[flg]) for flg in num_flags]
+
+        print("------------ any_cnt ----------------")
+        print(any_count_tpl)
+        print("------------ all_cnt ----------------")
+        print(all_count_tpl)
+        print("------------ any_load ---------------")
+        print(any_load_tpl)
+        print("------------ all_load ---------------")
+        print(all_load_tpl)
 
 
 class CreateRowMixin(BulkCreateMixin):
@@ -717,11 +709,11 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
             # dont change query order
 
             start = perf_counter()
-            flg_all.append(self.FlagModel.objects.filter(flags__has_all=mask).count())
+            flg_all.append(self.FlagModel.objects.filter(flags__all=mask).count())
             flg_all_time += perf_counter() - start
 
             all_explanation = json.loads(
-                self.FlagModel.objects.filter(flags__has_all=mask).explain(
+                self.FlagModel.objects.filter(flags__all=mask).explain(
                     format="json",
                     analyze=True,
                     buffers=True,
@@ -736,11 +728,11 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
                 flg_all_ftr_time += all_explanation["Execution Time"]
 
             start = perf_counter()
-            flg_any.append(self.FlagModel.objects.filter(flags__has_any=mask).count())
+            flg_any.append(self.FlagModel.objects.filter(flags__any=mask).count())
             flg_any_time += perf_counter() - start
 
             any_explanation = json.loads(
-                self.FlagModel.objects.filter(flags__has_any=mask).explain(
+                self.FlagModel.objects.filter(flags__any=mask).explain(
                     format="json",
                     analyze=True,
                     buffers=True,
@@ -834,7 +826,7 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
 
                 bq_all = reduce(and_, get_all_q(set_bits))
 
-                # todo there is not a better way to formulate a has_any query
+                # todo there is not a better way to formulate a any query
                 #  that will use the index ??
 
                 # bq_any = reduce(
@@ -1016,11 +1008,9 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
                                 any_ftr_time,
                                 exact_ftr_time,
                             ) = query(masks)
-                            queries[f"{name} has_all"] = ctx.captured_queries[0]["sql"]
-                            queries[f"{name} has_any"] = ctx.captured_queries[1]["sql"]
-                            queries[f"{name} has_exact"] = ctx.captured_queries[2][
-                                "sql"
-                            ]
+                            queries[f"{name} all"] = ctx.captured_queries[0]["sql"]
+                            queries[f"{name} any"] = ctx.captured_queries[1]["sql"]
+                            queries[f"{name} exact"] = ctx.captured_queries[2]["sql"]
 
                         pbar.refresh()
 

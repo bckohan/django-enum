@@ -1,5 +1,5 @@
 """
-Specialized has_any and has_all query lookups for flag enumerations.
+Specialized any and all query lookups for flag enumerations.
 """
 
 # from django.core.exceptions import FieldError
@@ -15,7 +15,7 @@ class HasAllFlagsLookup(Exact):
     to the lookup value.
     """
 
-    lookup_name = "has_all"
+    lookup_name = "all"
 
     def process_lhs(self, compiler, connection, lhs=None):
         lhs_sql, lhs_params = super().process_lhs(compiler, connection, lhs)
@@ -49,7 +49,7 @@ class HasAllFlagsLookup(Exact):
 #     HasAllFlagsLookup
 # ):
 #     """
-#     Support for bitwise has_all lookup on extra big integers (>64 bits)
+#     Support for bitwise all lookup on extra big integers (>64 bits)
 #     stored as binary columns.
 #
 #     get_bit(, 0) AND get_bit(, 7) = 1;
@@ -82,7 +82,7 @@ class HasAnyFlagsLookup(HasAllFlagsLookup):
     than zero.
     """
 
-    lookup_name = "has_any"
+    lookup_name = "any"
 
     def process_rhs(self, compiler, connection):
         rhs_sql, rhs_params = super().process_rhs(compiler, connection)
@@ -101,7 +101,7 @@ class HasAnyFlagsLookup(HasAllFlagsLookup):
 #     HasAnyFlagsLookup
 # ):
 #     """
-#     Support for bitwise has_any lookup on extra big integers (>64 bits)
+#     Support for bitwise any lookup on extra big integers (>64 bits)
 #     stored as binary columns.
 #     """
 #

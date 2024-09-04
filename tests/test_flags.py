@@ -136,8 +136,8 @@ class FlagTests(TestCase):
             update_empties(obj3)
 
             for cont in [
-                self.MODEL_CLASS.objects.filter(**{f"{field}__has_any": EnumClass.ONE}),
-                self.MODEL_CLASS.objects.filter(**{f"{field}__has_all": EnumClass.ONE}),
+                self.MODEL_CLASS.objects.filter(**{f"{field}__any": EnumClass.ONE}),
+                self.MODEL_CLASS.objects.filter(**{f"{field}__all": EnumClass.ONE}),
             ]:
                 self.assertEqual(cont.count(), 2)
                 self.assertIn(obj3, cont)
@@ -145,7 +145,7 @@ class FlagTests(TestCase):
                 self.assertNotIn(obj2, cont)
 
             cont2 = self.MODEL_CLASS.objects.filter(
-                **{f"{field}__has_any": (EnumClass.ONE | EnumClass.TWO)}
+                **{f"{field}__any": (EnumClass.ONE | EnumClass.TWO)}
             )
             self.assertEqual(cont2.count(), 3)
             self.assertIn(obj3, cont2)
@@ -153,38 +153,34 @@ class FlagTests(TestCase):
             self.assertIn(obj, cont2)
 
             cont3 = self.MODEL_CLASS.objects.filter(
-                **{f"{field}__has_all": (EnumClass.ONE | EnumClass.TWO)}
+                **{f"{field}__all": (EnumClass.ONE | EnumClass.TWO)}
             )
             self.assertEqual(cont3.count(), 1)
             self.assertIn(obj3, cont3)
 
             cont4 = self.MODEL_CLASS.objects.filter(
-                **{f"{field}__has_all": (EnumClass.THREE | EnumClass.FIVE)}
+                **{f"{field}__all": (EnumClass.THREE | EnumClass.FIVE)}
             )
             self.assertEqual(cont4.count(), 1)
             self.assertIn(obj2, cont4)
 
             cont5 = self.MODEL_CLASS.objects.filter(
-                **{f"{field}__has_all": (EnumClass.ONE | EnumClass.FIVE)}
+                **{f"{field}__all": (EnumClass.ONE | EnumClass.FIVE)}
             )
             self.assertEqual(cont5.count(), 0)
 
             cont6 = self.MODEL_CLASS.objects.filter(
-                **{f"{field}__has_any": (EnumClass.FOUR | EnumClass.FIVE)}
+                **{f"{field}__any": (EnumClass.FOUR | EnumClass.FIVE)}
             )
             self.assertEqual(cont6.count(), 2)
             self.assertIn(obj, cont6)
             self.assertIn(obj2, cont6)
 
-            cont7 = self.MODEL_CLASS.objects.filter(
-                **{f"{field}__has_any": EnumClass(0)}
-            )
+            cont7 = self.MODEL_CLASS.objects.filter(**{f"{field}__any": EnumClass(0)})
             self.assertEqual(cont7.count(), empties[field])
             self.assertIn(empty, cont7)
 
-            cont8 = self.MODEL_CLASS.objects.filter(
-                **{f"{field}__has_all": EnumClass(0)}
-            )
+            cont8 = self.MODEL_CLASS.objects.filter(**{f"{field}__all": EnumClass(0)})
             self.assertEqual(cont8.count(), empties[field])
             self.assertIn(empty, cont8)
 
@@ -200,7 +196,7 @@ class FlagTests(TestCase):
 
         EnumClass = self.MODEL_CLASS._meta.get_field("pos").enum
         compound_qry = self.MODEL_CLASS.objects.filter(
-            Q(small_pos__isnull=True) | Q(pos__has_any=EnumClass.ONE)
+            Q(small_pos__isnull=True) | Q(pos__any=EnumClass.ONE)
         )
 
         self.assertEqual(compound_qry.count(), 9)
@@ -208,14 +204,14 @@ class FlagTests(TestCase):
             self.assertTrue(obj.small_pos is None or obj.pos & EnumClass.ONE)
 
         compound_qry = self.MODEL_CLASS.objects.filter(
-            Q(small_pos__isnull=True) & Q(pos__has_any=EnumClass.ONE)
+            Q(small_pos__isnull=True) & Q(pos__any=EnumClass.ONE)
         )
         self.assertEqual(compound_qry.count(), 2)
         for obj in compound_qry:
             self.assertTrue(obj.small_pos is None and obj.pos & EnumClass.ONE)
 
     def test_subquery(self):
-        """test that has_any and has_all work with complex queries involving subqueries"""
+        """test that any and all work with complex queries involving subqueries"""
 
         for field in [
             field
@@ -261,7 +257,7 @@ class FlagTests(TestCase):
 
             any_matches = (
                 self.MODEL_CLASS.objects.filter(
-                    **{f"{field.name}__has_any": OuterRef(field.name)}
+                    **{f"{field.name}__any": OuterRef(field.name)}
                 )
                 .order_by()
                 .annotate(count=Func(F("id"), function="Count"))
@@ -270,7 +266,7 @@ class FlagTests(TestCase):
 
             all_matches = (
                 self.MODEL_CLASS.objects.filter(
-                    **{f"{field.name}__has_all": OuterRef(field.name)}
+                    **{f"{field.name}__all": OuterRef(field.name)}
                 )
                 .order_by()
                 .annotate(count=Func(F("id"), function="Count"))
@@ -299,7 +295,7 @@ class FlagTests(TestCase):
                 self.assertEqual(obj.any_matches, expected)
 
     def test_joins(self):
-        """test that has_any and has_all work with complex queries involving joins"""
+        """test that any and all work with complex queries involving joins"""
         working = []
         not_working = []
         for field in [
@@ -404,11 +400,7 @@ class FlagTests(TestCase):
                         all_matches=Count(
                             "related_flags__id",
                             filter=Q(
-                                **{
-                                    f"related_flags__{field.name}__has_all": F(
-                                        field.name
-                                    )
-                                }
+                                **{f"related_flags__{field.name}__all": F(field.name)}
                             ),
                         )
                     ).order_by("id"),
@@ -423,11 +415,7 @@ class FlagTests(TestCase):
                         any_matches=Count(
                             "related_flags__id",
                             filter=Q(
-                                **{
-                                    f"related_flags__{field.name}__has_any": F(
-                                        field.name
-                                    )
-                                }
+                                **{f"related_flags__{field.name}__any": F(field.name)}
                             ),
                         )
                     ).order_by("id"),
@@ -444,7 +432,7 @@ class FlagTests(TestCase):
         for field in ["small_neg", "neg", "big_neg", "extra_big_neg", "extra_big_pos"]:
             EnumClass = self.MODEL_CLASS._meta.get_field(field).enum
             with self.assertRaises(FieldError):
-                self.MODEL_CLASS.objects.filter(**{"field__has_any": EnumClass.ONE})
+                self.MODEL_CLASS.objects.filter(**{"field__any": EnumClass.ONE})
 
             with self.assertRaises(FieldError):
-                self.MODEL_CLASS.objects.filter(**{"field__has_all": EnumClass.ONE})
+                self.MODEL_CLASS.objects.filter(**{"field__all": EnumClass.ONE})

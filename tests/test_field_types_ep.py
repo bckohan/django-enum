@@ -97,23 +97,23 @@ class TestFieldTypeResolutionProps(TestFieldTypeResolution):
             bit_field_large_neg=None,
         )
 
-        # has_any and has_all are not supported on ExtraLarge bit fields
+        # any and all are not supported on ExtraLarge bit fields
         with self.assertRaises(FieldError):
-            BitFieldModel.objects.filter(bit_field_large__has_any=LargeBitField.ONE)
+            BitFieldModel.objects.filter(bit_field_large__any=LargeBitField.ONE)
 
         with self.assertRaises(FieldError):
             BitFieldModel.objects.filter(
-                bit_field_large__has_all=LargeBitField.ONE | LargeBitField.TWO
+                bit_field_large__all=LargeBitField.ONE | LargeBitField.TWO
             )
 
         with self.assertRaises(FieldError):
             BitFieldModel.objects.filter(
-                bit_field_large_neg__has_any=LargeNegativeField.NEG_ONE
+                bit_field_large_neg__any=LargeNegativeField.NEG_ONE
             )
 
         with self.assertRaises(FieldError):
             BitFieldModel.objects.filter(
-                bit_field_large_neg__has_all=LargeNegativeField.NEG_ONE
+                bit_field_large_neg__all=LargeNegativeField.NEG_ONE
                 | LargeNegativeField.ZERO
             )
 
