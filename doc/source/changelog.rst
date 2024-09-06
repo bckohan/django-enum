@@ -1,3 +1,5 @@
+.. include:: refs.rst
+
 ==========
 Change Log
 ==========
@@ -11,7 +13,7 @@ Migration from 1.x
 * Imports of enum-properties_ extended ``TextChoices`` and ``IntegerChoices`` have been changed:
 
     .. code-block:: python
-    
+
         # 1.x way
         from django_enum import TextChoices, IntegerChoices
 
@@ -21,7 +23,7 @@ Migration from 1.x
 * Imports of ``EnumChoiceField`` for django forms has been changed:
 
     ..code-block: python
-    
+
         # 1.x way
         from django_enum import EnumChoiceField
 
@@ -31,7 +33,7 @@ Migration from 1.x
 * Imports of ``EnumFilter`` and ``FilterSet`` has been changed:
 
     ..code-block: python
-    
+
         # 1.x way
         from django_enum import EnumFilter, FilterSet
 
