@@ -18,6 +18,7 @@ class DBDefaultTests(EnumTypeMixin, TestCase):
         return {
             "small_pos_int": None,
             "small_int": self.SmallIntEnum.VAL3,
+            "small_int_shadow": self.SmallIntEnum.VAL3,
             "pos_int": self.PosIntEnum.VAL3,
             "int": self.IntEnum.VALn1,
             "big_pos_int": None,

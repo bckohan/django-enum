@@ -1,5 +1,5 @@
 from django.db import models
-from django.db.models.expressions import Value
+from django.db.models.expressions import Value, F
 from django.db.models.functions import Concat
 from django.urls import reverse
 
@@ -23,6 +23,10 @@ class DBDefaultTester(models.Model):
     small_pos_int = EnumField(SmallPosIntEnum, null=True, db_default=None, blank=True)
     small_int = EnumField(
         SmallIntEnum, null=False, db_default=SmallIntEnum.VAL3, blank=True
+    )
+
+    small_int_shadow = EnumField(
+        SmallIntEnum, null=False, db_default=Value(SmallIntEnum.VAL3.value), blank=True
     )
 
     pos_int = EnumField(PosIntEnum, db_default=2147483647, blank=True)

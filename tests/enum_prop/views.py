@@ -1,7 +1,6 @@
 from django.urls import reverse, reverse_lazy
 from django.views.generic import CreateView, DeleteView, UpdateView
 
-from django_enum.filters import FilterSet as EnumFilterSet
 from tests.djenum import views
 from tests.enum_prop import enums as prop_enums
 from tests.enum_prop.enums import (
@@ -82,6 +81,7 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 
 try:
     from tests.djenum.views import EnumTesterFilterViewSet
+    from django_enum.filters import FilterSet as EnumFilterSet
 
     class EnumTesterFilterViewSet(EnumTesterFilterViewSet):
         enums = prop_enums
