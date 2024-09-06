@@ -4,7 +4,7 @@ from enum_properties import StrEnumProperties, IntEnumProperties, Symmetric
 from typing_extensions import Annotated
 import typing as t
 
-from django_enum import EnumField, TextChoices
+from django_enum import EnumField
 from tests.enum_prop.enums import (
     BigIntEnum,
     BigNegativeFlagEnum,

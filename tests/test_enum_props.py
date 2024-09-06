@@ -8,7 +8,7 @@ from tests.enum_prop.models import EnumTester
 from enum_properties import s
 from django.db import transaction
 from django_enum.forms import EnumChoiceField
-from django_enum import TextChoices
+from django_enum.choices import TextChoices
 from tests.enum_prop.enums import PrecedenceTest
 
 

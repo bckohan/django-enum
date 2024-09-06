@@ -7,7 +7,7 @@ from django.db.models import TextChoices as DjangoTextChoices
 from django.utils.translation import gettext as _
 from enum_properties import EnumProperties, IntEnumProperties, Symmetric, s
 
-from django_enum import FlagChoices, FloatChoices, IntegerChoices, TextChoices
+from django_enum.choices import FlagChoices, FloatChoices, IntegerChoices, TextChoices
 from tests.utils import try_convert
 
 

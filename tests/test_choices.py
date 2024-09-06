@@ -727,16 +727,13 @@ class TestChoices(EnumTypeMixin, TestCase):
             self.assertTrue("extern" in ve.message_dict)
 
     def do_rest_framework_missing(self):
-        from django_enum.drf import EnumField
-
-        self.assertRaises(ImportError, EnumField, self.SmallPosIntEnum)
+        with self.assertRaises(ImportError):
+            from django_enum.drf import EnumField
 
     def test_rest_framework_missing(self):
         import sys
         from importlib import reload
         from unittest.mock import patch
-
-        from django_enum import drf
 
         if "rest_framework.fields" in sys.modules:
             with patch.dict(sys.modules, {"rest_framework.fields": None}):
@@ -747,23 +744,15 @@ class TestChoices(EnumTypeMixin, TestCase):
             self.do_rest_framework_missing()  # pragma: no cover
 
     def do_django_filters_missing(self):
-        from django_enum.filters import EnumFilter
-        from django_enum.filters import FilterSet as EnumFilterSet
 
-        class EnumTesterFilter(EnumFilterSet):
-            class Meta:
-                model = EnumTester
-                fields = "__all__"
+        with self.assertRaises(ImportError):
+            from django_enum.filters import EnumFilter
 
-        self.assertRaises(ImportError, EnumTesterFilter)
-        self.assertRaises(ImportError, EnumFilter)
 
     def test_django_filters_missing(self):
         import sys
         from importlib import reload
         from unittest.mock import patch
-
-        from django_enum import filters
 
         if "django_filters" in sys.modules:
             with patch.dict(sys.modules, {"django_filters": None}):
@@ -774,50 +763,15 @@ class TestChoices(EnumTypeMixin, TestCase):
             self.do_django_filters_missing()  # pragma: no cover
 
     def do_enum_properties_missing(self):
-        import enum
-
-        from django_enum.choices import (
-            DjangoEnumPropertiesMeta,
-            DjangoSymmetricMixin,
-            FloatChoices,
-            IntegerChoices,
-            TextChoices,
-        )
 
         with self.assertRaises(ImportError):
-
-            class ThrowsEnum(DjangoSymmetricMixin, enum.Enum):
-                A = 1
-                B = 2
-                C = 3
-
-        with self.assertRaises(ImportError):
-
-            class ThrowsEnum(enum.Enum, metaclass=DjangoEnumPropertiesMeta):
-                A = 1
-                B = 2
-                C = 3
-
-        with self.assertRaises(ImportError):
-
-            class ThrowsEnum(IntegerChoices):
-                A = 1
-                B = 2
-                C = 3
-
-        with self.assertRaises(ImportError):
-
-            class ThrowsEnum(TextChoices):
-                A = "A"
-                B = "B"
-                C = "C"
-
-        with self.assertRaises(ImportError):
-
-            class ThrowsEnum(FloatChoices):
-                A = 1.1
-                B = 2.2
-                C = 3.3
+            from django_enum.choices import (
+                DjangoEnumPropertiesMeta,
+                DjangoSymmetricMixin,
+                FloatChoices,
+                IntegerChoices,
+                TextChoices,
+            )
 
         self.do_test_integer_choices()
         self.do_test_text_choices()

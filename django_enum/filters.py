@@ -7,77 +7,65 @@ from django.db.models import Field as ModelField
 from django_enum.forms import EnumChoiceField
 from django_enum.utils import choices
 
-try:
-    from django_filters import Filter, TypedChoiceFilter, filterset
+from django_filters import Filter, TypedChoiceFilter, filterset
 
-    class EnumFilter(TypedChoiceFilter):
-        """
-        Use this filter class instead of ``ChoiceFilter`` to get filters to
-        accept Enum labels and symmetric properties.
 
-        For example if we have an enumeration field defined with the following
-        Enum:
+class EnumFilter(TypedChoiceFilter):
+    """
+    Use this filter class instead of ``ChoiceFilter`` to get filters to
+    accept Enum labels and symmetric properties.
 
-        .. code-block::
+    For example if we have an enumeration field defined with the following
+    Enum:
 
-            class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
-                RED = 'R', 'Red', (1, 0, 0), 'ff0000'
-                GREEN = 'G', 'Green', (0, 1, 0), '00ff00'
-                BLUE = 'B', 'Blue', (0, 0, 1), '0000ff'
+    .. code-block::
 
-            color = EnumField(Color)
+        class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
+            RED = 'R', 'Red', (1, 0, 0), 'ff0000'
+            GREEN = 'G', 'Green', (0, 1, 0), '00ff00'
+            BLUE = 'B', 'Blue', (0, 0, 1), '0000ff'
 
-        The default ``ChoiceFilter`` will only work with the enumeration
-        values: ?color=R, ?color=G, ?color=B. ``EnumFilter`` will accept query
-        parameter values from any of the symmetric properties: ?color=Red,
-        ?color=ff0000, etc...
+        color = EnumField(Color)
 
-        :param enum: The class of the enumeration containing the values to
-            filter on
-        :param strict: If False (default), values not in the enumeration will
-            be searchable.
-        :param kwargs: Any additional arguments for base classes
-        """
+    The default ``ChoiceFilter`` will only work with the enumeration
+    values: ?color=R, ?color=G, ?color=B. ``EnumFilter`` will accept query
+    parameter values from any of the symmetric properties: ?color=Red,
+    ?color=ff0000, etc...
 
-        field_class = EnumChoiceField
+    :param enum: The class of the enumeration containing the values to
+        filter on
+    :param strict: If False (default), values not in the enumeration will
+        be searchable.
+    :param kwargs: Any additional arguments for base classes
+    """
 
-        def __init__(self, *, enum, strict=False, **kwargs):
-            self.enum = enum
-            super().__init__(
-                enum=enum,
-                choices=kwargs.pop("choices", choices(self.enum)),
-                strict=strict,
-                **kwargs,
-            )
+    field_class = EnumChoiceField
 
-    class FilterSet(filterset.FilterSet):
-        """
-        Use this class instead of django-filter's ``FilterSet`` class to
-        automatically set all ``EnumField`` filters to ``EnumFilter`` by
-        default instead of ``ChoiceFilter``.
-        """
+    def __init__(self, *, enum, strict=False, **kwargs):
+        self.enum = enum
+        super().__init__(
+            enum=enum,
+            choices=kwargs.pop("choices", choices(self.enum)),
+            strict=strict,
+            **kwargs,
+        )
 
-        @classmethod
-        def filter_for_lookup(
-            cls, field: ModelField, lookup_type: str
-        ) -> Tuple[Type[Filter], dict]:
-            """For EnumFields use the EnumFilter class by default"""
-            if hasattr(field, "enum"):
-                return EnumFilter, {
-                    "enum": field.enum,
-                    "strict": getattr(field, "strict", False),
-                }
-            return super().filter_for_lookup(field, lookup_type)
 
-except (ImportError, ModuleNotFoundError):
+class FilterSet(filterset.FilterSet):
+    """
+    Use this class instead of django-filter's ``FilterSet`` class to
+    automatically set all ``EnumField`` filters to ``EnumFilter`` by
+    default instead of ``ChoiceFilter``.
+    """
 
-    class _MissingDjangoFilters:
-        """Throw error if filter support is used without django-filter"""
-
-        def __init__(self, *args, **kwargs):
-            raise ImportError(
-                f"{self.__class__.__name__} requires django-filter to be " f"installed."
-            )
-
-    EnumFilter = _MissingDjangoFilters  # type: ignore
-    FilterSet = _MissingDjangoFilters  # type: ignore
+    @classmethod
+    def filter_for_lookup(
+        cls, field: ModelField, lookup_type: str
+    ) -> Tuple[Type[Filter], dict]:
+        """For EnumFields use the EnumFilter class by default"""
+        if hasattr(field, "enum"):
+            return EnumFilter, {
+                "enum": field.enum,
+                "strict": getattr(field, "strict", False),
+            }
+        return super().filter_for_lookup(field, lookup_type)

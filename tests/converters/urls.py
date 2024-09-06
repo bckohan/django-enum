@@ -3,7 +3,7 @@ from enum import IntEnum
 from django.http import HttpResponse
 from django.urls import path
 
-from django_enum import register_enum_converter
+from django_enum.urls import register_enum_converter
 from tests.djenum.enums import Constants, DecimalEnum
 
 

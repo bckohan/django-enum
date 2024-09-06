@@ -120,7 +120,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             TextChoicesExample.objects.filter(color="FF0000").first() == instance
         )
 
-        from django_enum import EnumChoiceField
+        from django_enum.forms import EnumChoiceField
 
         class TextChoicesExampleForm(ModelForm):
             color = EnumChoiceField(TextChoicesExample.Color)

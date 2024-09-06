@@ -5,6 +5,43 @@ Change Log
 v2.0.0
 ======
 
+Migration from 1.x
+------------------
+
+* Imports of enum-properties_ extended ``TextChoices`` and ``IntegerChoices`` have been changed:
+
+    .. code-block:: python
+    
+        # 1.x way
+        from django_enum import TextChoices, IntegerChoices
+
+        # 2.x way
+        from django_enum.choices import TextChoices, IntegerChoices
+
+* Imports of ``EnumChoiceField`` for django forms has been changed:
+
+    ..code-block: python
+    
+        # 1.x way
+        from django_enum import EnumChoiceField
+
+        # 2.x way
+        from django_enum.forms import EnumChoiceField
+
+* Imports of ``EnumFilter`` and ``FilterSet`` has been changed:
+
+    ..code-block: python
+    
+        # 1.x way
+        from django_enum import EnumFilter, FilterSet
+
+        # 2.x way
+        from django_enum.filters import EnumFilter, FilterSet
+
+
+Issues
+------
+
 * Completed `Reorganize tests <https://github.com/bckohan/django-enum/issues/70>`_
 * Completed `Switch linting and formatting to ruff <https://github.com/bckohan/django-enum/issues/62>`_
 * Implemented `Supply a mixin for DRF ModelSerializers that instantiates the provided DRF EnumField type for model EnumFields. <https://github.com/bckohan/django-enum/issues/47>`_

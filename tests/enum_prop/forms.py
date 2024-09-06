@@ -1,7 +1,7 @@
 from django.db.models import BLANK_CHOICE_DASH
 from django.forms import ModelForm
 
-from django_enum import EnumChoiceField
+from django_enum.forms import EnumChoiceField
 from tests.enum_prop.enums import SmallPosIntEnum, TextEnum
 from tests.enum_prop.models import EnumTester
 

@@ -279,7 +279,7 @@ Django_'s ``ModelForms`` will use this form field type to represent
 
 .. code-block::
 
-    from django_enum import EnumChoiceField
+    from django_enum.forms import EnumChoiceField
 
     class TextChoicesExampleForm(ModelForm):
 
@@ -378,7 +378,7 @@ dependency on django-filter_ is optional, you must first install it:
 
 .. code-block::
 
-    from django_enum import EnumFilter
+    from django_enum.filters import EnumFilter
     from django_filters.views import FilterView
     from django_filters import FilterSet
 
@@ -403,7 +403,7 @@ by default. So the above is also equivalent to:
 
 .. code-block::
 
-    from django_enum import FilterSet as EnumFilterSet
+    from django_enum.filters import FilterSet as EnumFilterSet
     from django_filters.views import FilterView
 
     class TextChoicesExampleFilterViewSet(FilterView):

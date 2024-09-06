@@ -1,7 +1,11 @@
-from django.db import models
-from enum_properties import s
+import typing as t
+from typing_extensions import Annotated
 
-from django_enum import EnumField, TextChoices
+from django.db import models
+from enum_properties import Symmetric
+
+from django_enum import EnumField
+from django_enum.choices import TextChoices
 
 
 class MigrationTester(models.Model):
@@ -13,7 +17,10 @@ class MigrationTester(models.Model):
         )
         C = "C", "Three"
 
-    class Color(TextChoices, s("rgb"), s("hex", case_fold=True)):
+    class Color(TextChoices):
+        rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
+        hex: Annotated[str, Symmetric(case_fold=True)]
+
         RED = "R", "Red", (1, 0, 0), "ff0000"
         GREEN = "G", "Green", (0, 1, 0), "00ff00"
         BLUE = "B", "Blue", (0, 0, 1), "0000ff"

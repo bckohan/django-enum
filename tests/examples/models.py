@@ -3,7 +3,8 @@ from enum import IntFlag
 from enum_properties import s, Symmetric
 import typing as t
 from typing_extensions import Annotated
-from django_enum import EnumField, FlagChoices, IntegerChoices, TextChoices
+from django_enum import EnumField
+from django_enum.choices import FlagChoices, IntegerChoices, TextChoices
 
 
 class Map(models.Model):

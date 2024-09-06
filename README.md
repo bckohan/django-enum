@@ -173,13 +173,15 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
     assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
 ```
 
-While they should be unnecessary if you need to integrate with code that expects an interface fully compatible with Django's ``TextChoices`` and ``IntegerChoices`` django-enum provides ``TextChoices`` and ``IntegerChoices`` types that derive from enum-properties and Django's enum types. So the above enumeration could also be written:
+While they should be unnecessary if you need to integrate with code that expects an interface fully compatible with Django's ``TextChoices`` and ``IntegerChoices`` django-enum provides ``TextChoices``, ``IntegerChoices``, ``FlagChoices`` and ``FloatChoices`` types that derive from enum-properties and Django's ``Choices``. So the above enumeration could also be written:
 
 ```python
 
     from django_enum.choices import TextChoices
 
     class Color(TextChoices):
+
+        # label is added as a symmetric property by the base class
 
         rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
         hex: Annotated[str, Symmetric(case_fold=True)]
