@@ -1,15 +1,20 @@
 from django.db import models
-from enum_properties import p, s
-
+from enum import IntFlag
+from enum_properties import s, Symmetric
+import typing as t
+from typing_extensions import Annotated
 from django_enum import EnumField, FlagChoices, IntegerChoices, TextChoices
 
 
 class Map(models.Model):
 
-    class MapBoxStyle(IntegerChoices, s("slug", case_fold=True), p("version")):
+    class MapBoxStyle(IntegerChoices):
         """
         https://docs.mapbox.com/api/maps/styles/
         """
+
+        slug: Annotated[str, Symmetric(case_fold=True)]
+        version: int
 
         _symmetric_builtins_ = ["name", s("label", case_fold=True), "uri"]
 
@@ -68,7 +73,10 @@ class NoCoerceExample(models.Model):
 
 class TextChoicesExample(models.Model):
 
-    class Color(TextChoices, s("rgb"), s("hex", case_fold=True)):
+    class Color(TextChoices):
+
+        rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
+        hex: Annotated[str, Symmetric(case_fold=True)]
 
         # name   value   label       rgb       hex
         RED = "R", "Red", (1, 0, 0), "ff0000"
@@ -99,13 +107,22 @@ class MyModel(models.Model):
         )
         THREE = 3, "Three"
 
+
+    class Permissions(IntFlag):
+
+        READ = 0**2
+        WRITE = 1**2
+        EXECUTE = 2**3
+
     # this is equivalent to:
     #  CharField(max_length=2, choices=TextEnum.choices, null=True, blank=True)
     txt_enum = EnumField(TextEnum, null=True, blank=True)
 
     # this is equivalent to
-    #  PositiveSmallIntegerField(choices=IntEnum.choices)
-    int_enum = EnumField(IntEnum)
+    #  PositiveSmallIntegerField(choices=IntEnum.choices, default=IntEnum.ONE.value)
+    int_enum = EnumField(IntEnum, default=IntEnum.ONE)
+
+    permissions = EnumField(Permissions, null=True, blank=True)
 
 
 class BitFieldExample(models.Model):

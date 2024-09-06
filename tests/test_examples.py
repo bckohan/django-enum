@@ -181,3 +181,21 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
         self.assertTrue(obj.non_strict == "1")
         self.assertTrue(isinstance(obj.non_strict, str))
         self.assertFalse(isinstance(obj.non_strict, NoCoerceExample.EnumType))
+
+    def test_flag_readme_ex(self):
+        from tests.examples.models import MyModel
+
+        MyModel.objects.create(
+            permissions=MyModel.Permissions.READ | MyModel.Permissions.WRITE,
+        )
+
+        MyModel.objects.create(
+            permissions=MyModel.Permissions.READ | MyModel.Permissions.EXECUTE,
+        )
+
+        self.assertEqual(
+            MyModel.objects.filter(
+                permissions__all=MyModel.Permissions.READ | MyModel.Permissions.WRITE
+            ).count(),
+            1,
+        )

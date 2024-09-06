@@ -1,6 +1,8 @@
 from django.db import models
 from django.urls import reverse
-from enum_properties import s
+from enum_properties import StrEnumProperties, IntEnumProperties, Symmetric
+from typing_extensions import Annotated
+import typing as t
 
 from django_enum import EnumField, TextChoices
 from tests.enum_prop.enums import (
@@ -128,12 +130,16 @@ class EnumTester(models.Model):
 
 
 class MyModel(models.Model):
-    class TextEnum(models.TextChoices):
+    class TextEnum(StrEnumProperties):
+        label: str
+
         VALUE0 = "V0", "Value 0"
         VALUE1 = "V1", "Value 1"
         VALUE2 = "V2", "Value 2"
 
-    class IntEnum(models.IntegerChoices):
+    class IntEnum(IntEnumProperties):
+        label: str
+
         ONE = 1, "One"
         TWO = (
             2,
@@ -141,7 +147,11 @@ class MyModel(models.Model):
         )
         THREE = 3, "Three"
 
-    class Color(TextChoices, s("rgb"), s("hex", case_fold=True)):
+    class Color(StrEnumProperties):
+        label: Annotated[str, Symmetric()]
+        rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
+        hex: Annotated[str, Symmetric(case_fold=True)]
+
         # name   value   label       rgb       hex
         RED = "R", "Red", (1, 0, 0), "ff0000"
         GREEN = "G", "Green", (0, 1, 0), "00ff00"

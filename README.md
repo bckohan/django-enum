@@ -23,18 +23,19 @@
 
 Full and natural support for [enumerations](https://docs.python.org/3/library/enum.html#enum.Enum) as Django model fields.
 
-Many packages aim to ease usage of Python enumerations as model fields. Most were made obsolete when Django provided ``TextChoices`` and ``IntegerChoices`` types. The motivation for [django-enum](https://django-enum.readthedocs.io) was to:
+Many packages aim to ease usage of Python enumerations as model fields. Most were superseded when Django provided ``TextChoices`` and ``IntegerChoices`` types. The motivation for [django-enum](https://django-enum.readthedocs.io) was to:
 
 * Work with any Python PEP 435 Enum including those that do not derive from Django's TextChoices and IntegerChoices.
-* Always automatically coerce fields to instances of the Enum type.
+* Coerce fields to instances of the Enum type by default.
 * Allow strict adherence to Enum values to be disabled.
 * Handle migrations appropriately. (See [migrations](https://django-enum.readthedocs.io/en/latest/usage.html#migrations))
 * Integrate as fully as possible with [Django's](https://www.djangoproject.com) existing level of enum support.
-* Support [enum-properties](https://pypi.org/project/enum-properties) and dataclass enumerations to enable richer enumeration types.
+* Support [enum-properties](https://pypi.org/project/enum-properties) to enable richer enumeration types. (A less awkward alternative to dataclass enumerations with more features)
 * Represent enum fields with the smallest possible column type.
-* Provide bit mask functionality using standard Python Flag enumerations.
+* Support bit mask queries using standard Python Flag enumerations.
 * Be as simple and light-weight an extension to core [Django](https://www.djangoproject.com) as possible.
-* Optionally enforce enumeration value consistency at the database level using check constraints.
+* Enforce enumeration value consistency at the database level using check constraints by default.
+* (TODO) Support native database enumeration column types when available.
 
 [django-enum](https://django-enum.readthedocs.io) works in concert with [Django's](https://www.djangoproject.com) built in ``TextChoices`` and ``IntegerChoices`` to provide a new model field type, ``EnumField``, that resolves the correct native [Django](https://www.djangoproject.com) field type for the given enumeration based on its value type and range. For example, ``IntegerChoices`` that contain values between 0 and 32767 become [PositiveSmallIntegerField](https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield).
 
@@ -62,8 +63,8 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
         txt_enum = EnumField(TextEnum, null=True, blank=True)
 
         # this is equivalent to
-        #  PositiveSmallIntegerField(choices=IntEnum.choices)
-        int_enum = EnumField(IntEnum)
+        #  PositiveSmallIntegerField(choices=IntEnum.choices, default=IntEnum.ONE.value)
+        int_enum = EnumField(IntEnum, default=IntEnum.ONE)
 ```
 
 ``EnumField`` **is more than just an alias. The fields are now assignable and accessible as their enumeration type rather than by-value:**
@@ -82,24 +83,29 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
     assert instance.int_enum.value == 3
 ```
 
-[django-enum](https://django-enum.readthedocs.io) also provides ``IntegerChoices`` and ``TextChoices`` types that extend from [enum-properties](https://pypi.org/project/enum-properties) which makes possible very rich enumeration fields.
+## Complex Enumerations
+
+[django-enum](https://django-enum.readthedocs.io) supports enum types that do not derive from Django's ``IntegerChoices`` and ``TextChoices``. This allows us to use other libs like [enum-properties](https://pypi.org/project/enum-properties) which makes possible very rich enumeration fields:
 
 ``?> pip install enum-properties``
 
 ```python
 
-    from enum_properties import s
-    from django_enum import TextChoices  # use instead of Django's TextChoices
+    from enum_properties import StrEnumProperties
     from django.db import models
 
     class TextChoicesExample(models.Model):
 
-        class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
+        class Color(StrEnumProperties):
 
-            # name   value   label       rgb       hex
-            RED     = 'R',   'Red',   (1, 0, 0), 'ff0000'
-            GREEN   = 'G',   'Green', (0, 1, 0), '00ff00'
-            BLUE    = 'B',   'Blue',  (0, 0, 1), '0000ff'
+            label: Annotated[str, Symmetric()]
+            rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
+            hex: Annotated[str, Symmetric(case_fold=True)]
+
+            # name value label       rgb       hex
+            RED   = "R", "Red",   (1, 0, 0), "ff0000"
+            GREEN = "G", "Green", (0, 1, 0), "00ff00"
+            BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
 
             # any named s() values in the Enum's inheritance become properties on
             # each value, and the enumeration value may be instantiated from the
@@ -143,13 +149,29 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
     assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
 ```
 
-Consider using [django-render-static](https://pypi.org/project/django-render-static) to make your enumerations [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) across the full stack!
+## Flag Support
 
-Please report bugs and discuss features on the [issues page](https://github.com/bckohan/django-enum/issues).
+``FlagEnum`` types are also seamlessly supported! This allows a database column to behave like a bit mask and is an alternative to multiple boolean columns. There are (mostly positive) performance implications for using a bit mask instead of booleans depending on the size of the bit mask and the types of queries you will run against it. For bit masks more than a few bits long the size reduction both speeds up queries and reduces the required storage space. See the documentation for [discussion and benchmarks]().
 
-[Contributions](https://github.com/bckohan/django-enum/blob/main/CONTRIBUTING.md) are encouraged!
+```python
 
-[Full documentation at read the docs.](https://django-enum.readthedocs.io)
+    class Permissions(IntFlag):
+
+        READ = 0**2
+        WRITE = 1**2
+        EXECUTE = 2**3
+
+
+    class FlagExample(models.Model):
+
+        permissions = EnumField(Permissions)
+
+
+    FlagExample.objects.create(permissions=Permissions.READ | Permissions.WRITE)
+
+    # get all models with RW:
+    FlagExample.objects.filter(permissions__all=Permissions.READ | Permissions.WRITE)
+```
 
 ## Installation
 
@@ -176,3 +198,13 @@ Like with Django, Postgres is the preferred database for support. The full test 
 **See the [latest test runs](https://github.com/bckohan/django-enum/actions/workflows/test.yml) for our current test matrix**
 
 *For Oracle, only the latest version of the free database is tested against the minimum and maximum supported versions of Python, Django and the cx-Oracle driver.*
+
+## Further Reading
+
+Consider using [django-render-static](https://pypi.org/project/django-render-static) to make your enumerations [DRY](https://en.wikipedia.org/wiki/Don%27t_repeat_yourself) across the full stack!
+
+Please report bugs and discuss features on the [issues page](https://github.com/bckohan/django-enum/issues).
+
+[Contributions](https://github.com/bckohan/django-enum/blob/main/CONTRIBUTING.md) are encouraged!
+
+[Full documentation at read the docs.](https://django-enum.readthedocs.io)
