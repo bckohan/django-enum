@@ -31,6 +31,7 @@ from django_enum.utils import (
     with_typehint,
 )
 
+
 class ClassLookupDict:
     """
     A dict-like object that looks up values using the MRO of a class or
@@ -64,6 +65,7 @@ class ClassLookupDict:
             if cls in self.mapping:
                 return self.mapping.get(cls, None)
         return None
+
 
 class EnumField(ChoiceField):
     """
@@ -164,6 +166,7 @@ class EnumField(ChoiceField):
         Transform the *outgoing* enum value into its primitive value.
         """
         return getattr(value, "value", value)
+
 
 class EnumFieldMixin(with_typehint(ModelSerializer)):  # type: ignore
     """

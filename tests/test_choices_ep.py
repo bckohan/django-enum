@@ -3,6 +3,7 @@ import pytest
 pytest.importorskip("enum_properties")
 
 from tests.test_choices import TestChoices as BaseTestChoices
+from django_enum.choices import FlagChoices
 from tests.enum_prop.models import EnumTester
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
@@ -128,6 +129,26 @@ class TestChoicesEnumProp(BaseTestChoices):
 
         tester.refresh_from_db()
         self.assertEqual(tester.no_coerce, 32767)
+
+    def test_flag_choice_hashable(self):
+        class HashableFlagChoice(FlagChoices):
+            READ = 1**2
+            WRITE = 2**2
+            EXECUTE = 3**2
+
+        self.assertEqual(hash(HashableFlagChoice.READ), hash(1**2))
+        self.assertEqual(hash(HashableFlagChoice.WRITE), hash(2**2))
+        self.assertEqual(hash(HashableFlagChoice.EXECUTE), hash(3**2))
+
+        test_dict = {
+            HashableFlagChoice.READ: "read",
+            HashableFlagChoice.WRITE: "write",
+            HashableFlagChoice.EXECUTE: "execute",
+        }
+
+        self.assertEqual(test_dict[HashableFlagChoice.READ], "read")
+        self.assertEqual(test_dict[HashableFlagChoice.WRITE], "write")
+        self.assertEqual(test_dict[HashableFlagChoice.EXECUTE], "execute")
 
 
 # we do this to avoid the base class tests from being collected and re-run in this module

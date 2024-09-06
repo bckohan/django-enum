@@ -3,11 +3,10 @@
 from typing import Tuple, Type
 
 from django.db.models import Field as ModelField
+from django_filters import Filter, TypedChoiceFilter, filterset
 
 from django_enum.forms import EnumChoiceField
 from django_enum.utils import choices
-
-from django_filters import Filter, TypedChoiceFilter, filterset
 
 
 class EnumFilter(TypedChoiceFilter):

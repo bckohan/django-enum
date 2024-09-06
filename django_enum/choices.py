@@ -11,10 +11,9 @@ from django.db.models import Choices
 from django.db.models import IntegerChoices as DjangoIntegerChoices
 from django.db.models import TextChoices as DjangoTextChoices
 from django.db.models import enums as model_enums
+from enum_properties import DecomposeMixin, EnumPropertiesMeta, SymmetricMixin
 
 from django_enum.utils import choices, names
-
-from enum_properties import DecomposeMixin, EnumPropertiesMeta, SymmetricMixin
 
 ChoicesType = (
     model_enums.ChoicesType
@@ -49,6 +48,7 @@ class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):  # type: ignore
         """
         return super().choices or choices(self, override=True)
 
+
 class DjangoSymmetricMixin(SymmetricMixin):
     """
     An enumeration mixin that makes Django's Choices type label field
@@ -56,6 +56,7 @@ class DjangoSymmetricMixin(SymmetricMixin):
     """
 
     _symmetric_builtins_ = ["name", "label"]
+
 
 class TextChoices(
     DjangoSymmetricMixin, DjangoTextChoices, metaclass=DjangoEnumPropertiesMeta
@@ -70,6 +71,7 @@ class TextChoices(
 
     label: str
 
+
 class IntegerChoices(
     DjangoSymmetricMixin, DjangoIntegerChoices, metaclass=DjangoEnumPropertiesMeta
 ):
@@ -82,6 +84,7 @@ class IntegerChoices(
         return DjangoIntegerChoices.__hash__(self)
 
     label: str
+
 
 class FloatChoices(
     DjangoSymmetricMixin, float, Choices, metaclass=DjangoEnumPropertiesMeta
@@ -98,6 +101,7 @@ class FloatChoices(
         return str(self.value)
 
     label: str
+
 
 # mult inheritance type hint bug
 class FlagChoices(  # type: ignore

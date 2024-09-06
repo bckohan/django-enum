@@ -1,4 +1,5 @@
 import pytest
+from importlib.util import find_spec
 from tests.utils import EnumTypeMixin, IGNORE_ORA_01843
 from django.test import TestCase
 from django.db import connection
@@ -726,67 +727,26 @@ class TestChoices(EnumTypeMixin, TestCase):
             self.assertTrue("text" in ve.message_dict)
             self.assertTrue("extern" in ve.message_dict)
 
-    def do_rest_framework_missing(self):
+    @pytest.mark.skipif(
+        find_spec("rest_framework") is not None, reason="rest_framework is installed"
+    )
+    def test_rest_framework_missing(self):
         with self.assertRaises(ImportError):
             from django_enum.drf import EnumField
 
-    def test_rest_framework_missing(self):
-        import sys
-        from importlib import reload
-        from unittest.mock import patch
-
-        if "rest_framework.fields" in sys.modules:
-            with patch.dict(sys.modules, {"rest_framework.fields": None}):
-                reload(sys.modules["django_enum.drf"])
-                self.do_rest_framework_missing()
-            reload(sys.modules["django_enum.drf"])
-        else:
-            self.do_rest_framework_missing()  # pragma: no cover
-
-    def do_django_filters_missing(self):
-
+    @pytest.mark.skipif(
+        find_spec("django_filters") is not None, reason="django-filter is installed"
+    )
+    def test_django_filters_missing(self):
         with self.assertRaises(ImportError):
             from django_enum.filters import EnumFilter
 
-
-    def test_django_filters_missing(self):
-        import sys
-        from importlib import reload
-        from unittest.mock import patch
-
-        if "django_filters" in sys.modules:
-            with patch.dict(sys.modules, {"django_filters": None}):
-                reload(sys.modules["django_enum.filters"])
-                self.do_django_filters_missing()
-            reload(sys.modules["django_enum.filters"])
-        else:
-            self.do_django_filters_missing()  # pragma: no cover
-
-    def do_enum_properties_missing(self):
-
+    @pytest.mark.skipif(
+        find_spec("enum_properties") is not None, reason="enum-properties is installed"
+    )
+    def test_enum_properties_missing(self):
         with self.assertRaises(ImportError):
-            from django_enum.choices import (
-                DjangoEnumPropertiesMeta,
-                DjangoSymmetricMixin,
-                FloatChoices,
-                IntegerChoices,
-                TextChoices,
-            )
+            from django_enum.choices import TextChoices
 
         self.do_test_integer_choices()
         self.do_test_text_choices()
-
-    def test_enum_properties_missing(self):
-        import sys
-        from importlib import reload
-        from unittest.mock import patch
-
-        if "enum_properties" in sys.modules:
-            with patch.dict(sys.modules, {"enum_properties": None}):
-                from django_enum import choices
-
-                reload(sys.modules["django_enum.choices"])
-                self.do_enum_properties_missing()
-            reload(sys.modules["django_enum.choices"])
-        else:
-            self.do_enum_properties_missing()  # pragma: no cover

@@ -111,9 +111,9 @@ class MyModel(models.Model):
 
     class Permissions(IntFlag):
 
-        READ = 0**2
-        WRITE = 1**2
-        EXECUTE = 2**3
+        READ = 1**2
+        WRITE = 2**2
+        EXECUTE = 3**2
 
     # this is equivalent to:
     #  CharField(max_length=2, choices=TextEnum.choices, null=True, blank=True)
