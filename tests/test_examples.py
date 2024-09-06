@@ -195,7 +195,8 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
 
         self.assertEqual(
             MyModel.objects.filter(
-                permissions__all=MyModel.Permissions.READ | MyModel.Permissions.WRITE
+                permissions__has_all=MyModel.Permissions.READ
+                | MyModel.Permissions.WRITE
             ).count(),
             1,
         )

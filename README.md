@@ -104,7 +104,7 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
     FlagExample.objects.create(permissions=Permissions.READ | Permissions.WRITE)
 
     # get all models with RW:
-    FlagExample.objects.filter(permissions__all=Permissions.READ | Permissions.WRITE)
+    FlagExample.objects.filter(permissions__has_all=Permissions.READ | Permissions.WRITE)
 ```
 
 ## Complex Enumerations
