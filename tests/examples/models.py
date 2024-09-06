@@ -116,7 +116,7 @@ class MyModel(models.Model):
 
     # this is equivalent to:
     #  CharField(max_length=2, choices=TextEnum.choices, null=True, blank=True)
-    txt_enum = EnumField(TextEnum, null=True, blank=True)
+    txt_enum = EnumField(TextEnum, null=True, blank=True, default=None)
 
     # this is equivalent to
     #  PositiveSmallIntegerField(choices=IntEnum.choices, default=IntEnum.ONE.value)
