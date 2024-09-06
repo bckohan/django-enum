@@ -85,7 +85,7 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
 
 ## Flag Support
 
-``FlagEnum`` types are also seamlessly supported! This allows a database column to behave like a bit mask and is an alternative to multiple boolean columns. There are mostly positive performance implications for using a bit mask instead of booleans depending on the size of the bit mask and the types of queries you will run against it. For bit masks more than a few bits long the size reduction both speeds up queries and reduces the required storage space. See the documentation for [discussion and benchmarks]().
+[Flag](https://docs.python.org/3/library/enum.html#enum.Flag) types are also seamlessly supported! This allows a database column to behave like a bit mask and is an alternative to multiple boolean columns. There are mostly positive performance implications for using a bit mask instead of booleans depending on the size of the bit mask and the types of queries you will run against it. For bit masks more than a few bits long the size reduction both speeds up queries and reduces the required storage space. See the documentation for [discussion and benchmarks]().
 
 ```python
 
