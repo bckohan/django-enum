@@ -207,10 +207,7 @@ class EnumFlagTesterBase(models.Model):
     )
 
     extra_big_neg = EnumField(
-        ExtraBigNegativeFlagEnum,
-        default=ExtraBigNegativeFlagEnum(0),
-        db_index=True,
-        blank=True,
+        ExtraBigNegativeFlagEnum, default=None, db_index=True, blank=True, null=True
     )
 
     def __repr__(self):
