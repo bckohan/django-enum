@@ -4,10 +4,10 @@
 Usage
 =====
 
-``EnumField`` inherits from the appropriate native Django_ field and sets the
-correct choice tuple set based on the enumeration type. This means
-``EnumFields`` are compatible with all modules, utilities and libraries that
-fields defined with a choice tuple are. For example:
+:class:`~django_enum.fields.EnumField` inherits from the appropriate native Django_ field and sets
+the correct choice tuple set based on the enumeration type. This means ``EnumFields`` are
+compatible with all modules, utilities and libraries that fields defined with a choice tuple are.
+For example:
 
 .. code:: python
 
@@ -44,14 +44,10 @@ following exceptions:
     assert not isinstance(MyModel.objects.first().txt_choices, MyModel.TextEnum)
 
     # by default EnumFields are more strict, this is possible:
-    MyModel.objects.create(
-        txt_choices='AA'
-    )
+    MyModel.objects.create(txt_choices='AA')
 
     # but this will throw a ValueError (unless strict=False)
-    MyModel.objects.create(
-        txt_enum='AA'
-    )
+    MyModel.objects.create(txt_enum='AA')
 
     # and this will throw a ValidationError
     MyModel(txt_enum='AA').full_clean()
@@ -62,21 +58,20 @@ integration with forms and django-filter_ but their usage is optional.
 See :ref:`forms` and :ref:`filtering`.
 
 Very rich enumeration fields that encapsulate much more functionality in a
-simple declarative syntax are possible with ``EnumField``. See
+simple declarative syntax are possible with :class:`~django_enum.fields.EnumField`. See
 :ref:`enum_props`.
 
 
 External Enum Types
 ###################
 
-Enum_ classes defined externally to your code base or enum classes that
-otherwise do not inherit from Django's Choices_ type, are supported. When no
-choices are present on an Enum_ type, ``EnumField`` will attempt to use the
-``label`` member on each enumeration value if it is present, otherwise the
-labels will be based off the enumeration name. Choices can also be overridden
-at the ``EnumField`` declaration.
+Enum_ classes defined externally to your code base or enum classes that otherwise do not inherit
+from Django's Choices_ type, are supported. When no choices are present on an Enum_ type,
+:class:`~django_enum.fields.EnumField` will attempt to use the ``label`` member on each
+enumeration value if it is present, otherwise the labels will be based off the enumeration name.
+Choices can also be overridden at the :class:`~django_enum.fields.EnumField` declaration.
 
-In short, ``EnumField`` should work with any subclass of Enum_.
+In short, :class:`~django_enum.fields.EnumField` should work with any subclass of Enum_.
 
 .. code:: python
 
@@ -110,11 +105,11 @@ The above code will produce a choices set like ``[('V0', 'VALUE0'), ...]``.
 Parameters
 ##########
 
-All parameters available to the equivalent model field with choices may be set
-directly in the ``EnumField`` instantiation. If not provided EnumField will set
-``choices`` and ``max_length`` automatically.
+All parameters available to the equivalent model field with choices may be set directly in the
+:class:`~django_enum.fields.EnumField` instantiation. If not provided
+:class:`~django_enum.fields.EnumField` will set ``choices`` and ``max_length`` automatically.
 
-The following ``EnumField`` specific parameters are available:
+The following :class:`~django_enum.fields.EnumField` specific parameters are available:
 
 ``strict``
 ----------
@@ -159,6 +154,28 @@ data where no Enum_ type coercion is possible.
     # when accessed will be a str instance
     assert obj.non_strict == 'arbitrary'
 
+``constrained``
+---------------
+
+By default all strict ``EnumFields`` are ``constrained``. This means that
+`CheckConstraints <https://docs.djangoproject.com/en/stable/ref/models/constraints/>`_ will be
+generated at the database level to ensure that the column will reject any value that is not
+present in the enumeration. This is a good idea for most use cases, but it can be turned off
+by setting ``constrained`` to ``False``.
+
+.. note::
+
+    This is new in version 2.0. If you are upgrading from a previous version, you may set
+    this parameter to ``False`` to maintain the previous behavior.
+
+``primitive``
+-------------
+
+``EnumFields`` dynamically determine the database column type by determining the most appropriate
+primitive type for the enumeration based on the enumeration values. You may override the primitive
+determined by :class:`~django_enum.fields.EnumField` by passing a type to the ``primitive``
+parameter. You will likely not need to do this unless your enumeration is
+:ref:`eccentric <eccentric>` in some way.
 
 ``coerce``
 ----------
@@ -193,27 +210,36 @@ filter by Enum_ instance or any symmetric value:
 enum-properties
 ###############
 
-TextChoices_ and IntegerChoices_ types are provided that extend Django_'s
-native choice types with support for enum-properties_. The dependency on
-enum-properties_ is optional, so to utilize these classes you must separately
-install enum-properties_:
+Almost any Enum_ type is supported, so you may make use of Enum_ extension libraries like
+enum-properties_ to define very rich enumeration fields:
 
 .. code:: bash
 
        pip install enum-properties
 
-These choice extensions make possible very rich enumerations that have other
-values that can be symmetrically mapped back to enumeration values:
+enum-properties_ is an extension to Enum_ that allows properties to be added to enumeration
+instances using a simple declarative syntax. This is a less awkward and more compatible alternative
+than dataclass enumerations.
 
-.. code-block::
+If you find yourself considering a dataclass enumeration, consider using enum-properties_ instead.
+dataclass enumerations do not work with :class:`~django_enum.fields.EnumField` because their value
+type is a dataclass. Futher, most libraries that expect to be able to work with enumerations expect
+the ``value`` attribute to be a primitive serializable type.
 
-    from enum_properties import s
-    from django_enum import TextChoices  # use instead of Django's TextChoices
+.. code-block:: python
+
+    import typing as t
+    from enum_properties import StrEnumProperties, Symmetric
+    from django_enum.choices import TextChoices  # use instead of Django's TextChoices
     from django.db import models
 
     class TextChoicesExample(models.Model):
 
-        class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
+        class Color(StrEnumProperties):
+
+            label: t.Annotated[str, Symmetric()]
+            rgb: t.Annotated[t.Tuple[int, int, int], Symmetric()]
+            hex: t.Annotated[str, Symmetric(case_fold=True)]
 
             # name   value   label       rgb       hex
             RED     = 'R',   'Red',   (1, 0, 0), 'ff0000'
@@ -229,9 +255,9 @@ values that can be symmetrically mapped back to enumeration values:
     instance = TextChoicesExample.objects.create(
         color=TextChoicesExample.Color('FF0000')
     )
-    assert instance.color == TextChoicesExample.Color('Red')
-    assert instance.color == TextChoicesExample.Color('R')
-    assert instance.color == TextChoicesExample.Color((1, 0, 0))
+    assert instance.color is TextChoicesExample.Color('Red')
+    assert instance.color is TextChoicesExample.Color('R')
+    assert instance.color is TextChoicesExample.Color((1, 0, 0))
 
     # direct comparison to any symmetric value also works
     assert instance.color == 'Red'
@@ -263,6 +289,35 @@ values that can be symmetrically mapped back to enumeration values:
 
 For a real-world example see :ref:`examples`.
 
+It should be unnecessary, but if you need to integrate with code that expects an interface fully
+compatible with Django's
+`enumeration types <https://docs.djangoproject.com/en/stable/ref/models/fields/#enumeration-types>`_
+(``TextChoices`` and ``IntegerChoices`` django-enum_ provides
+:class:`~django_enum.choices.TextChoices`, :class:`~django_enum.choices.IntegerChoices`,
+:class:`~django_enum.choices.FlagChoices` and :class:`~django_enum.choices.FloatChoices` types that
+derive from enum-properties_ and Django's ``Choices``. So the above enumeration could also be
+written:
+
+.. code-block:: python
+
+    from django_enum.choices import TextChoices
+
+    class Color(TextChoices):
+
+        # label is added as a symmetric property by the base class
+
+        rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
+        hex: Annotated[str, Symmetric(case_fold=True)]
+
+        # name value label       rgb       hex
+        RED   = "R", "Red",   (1, 0, 0), "ff0000"
+        GREEN = "G", "Green", (0, 1, 0), "00ff00"
+        BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
+
+.. note::
+
+    To use these ``Choices`` extensions you will need to install enum-properties_ which is an
+    optional dependency.
 
 .. _forms:
 
@@ -334,8 +389,8 @@ Django Rest Framework
 #####################
 
 By default DRF_ ``ModelSerializer`` will use a ``ChoiceField`` to represent an
-``EnumField``. This works great, but it will not accept symmetric enumeration
-values. A serializer field ``EnumField`` is provided that will. The dependency
+:class:`~django_enum.fields.EnumField`. This works great, but it will not accept symmetric enumeration
+values. A serializer field :class:`~django_enum.fields.EnumField` is provided that will. The dependency
 on DRF_ is optional so to use the provided serializer field you must install
 DRF_:
 
@@ -355,8 +410,8 @@ DRF_:
     ser = ExampleSerializer(data={'color': (1, 0, 0)})
     assert ser.is_valid()
 
-The serializer ``EnumField`` accepts any arguments that ``ChoiceField`` does.
-It also accepts the ``strict`` parameter which behaves the same way as it does
+The serializer :class:`~django_enum.fields.EnumField` accepts any arguments that ``ChoiceField``
+does. It also accepts the ``strict`` parameter which behaves the same way as it does
 on the model field.
 
 .. _filtering:
@@ -440,57 +495,88 @@ are with any field with choices.
 Flag Enumerations
 #################
 
-Flag enumerations are supported and will render as multi select form fields
+Python supports `bit masks <https://en.wikipedia.org/wiki/Mask_(computing)>`_ through the
+`Flag <https://docs.python.org/3/library/enum.html#enum.Flag>`_ extension to Enum_.
+
+These enumerations are fully supported and will render as multi select form fields
 by default. For example:
 
+.. code-block:: python
 
-.. code-block::
-
-    from django_enum import FlagChoices
+    from enum import IntFlag
+    from django_enum import EnumField
     from django.db import models
 
     class MyModel(models.Model):
 
-        class GNSSConstellation(FlagChoices):
+        class GNSSConstellation(IntFlag):
 
-            GPS     = 2**0
-            GLONASS = 2**1
-            GALILEO = 2**2
-            BEIDOU  = 2**3
-            QZSS    = 2**4
+            GPS     = 2**1
+            GLONASS = 2**2
+            GALILEO = 2**3
+            BEIDOU  = 2**4
+            QZSS    = 2**5
 
         constellation = EnumField(GNSSConstellation)
 
-    obj = MyModel.objects.create(
-        constellation=GNSSConstellation.GPS | GNSSConstellation.GLONASS
+    obj1 = MyModel.objects.create(
+        constellation=(
+            GNSSConstellation.GPS |
+            GNSSConstellation.GLONASS |
+            GNSSConstellation.GALILEO
+        )
+    )
+    obj2 = MyModel.objects.create(constellation=GNSSConstellation.GPS)
+
+    assert GNSSConstellation.GPS in obj1.constellation
+    assert GNSSConstellation.GLONASS in obj1.constellation
+
+**Two new field lookups are provided for flag enumerations:** ``has_any`` **and**
+``has_all``.
+
+.. _has_any:
+
+has_any
+-------
+
+The ``has_any`` lookup will return any object that has at least one of the flags in the referenced
+enumeration. For example:
+
+.. code-block:: python
+
+    # this will return both obj1 and obj2
+    MyModel.objects.filter(
+        constellation__has_any=GNSSConstellation.GPS | GNSSConstellation.QZSS
     )
 
-    assert GNSSConstellation.GPS in obj.constellation
-    assert GNSSConstellation.GLONASS in obj.constellation
+.. _has_all:
 
+has_all
+-------
 
-Seamless API support for filtering by bitwise operations is expected in a
-future release, but can be done manually now in a number of ways:
+The ``has_all`` lookup will return any object that has at least all of the flags in the referenced
+enumeration. For example:
 
-.. code-block::
+.. code-block:: python
 
-    # get all models that have GLONASS enabled
-    MyModel.objects.extra(
-        where=[
-            f'constellation & {GNSSConstellation.GLONASS.value} = {GNSSConstellation.GLONASS.value}'
-        ]
+    # this will return only obj1
+    MyModel.objects.filter(
+        constellation__has_all=GNSSConstellation.GPS | GNSSConstellation.GLONASS
     )
 
+**There are performance considerations when using a bit mask like a Flag enumeration instead of
+multiple boolean columns.** See :ref:`flag performance <flag_performance>` for discussion and
+benchmarks.
 
-Flags with more than 64 flags
------------------------------
+Flags with more than 64 bits
+----------------------------
 
 Flag enumerations of arbitrary size are supported, however if the enum has more
 than 64 flags it will be stored as a `BinaryField <https://docs.djangoproject.com/en/stable/ref/models/fields/#binaryfield>`_.
+It is therefore strongly recommended to keep your Flag_ enumerations at 64 bits or less.
 
 .. warning::
 
-    This feature is experimental. Filtering behavior is undefined for
-    bitwise operations. Most RDBMS systems do not support bitwise operations on
-    binary fields. Future work may involve exploring support for this as a
-    Postgres extension.
+    Support for extra large flag fields is experimental. ``has_any`` and ``has_all`` do not work.
+    Most RDBMS systems do not support bitwise operations on binary fields. Future work may
+    involve exploring support for this as a Postgres extension.

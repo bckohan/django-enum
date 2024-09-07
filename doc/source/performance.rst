@@ -24,7 +24,7 @@ or eccentric enumeration cases.
 
     The marshalling penalty can be eliminated by setting ``coerce`` to
     ``False``. This will require the developer to manually coerce the
-    ``EnumField`` value to an Enum_ type object and is therefore usually
+    :class:`~django_enum.fields.EnumField` value to an Enum_ type object and is therefore usually
     not recommended - but may be appropriate if the dominate use case involves
     high volume serialization to a raw value instead.
 
@@ -40,7 +40,7 @@ There is an obvious storage improvement when using a single column bit mask inst
 we achieve better query performance as well? The following benchmarks compare storage and query
 performance between boolean columns and bit masks.
 
-**Using a flag** ``EnumField`` **out performs boolean columns in both
+**Using a flag** :class:`~django_enum.fields.EnumField` **out performs boolean columns in both
 storage and query performance in most scenarios.**
 
 .. note::
@@ -57,7 +57,7 @@ storage and query performance in most scenarios.**
 No Indexing
 -----------
 
-When no indexes are used, the flag ``EnumField`` saves a significant amount
+When no indexes are used, the flag :class:`~django_enum.fields.EnumField` saves a significant amount
 of space over the boolean column model. The following plot shows the storage
 efficiency improvement over boolean columns as the number of flags increases
 for each supported RDBMS. The oracle line shows extents which are allocated in
@@ -94,13 +94,14 @@ does a full table scan:
 Indexed Exact Queries
 ---------------------
 
-When an index is used, the flag ``EnumField`` marginally outperforms the
+When an index is used, the flag :class:`~django_enum.fields.EnumField` marginally outperforms the
 boolean column equivalent in both storage and query performance for exact match
 queries. It is also much simpler to define. When using the boolean column
 approach a multi-column index must be used. By default PostgreSQL is compiled
 with a maximum multi-column index size of 32 columns. This means that masks
 with more than 32 flags must be split into multiple multi-column indexes which
-will further degrade performance compared to the equivalent flag ``EnumField``.
+will further degrade performance compared to the equivalent flag
+:class:`~django_enum.fields.EnumField`.
 
 The multi-column limit on MySQL is only 16 columns.
 

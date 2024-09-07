@@ -1,6 +1,6 @@
 .. include:: refs.rst
 
-.. _eccentric_enums:
+.. _eccentric:
 
 ======================
 Eccentric Enumerations
@@ -52,8 +52,8 @@ Mixed value enumerations are supported. For example:
         VAL4 = Decimal('4.5')
 
 
-``EnumField`` will determine the most appropriate database column type to store
-the enumeration by trying each of the supported primitive types in order and
+:class:`~django_enum.fields.EnumField` will determine the most appropriate database column type
+to store the enumeration by trying each of the supported primitive types in order and
 selecting the first one that is symmetrically coercible to and from each
 enumeration value. ``None`` values are allowed and do not take part in the
 primitive type selection. In the above example, the database column type would
@@ -62,12 +62,12 @@ be a string.
 .. note::
 
     If none of the supported primitive types are symmetrically coercible
-    ``EnumField`` will not be able to determine an appropriate column type and
-    a ``ValueError`` will be raised.
+    :class:`~django_enum.fields.EnumField` will not be able to determine an appropriate column
+    type and a ``ValueError`` will be raised.
 
 In these cases, or to override the primitive type selection made by
-``EnumField``, pass the ``primitive`` parameter. It may be necessary to extend
-one of the supported primitives to make it coercible. It may also be necessary
+:class:`~django_enum.fields.EnumField`, pass the ``primitive`` parameter. It may be necessary to
+extend one of the supported primitives to make it coercible. It may also be necessary
 to override the Enum_'s ``_missing_`` method:
 
 .. code-block:: python
@@ -78,8 +78,8 @@ to override the Enum_'s ``_missing_`` method:
     # primitive will be a float
     eccentric_float = EnumField(EccentricEnum, primitive=float)
 
-In the above case since ``None`` is an enumeration value, ``EnumField`` will
-automatically set null=True on the model field.
+In the above case since ``None`` is an enumeration value, :class:`~django_enum.fields.EnumField`
+will automatically set null=True on the model field.
 
 Custom Enumeration Values
 =========================

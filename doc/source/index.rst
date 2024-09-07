@@ -77,11 +77,11 @@ to:
 * Enforce enumeration value consistency at the database level using check constraints by default.
 * (TODO) Support native database enumeration column types when available.
 
-django-enum_ provides a new model field type, ``EnumField``, that allows you to treat almost any
-PEP 435 enumeration as a database column. ``EnumField`` resolves the correct native Django_ field
-type for the given enumeration based on its value type and range. For example, ``IntegerChoices``
-that contain values between 0 and 32767 become
-`PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
+django-enum_ provides a new model field type, :class:`~django_enum.fields.EnumField`, that allows
+you to treat almost any PEP 435 enumeration as a database column.
+:class:`~django_enum.fields.EnumField` resolves the correct native Django_ field type for the given
+enumeration based on its value type and range. For example, ``IntegerChoices`` that contain values
+between 0 and 32767 become `PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
 
 .. code-block:: python
 
@@ -111,8 +111,8 @@ that contain values between 0 and 32767 become
         int_enum = EnumField(IntEnum, default=IntEnum.ONE)
 
 
-``EnumField`` **is more than just an alias. The fields are now assignable and accessible as their
-enumeration type rather than by-value:**
+:class:`~django_enum.fields.EnumField` **is more than just an alias. The fields are now assignable
+and accessible as their enumeration type rather than by-value:**
 
 .. code-block:: python
 
@@ -157,6 +157,9 @@ reduction both speeds up queries and reduces the required storage space. See the
     # get all models with RW:
     FlagExample.objects.filter(permissions__has_all=Permissions.READ | Permissions.WRITE)
 
+.. note::
+
+    The :ref:`has_all` and :ref:`has_any` field lookups are only available for Flag enumerations.
 
 Complex Enumerations
 ====================
@@ -307,7 +310,6 @@ Please report bugs and discuss features on the
    :caption: Contents:
 
    usage
-   flag_enums
    examples
    performance
    eccentric_enums
