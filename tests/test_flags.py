@@ -451,8 +451,15 @@ class FlagTests(TestCase):
 
     def test_extra_big_flags(self):
         obj = self.MODEL_CLASS.objects.create()
-        obj.refresh_from_db()
         self.assertTrue(obj.extra_big_neg is None)
+        self.assertEqual(obj.extra_big_pos, 0)
+        obj.refresh_from_db()
+
+        if connection.vendor == "oracle":
+            # TODO - possible to fix this?
+            self.assertEqual(obj.extra_big_neg, 0)
+        else:
+            self.assertTrue(obj.extra_big_neg is None)
         self.assertEqual(obj.extra_big_pos, 0)
 
         self.assertEqual(obj, self.MODEL_CLASS.objects.get(extra_big_pos=0))

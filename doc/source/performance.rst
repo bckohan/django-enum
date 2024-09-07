@@ -28,6 +28,9 @@ or eccentric enumeration cases.
     not recommended - but may be appropriate if the dominate use case involves
     high volume serialization to a raw value instead.
 
+
+.. _flag_performance:
+
 Flags
 =====
 

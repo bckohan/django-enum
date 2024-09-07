@@ -416,6 +416,8 @@ by default. So the above is also equivalent to:
         filterset_class = TextChoicesExampleFilter
         model = TextChoicesExample
 
+.. _migrations:
+
 Migrations
 ##########
 
