@@ -36,6 +36,7 @@ from tests.djenum.enums import (
     StrPropsEnum,
     TextEnum,
     TimeEnum,
+    NullableConstants,
 )
 
 
@@ -312,3 +313,7 @@ class CustomPrimitiveTestModel(models.Model):
     path = EnumField(PathEnum, primitive=str)
 
     str_props = EnumField(StrPropsEnum, primitive=str)
+
+
+class TestNullableFloat(models.Model):
+    nullable_float = EnumField(NullableConstants, default=None, blank=True, null=True)

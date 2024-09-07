@@ -161,3 +161,17 @@ class TestEccentricEnums(TestCase):
             obj3,
             CustomPrimitiveTestModel.objects.get(str_props=StrProps("str3")),
         )
+
+    def test_nullable_float(self):
+        from tests.djenum.models import TestNullableFloat
+        from tests.djenum.enums import NullableConstants
+
+        obj = TestNullableFloat.objects.create()
+        self.assertEqual(obj.nullable_float, NullableConstants.NONE)
+        obj.refresh_from_db()
+        self.assertEqual(obj.nullable_float, NullableConstants.NONE)
+
+        obj.nullable_float = NullableConstants.PI
+        obj.save()
+        obj.refresh_from_db()
+        self.assertEqual(obj.nullable_float, NullableConstants.PI)

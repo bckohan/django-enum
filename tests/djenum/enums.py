@@ -223,6 +223,13 @@ class DecimalEnum(Enum):
         return super().__hash__()
 
 
+class NullableConstants(Enum):
+    NONE = None
+    PI = 3.14159265358979323846264338327950288
+    e = 2.71828
+    GOLDEN_RATIO = 1.61803398874989484820458683436563811
+
+
 class SmallPositiveFlagEnum(IntFlag):
     ONE = 2**10
     TWO = 2**11
