@@ -262,9 +262,10 @@ class EnumFlagTester(EnumFlagTesterBase):
 
     extra_big_neg = EnumField(
         ExtraBigNegativeFlagEnum,
-        default=ExtraBigNegativeFlagEnum(0),
+        default=None,
         db_index=True,
         blank=True,
+        null=True,
     )
 
     def __repr__(self):

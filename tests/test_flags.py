@@ -448,3 +448,12 @@ class FlagTests(TestCase):
 
             with self.assertRaises(FieldError):
                 self.MODEL_CLASS.objects.filter(**{"field__has_all": EnumClass.ONE})
+
+    def test_extra_big_flags(self):
+        obj = self.MODEL_CLASS.objects.create()
+        obj.refresh_from_db()
+        self.assertTrue(obj.extra_big_neg is None)
+        self.assertEqual(obj.extra_big_pos, 0)
+
+        self.assertEqual(obj, self.MODEL_CLASS.objects.get(extra_big_pos=0))
+        self.assertEqual(obj, self.MODEL_CLASS.objects.get(extra_big_neg__isnull=True))
