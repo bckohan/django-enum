@@ -7,7 +7,6 @@ Django Enum
 |MIT license| |Ruff| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status|
 |Documentation Status| |Code Cov| |Test Status|
 
-----
 
 |Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
 
@@ -308,6 +307,7 @@ Please report bugs and discuss features on the
    :caption: Contents:
 
    usage
+   flag_enums
    examples
    performance
    eccentric_enums

@@ -27,29 +27,30 @@ implement our style enumeration like so:
 
 .. code-block:: python
 
+    import typing as t
     from django.db import models
-    from django_enum import IntegerChoices, EnumField
-    from enum_properties import p, s
+    from django_enum import EnumField
+    from enum_properties import IntEnumProperties, Symmetric
 
     class Map(models.Model):
 
-        class MapBoxStyle(
-            IntegerChoices,
-            s('slug', case_fold=True),
-            p('version')
-        ):
+        class MapBoxStyle(IntEnumProperties):
             """
             https://docs.mapbox.com/api/maps/styles/
             """
-            _symmetric_builtins_ = ['name', 'uri', 'label']
+            _symmetric_builtins_ = ['name', 'uri']
 
-            # name             value    label                 slug         version
-            STREETS           =  1,   'Streets',            'streets',           11
-            OUTDOORS          =  2,   'Outdoors',           'outdoors',          11
-            LIGHT             =  3,   'Light',              'light',             10
-            DARK              =  4,   'Dark',               'dark',              10
+            label: t.Annotated[str, Symmetric()]
+            slug: t.Annotated[str, Symmetric(case_fold=True)]
+            version: int
+
+            # name             value    label                 slug          version
+            STREETS           =  1,   'Streets',            'streets',           12
+            OUTDOORS          =  2,   'Outdoors',           'outdoors',          12
+            LIGHT             =  3,   'Light',              'light',             11
+            DARK              =  4,   'Dark',               'dark',              11
             SATELLITE         =  5,   'Satellite',          'satellite',          9
-            SATELLITE_STREETS =  6,   'Satellite Streets',  'satellite-streets', 11
+            SATELLITE_STREETS =  6,   'Satellite Streets',  'satellite-streets', 12
             NAVIGATION_DAY    =  7,   'Navigation Day',     'navigation-day',     1
             NAVIGATION_NIGHT  =  8,   'Navigation Night',   'navigation-night',   1
 
@@ -88,12 +89,12 @@ We can use our enumeration like so:
 
     map = Map.objects.create()
 
-    map.style.uri == 'mapbox://styles/mapbox/streets-v11'
+    assert map.style.uri == 'mapbox://styles/mapbox/streets-v11'
 
     # uri's are symmetric
     map.style = 'mapbox://styles/mapbox/light-v10'
     map.full_clean()
-    assert map.style == Map.MapBoxStyle.LIGHT
+    assert map.style is Map.MapBoxStyle.LIGHT
     assert map.style == 3
     assert map.style == 'light'
 

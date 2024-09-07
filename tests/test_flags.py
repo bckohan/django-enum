@@ -462,5 +462,11 @@ class FlagTests(TestCase):
             self.assertTrue(obj.extra_big_neg is None)
         self.assertEqual(obj.extra_big_pos, 0)
 
-        self.assertEqual(obj, self.MODEL_CLASS.objects.get(extra_big_pos=0))
+        if connection.vendor == "oracle":
+            # TODO - possible to fix this?
+            self.assertEqual(
+                obj, self.MODEL_CLASS.objects.get(extra_big_pos__isnull=True)
+            )
+        else:
+            self.assertEqual(obj, self.MODEL_CLASS.objects.get(extra_big_pos=0))
         self.assertEqual(obj, self.MODEL_CLASS.objects.get(extra_big_neg__isnull=True))

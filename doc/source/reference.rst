@@ -66,3 +66,21 @@ Serializer Fields
    :show-inheritance:
    :private-members:
 
+
+URLs
+----
+
+.. automodule:: django_enum.urls
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:
+
+utilities
+---------
+
+.. automodule:: django_enum.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :private-members:

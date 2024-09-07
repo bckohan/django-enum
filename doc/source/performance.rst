@@ -2,9 +2,9 @@
 
 .. _performance:
 
-==========================
-Performance Considerations
-==========================
+===========
+Performance
+===========
 
 Enums
 =====
@@ -34,9 +34,14 @@ or eccentric enumeration cases.
 Flags
 =====
 
-The typical flag-like data model is to use a separate boolean column for each
-flag. **Using a flag** ``EnumField`` **out performs boolean columns in both
-storage and query performance in all scenarios.**
+The usual advice for adding bit mask behavior to a database table is to add multiple boolean
+columns. These columns can be indexed together which can speed up certain kinds of queries.
+There is an obvious storage improvement when using a single column bit mask instead, but can
+we achieve better query performance as well? The following benchmarks compare storage and query
+performance between boolean columns and bit masks.
+
+**Using a flag** ``EnumField`` **out performs boolean columns in both
+storage and query performance in most scenarios.**
 
 .. note::
 
@@ -45,7 +50,8 @@ storage and query performance in all scenarios.**
     tables with boolean columns have exactly the same mask values as the tables
     with bitmasks. 10 queries are performed and averaged at each check point.
     Each query generates a different random mask value to query and each table
-    both boolean and bitmask are queried with the same mask value.
+    both boolean and bitmask are queried with the same mask value. The benchmarks
+    were run on an Apple M1 laptop with 16GB of RAM and a 1TB SSD.
 
 
 No Indexing
@@ -60,10 +66,10 @@ for each supported RDBMS. The oracle line shows extents which are allocated in
 .. figure:: plots/FlagSizeBenchmark.png
    :alt: Storage Efficiency improvement over boolean columns
 
-   Storage efficiency improvement over boolean columns. The x-axis is the
-   number of flags and the y-axis is the number of bytes saved per row by using
-   a bitmask instead of a boolean column for each flag. The colored areas show
-   the column type employed to store the bitmask given the number of flags.
+   Storage efficiency improvement over boolean columns. The x-axis is the number of flags and the
+   y-axis is the number of bytes saved per row by using a bitmask instead of a boolean column for
+   each flag. The colored areas show the column type employed to store the bitmask given the number
+   of flags.
 
 For example, using PostgreSQL a table with a 32-flag column will save ~25 bytes
 per row over an equivalent table with 32 boolean columns. *For a table with a
