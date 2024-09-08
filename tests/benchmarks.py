@@ -26,7 +26,7 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
     ENUM_PROPERTIES_INSTALLED = False
 
 
-BENCHMARK_FILE = Path(__file__).parent.parent.parent / "benchmarks.json"
+BENCHMARK_FILE = Path(__file__).parent.parent / "benchmarks.json"
 
 patch_oracle()
 
@@ -673,8 +673,8 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
 
     CHECK_POINTS = [
         *(int(10**i) for i in range(1, 7)),
-        *(int(i * ((10**7) / 5)) for i in range(1, 6)),
-        *(int(i * ((10**8) / 5)) for i in range(1, 6)),
+        # *(int(i * ((10**7) / 5)) for i in range(1, 6)),
+        # *(int(i * ((10**8) / 5)) for i in range(1, 6)),
         # *(int(i * ((10**9) / 5)) for i in range(1, 6))
     ]
 
@@ -1095,9 +1095,9 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
         with tqdm(total=self.CHECK_POINTS[-1]) as pbar:
             check_point = self.CHECK_POINTS[-1]
             self.create_rows(check_point, pbar)
-        import ipdb
+        # import ipdb
 
-        ipdb.set_trace()
+        # ipdb.set_trace()
 
     def drop_indexes(self):
         def drop_index(table, index):
