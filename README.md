@@ -21,6 +21,8 @@
 
 ---------------------------------------------------------------------------------------------------
 
+🚨🚨 **See [migration guide](https://django-enum.readthedocs.io/en/latest/changelog.html#migration-1-x-to-2-x) for notes on 1.x to 2.x migration.** 🚨🚨
+
 Full and natural support for [enumerations](https://docs.python.org/3/library/enum.html#enum.Enum) as Django model fields.
 
 Many packages aim to ease usage of Python enumerations as model fields. Most were superseded when Django provided ``TextChoices`` and ``IntegerChoices`` types. The motivation for [django-enum](https://django-enum.readthedocs.io) was to:
