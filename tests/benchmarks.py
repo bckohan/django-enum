@@ -673,8 +673,8 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
 
     CHECK_POINTS = [
         *(int(10**i) for i in range(1, 7)),
-        # *(int(i * ((10**7) / 5)) for i in range(1, 6)),
-        # *(int(i * ((10**8) / 5)) for i in range(1, 6)),
+        *(int(i * ((10**7) / 5)) for i in range(1, 6)),
+        *(int(i * ((10**8) / 5)) for i in range(1, 6)),
         # *(int(i * ((10**9) / 5)) for i in range(1, 6))
     ]
 
