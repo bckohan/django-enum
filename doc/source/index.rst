@@ -14,7 +14,7 @@ Django Enum
    :target: https://lbesson.mit-license.org/
 
 .. |Ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
-   :target: https:://github.com/astral-sh/ruff
+   :target: https://docs.astral.sh/ruff
 
 .. |PyPI version fury.io| image:: https://badge.fury.io/py/django-enum.svg
    :target: https://pypi.python.org/pypi/django-enum/
@@ -56,6 +56,10 @@ Django Enum
     :target: https://www.oracle.com/database/
 
 ----
+
+.. tip::
+
+    See :ref:`migration_1.x_to_2.x` for how to update from 1.x to 2.x.
 
 Full and natural support for enumerations_ as Django_ model fields.
 

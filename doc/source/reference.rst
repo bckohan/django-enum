@@ -67,6 +67,8 @@ Serializer Fields
    :private-members:
 
 
+.. _urls:
+
 URLs
 ----
 
@@ -75,6 +77,8 @@ URLs
    :undoc-members:
    :show-inheritance:
    :private-members:
+
+.. _utilities:
 
 utilities
 ---------

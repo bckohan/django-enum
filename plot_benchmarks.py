@@ -94,6 +94,20 @@ def plot_queries(queries):
 
     lines = [("all_time", "has_all"), ("any_time", "has_any"), ("exact_time", "exact")]
 
+    # Define colors for query types
+    query_colors = {
+        "exact": "blue",
+        "has_any": "green",
+        "has_all": "red",
+    }
+
+    # Define line styles for column/index types
+    index_styles = {
+        "[BOOL] MultiCol Index": "--",  # Dashed line for BOOL indexes
+        "[FLAG] Single Index": "-",  # Solid line for others
+        "[BOOL] Col Index": ":",
+    }
+
     for vendor, indexes in queries.items():
         plt.figure(figsize=(10, 6))
         plt.title("Query Performance [{}]".format(vendor))
@@ -124,8 +138,9 @@ def plot_queries(queries):
                     plt.plot(
                         cnts,
                         plt_data,
-                        "--" if "BOOL" in index else "-",
+                        index_styles[index],
                         label=f"[{index}] ({label})",
+                        color=query_colors[label],
                     )
 
         # save the plot as a .png file

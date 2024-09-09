@@ -580,3 +580,40 @@ It is therefore strongly recommended to keep your Flag_ enumerations at 64 bits 
     Support for extra large flag fields is experimental. ``has_any`` and ``has_all`` do not work.
     Most RDBMS systems do not support bitwise operations on binary fields. Future work may
     involve exploring support for this as a Postgres extension.
+
+
+URLs
+####
+
+django-enum_ provides a :ref:`converter <urls>` that can be used to register enum url parameters
+with the Django_ path resolver.
+
+.. code-block:: python
+
+    from enum import IntEnum
+
+    from django.http import HttpResponse
+    from django.urls import path
+
+    from django_enum.urls import register_enum_converter
+
+
+    class Enum1(IntEnum):
+        A = 1
+        B = 2
+
+    register_enum_converter(Enum1)
+
+    def enum_converter_view(request, enum):
+        assert isinstance(enum, Enum1)
+        return HttpResponse(status=200)
+
+
+    # this will match paths /1/ and /2/
+    urlpatterns = [
+        path("<Enum1:enum>", register_enum_converter, name="enum1_view"),
+    ]
+
+By default the converter will use the value property of the enumeration to resolve the enumeration,
+but this can be overridden by passing the `prop` parameter, so we could for example use the label
+instead.

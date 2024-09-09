@@ -1,7 +1,7 @@
 # django-enum
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://docs.astral.sh/ruff)
 [![PyPI version](https://badge.fury.io/py/django-enum.svg)](https://pypi.python.org/pypi/django-enum/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/django-enum.svg)](https://pypi.python.org/pypi/django-enum/)
 [![PyPI djversions](https://img.shields.io/pypi/djversions/django-enum.svg)](https://pypi.org/project/django-enum/)

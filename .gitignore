@@ -135,5 +135,6 @@ tests/edit_tests/migrations/00*.py
 benchmark.db
 type_check.py
 tests/**/migrations/**py
+/*png
 
 .DS_Store

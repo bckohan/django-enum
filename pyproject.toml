@@ -52,7 +52,15 @@ djangorestframework = {version = "^3.9", optional = true}
 
 [tool.poetry.group.dev.dependencies]
 pytest = ">=7.0"
-Sphinx = ">=7.0"
+Sphinx = [
+    { version = ">=8.0", markers = "python_version >= '3.10'" },
+    { version = ">=7.4", markers = "python_version >= '3.9'" },
+    { version = ">=7.0", markers = "python_version < '3.9'" }
+]
+docutils = [
+    { version = ">=0.21", markers = "python_version >= '3.9'" },
+    { version = ">=0.20", markers = "python_version < '3.9'" }
+]
 mypy = ">=1.0"
 doc8 = ">=0.11.0"
 darglint = ">=1.5.7"
