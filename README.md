@@ -197,7 +197,7 @@ While they should be unnecessary if you need to integrate with code that expects
 
 ## Installation
 
-1. Clone django-enum from GitHub_ or install a release off [pypi](https://pypi.org/project/django-enum):
+1. Clone django-enum from here or install a release off [pypi](https://pypi.org/project/django-enum):
 
 ```bash
    pip install django-enum
