@@ -9,17 +9,20 @@ v2.0.0 (2024-09-09)
 
 * Completed `Reorganize tests <https://github.com/bckohan/django-enum/issues/70>`_
 * Completed `Switch linting and formatting to ruff <https://github.com/bckohan/django-enum/issues/62>`_
+* Implemented `Install django-stubs when running static type checks. <https://github.com/bckohan/django-enum/issues/60>`_
 * Implemented `Supply a mixin for DRF ModelSerializers that instantiates the provided DRF EnumField type for model EnumFields. <https://github.com/bckohan/django-enum/issues/47>`_
 * Implemented `EnumField's should inherit from common base titled EnumField <https://github.com/bckohan/django-enum/issues/46>`_
 * Implemented `Add database constraints on enum fields by default. <https://github.com/bckohan/django-enum/issues/45>`_
 * Fixed `to_python() raises ValueError instead of spec'ed ValidationError <https://github.com/bckohan/django-enum/issues/44>`_
 * Implemented `Add support for date, datetime, timedelta, time and Decimal enumeration types. <https://github.com/bckohan/django-enum/issues/43>`_
 * Fixed `None should be an allowable enumeration value in enums of any primitive type. <https://github.com/bckohan/django-enum/issues/42>`_
+* Implemented `Characterize the performance trade offs of bitfields vs indexed and non-indexed boolean fields. <https://github.com/bckohan/django-enum/issues/41>`_
 * Fixed `When coerce is false, to_python does not convert to the Enum's primitive type <https://github.com/bckohan/django-enum/issues/39>`_
 * Implemented `Provide parameter to override integer range on EnumField. <https://github.com/bckohan/django-enum/issues/38>`_
 * Implemented `Add all official supported Django RDBMS backends to CI <https://github.com/bckohan/django-enum/issues/33>`_
+* Implemented `Support for integer sizes greater than 64 bit <https://github.com/bckohan/django-enum/issues/32>`_
 * Implemented `Provide an optional enum path converter. <https://github.com/bckohan/django-enum/issues/22>`_
-
+* Implemented `Support flag enumerations <https://github.com/bckohan/django-enum/issues/7>`_
 
 .. _migration_1.x_to_2.x:
 
