@@ -4,6 +4,11 @@
 Change Log
 ==========
 
+v2.0.1 (2024-09-16)
+===================
+
+* Fixed `Unexpected ValueError instead of ValidationError <https://github.com/bckohan/django-enum/issues/74>`_
+
 v2.0.0 (2024-09-09)
 ===================
 

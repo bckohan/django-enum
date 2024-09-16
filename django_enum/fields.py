@@ -365,6 +365,10 @@ class EnumField(
 
     descriptor_class = ToPythonDeferredAttribute
 
+    default_error_messages: Any = {  # mypy is stupid
+        "invalid_choice": _("Value %(value)r is not a valid %(enum)r.")
+    }
+
     # use properties to disable setters
     @property
     def enum(self):
@@ -611,8 +615,12 @@ class EnumField(
             if value is None:
                 return value
             raise ValidationError(
-                f"'{value}' is not a valid "
-                f"{self.enum.__name__ if self.enum else ''}."
+                self.error_messages["invalid_choice"],
+                code="invalid_choice",
+                params={
+                    "value": value,
+                    "enum": self.enum.__name__ if self.enum else "",
+                },
             ) from err
 
     def get_default(self) -> Any:
@@ -648,7 +656,12 @@ class EnumField(
             self._try_coerce(value, force=True)
         except ValueError as err:
             raise ValidationError(
-                str(err), code="invalid_choice", params={"value": value}
+                self.error_messages["invalid_choice"],
+                code="invalid_choice",
+                params={
+                    "value": value,
+                    "enum": self.enum.__name__ if self.enum else "",
+                },
             ) from err
 
     def formfield(self, form_class=None, choices_form_class=None, **kwargs):
@@ -768,6 +781,8 @@ class EnumCharField(EnumField[Type[str]], CharField):
     """
     A database field supporting enumerations with character values.
     """
+
+    empty_values = [empty for empty in CharField.empty_values if empty != ""]
 
     @property
     def primitive(self):

@@ -1,5 +1,7 @@
 from django.test import TestCase
+from django.core.exceptions import ValidationError
 from django_enum import EnumField
+from tests.djenum.models import EnumTester
 
 
 class MiscOffNominalTests(TestCase):
@@ -10,6 +12,14 @@ class MiscOffNominalTests(TestCase):
 
             class TestModel(Model):
                 enum = EnumField()
+
+    def test_full_clean_raises_validation_error(self):
+        with self.assertRaises(ValidationError):
+            en = EnumTester(text="wrong")
+            en.full_clean()
+
+        with self.assertRaises(ValidationError):
+            EnumTester(text="").full_clean()
 
     def test_variable_primitive_type(self):
         from enum import Enum
