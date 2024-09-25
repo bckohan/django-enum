@@ -317,3 +317,14 @@ class CustomPrimitiveTestModel(models.Model):
 
 class TestNullableFloat(models.Model):
     nullable_float = EnumField(NullableConstants, default=None, blank=True, null=True)
+
+
+class NameOverrideTest(models.Model):
+    class TextEnum(models.TextChoices):
+        VALUE0 = "V0", "Value 0"
+        VALUE1 = "V1", "Value 1"
+        VALUE2 = "V2", "Value 2"
+
+    txt_enum = EnumField(
+        TextEnum, name="enum_field", null=True, blank=True, default=None
+    )

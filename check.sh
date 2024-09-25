@@ -13,10 +13,10 @@ else
 fi
 
 poetry run mypy django_enum
-poetry check
-poetry run pip check
 cd ./doc
 poetry run doc8 --ignore-path build --max-line-length 100 -q
+poetry check
+poetry run pip check
 # check for broken links in the docs ############
 set +e
 

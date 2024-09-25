@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "django-enum"
-version = "2.0.1"
+version = "2.0.2"
 description = "Full and natural support for enumerations as Django model fields."
 authors = ["Brian Kohan <bckohan@gmail.com>"]
 license = "MIT"
