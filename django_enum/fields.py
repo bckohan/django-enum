@@ -763,7 +763,7 @@ class EnumField(
             cls._meta.constraints = [
                 *cls._meta.constraints,
                 CheckConstraint(
-                    **{  # type: ignore[arg-type]
+                    **{  # type: ignore[call-overload]
                         condition: constraint,
                         "name": self.constraint_name(cls, self.name or name, self.enum),
                     }
