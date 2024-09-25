@@ -753,19 +753,19 @@ class EnumField(
         elif self.constrained and self.enum:
             constraint = Q(
                 **{
-                    f"{name}__in": [
+                    f"{self.name or name}__in": [
                         self._coerce_to_value_type(value) for value in values(self.enum)
                     ]
                 }
             )
             if self.null:
-                constraint |= Q(**{f"{name}__isnull": True})
+                constraint |= Q(**{f"{self.name or name}__isnull": True})
             cls._meta.constraints = [
                 *cls._meta.constraints,
                 CheckConstraint(
                     **{  # type: ignore[arg-type]
                         condition: constraint,
-                        "name": self.constraint_name(cls, name, self.enum),
+                        "name": self.constraint_name(cls, self.name or name, self.enum),
                     }
                 ),
             ]
@@ -1185,19 +1185,21 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
 
             if is_strict or is_conform or (is_eject and self.strict) and flags:
                 constraint = (
-                    Q(**{f"{name}__gte": min(*flags)})
-                    & Q(**{f"{name}__lte": reduce(or_, flags)})
-                ) | Q(**{name: 0})
+                    Q(**{f"{self.name or name}__gte": min(*flags)})
+                    & Q(**{f"{self.name or name}__lte": reduce(or_, flags)})
+                ) | Q(**{self.name or name: 0})
 
                 if self.null:
-                    constraint |= Q(**{f"{name}__isnull": True})
+                    constraint |= Q(**{f"{self.name or name}__isnull": True})
 
                 cls._meta.constraints = [
                     *cls._meta.constraints,
                     CheckConstraint(
                         **{
                             condition: constraint,
-                            "name": self.constraint_name(cls, name, self.enum),
+                            "name": self.constraint_name(
+                                cls, self.name or name, self.enum
+                            ),
                         }
                     ),
                 ]

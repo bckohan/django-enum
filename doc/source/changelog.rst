@@ -4,6 +4,11 @@
 Change Log
 ==========
 
+v2.0.2 (2024-09-25)
+===================
+
+* Fixed `Constraints fail when using a name argument <https://github.com/bckohan/django-enum/issues/77>`_
+
 v2.0.1 (2024-09-16)
 ===================
 
