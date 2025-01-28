@@ -5,9 +5,10 @@ on:
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Set to on, to open ssh debug session.'
+        description: 'Open ssh debug session.'
         required: true
-        default: 'off'
+        default: false
+        type: boolean
   schedule:
     - cron: '0 13 * * *'  # Runs at 6 am pacific every day
 
@@ -509,8 +510,8 @@ jobs:
         timeout-minutes: 60
       - name: Install Oracle Client
         run: |
-          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2111000/oracle-instantclient-basiclite-21.11.0.0.0-1.el8.x86_64.rpm
-          sudo apt install alien libaio1
+          curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2116000/oracle-instantclient-basiclite-21.16.0.0.0-1.el8.x86_64.rpm
+          sudo apt install alien
           sudo alien -i oracle-client.rpm
           sudo sh -c  'echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf'
           sudo ldconfig
