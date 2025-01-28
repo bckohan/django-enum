@@ -82,10 +82,6 @@ numpy = [
     {version = ">=1.25", markers = "python_version >= '3.9'"}
 ]
 django-stubs = {extras = ["compatible-mypy"], version = ">=4.2.7"}
-django-stubs = [
-    {version = "<1.25", markers = "python_version < '3.9'"},
-    {version = ">=1.25", markers = "python_version >= '3.9'"}
-]
 furo = "^2024.8.6"
 ruff = "^0.6.3"
 typing-extensions = "^4.12.2"
