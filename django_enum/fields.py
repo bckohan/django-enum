@@ -325,7 +325,7 @@ class EnumFieldFactory(type):
             return EnumDecimalField(enum=enum, primitive=primitive, **field_kwargs)
 
         raise NotImplementedError(
-            f"EnumField does not support enumerations of primitive type " f"{primitive}"
+            f"EnumField does not support enumerations of primitive type {primitive}"
         )
 
 

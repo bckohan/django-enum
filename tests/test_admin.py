@@ -21,12 +21,12 @@ class TestAdmin(EnumTypeMixin, LiveServerTestCase):
 
         resp = self.client.get(
             reverse(
-                f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_changelist'
+                f"admin:{self.BUG35_CLASS._meta.label_lower.replace('.', '_')}_changelist"
             )
         )
         self.assertContains(resp, '<td class="field-int_enum">Value 2</td>')
         change_link = reverse(
-            f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_change',
+            f"admin:{self.BUG35_CLASS._meta.label_lower.replace('.', '_')}_change",
             args=[obj.id],
         )
         self.assertContains(resp, f'<a href="{change_link}">Value1</a>')
@@ -44,7 +44,7 @@ class TestAdmin(EnumTypeMixin, LiveServerTestCase):
         obj = self.BUG35_CLASS.objects.create()
         resp = self.client.get(
             reverse(
-                f'admin:{self.BUG35_CLASS._meta.label_lower.replace(".", "_")}_change',
+                f"admin:{self.BUG35_CLASS._meta.label_lower.replace('.', '_')}_change",
                 args=[obj.id],
             )
         )

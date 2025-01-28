@@ -90,9 +90,9 @@ class EnumField(ChoiceField):
     def __init__(self, enum: Type[Enum], strict: bool = strict, **kwargs):
         self.enum = enum
         self.primitive = determine_primitive(enum)  # type: ignore
-        assert (
-            self.primitive is not None
-        ), f"Unable to determine primitive type for {enum}"
+        assert self.primitive is not None, (
+            f"Unable to determine primitive type for {enum}"
+        )
         self.strict = strict
         self.choices = kwargs.pop("choices", choices(enum))
         field_name = kwargs.pop("field_name", None)

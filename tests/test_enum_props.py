@@ -364,8 +364,7 @@ class TestSymmetricEmptyValEquivalency(TestCase):
             form_field = EnumChoiceField(enum=EmptyEqEnum)
         except Exception as err:  # pragma: no cover
             self.fail(
-                "EnumChoiceField() raised value error with alternative"
-                "empty_value set."
+                "EnumChoiceField() raised value error with alternativeempty_value set."
             )
 
         self.assertTrue(None not in form_field.empty_values)
@@ -381,8 +380,7 @@ class TestSymmetricEmptyValEquivalency(TestCase):
             form_field = EnumChoiceField(enum=EmptyEqEnum)
         except Exception as err:  # pragma: no cover
             self.fail(
-                "EnumChoiceField() raised value error with alternative"
-                "empty_value set."
+                "EnumChoiceField() raised value error with alternativeempty_value set."
             )
 
         # this is pathological
@@ -425,8 +423,7 @@ class TestSymmetricEmptyValEquivalency(TestCase):
             )
         except Exception:  # pragma: no cover
             self.fail(
-                "EnumChoiceField() raised value error with alternative"
-                "empty_value set."
+                "EnumChoiceField() raised value error with alternativeempty_value set."
             )
 
 

@@ -83,7 +83,7 @@ numpy = [
 ]
 django-stubs = {extras = ["compatible-mypy"], version = ">=4.2.7"}
 furo = "^2024.8.6"
-ruff = "^0.6.3"
+ruff = "^0.9"
 typing-extensions = "^4.12.2"
 
 [tool.poetry.group.psycopg2]

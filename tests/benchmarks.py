@@ -600,9 +600,9 @@ class FlagBenchmarks(BulkCreateMixin, TestCase):
 class CreateRowMixin(BulkCreateMixin):
     NUM_FLAGS = 16
 
-    FlagModel = getattr(benchmark_models, f"FlagTester{NUM_FLAGS-1:03d}")
+    FlagModel = getattr(benchmark_models, f"FlagTester{NUM_FLAGS - 1:03d}")
     EnumClass = FlagModel._meta.get_field("flags").enum
-    BoolModel = getattr(benchmark_models, f"BoolTester{NUM_FLAGS-1:03d}")
+    BoolModel = getattr(benchmark_models, f"BoolTester{NUM_FLAGS - 1:03d}")
 
     @property
     def num_flags(self):
@@ -1107,7 +1107,7 @@ class FlagIndexTests(CreateRowMixin, SimpleTestCase):
                 cursor.execute(f"ALTER TABLE {table} DROP INDEX {index}")
             else:
                 raise NotImplementedError(
-                    f"Drop index for vendor {connection.vendor} not " f"implemented!"
+                    f"Drop index for vendor {connection.vendor} not implemented!"
                 )
 
         with connection.cursor() as cursor:

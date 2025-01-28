@@ -563,7 +563,7 @@ class TestRequests(EnumTypeMixin, TestCase):
                 except KeyError:  # pragma: no cover
                     self.fail(
                         f"{field.name} did not expect option "
-                        f'{option["value"]}: {option.text}.'
+                        f"{option['value']}: {option.text}."
                     )
 
             self.assertEqual(len(expected), 0)
