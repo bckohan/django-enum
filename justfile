@@ -152,10 +152,13 @@ test-all:
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
     poetry install -E properties
+    poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
     poetry install -E djangorestframework
+    poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
     poetry install -E filters
+    poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
 
 # run tests
