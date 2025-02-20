@@ -37,6 +37,7 @@ jobs:
             django-version: '5.1'
 
     env:
+      RDBMS: sqlite
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
 
