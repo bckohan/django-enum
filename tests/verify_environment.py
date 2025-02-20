@@ -3,7 +3,7 @@ import sys
 from django import VERSION
 from django.db import connection
 import typing as t
-from django.test import SimpleTestCase
+from django.test import TestCase
 
 
 def get_postgresql_version() -> t.Tuple[int, ...]:
