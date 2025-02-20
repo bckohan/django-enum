@@ -29,7 +29,7 @@ def test():
     rdbms = os.environ["RDBMS"]
     expected_python = os.environ["TEST_PYTHON_VERSION"]
     expected_django = os.environ["TEST_DJANGO_VERSION"]
-    expected_db_ver = os.environ["TEST_DATABASE_VERSION"]
+    expected_db_ver = os.environ.get("TEST_DATABASE_VERSION", None)
     expected_client = os.environ.get("TEST_DATABASE_CLIENT_VERSION", None)
 
     expected_python = tuple(int(v) for v in expected_python.split(".") if v)
@@ -44,19 +44,25 @@ def test():
         f"{expected_django}"
     )
 
-    if rdbms == "postgres":
-        if expected_db_ver == "latest":
-            # todo
+    if expected_db_ver:
+        if rdbms == "postgres":
+            if expected_db_ver == "latest":
+                # todo
+                pass
+            else:
+                expected_version = tuple(
+                    int(v) for v in expected_db_ver.split(".") if v
+                )
+                assert (
+                    expected_version
+                    == get_postgresql_version()[: len(expected_version)]
+                )
+            assert find_spec(expected_client), f"{expected_client} not installed"
+        elif rdbms == "mysql":
             pass
-        else:
-            expected_version = tuple(int(v) for v in expected_db_ver.split(".") if v)
-            assert expected_version == get_postgresql_version()[: len(expected_version)]
-        assert find_spec(expected_client), f"{expected_client} not installed"
-    elif rdbms == "mysql":
-        pass
-    elif rdbms == "mariadb":
-        pass
-    elif rdbms == "sqlite":
-        pass
-    elif rdbms == "oracle":
-        pass
+        elif rdbms == "mariadb":
+            pass
+        elif rdbms == "sqlite":
+            pass
+        elif rdbms == "oracle":
+            pass

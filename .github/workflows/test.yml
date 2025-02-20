@@ -106,7 +106,7 @@ jobs:
     - name: Install Release Dependencies
       run: |
         just init ${{ steps.sp.outputs.python-path }}
-        just install-postgres
+        just install-${{ matrix.psycopg-version }}
         just pin-dependency Django~=${{ matrix.django-version }}.0
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
