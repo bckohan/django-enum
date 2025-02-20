@@ -120,6 +120,7 @@ jobs:
       timeout-minutes: 60
     - name: Run Unit Tests
       run: |
+        poetry run ./manage.py makemigrations
         just test ./tests/verify_environment.py
         just test-all
     - name: Store coverage files
@@ -179,6 +180,7 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
+          poetry run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
@@ -276,6 +278,7 @@ jobs:
         run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
+          poetry run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
@@ -377,6 +380,7 @@ jobs:
         run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
+          poetry run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
@@ -477,18 +481,9 @@ jobs:
           just init ${{ steps.sp.outputs.python-path }}
           just install-oracle
           just pin-dependency Django~=${{ matrix.django-version }}.0
-      - name: Install Dependencies
-        run: |
-          just init ${{ steps.sp.outputs.python-path }}
-          just install-oracle
-          poetry config virtualenvs.in-project true
-          poetry run pip install --upgrade pip
-          sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
-          poetry add django@^${{ matrix.django-version }}
-          poetry install -E all --with oracle
-          poetry run ./manage.py makemigrations
       - name: Run Full Unit Tests
         run: |
+          poetry run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test
 
