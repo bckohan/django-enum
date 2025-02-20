@@ -1,4 +1,7 @@
 name: test
+
+permissions: read-all
+
 on:
   push:
   pull_request:
@@ -17,16 +20,12 @@ jobs:
 
   postgres:
     runs-on: ubuntu-latest
-    # Service containers to run with `container-job`
-    env:
-      RDBMS: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_USER: postgres
-      POSTGRES_HOST: localhost
-      POSTGRES_PORT: 5432
+    permissions:
+      actions: write
+    # Service containers to run with `container-job`  
     strategy:
       matrix:
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         postgres-version: ['9.6', '12', 'latest']
         psycopg-version: ['psycopg2', 'psycopg3']
         django-version:
@@ -53,8 +52,6 @@ jobs:
           - postgres-version: '9.6'
             django-version: '5.1'
 
-          - python-version: '3.8'
-            django-version: '5.1'
           - python-version: '3.9'
             django-version: '5.1'
           - python-version: '3.13'
@@ -65,6 +62,17 @@ jobs:
           # https://github.com/psycopg/psycopg2/pull/1695
           - python-version: '3.13'
             psycopg-version: 'psycopg2'
+    env:
+      RDBMS: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_HOST: localhost
+      POSTGRES_PORT: 5432
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      TEST_DATABASE_CLIENT_VERSION: ${{ matrix.psycopg-version }}
+      TEST_DATABASE_VERSION: ${{ matrix.postgres-version }}
 
     # Service containers to run with `runner-job`
     services:
@@ -88,91 +96,58 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python ${{ matrix.python-version }}
+      id: sp
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
 
-    - name: Install Poetry
+    - name: Setup Just
+      uses: extractions/setup-just@v2
+    - name: Install Release Dependencies
       run: |
-        pip install pipx
-        pipx ensurepath
-        pipx install poetry
-        poetry config --local virtualenvs.create true
-        poetry config --local virtualenvs.in-project true
-        poetry env use python
+        just init ${{ steps.sp.outputs.python-path }}
+        just install-postgres
+        just pin-dependency Django~=${{ matrix.django-version }}.0
     - name: Install Emacs
-      if: ${{ github.event.inputs.debug == 'on' }}
+      if: ${{ github.event.inputs.debug == 'true' }}
       run: |
         sudo apt install emacs
     - name: Setup tmate session
-      if: ${{ github.event.inputs.debug == 'on' }}
-      uses: mxschmitt/action-tmate@v3
+      if: ${{ github.event.inputs.debug == 'true' }}
+      uses: mxschmitt/action-tmate@v3.19
       with:
         detached: true
       timeout-minutes: 60
-    - name: Install Basic Dependencies
-      # it'd be great if you could just tell poetry to lock to specific versions
+    - name: Run Unit Tests
       run: |
-        poetry config virtualenvs.in-project true
-        poetry run pip install --upgrade pip
-        sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
-        poetry add django@^${{ matrix.django-version }}
-        poetry install --no-interaction --with ${{ matrix.psycopg-version }}
-        poetry run ./manage.py makemigrations
-    - name: No Optional Dependency Unit Tests
-      run: |
-        poetry run pytest --cov-append
-    - name: Install enum-properties
-      run: |
-        poetry install -E properties
-    - name: Unit Tests w/ enum-properties
-      run: |
-        poetry run ./manage.py makemigrations
-        poetry run pytest --cov-append
-    - name: Remove enum-properties
-      run: |
-        poetry run pip uninstall -y enum-properties
-    - name: Install djangorestframework
-      run: |
-        poetry install -E djangorestframework
-    - name: Run Unit Tests w/ djangorestframework
-      run: |
-        poetry run pytest --cov-append
-    - name: Install django-filters
-      run: |
-        poetry install -E filters
-    - name: Run Unit Tests w/ django-filter
-      run: |
-        poetry run pytest --cov-append
-    - name: Install all deps
-      run: |
-        poetry run ./manage.py makemigrations
-        poetry install -E all
-    - name: Run Full Unit Tests
-      run: |
-        poetry run pytest --cov-append
-        mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}.coverage
-
+        just test ./tests/verify_environment.py
+        just test-all
     - name: Store coverage files
       uses: actions/upload-artifact@v4
       with:
-        name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}
-        path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.psycopg-version }}-pg${{ matrix.postgres-version }}.coverage
+        name: ${{ env.COVERAGE_FILE }}
+        path: ${{ env.COVERAGE_FILE }}
+    
 
   sqlite:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     env:
       RDBMS: sqlite
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      TEST_DATABASE_VERSION: "sqlite"
     strategy:
       matrix:
-        python-version: [ '3.8', '3.12']
-        #mysqlclient-version: ['^1.0.3']
+        python-version: [ '3.9', '3.12']
         django-version:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
         exclude:
-          - python-version: '3.8'
+          - python-version: '3.9'
             django-version: '5.1'
           - python-version: '3.12'
             django-version: '3.2'
@@ -181,54 +156,45 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
+        id: sp
         with:
           python-version: ${{ matrix.python-version }}
 
-      - name: Install Poetry
+      - name: Setup Just
+        uses: extractions/setup-just@v2
+      - name: Install Release Dependencies
         run: |
-          pip install pipx
-          pipx ensurepath
-          pipx install poetry
-          poetry config --local virtualenvs.create true
-          poetry config --local virtualenvs.in-project true
-          poetry env use python
+          just init ${{ steps.sp.outputs.python-path }}
+          just install
+          just pin-dependency Django~=${{ matrix.django-version }}.0
       - name: Install Emacs
-        if: ${{ github.event.inputs.debug == 'on' }}
+        if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
-        if: ${{ github.event.inputs.debug == 'on' }}
-        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@v3.19
         with:
           detached: true
         timeout-minutes: 60
-      - name: Install Dependencies
+      - name: Run Unit Tests
         run: |
-          poetry config virtualenvs.in-project true
-          poetry run pip install --upgrade pip
-          sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
-          poetry add django@^${{ matrix.django-version }}
-          poetry install --no-interaction -E all
-          poetry run ./manage.py makemigrations
-      - name: Run Full Unit Tests
-        run: |
-          poetry run pytest
-          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
-
+          just test ./tests/verify_environment.py
+          just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite
-          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
-
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+        
 
   mysql:
     runs-on: ubuntu-latest
-    env:
-      RDBMS: mysql
+    permissions:
+      actions: write
     strategy:
       matrix:
-        python-version: [ '3.8', '3.12']
+        python-version: [ '3.9', '3.12']
         mysql-version: ['5.7', 'latest']
         mysqlclient-version: ['1.4.3', '']
         django-version:
@@ -238,7 +204,7 @@ jobs:
         exclude:
           - python-version: '3.12'
             django-version: '3.2'
-          - python-version: '3.8'
+          - python-version: '3.9'
             django-version: '5.1'
 
           - django-version: '3.2'
@@ -252,7 +218,15 @@ jobs:
             mysqlclient-version: ''
           - mysql-version: 'latest'
             mysqlclient-version: '1.4.3'
-
+  
+    env:
+      RDBMS: mysql
+      MYSQL_VERSION: ${{ matrix.mysql-version }}
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      TEST_DATABASE_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
+      TEST_DATABASE_VERSION: ${{ matrix.mysql-version }}
 
     services:
       mysql:
@@ -276,59 +250,55 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
+        id: sp
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        run: |
-          pip install pipx
-          pipx ensurepath
-          pipx install poetry
-          poetry config --local virtualenvs.create true
-          poetry config --local virtualenvs.in-project true
-          poetry env use python
       - name: Install Emacs
-        if: ${{ github.event.inputs.debug == 'on' }}
+        if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
-        if: ${{ github.event.inputs.debug == 'on' }}
-        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@v3.19
         with:
           detached: true
         timeout-minutes: 60
-      - name: Install Dependencies
+      - name: Setup Just
+        uses: extractions/setup-just@v2
+      - name: Install Release Dependencies
         run: |
-          poetry config virtualenvs.in-project true
-          poetry run pip install --upgrade pip
-          sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
-          poetry add django@^${{ matrix.django-version }}
-          poetry install -E all --with mysql
-          poetry run ./manage.py makemigrations
+          just init ${{ steps.sp.outputs.python-path }}
+          just install-mysql
+          just pin-dependency Django~=${{ matrix.django-version }}.0
+      
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
-      - name: Run Full Unit Tests
-        env:
-          MYSQL_VERSION: ${{ matrix.mysql-version }}
+        run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
+      - name: Run Unit Tests
         run: |
-          poetry run pytest
-          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}.coverage
-
+          just test ./tests/verify_environment.py
+          just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}
-          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mysql${{ matrix.mysql-version }}.coverage
-
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
 
   mariadb:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     env:
       RDBMS: mariadb
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      TEST_DATABASE_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
+      TEST_DATABASE_VERSION: ${{ matrix.mariadb-version }}
+
     strategy:
       matrix:
-        python-version: [ '3.8', '3.12']
+        python-version: [ '3.9', '3.12']
         mysqlclient-version: ['1.4.3', '']
         mariadb-version: ['10.2', 'latest']
         mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
@@ -339,7 +309,7 @@ jobs:
         exclude:
           - python-version: '3.12'
             django-version: '3.2'
-          - python-version: '3.8'
+          - python-version: '3.9'
             django-version: '5.1'
 
           - django-version: '3.2'
@@ -381,57 +351,57 @@ jobs:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
+        id: sp
         with:
           python-version: ${{ matrix.python-version }}
-
-      - name: Install Poetry
-        run: |
-          pip install pipx
-          pipx ensurepath
-          pipx install poetry
-          poetry config --local virtualenvs.create true
-          poetry config --local virtualenvs.in-project true
-          poetry env use python
       - name: Install Emacs
-        if: ${{ github.event.inputs.debug == 'on' }}
+        if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
-        if: ${{ github.event.inputs.debug == 'on' }}
-        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@v3.19
         with:
           detached: true
         timeout-minutes: 60
-      - name: Install Dependencies
+      - name: Setup Just
+        uses: extractions/setup-just@v2
+      - name: Install Release Dependencies
         run: |
-          poetry config virtualenvs.in-project true
-          poetry run pip install --upgrade pip
-          sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
-          poetry add django@^${{ matrix.django-version }}
-          poetry install -E all --with mysql
-          poetry run ./manage.py makemigrations
+          just init ${{ steps.sp.outputs.python-path }}
+          just install-mysql
+          just pin-dependency Django~=${{ matrix.django-version }}.0
+      
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: poetry run pip install -U mysqlclient=="${{ matrix.mysqlclient-version }}"
-      - name: Run Full Unit Tests
+        run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
+      - name: Run Unit Tests
         run: |
-          poetry run pytest
-          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
-
+          just test ./tests/verify_environment.py
+          just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}
-          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-myclient${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
-
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
 
   oracle:
     runs-on: ubuntu-latest
+    permissions:
+      actions: write
     env:
       RDBMS: oracle
+      COVERAGE_FILE: linux-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      TEST_DATABASE_VERSION: ${{ matrix.oracle-version }}
+      # oracle bug is encountered in Linux CI - does not manifest using same
+      # oracle DB containers on OSX
+      IGNORE_ORA_01843: True
+      IGNORE_ORA_00932: True
     strategy:
       matrix:
-        python-version: ['3.8', '3.10', '3.12']
+        python-version: ['3.9', '3.10', '3.12']
         django-version:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
@@ -440,7 +410,7 @@ jobs:
           - '18'
           - 'latest'
         exclude:
-          - python-version: '3.8'
+          - python-version: '3.9'
             django-version: '5.1'
           - python-version: '3.10'
             django-version: '5.1'
@@ -450,7 +420,7 @@ jobs:
             django-version: '3.2'
           - python-version: '3.12'
             django-version: '4.2'
-          - python-version: '3.8'
+          - python-version: '3.9'
             django-version: '4.2'
           - django-version: '3.2'
             oracle-version: 'latest'
@@ -461,16 +431,12 @@ jobs:
 
     services:
       oracle:
-
         image: gvenzl/oracle-xe:${{ matrix.oracle-version }}
-
         env:
           ORACLE_PASSWORD: password
-
         # Forward Oracle port
         ports:
           - 1521:1521
-
         # Provide healthcheck script options for startup
         options: >-
           --health-cmd healthcheck.sh
@@ -481,33 +447,22 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Set up Python ${{ matrix.python-version }}
+        id: sp
         uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Set Variables
-        # oracle bug is encountered in Linux CI - does not manifest using same
-        # oracle DB containers on OSX
-        run: |
-          echo "IGNORE_ORA_01843=True" >> $GITHUB_ENV
-          echo "IGNORE_ORA_00932=True" >> $GITHUB_ENV
-      - name: Install Poetry
-        run: |
-          pip install pipx
-          pipx ensurepath
-          pipx install poetry
-          poetry config --local virtualenvs.create true
-          poetry config --local virtualenvs.in-project true
-          poetry env use python
       - name: Install Emacs
-        if: ${{ github.event.inputs.debug == 'on' }}
+        if: ${{ github.event.inputs.debug == 'true' }}
         run: |
           sudo apt install emacs
       - name: Setup tmate session
-        if: ${{ github.event.inputs.debug == 'on' }}
-        uses: mxschmitt/action-tmate@v3
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@v3.19
         with:
           detached: true
         timeout-minutes: 60
+      - name: Setup Just
+        uses: extractions/setup-just@v2
       - name: Install Oracle Client
         # https://askubuntu.com/questions/1512196/libaio1-on-noble
         run: |
@@ -517,8 +472,15 @@ jobs:
           sudo sh -c "echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf"
           sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
           sudo ldconfig
+      - name: Install Release Dependencies
+        run: |
+          just init ${{ steps.sp.outputs.python-path }}
+          just install-oracle
+          just pin-dependency Django~=${{ matrix.django-version }}.0
       - name: Install Dependencies
         run: |
+          just init ${{ steps.sp.outputs.python-path }}
+          just install-oracle
           poetry config virtualenvs.in-project true
           poetry run pip install --upgrade pip
           sed -i 's/^python = .*/python = "^${{ matrix.python-version }}"/' pyproject.toml
@@ -527,65 +489,45 @@ jobs:
           poetry run ./manage.py makemigrations
       - name: Run Full Unit Tests
         run: |
-          poetry run pytest -s
-          mv .coverage py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}.coverage
+          just test ./tests/verify_environment.py
+          just test
 
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
-          name: coverage-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}
-          path: py${{ matrix.python-version }}-dj${{ matrix.django-version }}-oracle${{ matrix.oracle-version }}.coverage
-
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+            
 
   coverage-combine:
     needs: [postgres, sqlite, mysql, mariadb, oracle]
     runs-on: ubuntu-latest
 
     steps:
-      - name: Install Emacs
-        if: ${{ github.event.inputs.debug == 'on' }}
-        run: |
-          sudo apt install emacs
-      - name: Setup tmate session
-        if: ${{ github.event.inputs.debug == 'on' }}
-        uses: mxschmitt/action-tmate@v3
-        with:
-          detached: true
-        timeout-minutes: 60
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
+        id: sp
         with:
           python-version: '3.12'
-      
-      - name: Install Poetry
-        run: |
-          pip install pipx
-          pipx ensurepath
-          pipx install poetry
-          poetry config --local virtualenvs.create true
-          poetry config --local virtualenvs.in-project true
-          poetry env use python
-    
+
+      - name: Setup Just
+        uses: extractions/setup-just@v2
       - name: Install Release Dependencies
         run: |
-          poetry config virtualenvs.in-project true
-          poetry run pip install --upgrade pip
-          poetry install
+          just init ${{ steps.sp.outputs.python-path }}
+          just install
 
       - name: Get coverage files
         uses: actions/download-artifact@v4
         with:
-          pattern: coverage-*
+          pattern: "*.coverage"
           merge-multiple: true
-
       - run: ls -la *.coverage
-      - run: poetry run coverage combine --keep *.coverage
-      - run: poetry run coverage report
-      - run: poetry run coverage xml
+      - run: just coverage
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          file: ./coverage.xml
-          verbose: true
+          files:
+            ./coverage.xml

@@ -44,7 +44,7 @@ Django Enum
    :target: https://www.postgresql.org/
 
 .. |MySQL| image:: https://img.shields.io/badge/MySQL-5.7%2B-blue
-    :target: https://www.mysql.com/
+    :target: https://www.mysql.com
 
 .. |MariaDB| image:: https://img.shields.io/badge/MariaDB-10.2%2B-blue
     :target: https://mariadb.org/
