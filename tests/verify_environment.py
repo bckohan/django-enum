@@ -57,6 +57,14 @@ def test():
                     expected_version
                     == get_postgresql_version()[: len(expected_version)]
                 )
+            if expected_client == "psycopg3":
+                import psycopg
+
+                assert psycopg.__version__[0] == "3"
+            else:
+                import psycopg2
+
+                assert psycopg2.__version__[0] == "2"
             assert find_spec(expected_client), f"{expected_client} not installed"
         elif rdbms == "mysql":
             pass

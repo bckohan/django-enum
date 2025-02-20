@@ -29,9 +29,11 @@ install-docs:
     poetry install --with docs
 
 install-psycopg2:
+    poetry run pip uninstall -y psycopg
     poetry install --with psycopg2
 
 install-psycopg3:
+    poetry run pip uninstall -y psycopg2
     poetry install --with psycopg3
 
 install-mysql:
