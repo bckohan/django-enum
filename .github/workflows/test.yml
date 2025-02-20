@@ -120,7 +120,7 @@ jobs:
       timeout-minutes: 60
     - name: Run Unit Tests
       run: |
-        poetry run ./manage.py makemigrations
+        just run ./manage.py makemigrations
         just test ./tests/verify_environment.py
         just test-all
     - name: Store coverage files
@@ -180,7 +180,7 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
-          poetry run ./manage.py makemigrations
+          just run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
@@ -278,7 +278,7 @@ jobs:
         run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          poetry run ./manage.py makemigrations
+          just run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
@@ -380,7 +380,7 @@ jobs:
         run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          poetry run ./manage.py makemigrations
+          just run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
@@ -483,7 +483,7 @@ jobs:
           just pin-dependency Django~=${{ matrix.django-version }}.0
       - name: Run Full Unit Tests
         run: |
-          poetry run ./manage.py makemigrations
+          just run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just test
 

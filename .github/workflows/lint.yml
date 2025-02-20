@@ -67,6 +67,7 @@ jobs:
         timeout-minutes: 60
       - name: Run Static Analysis
         run: |
+          just run ./manage.py makemigrations
           just test ./tests/verify_environment.py
           just check-lint
           just check-format
