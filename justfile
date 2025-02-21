@@ -42,8 +42,9 @@ install-mysql:
 install-oracle:
     poetry install --with oracle
 
-# install a dependency to a specific version e.g. just lock Django~=5.1.0
-lock +PACKAGES:
+# lock to specific python and versions of given dependencies
+test-lock PYTHON +PACKAGES:
+    python -c 'import re; s=open("pyproject.toml").read(); open("pyproject.toml", "w").write(re.sub(r"^requires-python = .*$", "requires-python = \"{{ PYTHON }}\"", s, flags=re.M))'
     poetry add {{ PACKAGES }}
 
 # run static type checking

@@ -107,7 +107,7 @@ jobs:
       run: |
         just init ${{ steps.sp.outputs.python-path }}
         just install-${{ matrix.psycopg-version }}
-        just lock Django~=${{ matrix.django-version }}.0
+        just test-lock  ${{ matrix.python-version }} Django~=${{ matrix.django-version }}.0
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
       run: |
@@ -167,7 +167,7 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install
-          just lock Django~=${{ matrix.django-version }}.0
+          just test-lock  ${{ matrix.python-version }} Django~=${{ matrix.django-version }}.0
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
@@ -271,11 +271,11 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install-mysql
-          just lock Django~=${{ matrix.django-version }}.0
+          just test-lock  ${{ matrix.python-version }} Django~=${{ matrix.django-version }}.0
       
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just lock mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just test-lock  ${{ matrix.python-version }} mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
           just run ./manage.py makemigrations
@@ -373,11 +373,11 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install-mysql
-          just lock Django~=${{ matrix.django-version }}.0
+          just test-lock  ${{ matrix.python-version }} Django~=${{ matrix.django-version }}.0
       
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just lock mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just test-lock  ${{ matrix.python-version }} mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
           just run ./manage.py makemigrations
@@ -480,7 +480,7 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install-oracle
-          just lock Django~=${{ matrix.django-version }}.0
+          just test-lock  ${{ matrix.python-version }} Django~=${{ matrix.django-version }}.0
       - name: Run Full Unit Tests
         run: |
           just run ./manage.py makemigrations
