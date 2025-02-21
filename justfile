@@ -45,7 +45,7 @@ install-oracle:
 # lock to specific python and versions of given dependencies
 test-lock +PACKAGES:
     pip install tomlkit
-    python -c "import tomlkit,sys;f='pyproject.toml';d=tomlkit.parse(open(f).read());d['project']['requires-python']='{}'.format(sys.version.split()[0]);open(f,'w').write(tomlkit.dumps(d))"
+    python -c "import tomlkit,sys;f='pyproject.toml';d=tomlkit.parse(open(f).read());d['project']['requires-python']='=={}'.format(sys.version.split()[0]);open(f,'w').write(tomlkit.dumps(d))"
     poetry add {{ PACKAGES }}
 
 # run static type checking
