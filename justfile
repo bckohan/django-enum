@@ -152,13 +152,13 @@ test-all:
     # todo clean this up, rerunning a lot of tests
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
-    poetry run pip install enum-properties
+    poetry run pip install properties
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
-    poetry run pip install djangorestframework
+    poetry run install -E rest
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
-    poetry run pip install django-filter
+    poetry run pip install filters
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
 

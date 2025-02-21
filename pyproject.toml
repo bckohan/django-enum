@@ -53,7 +53,7 @@ packages = [{ include = "django_enum" }]
 [project.optional-dependencies]
 properties = ["enum-properties>=2.0.0"]
 filters = ["django-filter>=21"]
-djangorestframework = ["djangorestframework>=3.9,<4.0"]
+rest = ["djangorestframework>=3.9,<4.0"]
 
 
 [project.urls]
