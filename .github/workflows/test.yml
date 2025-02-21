@@ -142,7 +142,7 @@ jobs:
       TEST_DATABASE_VERSION: "sqlite"
     strategy:
       matrix:
-        python-version: [ '3.9', '3.12']
+        python-version: [ '3.9', '3.13']
         django-version:
           - '3.2' # LTS April 2024
           - '4.2' # LTS April 2026
@@ -150,7 +150,7 @@ jobs:
         exclude:
           - python-version: '3.9'
             django-version: '5.1'
-          - python-version: '3.12'
+          - python-version: '3.13'
             django-version: '3.2'
 
     steps:
@@ -196,7 +196,7 @@ jobs:
       actions: write
     strategy:
       matrix:
-        python-version: [ '3.9', '3.12']
+        python-version: [ '3.9', '3.13']
         mysql-version: ['5.7', 'latest']
         mysqlclient-version: ['1.4.3', '']
         django-version:
@@ -204,7 +204,7 @@ jobs:
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
         exclude:
-          - python-version: '3.12'
+          - python-version: '3.13'
             django-version: '3.2'
           - python-version: '3.9'
             django-version: '5.1'
@@ -301,7 +301,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: [ '3.9', '3.12']
+        python-version: [ '3.9', '3.13']
         mysqlclient-version: ['1.4.3', '']
         mariadb-version: ['10.2', 'latest']
         mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
@@ -310,7 +310,7 @@ jobs:
           - '4.2' # LTS April 2026
           - '5.1' # December 2025
         exclude:
-          - python-version: '3.12'
+          - python-version: '3.13'
             django-version: '3.2'
           - python-version: '3.9'
             django-version: '5.1'
@@ -492,10 +492,129 @@ jobs:
         with:
           name: ${{ env.COVERAGE_FILE }}
           path: ${{ env.COVERAGE_FILE }}
-            
+  
+
+  windows:
+    runs-on: windows-latest
+    permissions:
+      actions: write
+    env:
+      RDBMS: sqlite
+      COVERAGE_FILE: windows-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      TEST_DATABASE_VERSION: "sqlite"
+    strategy:
+      matrix:
+        python-version: [ '3.9', '3.13']
+        django-version:
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.1' # December 2025
+        exclude:
+          - python-version: '3.9'
+            django-version: '5.1'
+          - python-version: '3.13'
+            django-version: '3.2'
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup Just
+        uses: extractions/setup-just@v2
+      - name: Install Release Dependencies
+        run: |
+          just init ${{ steps.sp.outputs.python-path }}
+          just install
+          just test-lock Django~=${{ matrix.django-version }}.0
+      - name: install-vim-windows
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: rhysd/action-setup-vim@v1
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@v3.19
+        with:
+          detached: true
+        timeout-minutes: 60
+      - name: Run Unit Tests
+        run: |
+          just run ./manage.py makemigrations
+          just test ./tests/verify_environment.py
+          just test-all
+      - name: Store coverage files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+
+  
+  macos:
+    runs-on: macos-latest
+    permissions:
+      actions: write
+    env:
+      RDBMS: sqlite
+      COVERAGE_FILE: macos-py${{ matrix.python-version }}-dj${{ matrix.django-version }}-sqlite.coverage
+      TEST_PYTHON_VERSION: ${{ matrix.python-version }}
+      TEST_DJANGO_VERSION: ${{ matrix.django-version }}
+      TEST_DATABASE_VERSION: "sqlite"
+    strategy:
+      matrix:
+        python-version: [ '3.9', '3.13']
+        django-version:
+          - '3.2' # LTS April 2024
+          - '4.2' # LTS April 2026
+          - '5.1' # December 2025
+        exclude:
+          - python-version: '3.9'
+            django-version: '5.1'
+          - python-version: '3.13'
+            django-version: '3.2'
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        id: sp
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Setup Just
+        uses: extractions/setup-just@v2
+      - name: Install Release Dependencies
+        run: |
+          just init ${{ steps.sp.outputs.python-path }}
+          just install
+          just test-lock Django~=${{ matrix.django-version }}.0
+      - name: install-emacs-macos
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          brew install emacs
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@v3.19
+        with:
+          detached: true
+        timeout-minutes: 60
+      - name: Run Unit Tests
+        run: |
+          just run ./manage.py makemigrations
+          just test ./tests/verify_environment.py
+          just test-all
+      - name: Store coverage files
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+        
 
   coverage-combine:
-    needs: [postgres, sqlite, mysql, mariadb, oracle]
+    needs: [postgres, sqlite, mysql, mariadb, oracle, windows, macos]
     runs-on: ubuntu-latest
 
     steps:

@@ -34,14 +34,14 @@ _FieldChoices = Iterable[Union[_Choice, _ChoiceNamedGroup]]
 
 
 class _ChoicesCallable(Protocol):
-    def __call__(self) -> _FieldChoices: ...
+    def __call__(self) -> _FieldChoices: ...  # pragma: no cover
 
 
 _ChoicesParameter = Union[_FieldChoices, _ChoicesCallable]
 
 
 class _CoerceCallable(Protocol):
-    def __call__(self, value: Any, /) -> Any: ...
+    def __call__(self, value: Any, /) -> Any: ...  # pragma: no cover
 
 
 class _Unspecified:
