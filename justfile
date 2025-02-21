@@ -152,13 +152,13 @@ test-all:
     # todo clean this up, rerunning a lot of tests
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
-    poetry run pip install properties
+    poetry install -E properties
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
-    poetry run install -E rest
+    poetry install -E rest
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
-    poetry run pip install filters
+    poetry install -E filters
     poetry run ./manage.py makemigrations
     poetry run pytest --cov-append
 
