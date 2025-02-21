@@ -42,9 +42,9 @@ install-mysql:
 install-oracle:
     poetry install --with oracle
 
-# install a dependency to a specific version e.g. just pin-dependency Django~=5.1.0
-pin-dependency +PACKAGES:
-    poetry run pip install -U {{ PACKAGES }}
+# install a dependency to a specific version e.g. just lock Django~=5.1.0
+lock +PACKAGES:
+    poetry add {{ PACKAGES }}
 
 # run static type checking
 check-types:

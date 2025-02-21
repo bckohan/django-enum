@@ -107,7 +107,7 @@ jobs:
       run: |
         just init ${{ steps.sp.outputs.python-path }}
         just install-${{ matrix.psycopg-version }}
-        just pin-dependency Django~=${{ matrix.django-version }}.0
+        just lock Django~=${{ matrix.django-version }}.0
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
       run: |
@@ -167,7 +167,7 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install
-          just pin-dependency Django~=${{ matrix.django-version }}.0
+          just lock Django~=${{ matrix.django-version }}.0
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
@@ -271,11 +271,11 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install-mysql
-          just pin-dependency Django~=${{ matrix.django-version }}.0
+          just lock Django~=${{ matrix.django-version }}.0
       
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
           just run ./manage.py makemigrations
@@ -373,11 +373,11 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install-mysql
-          just pin-dependency Django~=${{ matrix.django-version }}.0
+          just lock Django~=${{ matrix.django-version }}.0
       
       - name: Install mysqlclient if needed
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just pin-dependency mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
           just run ./manage.py makemigrations
@@ -480,7 +480,7 @@ jobs:
         run: |
           just init ${{ steps.sp.outputs.python-path }}
           just install-oracle
-          just pin-dependency Django~=${{ matrix.django-version }}.0
+          just lock Django~=${{ matrix.django-version }}.0
       - name: Run Full Unit Tests
         run: |
           just run ./manage.py makemigrations
