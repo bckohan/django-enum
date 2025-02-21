@@ -54,7 +54,7 @@ jobs:
       - name: Install Dependencies
         run: |
           just init ${{ steps.sp.outputs.python-path }} install-docs
-          just lock ${{ matrix.python-version }} Django~=${{ matrix.django-version }}.0
+          just test-lock ${{ matrix.python-version }} Django~=${{ matrix.django-version }}.0
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
         run: |
