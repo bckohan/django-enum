@@ -43,8 +43,8 @@ install-oracle:
     poetry install --with oracle
 
 # lock to specific python and versions of given dependencies
-test-lock PYTHON +PACKAGES:
-    python -c 'import re; s=open("pyproject.toml").read(); open("pyproject.toml", "w").write(re.sub(r"^requires-python = .*$", "requires-python = \"{{ PYTHON }}\"", s, flags=re.M))'
+test-lock +PACKAGES:
+    python -c 'import sys; import re; s=open("pyproject.toml").read(); open("pyproject.toml", "w").write(re.sub(r"^requires-python = .*$", f"requires-python = \"=={sys.version.split()[0]}\"", s, flags=re.M))'
     poetry add {{ PACKAGES }}
 
 # run static type checking
