@@ -5,6 +5,7 @@ permissions: read-all
 on:
   push:
   pull_request:
+  workflow_call:
   workflow_dispatch:
     inputs:
       debug:
