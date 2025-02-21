@@ -19,7 +19,7 @@ keywords = [
     "enum",  "properties", "defines", "field", "django", "database",
     "bitmask", "mask", "bitfield", "flags"
 ]
-dependencies = ["django (>=4.2,<5.0)"]
+dependencies = ["django (>=3.2,<6.0)"]
 classifiers = [
     "Environment :: Console",
     "Framework :: Django",
