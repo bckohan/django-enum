@@ -86,7 +86,6 @@ django-stubs = {extras = ["compatible-mypy"], version = ">=4.2.7"}
 ruff = "^0.9"
 typing-extensions = "^4.12.2"
 pre-commit = "^4.0.1"
-tomlkit = "^0.13.2"
 
 [tool.poetry.group.docs]
 optional = true
