@@ -151,16 +151,16 @@ check: check-lint check-format check-types check-package check-docs check-docs-l
 test-all:
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
-    poetry run ./manage.py makemigrations
+    poetry run python manage.py makemigrations
     poetry run pytest --cov-append
     poetry install -E properties
-    poetry run ./manage.py makemigrations
+    poetry run python manage.py makemigrations
     poetry run pytest --cov-append
     poetry install -E rest
-    poetry run ./manage.py makemigrations
+    poetry run python manage.py makemigrations
     poetry run pytest --cov-append
     poetry install -E filters
-    poetry run ./manage.py makemigrations
+    poetry run python manage.py makemigrations
     poetry run pytest --cov-append
 
 # run tests
