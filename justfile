@@ -44,7 +44,7 @@ install-oracle:
 
 # lock to specific python and versions of given dependencies
 test-lock +PACKAGES:
-    python -c 'import sys; import re; s=open("pyproject.toml").read(); open("pyproject.toml", "w").write(re.sub(r"^requires-python = .*$", f"requires-python = \"=={sys.version.split()[0]}\"", s, flags=re.M))'
+    python -c "import tomlkit,sys;f='pyproject.toml';d=tomlkit.parse(open(f).read());d['project']['requires-python']='{}'.format(sys.version.split()[0]);open(f,'w').write(tomlkit.dumps(d))"
     poetry add {{ PACKAGES }}
 
 # run static type checking
