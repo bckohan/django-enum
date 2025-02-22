@@ -1,69 +1,75 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 set unstable := true
+set script-interpreter := ['uv', 'run', '--script']
 
-# list all available commands
+[private]
 default:
-    @just --list
+    @just --list --list-submodules
+
+[script]
+manage *COMMAND:
+    import os
+    import sys
+    from django.core import management
+    sys.path.append(os.getcwd())
+    os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings"
+    management.execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
 # install build tooling
 init python="python":
     pip install pipx
     pipx ensurepath
-    pipx install poetry
-    poetry env use {{ python }}
-    poetry run pip install --upgrade pip setuptools wheel
+    pipx install uv
+    uv venv -p {{ python }}
+    @just run pre-commit install
 
 # install git pre-commit hooks
 install-precommit:
-    poetry run pre-commit install
+    @just run pre-commit install
 
 # update and install development dependencies
 install *OPTS:
     poetry lock
     poetry install {{ OPTS }}
-    poetry run pre-commit install
+    @just run pre-commit install
 
 # install documentation dependencies
 install-docs:
-    poetry lock
-    poetry install --with docs
+    uv sync --group docs
 
-install-psycopg2:
-    poetry run pip uninstall -y psycopg
-    poetry install --with psycopg2
-
-install-psycopg3:
-    poetry run pip uninstall -y psycopg2
-    poetry install --with psycopg3
-
-install-mysql:
-    poetry install --with mysql
-
-install-oracle:
-    poetry install --with oracle
+[script]
+_lock-python:
+    import tomlkit
+    import sys
+    f='pyproject.toml'
+    d=tomlkit.parse(open(f).read())
+    d['project']['requires-python']='=={}'.format(sys.version.split()[0])
+    open(f,'w').write(tomlkit.dumps(d))
 
 # lock to specific python and versions of given dependencies
-test-lock +PACKAGES:
-    pip install tomlkit
-    python -c "import tomlkit,sys;f='pyproject.toml';d=tomlkit.parse(open(f).read());d['project']['requires-python']='=={}'.format(sys.version.split()[0]);open(f,'w').write(tomlkit.dumps(d))"
-    poetry add {{ PACKAGES }}
+test-lock +PACKAGES: _lock-python
+    uv add {{ PACKAGES }}
 
 # run static type checking
 check-types:
-    poetry run mypy django_enum
+    @just run mypy src/django_enum
 
 # run package checks
 check-package:
-    poetry check
-    poetry run pip check
+    @just run pip check
 
 # remove doc build artifacts
+[script]
 clean-docs:
-    python -c "import shutil; shutil.rmtree('./doc/build', ignore_errors=True)"
+    import shutil
+    shutil.rmtree('./doc/build', ignore_errors=True)
 
 # remove the virtual environment
+[script]
 clean-env:
-    python -c "import shutil, sys; shutil.rmtree(sys.argv[1], ignore_errors=True)" $(poetry env info --path)
+    import shutil
+    import sys
+    shutil.rmtree(".venv", ignore_errors=True)
 
 # remove all git ignored files
 clean-git-ignored:
@@ -74,72 +80,80 @@ clean: clean-docs clean-env clean-git-ignored
 
 # build html documentation
 build-docs-html: install-docs
-    poetry run sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
+    @just run sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
 
 # build pdf documentation
 build-docs-pdf: install-docs
-    poetry run sphinx-build --fresh-env --builder latexpdf --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
+    @just run sphinx-build --fresh-env --builder latexpdf --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
 
 # build the docs
 build-docs: build-docs-html
 
-# build the wheel distribution
-build-wheel:
-    poetry build -f wheel
-
-# build the source distribution
-build-sdist:
-    poetry build -f sdist
-
 # build docs and package
 build: build-docs-html
-    poetry build
+    uv build
 
 # open the html documentation
+[script]
 open-docs:
-    poetry run python -c "import webbrowser; webbrowser.open('file://$(pwd)/doc/build/html/index.html')"
+    import os
+    import webbrowser
+    webbrowser.open(f'file://{os.getcwd()}/doc/build/html/index.html')
 
 # build and open the documentation
 docs: build-docs-html open-docs
 
 # serve the documentation, with auto-reload
 docs-live: install-docs
-    poetry run sphinx-autobuild doc/source doc/build --open-browser --watch django_enum --port 8000 --delay 1
+    @just run sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8000 --delay 1
+
+_link_check:
+    -uv run sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
 
 # check the documentation links for broken links
-check-docs-links:
-    -poetry run sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
-    poetry run python ./doc/broken_links.py
+[script]
+check-docs-links: _link_check
+    import os
+    import sys
+    import json
+    from pathlib import Path
+    # The json output isn't valid, so we have to fix it before we can process.
+    data = json.loads(f"[{','.join((Path(os.getcwd()) / 'doc/build/output.json').read_text().splitlines())}]")
+    broken_links = [link for link in data if link["status"] not in {"working", "redirected", "unchecked", "ignored"}]
+    if broken_links:
+        for link in broken_links:
+            print(f"[{link['status']}] {link['filename']}:{link['lineno']} -> {link['uri']}", file=sys.stderr)
+        sys.exit(1)
 
 # lint the documentation
 check-docs:
-    poetry run doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
+    @just run doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
 
 # lint the code
 check-lint:
-    poetry run ruff check --select I
-    poetry run ruff check
+    @just run ruff check --select I
+    @just run ruff check
 
 # check if the code needs formatting
 check-format:
-    poetry run ruff format --check
+    @just run ruff format --check
 
 # check that the readme renders
 check-readme:
-    poetry run python -m readme_renderer ./README.md -o /tmp/README.html
+    @just run python -m readme_renderer ./README.md -o /tmp/README.html
 
 # sort the python imports
 sort-imports:
-    poetry run ruff check --fix --select I
+    @just run ruff check --fix --select I
 
 # format the code and sort imports
 format: sort-imports
     just --fmt --unstable
-    poetry run ruff format
+    @just run ruff format
 
 # sort the imports and fix linting issues
 lint: sort-imports
-    poetry run ruff check --fix
+    @just run ruff check --fix
 
 # fix formatting, linting issues and import sorting
 fix: lint format
@@ -148,35 +162,36 @@ fix: lint format
 check: check-lint check-format check-types check-package check-docs check-docs-links check-readme
 
 # run all tests
-test-all:
+test-all DB_CLIENT:
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
-    poetry run python manage.py makemigrations
-    poetry run pytest --cov-append
-    poetry install -E properties
-    poetry run python manage.py makemigrations
-    poetry run pytest --cov-append
-    poetry install -E rest
-    poetry run python manage.py makemigrations
-    poetry run pytest --cov-append
-    poetry install -E filters
-    poetry run python manage.py makemigrations
-    poetry run pytest --cov-append
+    uv sync --group {{ DB_CLIENT }}
+    @just manage makemigrations
+    @just run pytest --cov-append
+    uv sync --extra properties --group {{ DB_CLIENT }}
+    @just manage makemigrations
+    @just run pytest --cov-append
+    uv sync --extra rest --group {{ DB_CLIENT }}
+    @just manage makemigrations
+    @just run pytest --cov-append
+    uv sync --extra filters --group {{ DB_CLIENT }}
+    @just manage makemigrations
+    @just run pytest --cov-append
 
 # run tests
 test *TESTS:
-    poetry run pytest --cov-append {{ TESTS }}
+    @just run pytest --cov-append {{ TESTS }}
 
 # run the pre-commit checks
 precommit:
-    poetry run pre-commit
+    @just run pre-commit
 
 # generate the test coverage report
 coverage:
-    poetry run coverage combine --keep *.coverage
-    poetry run coverage report
-    poetry run coverage xml
+    @just run coverage combine --keep *.coverage
+    @just run coverage report
+    @just run coverage xml
 
 # run the command in the virtual environment
 run +ARGS:
-    poetry run {{ ARGS }}
+    uv run {{ ARGS }}

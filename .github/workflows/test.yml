@@ -121,9 +121,9 @@ jobs:
       timeout-minutes: 60
     - name: Run Unit Tests
       run: |
-        just run ./manage.py makemigrations
+        just manage makemigrations
         just test ./tests/verify_environment.py
-        just test-all
+        just test-all ${{ matrix.psycopg-version }}
     - name: Store coverage files
       uses: actions/upload-artifact@v4
       with:
@@ -181,9 +181,9 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
-          just run ./manage.py makemigrations
+          just manage makemigrations
           just test ./tests/verify_environment.py
-          just test-all
+          just test-all dev
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
@@ -279,9 +279,9 @@ jobs:
         run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          just run ./manage.py makemigrations
+          just manage makemigrations
           just test ./tests/verify_environment.py
-          just test-all
+          just test-all ${{ matrix.mysqlclient-version }}
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
@@ -381,9 +381,9 @@ jobs:
         run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          just run ./manage.py makemigrations
+          just manage makemigrations
           just test ./tests/verify_environment.py
-          just test-all
+          just test-all ${{ matrix.mysqlclient-version }}
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
@@ -480,13 +480,12 @@ jobs:
       - name: Install Release Dependencies
         run: |
           just init ${{ steps.sp.outputs.python-path }}
-          just install-oracle
           just test-lock Django~=${{ matrix.django-version }}.0
       - name: Run Full Unit Tests
         run: |
-          just run ./manage.py makemigrations
+          just manage makemigrations
           just test ./tests/verify_environment.py
-          just test
+          just test-all oracle
 
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -543,9 +542,9 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
-          just run ./manage.py makemigrations
+          just manage makemigrations
           just test ./tests/verify_environment.py
-          just test-all
+          just test-all dev
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
@@ -602,9 +601,9 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
-          just run ./manage.py makemigrations
+          just manage makemigrations
           just test ./tests/verify_environment.py
-          just test-all
+          just test-all ${{ matrix.psycopg-version }}
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:

@@ -1,7 +1,3 @@
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
-
 [project]
 name = "django-enum"
 version = "2.1.0"
@@ -47,8 +43,9 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules"
 ]
 
-[tool.poetry]
-packages = [{ include = "django_enum" }]
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
 [project.optional-dependencies]
 properties = ["enum-properties>=2.0.0"]
@@ -65,67 +62,50 @@ rest = ["djangorestframework>=3.9,<4.0"]
 "Code_of_Conduct" = "https://github.com/bckohan/membership/blob/main/CODE_OF_CONDUCT.md"
 
 
-[tool.poetry.group.dev.dependencies]
-pytest = ">=7.0"
-mypy = ">=1.0"
-darglint = ">=1.5.7"
-pytest-cov = ">=4.0.0"
-deepdiff = ">=5.2.3"
-pygount = ">=1.2.4"
-types-PyYAML = ">=6.0"
-coverage = ">=6.2,<8.0"
-beautifulsoup4 = ">=4.11.1"
-pytest-django = ">=4.5.2"
-django-test-migrations = ">=1.2.0"
-python-dateutil = ">=2.8.2"
-ipdb = ">=0.13.13"
-tqdm = ">=4.65.0"
-matplotlib = ">=3.7.5"
-numpy = ">1.25"
-django-stubs = {extras = ["compatible-mypy"], version = ">=4.2.7"}
-ruff = "^0.9"
-typing-extensions = "^4.12.2"
-pre-commit = "^4.0.1"
-
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-furo = "2024.8.6"
-sphinx-tabs = "^3.4.5"
-readme-renderer = { extras = ["md"], version = "44"}
-doc8 = "^1.1.1"
-Sphinx = [
-    { version = "^8.0", markers = "python_version >= '3.10'" },
-    { version = "^7.4", markers = "python_version < '3.10'" }
+[dependency-groups]
+dev = [
+    "beautifulsoup4>=4.13.3",
+    "coverage>=7.6.12",
+    "darglint>=1.8.1",
+    "deepdiff>=8.2.0",
+    "django-stubs[compatible-mypy]>=5.1.3",
+    "django-test-migrations>=1.4.0",
+    "ipdb>=0.13.13",
+    "matplotlib>=3.9.4",
+    "mypy>=1.15.0",
+    "numpy>=2.0.2",
+    "pre-commit>=4.1.0",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-django>=4.10.0",
+    "python-dateutil>=2.9.0.post0",
+    "ruff>=0.9.7",
+    "tomlkit>=0.13.2",
+    "tqdm>=4.67.1",
+    "types-pyyaml>=6.0.12.20241230",
+    "typing-extensions>=4.12.2",
 ]
-docutils = "^0.21"
-sphinx-autobuild = "2024.10.3"
-
-[tool.poetry.group.psycopg2]
-optional = true
-
-[tool.poetry.group.psycopg2.dependencies]
-psycopg2 = "^2.5.4"
-
-[tool.poetry.group.psycopg3]
-optional = true
-
-[tool.poetry.group.psycopg3.dependencies]
-psycopg = "^3.1.8"
-
-[tool.poetry.group.mysql]
-optional = true
-
-[tool.poetry.group.mysql.dependencies]
-mysqlclient = ">=1.4.0"
-
-[tool.poetry.group.oracle]
-optional = true
-
-[tool.poetry.group.oracle.dependencies]
-cx-Oracle = '>=6.0.0'
-
+docs = [
+    "doc8>=1.1.2",
+    "docutils>=0.21.2",
+    "furo>=2024.8.6",
+    "readme-renderer>=44.0",
+    "sphinx>=7.4.7",
+    "sphinx-autobuild>=2024.10.3",
+    "sphinx-tabs>=3.4.7",
+]
+psycopg2 = [
+    "psycopg2>=2.9.10",
+]
+psycopg3 = [
+    "psycopg",
+]
+mysql = [
+    "mysqlclient>=1.4.0",
+]
+oracle = [
+    "cx-oracle>=8.3.0",
+]
 
 [tool.mypy]
 # The mypy configurations: http://bit.ly/2zEl9WI
