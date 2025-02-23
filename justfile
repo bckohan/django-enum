@@ -19,6 +19,8 @@ manage *COMMAND:
     management.execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
 # install the uv package manager
+[linux]
+[macos]
 install_uv:
     curl -LsSf https://astral.sh/uv/install.sh | sh
 

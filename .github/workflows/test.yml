@@ -283,7 +283,7 @@ jobs:
         run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          just test-all ${{ matrix.mysqlclient-version }}
+          just test-all mysql
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
@@ -386,7 +386,7 @@ jobs:
         run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          just test-all ${{ matrix.mysqlclient-version }}
+          just test-all mysql
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
