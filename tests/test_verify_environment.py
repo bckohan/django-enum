@@ -4,6 +4,7 @@ from django import VERSION
 from django.db import connection
 import typing as t
 from django.test import TestCase
+import pytest
 
 
 def get_postgresql_version() -> t.Tuple[int, ...]:
@@ -22,6 +23,10 @@ def get_mysql_version():
         print("MySQL version:", version[0])
 
 
+@pytest.mark.skipif(
+    os.environ.get("GITHUB_ACTIONS", None) != "true",
+    reason="This test is only for the CI environment.",
+)
 class TestEnvironment(TestCase):
     def test(self):
         # verify that the environment is set up correctly - this is used in CI to make
