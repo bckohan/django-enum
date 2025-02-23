@@ -8,8 +8,9 @@
 [![PyPI status](https://img.shields.io/pypi/status/django-enum.svg)](https://pypi.python.org/pypi/django-enum)
 [![Documentation Status](https://readthedocs.org/projects/django-enum/badge/?version=latest)](http://django-enum.readthedocs.io/?badge=latest/)
 [![Code Cov](https://codecov.io/gh/bckohan/django-enum/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/bckohan/django-enum)
-[![Test Status](https://github.com/bckohan/django-enum/workflows/test/badge.svg)](https://github.com/bckohan/django-enum/actions/workflows/test.yml)
-[![Lint Status](https://github.com/bckohan/django-enum/workflows/lint/badge.svg)](https://github.com/bckohan/django-enum/actions/workflows/lint.yml)
+[![Test Status](https://github.com/bckohan/django-enum/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/bckohan/django-enum/actions/workflows/test.yml?query=branch:main)
+[![Lint Status](https://github.com/bckohan/django-enum/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/bckohan/django-enum/actions/workflows/lint.yml?query=branch:main)
+
 
 ---------------------------------------------------------------------------------------------------
 

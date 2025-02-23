@@ -110,7 +110,6 @@ jobs:
     - name: Install Release Dependencies
       run: |
         just setup ${{ steps.sp.outputs.python-path }}
-        just install-${{ matrix.psycopg-version }}
         just test-lock Django~=${{ matrix.django-version }}.0
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
@@ -281,7 +280,6 @@ jobs:
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
-          just install-mysql
           just test-lock Django~=${{ matrix.django-version }}.0
       
       - name: Install mysqlclient if needed
@@ -387,7 +385,6 @@ jobs:
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
-          just install-mysql
           just test-lock Django~=${{ matrix.django-version }}.0
       
       - name: Install mysqlclient if needed
