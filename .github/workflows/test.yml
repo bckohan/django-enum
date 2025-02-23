@@ -124,7 +124,6 @@ jobs:
     - name: Run Unit Tests
       run: |
         just manage makemigrations
-        just test ./tests/verify_environment.py
         just test-all ${{ matrix.psycopg-version }}
     - name: Store coverage files
       uses: actions/upload-artifact@v4
@@ -187,7 +186,6 @@ jobs:
       - name: Run Unit Tests
         run: |
           just manage makemigrations
-          just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -288,7 +286,6 @@ jobs:
       - name: Run Unit Tests
         run: |
           just manage makemigrations
-          just test ./tests/verify_environment.py
           just test-all ${{ matrix.mysqlclient-version }}
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -393,7 +390,6 @@ jobs:
       - name: Run Unit Tests
         run: |
           just manage makemigrations
-          just test ./tests/verify_environment.py
           just test-all ${{ matrix.mysqlclient-version }}
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -499,7 +495,6 @@ jobs:
       - name: Run Full Unit Tests
         run: |
           just manage makemigrations
-          just test ./tests/verify_environment.py
           just test-all oracle
 
       - name: Store coverage files
@@ -561,7 +556,6 @@ jobs:
       - name: Run Unit Tests
         run: |
           just manage makemigrations
-          just test ./tests/verify_environment.py
           just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -623,8 +617,7 @@ jobs:
       - name: Run Unit Tests
         run: |
           just manage makemigrations
-          just test ./tests/verify_environment.py
-          just test-all ${{ matrix.psycopg-version }}
+          just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:

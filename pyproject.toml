@@ -91,6 +91,7 @@ dev = [
     "pytest-cov>=6.0.0",
     "pytest-django>=4.10.0",
     "python-dateutil>=2.9.0.post0",
+    "readme-renderer[markdown]>=44.0",
     "ruff>=0.9.7",
     "tomlkit>=0.13.2",
     "tqdm>=4.67.1",
