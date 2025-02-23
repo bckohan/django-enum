@@ -123,7 +123,6 @@ jobs:
       timeout-minutes: 60
     - name: Run Unit Tests
       run: |
-        just manage makemigrations
         just test-all ${{ matrix.psycopg-version }}
     - name: Store coverage files
       uses: actions/upload-artifact@v4
@@ -185,7 +184,6 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
-          just manage makemigrations
           just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -285,7 +283,6 @@ jobs:
         run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          just manage makemigrations
           just test-all ${{ matrix.mysqlclient-version }}
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -389,7 +386,6 @@ jobs:
         run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
       - name: Run Unit Tests
         run: |
-          just manage makemigrations
           just test-all ${{ matrix.mysqlclient-version }}
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -494,7 +490,6 @@ jobs:
           just test-lock Django~=${{ matrix.django-version }}.0
       - name: Run Full Unit Tests
         run: |
-          just manage makemigrations
           just test-all oracle
 
       - name: Store coverage files
@@ -555,7 +550,6 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
-          just manage makemigrations
           just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
@@ -616,7 +610,6 @@ jobs:
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
-          just manage makemigrations
           just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
