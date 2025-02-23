@@ -2,10 +2,13 @@ set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 set unstable := true
 set script-interpreter := ['uv', 'run', '--script']
 
+export PYTHONPATH := source_directory()
+
 [private]
 default:
     @just --list --list-submodules
 
+# run the django admin
 [script]
 manage *COMMAND:
     import os
@@ -15,11 +18,17 @@ manage *COMMAND:
     os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings"
     management.execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
-# install build tooling
-init python="python":
-    pip install pipx
-    pipx ensurepath
-    pipx install uv
+# install the uv package manager
+install_uv:
+    curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# install the uv package manager
+[windows]
+install_uv:
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+
+# setup the venv and pre-commit hooks
+setup python="python":
     uv venv -p {{ python }}
     @just run pre-commit install
 
@@ -29,13 +38,12 @@ install-precommit:
 
 # update and install development dependencies
 install *OPTS:
-    poetry lock
-    poetry install {{ OPTS }}
+    uv sync {{ OPTS }}
     @just run pre-commit install
 
 # install documentation dependencies
 install-docs:
-    uv sync --group docs
+    uv sync --group docs --all-extras
 
 [script]
 _lock-python:
@@ -140,7 +148,7 @@ check-format:
 
 # check that the readme renders
 check-readme:
-    @just run python -m readme_renderer ./README.md -o /tmp/README.html
+    @just run -m readme_renderer ./README.md -o /tmp/README.html
 
 # sort the python imports
 sort-imports:
@@ -162,7 +170,7 @@ fix: lint format
 check: check-lint check-format check-types check-package check-docs check-docs-links check-readme
 
 # run all tests
-test-all DB_CLIENT:
+test-all DB_CLIENT="dev":
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
     uv sync --group {{ DB_CLIENT }}
@@ -174,7 +182,7 @@ test-all DB_CLIENT:
     uv sync --extra rest --group {{ DB_CLIENT }}
     @just manage makemigrations
     @just run pytest --cov-append
-    uv sync --extra filters --group {{ DB_CLIENT }}
+    uv sync --all-extras --group {{ DB_CLIENT }}
     @just manage makemigrations
     @just run pytest --cov-append
 

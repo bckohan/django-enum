@@ -101,12 +101,15 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
-
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
     - name: Setup Just
       uses: extractions/setup-just@v2
     - name: Install Release Dependencies
       run: |
-        just init ${{ steps.sp.outputs.python-path }}
+        just setup ${{ steps.sp.outputs.python-path }}
         just install-${{ matrix.psycopg-version }}
         just test-lock Django~=${{ matrix.django-version }}.0
     - name: Install Emacs
@@ -161,12 +164,15 @@ jobs:
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Setup Just
         uses: extractions/setup-just@v2
       - name: Install Release Dependencies
         run: |
-          just init ${{ steps.sp.outputs.python-path }}
+          just setup ${{ steps.sp.outputs.python-path }}
           just install
           just test-lock Django~=${{ matrix.django-version }}.0
       - name: Install Emacs
@@ -183,7 +189,7 @@ jobs:
         run: |
           just manage makemigrations
           just test ./tests/verify_environment.py
-          just test-all dev
+          just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
@@ -266,11 +272,15 @@ jobs:
         with:
           detached: true
         timeout-minutes: 60
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Setup Just
         uses: extractions/setup-just@v2
       - name: Install Release Dependencies
         run: |
-          just init ${{ steps.sp.outputs.python-path }}
+          just setup ${{ steps.sp.outputs.python-path }}
           just install-mysql
           just test-lock Django~=${{ matrix.django-version }}.0
       
@@ -368,11 +378,15 @@ jobs:
         with:
           detached: true
         timeout-minutes: 60
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Setup Just
         uses: extractions/setup-just@v2
       - name: Install Release Dependencies
         run: |
-          just init ${{ steps.sp.outputs.python-path }}
+          just setup ${{ steps.sp.outputs.python-path }}
           just install-mysql
           just test-lock Django~=${{ matrix.django-version }}.0
       
@@ -466,6 +480,10 @@ jobs:
         with:
           detached: true
         timeout-minutes: 60
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Setup Just
         uses: extractions/setup-just@v2
       - name: Install Oracle Client
@@ -479,7 +497,7 @@ jobs:
           sudo ldconfig
       - name: Install Release Dependencies
         run: |
-          just init ${{ steps.sp.outputs.python-path }}
+          just setup ${{ steps.sp.outputs.python-path }}
           just test-lock Django~=${{ matrix.django-version }}.0
       - name: Run Full Unit Tests
         run: |
@@ -523,12 +541,15 @@ jobs:
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Setup Just
         uses: extractions/setup-just@v2
       - name: Install Release Dependencies
         run: |
-          just init ${{ steps.sp.outputs.python-path }}
+          just setup ${{ steps.sp.outputs.python-path }}
           just install
           just test-lock Django~=${{ matrix.django-version }}.0
       - name: install-vim-windows
@@ -544,7 +565,7 @@ jobs:
         run: |
           just manage makemigrations
           just test ./tests/verify_environment.py
-          just test-all dev
+          just test-all
       - name: Store coverage files
         uses: actions/upload-artifact@v4
         with:
@@ -581,12 +602,15 @@ jobs:
         id: sp
         with:
           python-version: ${{ matrix.python-version }}
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Setup Just
         uses: extractions/setup-just@v2
       - name: Install Release Dependencies
         run: |
-          just init ${{ steps.sp.outputs.python-path }}
+          just setup ${{ steps.sp.outputs.python-path }}
           just install
           just test-lock Django~=${{ matrix.django-version }}.0
       - name: install-emacs-macos
@@ -621,12 +645,15 @@ jobs:
         id: sp
         with:
           python-version: '3.12'
-
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
       - name: Setup Just
         uses: extractions/setup-just@v2
       - name: Install Release Dependencies
         run: |
-          just init ${{ steps.sp.outputs.python-path }}
+          just setup ${{ steps.sp.outputs.python-path }}
           just install
 
       - name: Get coverage files
