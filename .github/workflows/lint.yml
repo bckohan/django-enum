@@ -72,7 +72,7 @@ jobs:
       - name: Run Static Analysis
         run: |
           just manage makemigrations
-          just test ./tests/verify_environment.py
+          just test ./tests/test_verify_environment.py
           just check-lint
           just check-format
           just check-types
