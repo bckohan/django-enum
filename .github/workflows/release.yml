@@ -42,12 +42,16 @@ jobs:
       run: |
         TAG_NAME=${GITHUB_REF#refs/tags/}
         echo "Verifying tag $TAG_NAME..."
+        git fetch origin tag $TAG_NAME
         git tag -v "$TAG_NAME"
-    - name: Install pypa/build
-      run:
-        python3 -m pip install build --user
-    - name: Build a binary wheel and a source tarball
-      run: python3 -m build
+    - name: Install uv
+      uses: astral-sh/setup-uv@v5
+      with:
+        enable-cache: true
+    - name: Setup Just
+      uses: extractions/setup-just@v2
+    - name: Build the binary wheel and a source tarball
+      run: just build
     - name: Store the distribution packages
       uses: actions/upload-artifact@v4
       with:
