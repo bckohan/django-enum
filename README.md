@@ -10,7 +10,7 @@
 [![Code Cov](https://codecov.io/gh/bckohan/django-enum/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/bckohan/django-enum)
 [![Test Status](https://github.com/bckohan/django-enum/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/bckohan/django-enum/actions/workflows/test.yml?query=branch:main)
 [![Lint Status](https://github.com/bckohan/django-enum/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/bckohan/django-enum/actions/workflows/lint.yml?query=branch:main)
-
+[![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/django-enum/)
 
 ---------------------------------------------------------------------------------------------------
 

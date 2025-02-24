@@ -1,5 +1,7 @@
 # Security Policy
 
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/bckohan/django-enum/badge)](https://securityscorecards.dev/viewer/?uri=github.com/bckohan/django-enum)
+
 ## Supported Versions
 
 Only the latest version [![PyPI version](https://badge.fury.io/py/django-render-static.svg)](https://pypi.python.org/pypi/django-render-static) is supported.
