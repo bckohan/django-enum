@@ -4,7 +4,7 @@
 Change Log
 ==========
 
-v2.1.0 (2025-02-20)
+v2.1.0 (2025-02-24)
 ===================
 
 * Implemented `Switch poetry -> uv <https://github.com/bckohan/django-enum/issues/87>`_
