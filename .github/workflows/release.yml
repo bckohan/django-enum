@@ -63,7 +63,7 @@ jobs:
         git tag -v "$TAG_NAME"
 
         # verify version
-        just verify_version $TAG_NAME
+        just validate_version $TAG_NAME
 
         # check that github has marked the tag as verified
         export TAG_URL=`curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/git/refs/tags/$TAG_NAME | jq -r ".object.url"`
