@@ -1,5 +1,6 @@
 import os
 import sys
+import typing as t
 from pathlib import Path
 
 from django import VERSION as django_version
@@ -8,7 +9,7 @@ SECRET_KEY = "psst"
 SITE_ID = 1
 USE_TZ = False
 
-rdbms = os.environ.get("RDBMS", "postgres")
+rdbms = os.environ.get("RDBMS", "sqlite")
 
 if rdbms == "sqlite":  # pragma: no cover
     DATABASES = {
@@ -40,7 +41,7 @@ elif rdbms == "mysql":  # pragma: no cover
             "USER": os.environ.get("MYSQL_USER", "root"),
             "PASSWORD": os.environ.get("MYSQL_PASSWORD", "root"),
             "HOST": os.environ.get("MYSQL_HOST", "127.0.0.1"),
-            "PORT": os.environ.get("MYSQL_PORT", 3306),
+            "PORT": os.environ.get("MYSQL_PORT", "3306"),
         }
     }
 elif rdbms == "mariadb":  # pragma: no cover
@@ -51,7 +52,7 @@ elif rdbms == "mariadb":  # pragma: no cover
             "USER": os.environ.get("MARIADB_USER", "root"),
             "PASSWORD": os.environ.get("MARIADB_PASSWORD", "root"),
             "HOST": os.environ.get("MARIADB_HOST", "127.0.0.1"),
-            "PORT": os.environ.get("MARIADB_PORT", 3306),
+            "PORT": os.environ.get("MARIADB_PORT", "3306"),
         }
     }
 elif rdbms == "oracle":  # pragma: no cover
@@ -59,7 +60,7 @@ elif rdbms == "oracle":  # pragma: no cover
         "default": {
             "ENGINE": "django.db.backends.oracle",
             "NAME": f"{os.environ.get('ORACLE_HOST', 'localhost')}:"
-            f"{os.environ.get('ORACLE_PORT', 1521)}"
+            f"{os.environ.get('ORACLE_PORT', '1521')}"
             f"/{os.environ.get('ORACLE_DATABASE', 'XEPDB1')}",
             "USER": os.environ.get("ORACLE_USER", "system"),
             "PASSWORD": os.environ.get("ORACLE_PASSWORD", "password"),
@@ -148,7 +149,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 TEST_EDIT_DIR = Path(__file__).parent / "edit_tests" / "edits"
 TEST_MIGRATION_DIR = Path(__file__).parent / "edit_tests" / "migrations"
 
-REST_FRAMEWORK = {
+REST_FRAMEWORK: t.Dict[str, t.Any] = {
     # no auth
     "DEFAULT_AUTHENTICATION_CLASSES": [],
     "DEFAULT_PERMISSION_CLASSES": [],

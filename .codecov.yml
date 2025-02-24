@@ -1,0 +1,7 @@
+# https://github.com/codecov/codecov-python/issues/136
+coverage:
+  fixes:
+    - "__init__.py::django_enum/__init__.py"
+    - "utils.py::django_enum/utils.py"
+    - "forms.py::django_enum/forms.py"
+    - "urls.py::django_enum/urls.py"

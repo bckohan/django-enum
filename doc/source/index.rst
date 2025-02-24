@@ -44,7 +44,7 @@ Django Enum
    :target: https://www.postgresql.org/
 
 .. |MySQL| image:: https://img.shields.io/badge/MySQL-5.7%2B-blue
-    :target: https://www.mysql.com/
+    :target: https://www.mysql.com
 
 .. |MariaDB| image:: https://img.shields.io/badge/MariaDB-10.2%2B-blue
     :target: https://mariadb.org/
@@ -125,11 +125,11 @@ and accessible as their enumeration type rather than by-value:**
         int_enum=3  # by-value assignment also works
     )
 
-    assert instance.txt_enum == MyModel.TextEnum('V1')
-    assert instance.txt_enum.label == 'Value 1'
+    assert instance.txt_enum is MyModel.TextEnum('V1')
+    assert instance.txt_enum.label is 'Value 1'
 
-    assert instance.int_enum == MyModel.IntEnum['THREE']
-    assert instance.int_enum.value == 3
+    assert instance.int_enum is MyModel.IntEnum['THREE']
+    assert instance.int_enum.value is 3
 
 
 Flag Support
@@ -203,9 +203,9 @@ rich enumeration fields:
     instance = TextChoicesExample.objects.create(
         color=TextChoicesExample.Color('FF0000')
     )
-    assert instance.color == TextChoicesExample.Color('Red')
-    assert instance.color == TextChoicesExample.Color('R')
-    assert instance.color == TextChoicesExample.Color((1, 0, 0))
+    assert instance.color is TextChoicesExample.Color('Red')
+    assert instance.color is TextChoicesExample.Color('R')
+    assert instance.color is TextChoicesExample.Color((1, 0, 0))
 
     # direct comparison to any symmetric value also works
     assert instance.color == 'Red'

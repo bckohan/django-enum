@@ -24,6 +24,7 @@ def import_migration(migration):
     return import_module(
         str(migration.relative_to(Path(__file__).parent.parent))
         .replace("/", ".")
+        .replace("\\", ".")
         .replace(".py", "")
     ).Migration
 

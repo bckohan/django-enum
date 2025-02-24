@@ -4,6 +4,15 @@
 Change Log
 ==========
 
+v2.1.0 (2025-02-20)
+===================
+
+* Implemented `Add macos runner to CI <https://github.com/bckohan/django-enum/issues/86>`_
+* Implemented `Add windows runner to CI <https://github.com/bckohan/django-enum/issues/85>`_
+* Implemented `Drop support for python 3.8 <https://github.com/bckohan/django-enum/issues/84>`_
+* Implemented `Move to justfile dev interface. <https://github.com/bckohan/django-enum/issues/83>`_
+* Implemented `Modernize pyproject.toml <https://github.com/bckohan/django-enum/issues/82>`_
+
 v2.0.2 (2024-09-25)
 ===================
 
