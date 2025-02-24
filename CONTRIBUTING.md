@@ -83,3 +83,12 @@ Additional dependency groups will need to be installed for some RDBMS:
     # for oracle
     poetry install -E all --with oracle
 ```
+
+## Releases
+
+The release workflow is triggered by tag creation. You must have git tag signing enabled.
+
+```console
+git tag -s vX.X.X -m "X.X.X Release"
+git push origin vX.X.X
+```
