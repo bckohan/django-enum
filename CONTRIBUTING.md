@@ -84,11 +84,10 @@ Additional dependency groups will need to be installed for some RDBMS:
     poetry install -E all --with oracle
 ```
 
-## Releases
+## Issuing Releases
 
-The release workflow is triggered by tag creation. You must have git tag signing enabled.
+The release workflow is triggered by tag creation. You must have [git tag signing enabled](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). Our justfile has a release shortcut:
 
 ```console
-git tag -s vX.X.X -m "X.X.X Release"
-git push origin vX.X.X
+just release x.x.x
 ```

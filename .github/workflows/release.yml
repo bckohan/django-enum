@@ -37,27 +37,36 @@ jobs:
       actions: write
     outputs:
       PACKAGE_NAME: ${{ steps.set-package.outputs.package_name }}
+      RELEASE_VERSION: ${{ steps.set-package.outputs.release_version }}
     steps:
     - uses: actions/checkout@v4
     - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ">=3.11"  # for tomlib
-    - name: Verify Tag Signature
-      run: |
-        TAG_NAME=${GITHUB_REF#refs/tags/}
-        echo "Verifying tag $TAG_NAME..."
-        # if a tag was deleted and recreated we may have the old one cached
-        # be sure that we're publishing the current tag!
-        git fetch --force origin refs/tags/$TAG_NAME:refs/tags/$TAG_NAME
-        curl -sL https://github.com/${{ github.actor }}.gpg | gpg --import 
-        git tag -v "$TAG_NAME"
     - name: Install uv
       uses: astral-sh/setup-uv@v5
       with:
         enable-cache: true
     - name: Setup Just
       uses: extractions/setup-just@v2
+    - name: Verify Tag
+      run: |
+        TAG_NAME=${GITHUB_REF#refs/tags/}
+        echo "Verifying tag $TAG_NAME..."
+        # if a tag was deleted and recreated we may have the old one cached
+        # be sure that we're publishing the current tag!
+        git fetch --force origin refs/tags/$TAG_NAME:refs/tags/$TAG_NAME
+
+        # verify signature
+        curl -sL https://github.com/${{ github.actor }}.gpg | gpg --import 
+        git tag -v "$TAG_NAME"
+
+        # verify version
+        just verify_version $TAG_NAME
+
+        # export the release version
+        echo "RELEASE_VERSION=${TAG_NAME}" >> $GITHUB_ENV 
     - name: Build the binary wheel and a source tarball
       run: just build
     - name: Store the distribution packages

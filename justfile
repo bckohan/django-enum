@@ -205,3 +205,20 @@ coverage:
 # run the command in the virtual environment
 run +ARGS:
     uv run {{ ARGS }}
+
+
+# validate the given version string against the lib version
+[script]
+validate_version VERSION:
+    import re
+    import tomllib
+    import django_enum
+    assert re.match(r"\d+[.]\d+[.]\w+", "{{ VERSION }}")
+    assert "{{ VERSION }}" == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
+    assert "{{ VERSION }}" == django_enum.__version__
+
+# issue a relase for the given semver string (e.g. 2.1.0)
+release VERSION:
+    @just _validate_version {{ VERSION }}
+    git tag -s v{{ VERSION }} -m "{{ VERSION }} Release"
+    git push origin {{ VERSION }}
