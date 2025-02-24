@@ -17,7 +17,7 @@ on:
 
 jobs:
 
-  lint:
+  debug:
     runs-on: ubuntu-latest
     permissions:
       contents: read
