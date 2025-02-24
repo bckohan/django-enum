@@ -63,10 +63,10 @@ jobs:
         git tag -v "$TAG_NAME"
 
         # verify version
-        just validate_version $TAG_NAME
+        RELEASE_VERSION=$(just validate_version $TAG_NAME)
 
         # check that github has marked the tag as verified
-        export TAG_URL=`curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/git/refs/tags/$TAG_NAME | jq -r ".object.url"`
+        export TAG_URL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/git/refs/tags/$TAG_NAME | jq -r ".object.url")
         result=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$TAG_URL" | jq -r ".verification.verified")
         if [ "$result" != "true" ]; then
           echo "Error: Tag verification failed." >&2
@@ -74,7 +74,7 @@ jobs:
         fi
 
         # export the release version
-        echo "RELEASE_VERSION=${TAG_NAME}" >> $GITHUB_ENV 
+        echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV 
     - name: Build the binary wheel and a source tarball
       run: just build
     - name: Store the distribution packages
