@@ -11,10 +11,14 @@ on:
 jobs:
 
   lint:
+    permissions:
+      actions: write
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
   test:
+    permissions:
+      actions: write
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
