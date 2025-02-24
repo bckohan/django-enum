@@ -1,8 +1,5 @@
 name: Lint
 
-permissions:
-  contents: read
-
 on:
   push:
   pull_request:
@@ -19,6 +16,8 @@ jobs:
 
   lint:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     strategy:
       matrix:
         # run static analysis on bleeding and trailing edges
