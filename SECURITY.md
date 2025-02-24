@@ -1,5 +1,6 @@
 # Security Policy
 
+[![CodeQL](https://github.com/bckohan/django-enum/actions/workflows/github-code-scanning/codeql/badge.svg?branch=main)](https://github.com/bckohan/django-enum/actions/workflows/github-code-scanning/codeql?query=branch:main)
 [![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/bckohan/django-enum/badge)](https://securityscorecards.dev/viewer/?uri=github.com/bckohan/django-enum)
 
 ## Supported Versions
