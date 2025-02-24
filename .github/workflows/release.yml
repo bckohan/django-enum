@@ -12,12 +12,14 @@ jobs:
 
   lint:
     permissions:
+      contents: read
       actions: write
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
   test:
     permissions:
+      contents: read
       actions: write
     uses: ./.github/workflows/test.yml
     secrets: inherit
@@ -26,6 +28,7 @@ jobs:
     name: Build Package
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       actions: write
     outputs:
       PACKAGE_NAME: ${{ steps.set-package.outputs.package_name }}

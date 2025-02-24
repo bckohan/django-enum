@@ -22,6 +22,7 @@ jobs:
   postgres:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       actions: write
     # Service containers to run with `container-job`  
     strategy:
@@ -134,6 +135,7 @@ jobs:
   sqlite:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       actions: write
     env:
       RDBMS: sqlite
@@ -195,6 +197,7 @@ jobs:
   mysql:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       actions: write
     strategy:
       matrix:
@@ -293,6 +296,7 @@ jobs:
   mariadb:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       actions: write
     env:
       RDBMS: mariadb
@@ -396,6 +400,7 @@ jobs:
   oracle:
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       actions: write
     env:
       RDBMS: oracle
@@ -502,6 +507,7 @@ jobs:
   windows:
     runs-on: windows-latest
     permissions:
+      contents: read
       actions: write
     env:
       RDBMS: sqlite
@@ -561,6 +567,7 @@ jobs:
   macos:
     runs-on: macos-latest
     permissions:
+      contents: read
       actions: write
     env:
       RDBMS: sqlite
