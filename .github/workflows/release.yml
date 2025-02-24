@@ -7,6 +7,13 @@ on:
   push:
     tags:
       - 'v*'  # only publish on version tags (e.g. v1.0.0)
+  workflow_dispatch:
+    inputs:
+      debug:
+        description: 'Open ssh debug session.'
+        required: true
+        default: false
+        type: boolean
 
 jobs:
 
@@ -38,11 +45,20 @@ jobs:
       uses: actions/setup-python@v5
       with:
         python-version: ">=3.11"  # for tomlib
+    - name: Install Emacs
+      if: ${{ github.event.inputs.debug == 'true' }}
+      run: |
+        sudo apt install emacs
+    - name: Setup tmate session
+      if: ${{ github.event.inputs.debug == 'true' }}
+      uses: mxschmitt/action-tmate@v3.19
+      with:
+        detached: true
+      timeout-minutes: 60
     - name: Verify Tag Signature
       run: |
         TAG_NAME=${GITHUB_REF#refs/tags/}
         echo "Verifying tag $TAG_NAME..."
-        git fetch origin tag $TAG_NAME
         git tag -v "$TAG_NAME"
     - name: Install uv
       uses: astral-sh/setup-uv@v5
