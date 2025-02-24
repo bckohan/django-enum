@@ -219,6 +219,6 @@ validate_version VERSION:
 
 # issue a relase for the given semver string (e.g. 2.1.0)
 release VERSION:
-    @just validate_version {{ VERSION }}
+    @just validate_version v{{ VERSION }}
     git tag -s v{{ VERSION }} -m "{{ VERSION }} Release"
     git push origin v{{ VERSION }}
