@@ -67,8 +67,10 @@ jobs:
 
         # check that github has marked the tag as verified
         export TAG_URL=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/${{ github.repository_owner }}/${{ github.repository }}/git/refs/tags/$TAG_NAME | jq -r ".object.url")
-        result=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$TAG_URL" | jq -r ".verification.verified")
-        if [ "$result" != "true" ]; then
+        verified=$(curl -s -H "Authorization: token ${{ secrets.GITHUB_TOKEN }}" "$TAG_URL" | jq -r ".verification.verified")
+        if [ "$verified" != "true" ]; then
+          echo $TAG_URL
+          echo $verified
           echo "Error: Tag verification failed." >&2
           exit 1
         fi
