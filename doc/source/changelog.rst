@@ -7,6 +7,7 @@ Change Log
 v2.1.0 (2025-02-20)
 ===================
 
+* Implemented `Switch poetry -> uv <https://github.com/bckohan/django-enum/issues/87>`_
 * Implemented `Add macos runner to CI <https://github.com/bckohan/django-enum/issues/86>`_
 * Implemented `Add windows runner to CI <https://github.com/bckohan/django-enum/issues/85>`_
 * Implemented `Drop support for python 3.8 <https://github.com/bckohan/django-enum/issues/84>`_
