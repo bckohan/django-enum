@@ -13,13 +13,13 @@ We provide a platform independent justfile with recipes for all the development 
 
 `django-enum` uses [uv](https://docs.astral.sh/uv) for environment, package and dependency management:
 
-```shell
+```bash
     just install_uv
 ```
 
 Next, initialize and install the development environment:
 
-```shell
+```bash
     just setup
     just install
 ```
@@ -28,7 +28,7 @@ Next, initialize and install the development environment:
 
 `django-enum` documentation is generated using [Sphinx](https://www.sphinx-doc.org). Any new feature PRs must provide updated documentation for the features added. To build the docs run:
 
-```shell
+```bash
     just install-docs
     just docs
 ```
@@ -37,7 +37,7 @@ Next, initialize and install the development environment:
 
 `django-enum` uses [ruff](https://docs.astral.sh/ruff) for python linting and formatting. [mypy](http://mypy-lang.org) is used for static type checking. Before any PR is accepted the following must be run, and static analysis tools should not produce any errors or warnings. Disabling certain errors or warnings where justified is acceptable:
 
-```shell
+```bash
     just check
 ```
 
@@ -47,20 +47,20 @@ Next, initialize and install the development environment:
 
 To run the full suite:
 
-```shell
+```bash
     just test
 ```
 
 To run a single test, or group of tests in a class:
 
-```shell
+```bash
     just test <path_to_tests_file>::ClassName::FunctionName
 ```
 
 For instance to run all tests in ExampleTests, and then just the
 test_color example test you would do:
 
-```console
+```bash
     just test tests/test_examples.py::ExampleTests
     just test tests/test_examples.py::ExampleTests::test_color
 ```
@@ -79,7 +79,7 @@ The settings for each RDBMS can be found in ``tests/settings.py``. The database 
 
 Additional dependency groups will need to be installed for some RDBMS, to run the full suite against a given RDBMS, set the ``RDBMS`` environment variable and run test-all with the appropriate db client argument.
 
-```shell
+```bash
     just test-all  # sqlite tests
     just test-all psycopg3  # for postgres using psycopg3
     just test-all psycopg2  # for postgres using psycopg2
@@ -91,7 +91,7 @@ Additional dependency groups will need to be installed for some RDBMS, to run th
 
 The release workflow is triggered by tag creation. You must have [git tag signing enabled](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). Our justfile has a release shortcut:
 
-```shell
+```bash
     just release x.x.x
 ```
 
