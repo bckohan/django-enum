@@ -19,7 +19,6 @@ jobs:
     permissions:
       contents: read
       actions: write
-    if: ${{ github.event.ref.verification.verified }}
     uses: ./.github/workflows/lint.yml
     secrets: inherit
 
@@ -27,13 +26,11 @@ jobs:
     permissions:
       contents: read
       actions: write
-    if: ${{ github.event.ref.verification.verified }}
     uses: ./.github/workflows/test.yml
     secrets: inherit
 
   build:
     name: Build Package
-    if: ${{ github.event.ref.verification.verified }}
     runs-on: ubuntu-latest
     permissions:
       contents: read
