@@ -57,12 +57,12 @@ To run a single test, or group of tests in a class:
     just test <path_to_tests_file>::ClassName::FunctionName
 ```
 
-For instance to run all tests in TestDjangoEnums, and then just the
-test_properties_and_symmetry test you would do:
+For instance to run all tests in ExampleTests, and then just the
+test_color example test you would do:
 
 ```console
-    just test tests/tests.py::TestDjangoEnums
-    just test tests/tests.py::TestDjangoEnums::test_properties_and_symmetry
+    just test tests/test_examples.py::ExampleTests
+    just test tests/test_examples.py::ExampleTests::test_color
 ```
 
 ## RDBMS
