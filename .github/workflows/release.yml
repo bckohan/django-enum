@@ -31,7 +31,7 @@ jobs:
 
   build:
     name: Build Package
-    if: github.event.head_commit.verification.verified == true
+    if: github.event.ref.verification.verified == true
     runs-on: ubuntu-latest
     permissions:
       contents: read
