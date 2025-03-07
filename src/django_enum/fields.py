@@ -42,13 +42,6 @@ from django.utils.duration import duration_string
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 
-from django_enum.forms import (
-    EnumChoiceField,
-    EnumFlagField,
-    FlagSelectMultiple,
-    NonStrictSelect,
-    NonStrictSelectMultiple,
-)
 from django_enum.query import (  # HasAllFlagsExtraBigLookup,
     HasAllFlagsLookup,
     HasAnyFlagsLookup,
@@ -669,6 +662,13 @@ class EnumField(
         #   we try to pass in. Very annoying because we have to
         #   un-encapsulate some of this initialization logic, this makes our
         #   EnumChoiceField pretty ugly!
+        from django_enum.forms import (
+            EnumChoiceField,
+            EnumFlagField,
+            FlagSelectMultiple,
+            NonStrictSelect,
+            NonStrictSelectMultiple,
+        )
 
         is_multi = self.enum and issubclass(self.enum, Flag)
         if is_multi and self.enum:
