@@ -675,6 +675,7 @@ dev = [
     { name = "mypy" },
     { name = "numpy", version = "2.0.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
     { name = "numpy", version = "2.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.10'" },
+    { name = "packaging" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -715,7 +716,7 @@ requires-dist = [
     { name = "django", specifier = ">=3.2,<6.0" },
     { name = "django-filter", marker = "extra == 'filters'", specifier = ">=21" },
     { name = "djangorestframework", marker = "extra == 'rest'", specifier = ">=3.9,<4.0" },
-    { name = "enum-properties", marker = "extra == 'properties'", specifier = ">=2.0.0" },
+    { name = "enum-properties", marker = "extra == 'properties'", specifier = ">=2.2.0" },
 ]
 provides-extras = ["properties", "filters", "rest"]
 
@@ -731,6 +732,7 @@ dev = [
     { name = "matplotlib", specifier = ">=3.9.4" },
     { name = "mypy", specifier = ">=1.15.0" },
     { name = "numpy", specifier = ">=2.0.2" },
+    { name = "packaging", specifier = ">=24.2" },
     { name = "pre-commit", specifier = ">=4.1.0" },
     { name = "pytest", specifier = ">=8.3.4" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
@@ -858,11 +860,11 @@ wheels = [
 
 [[package]]
 name = "enum-properties"
-version = "2.0.1"
+version = "2.2.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/3a/1e/29ed072a664fd33f4a117f1ba2f5e011a68dd6040625a9cfcab216dbf304/enum_properties-2.0.1.tar.gz", hash = "sha256:0a451a069d6cc817649b337d7ebc30970f8d745faff3f5898afa53d9fe8ede3f", size = 11724 }
+sdist = { url = "https://files.pythonhosted.org/packages/d5/50/27d1a305ccbb77ec907f9e82fc2931029dfeac435ee6f714024a913ff3ee/enum_properties-2.2.2.tar.gz", hash = "sha256:82cccf28f23b3d52368048ee626fcc12166f06a4fd757cd5c87bd638db53a632", size = 162416 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/c2/2c/eca46697ea68257e2cc7d9c4d9989af4ce7a065ad405bce15268d2817849/enum_properties-2.0.1-py3-none-any.whl", hash = "sha256:28e50d9fc3567a38c55a0c82e9d38dec835654c0a4d26a4adbcec15592036335", size = 10608 },
+    { url = "https://files.pythonhosted.org/packages/eb/84/ee619ef2ae94f6b7aaa3834603e20f8f7c04a88fd13971c05f0572eb7832/enum_properties-2.2.2-py3-none-any.whl", hash = "sha256:f0990571b5d1d35aef4d7c81669c26bb2450f082caf7481246cdee9f88681bbf", size = 10934 },
 ]
 
 [[package]]

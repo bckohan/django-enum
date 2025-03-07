@@ -212,10 +212,15 @@ validate_version VERSION:
     import re
     import tomllib
     import django_enum
-    version = re.match(r"v?(\d+[.]\d+[.]\w+)", "{{ VERSION }}").groups()[0]
-    assert version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
-    assert version == django_enum.__version__
-    print(version)
+    from packaging.version import Version
+    raw_version = "{{ VERSION }}".lstrip("v")
+    version_obj = Version(raw_version)
+    # the version should be normalized
+    assert str(version_obj) == raw_version
+    # make sure all places the version appears agree
+    assert raw_version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
+    assert raw_version == django_enum.__version__
+    print(raw_version)
 
 # issue a relase for the given semver string (e.g. 2.1.0)
 release VERSION:
