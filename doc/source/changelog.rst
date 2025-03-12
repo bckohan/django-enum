@@ -4,6 +4,11 @@
 Change Log
 ==========
 
+v2.2.0 (2025-03-07)
+===================
+
+* Implemented `Move form imports to locally scoped imports where needed in fields.py <https://github.com/bckohan/django-enum/issues/79>`_
+
 v2.1.0 (2025-02-24)
 ===================
 
