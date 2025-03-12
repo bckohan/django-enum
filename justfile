@@ -14,7 +14,6 @@ manage *COMMAND:
     import os
     import sys
     from django.core import management
-    sys.path.append(os.getcwd())
     os.environ["DJANGO_SETTINGS_MODULE"] = "tests.settings"
     management.execute_from_command_line(sys.argv + "{{ COMMAND }}".split(" "))
 
@@ -92,9 +91,17 @@ clean: clean-docs clean-env clean-git-ignored
 build-docs-html: install-docs
     @just run sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
 
+[script]
+_open-pdf-docs:
+    import webbrowser
+    from pathlib import Path
+    webbrowser.open(f"file://{Path('./doc/build/pdf/django-render-static.pdf').absolute()}")
+
 # build pdf documentation
 build-docs-pdf: install-docs
-    @just run sphinx-build --fresh-env --builder latexpdf --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
+    @just run sphinx-build --fresh-env --builder latex --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
+    make -C ./doc/build/pdf
+    @just _open-pdf-docs
 
 # build the docs
 build-docs: build-docs-html
@@ -212,10 +219,15 @@ validate_version VERSION:
     import re
     import tomllib
     import django_enum
-    version = re.match(r"v?(\d+[.]\d+[.]\w+)", "{{ VERSION }}").groups()[0]
-    assert version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
-    assert version == django_enum.__version__
-    print(version)
+    from packaging.version import Version
+    raw_version = "{{ VERSION }}".lstrip("v")
+    version_obj = Version(raw_version)
+    # the version should be normalized
+    assert str(version_obj) == raw_version
+    # make sure all places the version appears agree
+    assert raw_version == tomllib.load(open('pyproject.toml', 'rb'))['project']['version']
+    assert raw_version == django_enum.__version__
+    print(raw_version)
 
 # issue a relase for the given semver string (e.g. 2.1.0)
 release VERSION:
