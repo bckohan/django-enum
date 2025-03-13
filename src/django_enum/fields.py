@@ -1215,6 +1215,15 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             # for non flag fields
             IntegerField.contribute_to_class(self, cls, name, private_only=private_only)
 
+    def _coerce_to_value_type(self, value: Any) -> Any:
+        if (
+            isinstance(value, list)
+            or isinstance(value, tuple)
+            or isinstance(value, set)
+        ):
+            value = reduce(or_, value)
+        return super()._coerce_to_value_type(value)
+
 
 class SmallIntegerFlagField(FlagField, EnumPositiveSmallIntegerField):
     """
