@@ -1,8 +1,9 @@
 from django.db import models
 from enum import IntFlag
-from enum_properties import s, Symmetric
+from enum_properties import symmetric, Symmetric
 import typing as t
 from typing_extensions import Annotated
+from django.db.models.enums import enum_property
 from django_enum import EnumField
 from django_enum.choices import FlagChoices, IntegerChoices, TextChoices
 
@@ -14,10 +15,9 @@ class Map(models.Model):
         https://docs.mapbox.com/api/maps/styles/
         """
 
+        name: Annotated[str, Symmetric()]
         slug: Annotated[str, Symmetric(case_fold=True)]
         version: int
-
-        _symmetric_builtins_ = ["name", s("label", case_fold=True), "uri"]
 
         # name             value    label                 slug         version
         STREETS = 1, "Streets", "streets", 11
@@ -29,6 +29,12 @@ class Map(models.Model):
         NAVIGATION_DAY = 7, "Navigation Day", "navigation-day", 1
         NAVIGATION_NIGHT = 8, "Navigation Night", "navigation-night", 1
 
+        @symmetric(case_fold=True)
+        @enum_property
+        def label(self):
+            return self._label_
+    
+        @symmetric()
         @property
         def uri(self):
             return f"mapbox://styles/mapbox/{self.slug}-v{self.version}"

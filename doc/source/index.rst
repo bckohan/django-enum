@@ -61,7 +61,7 @@ Django Enum
 
     See :ref:`migration_1.x_to_2.x` for how to update from 1.x to 2.x.
 
-Full and natural support for enumerations_ as Django_ model fields.
+Full and natural support for PEP435_ :class:`enumerations <enum.Enum>` as Django_ model fields.
 
 Many packages aim to ease usage of Python enumerations as model fields. Most were superseded when
 Django provided ``TextChoices`` and ``IntegerChoices`` types. The motivation for django-enum_ was
@@ -73,8 +73,8 @@ to:
 * Allow strict adherence to Enum values to be disabled.
 * Handle migrations appropriately. (See :ref:`migrations`)
 * Integrate as fully as possible with Django's existing level of enum support.
-* Support enum-properties_ to enable richer enumeration types. (A less awkward alternative to
-  dataclass enumerations with more features)
+* Support :doc:`enum-properties:index` to enable richer enumeration types. (A less awkward
+  alternative to dataclass enumerations with more features)
 * Represent enum fields with the smallest possible column type.
 * Support bit mask queries using standard Python Flag enumerations.
 * Be as simple and light-weight an extension to core Django_ as possible.
@@ -135,12 +135,12 @@ and accessible as their enumeration type rather than by-value:**
 Flag Support
 ============
 
-Flag_ types are also seamlessly supported! This allows a database column to behave like a bit mask
-and is an alternative to multiple boolean columns. There are mostly positive performance
-implications for using a bit mask instead of booleans depending on the size of the bit mask and the
-types of queries you will run against it. For bit masks more than a few bits long the size
-reduction both speeds up queries and reduces the required storage space. See the documentation for
-:ref:`discussion and benchmarks <flag_performance>`.
+:class:`enum.Flag` types are also seamlessly supported! This allows a database column to behave
+like a bit mask and is an alternative to multiple boolean columns. There are mostly positive
+performance implications for using a bit mask instead of booleans depending on the size of the
+bit mask and the types of queries you will run against it. For bit masks more than a few bits long
+the size reduction both speeds up queries and reduces the required storage space. See the
+documentation for :ref:`discussion and benchmarks <flag_performance>`.
 
 .. code-block:: python
 
@@ -169,7 +169,7 @@ Complex Enumerations
 ====================
 
 django-enum_ supports enum types that do not derive from Django's ``IntegerChoices`` and
-``TextChoices``. This allows us to use other libs like enum-properties_ which makes possible very
+``TextChoices``. This allows us to use other libs like :doc:`enum-properties:index` which makes possible very
 rich enumeration fields:
 
 .. code-block:: console
@@ -239,7 +239,7 @@ rich enumeration fields:
 While they should be unnecessary if you need to integrate with code that expects an interface fully
 compatible with Django's ``TextChoices`` and ``IntegerChoices`` django-enum_ provides
 ``TextChoices``, ``IntegerChoices``, ``FlagChoices`` and ``FloatChoices`` types that derive from
-enum-properties_ and Django's ``Choices``. So the above enumeration could also be written:
+:doc:`enum-properties:index` and Django's ``Choices``. So the above enumeration could also be written:
 
 .. code-block:: python
 
@@ -273,8 +273,8 @@ work seamlessly with all Django apps that work with model fields with choices wi
 additional work. Optional integrations are provided with several popular libraries to extend this
 basic functionality.
 
-Integrations are provided that leverage enum-properties_ to make enumerations do more work and to
-provide extended functionality for django-filter_ and djangorestframework_.
+Integrations are provided that leverage :doc:`enum-properties:index` to make enumerations do more
+work and to provide extended functionality for django-filter_ and djangorestframework_.
 
 .. code-block:: console
 
@@ -301,7 +301,8 @@ maximum supported versions of Python, Django and the cx-Oracle driver.*
 Further Reading
 ===============
 
-Consider using django-render-static_ to make your enumerations DRY_ across the full stack!
+Consider using :doc:`django-render-static <django-render-static:index>` to make your enumerations
+DRY_ across the full stack!
 
 Please report bugs and discuss features on the
 `issues page <https://github.com/bckohan/django-enum/issues>`_.
@@ -313,9 +314,9 @@ Please report bugs and discuss features on the
    :maxdepth: 2
    :caption: Contents:
 
-   usage
-   examples
+   tutorial
+   howto
    performance
    eccentric_enums
-   reference
+   reference/index
    changelog

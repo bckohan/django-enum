@@ -334,7 +334,7 @@ class EnumField(
     and convert any values to the Enumeration type in question.
 
     :param enum: The enum class
-    :param strict: If True (default) the field will throw ValueErrors if the
+    :param strict: If True (default) the field will throw a :exc:`ValueError` if the
         value is not coercible to a valid enumeration type.
     :param coerce: If True (default) the field will always coerce values to the
         enum type when possible. If False, the field will contain the primitive
@@ -462,7 +462,7 @@ class EnumField(
         """
         Attempt coercion of value to enumeration type instance, if unsuccessful
         and non-strict, coercion to enum's primitive type will be done,
-        otherwise a ValueError is raised.
+        otherwise a :exc:`ValueError` is raised.
         """
         if self.enum is None:
             return value
@@ -519,7 +519,7 @@ class EnumField(
             the choices tuple, which is plain old data and entirely sufficient
             to de/reconstruct our field.
 
-        See deconstruct_
+        See :meth:`django.db.models.Field.deconstruct`
         """
         name, path, args, kwargs = super().deconstruct()
         if self.enum is not None:
@@ -544,7 +544,7 @@ class EnumField(
         """
         Convert the database field value into the Enum type.
 
-        See get_prep_value_
+        See :meth:`django.db.models.Field.get_prep_value`
         """
         value = Field.get_prep_value(self, value)
         if self.enum:
@@ -562,7 +562,7 @@ class EnumField(
         Convert the field value into the Enum type and then pull its value
         out.
 
-        See get_db_prep_value_
+        See :meth:`django.db.models.Field.get_db_prep_value`
         """
         if not prepared:
             value = self.get_prep_value(value)
@@ -577,7 +577,7 @@ class EnumField(
         """
         Convert the database field value into the Enum type.
 
-        See from_db_value_
+        See :meth:`django.db.models.Field.from_db_value`
         """
         # give the super class converter a first whack if it exists
         value = getattr(super(), "from_db_value", lambda v: v)(value)
@@ -595,7 +595,7 @@ class EnumField(
         """
         Converts the value in the enumeration type.
 
-        See to_python_
+        See :meth:`django.db.models.Field.to_python`
 
         :param value: The value to convert
         :return: The converted value
@@ -633,7 +633,7 @@ class EnumField(
         validation routines then tries to convert the value to a valid
         enumeration instance.
 
-        See full_clean_
+        See :meth:`django.db.models.Model.full_clean`
 
         :param value: The value to validate
         :param model_instance: The model instance holding the value
@@ -1264,7 +1264,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
         Convert the database field value into the Enum type then convert that
         enum value into the smallest number of bytes that can hold it.
 
-        See get_prep_value_
+        See :meth:`django.db.models.Field.get_prep_value`
         """
         if value is None or isinstance(value, (bytes, memoryview, bytearray)):
             return value
@@ -1281,7 +1281,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
         Convert the field value into the Enum type and then pull its value
         out.
 
-        See get_db_prep_value_
+        See :meth:`django.db.models.Field.get_db_prep_value`
         """
         if value is None or isinstance(value, (bytes, memoryview, bytearray)):
             return value
@@ -1302,7 +1302,7 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
         """
         Convert the database field value into the Enum type.
 
-        See from_db_value_
+        See :meth:`django.db.models.Field.from_db_value`
         """
         if value is None:
             return value

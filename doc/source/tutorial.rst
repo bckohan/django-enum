@@ -1,14 +1,14 @@
 .. include:: refs.rst
 
-.. _examples:
+.. _tutorial:
 
 ========
-Examples
+Tutorial
 ========
 
 Enumerations in Python can provide rich class based interfaces, well suited
 to many scenarios. A real world example is presented here that leverages
-``IntegerChoices`` integration with enum-properties_ to encapsulate more
+``IntegerChoices`` integration with :doc:`enum-properties:index` to encapsulate more
 information and get our enum to do more work.
 
 Map Box Style

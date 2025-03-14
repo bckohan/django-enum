@@ -6,13 +6,13 @@
 Eccentric Enumerations
 ======================
 
-Python's Enum_ type is extremely lenient. Enumeration values may be any
+Python's :class:`enum.Enum` type is extremely lenient. Enumeration values may be any
 hashable type and values of the same enumeration may be of different types.
 
 For use in databases it is recommended to use more strict enumeration types
 that only allow a single value type of either string or integer. If additional
 properties need to be associated with enumeration values, a library like
-enum-properties_ should be used to store them on the enumeration value classes.
+:doc:`enum-properties:index` should be used to store them on the enumeration value classes.
 
 However, the goal of django-enum is to provide as complete a bridge as possible
 between Python and the database so eccentric enumerations are supported with
@@ -63,12 +63,12 @@ be a string.
 
     If none of the supported primitive types are symmetrically coercible
     :class:`~django_enum.fields.EnumField` will not be able to determine an appropriate column
-    type and a ``ValueError`` will be raised.
+    type and a :exc:`ValueError` will be raised.
 
 In these cases, or to override the primitive type selection made by
 :class:`~django_enum.fields.EnumField`, pass the ``primitive`` parameter. It may be necessary to
 extend one of the supported primitives to make it coercible. It may also be necessary
-to override the Enum_'s ``_missing_`` method:
+to override the :class:`enum.Enum`'s ``_missing_`` method:
 
 .. code-block:: python
 
@@ -87,8 +87,8 @@ Custom Enumeration Values
 .. warning::
     There is almost certainly a better way to do what you might be trying to do
     by writing a custom enumeration value - for example consider using
-    enum-properties_ to make your enumeration types more robust by pushing more
-    of this functionality on the Enum_ class itself.
+    :doc:`enum-properties:index` to make your enumeration types more robust by pushing more
+    of this functionality on the :class:`enum.Enum` class itself.
 
 If you must use a custom value type, you can by specifying a symmetrically
 coercible primitive type. For example Path is already symmetrically coercible

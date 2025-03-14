@@ -1,6 +1,6 @@
 [project]
 name = "django-enum"
-version = "2.1.0"
+version = "2.2.0"
 description = "Full and natural support for enumerations as Django model fields."
 requires-python = ">=3.9,<4.0"
 authors = [
@@ -28,6 +28,7 @@ classifiers = [
     "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.0",
     "Framework :: Django :: 5.1",
+    "Framework :: Django :: 5.2",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
@@ -106,6 +107,7 @@ docs = [
     "sphinx>=7.4.7",
     "sphinx-autobuild>=2024.10.3",
     "sphinx-tabs>=3.4.7",
+    "sphinxcontrib-django>=2.5",
 ]
 psycopg2 = [
     "psycopg2>=2.9.10",

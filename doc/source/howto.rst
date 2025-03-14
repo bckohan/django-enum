@@ -1,13 +1,13 @@
 .. include:: refs.rst
 
-=====
-Usage
-=====
+======
+How To
+======
 
 :class:`~django_enum.fields.EnumField` inherits from the appropriate native Django_ field and sets
-the correct choice tuple set based on the enumeration type. This means ``EnumFields`` are
-compatible with all modules, utilities and libraries that fields defined with a choice tuple are.
-For example:
+the correct choice tuple set based on the enumeration type. This means
+:class:`~django_enum.fields.EnumField` are compatible with all modules, utilities and libraries
+that fields defined with a choice tuple are. For example:
 
 .. code:: python
 
@@ -65,13 +65,15 @@ simple declarative syntax are possible with :class:`~django_enum.fields.EnumFiel
 External Enum Types
 ###################
 
-Enum_ classes defined externally to your code base or enum classes that otherwise do not inherit
-from Django's Choices_ type, are supported. When no choices are present on an Enum_ type,
-:class:`~django_enum.fields.EnumField` will attempt to use the ``label`` member on each
-enumeration value if it is present, otherwise the labels will be based off the enumeration name.
-Choices can also be overridden at the :class:`~django_enum.fields.EnumField` declaration.
+:class:`enum.Enum` classes defined externally to your code base or enum classes that otherwise do
+not inherit from Django's :ref:`field-choices-enum-types`, are supported. When no choices are
+present on an :class:`enum.Enum` type, :class:`~django_enum.fields.EnumField` will attempt to use
+the ``label`` member on each enumeration value if it is present, otherwise the labels will be based
+off the enumeration name. Choices can also be overridden at the
+:class:`~django_enum.fields.EnumField` declaration.
 
-In short, :class:`~django_enum.fields.EnumField` should work with any subclass of Enum_.
+In short, :class:`~django_enum.fields.EnumField` should work with any subclass of
+:class:`enum.Enum`.
 
 .. code:: python
 
@@ -93,8 +95,8 @@ The above code will produce a choices set like ``[('V0', 'VALUE0'), ...]``.
 
 .. warning::
 
-    One nice feature of Django's Choices_ type is that it disables
-    ``auto()`` on Enum_ fields. ``auto()`` can be dangerous because the
+    One nice feature of Django's :ref:`field-choices-enum-types` are that they disable
+    ``auto()`` on :class:`enum.Enum` fields. ``auto()`` can be dangerous because the
     values assigned depend on the order of declaration. This means that if the
     order changes existing database values will no longer align with the
     enumeration values. When using ``Enums`` where control over the values is
@@ -114,15 +116,16 @@ The following :class:`~django_enum.fields.EnumField` specific parameters are ava
 ``strict``
 ----------
 
-By default all ``EnumFields`` are ``strict``. This means a ``ValidationError``
-will be thrown anytime full_clean is run on a model and a value is set for the
-field that can not be coerced to its native Enum_ type. To allow the field
-to store values that are not present in the fields Enum_ type we can pass
+By default all :class:`~django_enum.fields.EnumField` are ``strict``. This means a
+:exc:`~django.core.exceptions.ValidationError` will be thrown anytime
+:meth:`django.db.models.Model.full_clean` is run on a model and a value is set for the
+field that can not be coerced to its native :class:`enum.Enum` type. To allow the field
+to store values that are not present in the fields :class:`enum.Enum` type we can pass
 `strict=False`.
 
 Non-strict fields that have values outside of the enumeration will be instances
-of the enumeration where a valid Enum_ value is present and the plain old
-data where no Enum_ type coercion is possible.
+of the enumeration where a valid :class:`enum.Enum` value is present and the plain old
+data where no :class:`enum.Enum` type coercion is possible.
 
 .. code-block:: python
 
@@ -157,11 +160,10 @@ data where no Enum_ type coercion is possible.
 ``constrained``
 ---------------
 
-By default all strict ``EnumFields`` are ``constrained``. This means that
-`CheckConstraints <https://docs.djangoproject.com/en/stable/ref/models/constraints/>`_ will be
-generated at the database level to ensure that the column will reject any value that is not
-present in the enumeration. This is a good idea for most use cases, but it can be turned off
-by setting ``constrained`` to ``False``.
+By default all strict :class:`~django_enum.fields.EnumField` are ``constrained``. This means that
+:doc:`CheckConstraints <django:ref/models/constraints>` will be generated at the database level
+to ensure that the column will reject any value that is not present in the enumeration. This is a
+good idea for most use cases, but it can be turned off by setting ``constrained`` to ``False``.
 
 .. note::
 
@@ -171,19 +173,19 @@ by setting ``constrained`` to ``False``.
 ``primitive``
 -------------
 
-``EnumFields`` dynamically determine the database column type by determining the most appropriate
-primitive type for the enumeration based on the enumeration values. You may override the primitive
-determined by :class:`~django_enum.fields.EnumField` by passing a type to the ``primitive``
-parameter. You will likely not need to do this unless your enumeration is
-:ref:`eccentric <eccentric>` in some way.
+:class:`~django_enum.fields.EnumField` dynamically determines the database column type by
+determining the most appropriate primitive type for the enumeration based on the enumeration
+values. You may override the primitive determined by :class:`~django_enum.fields.EnumField` by
+passing a type to the ``primitive`` parameter. You will likely not need to do this unless your
+enumeration is :ref:`eccentric <eccentric>` in some way.
 
 ``coerce``
 ----------
 
 Setting this parameter to ``False`` will turn off the automatic conversion to
-the field's Enum_ type while leaving all validation checks in place. It will
-still be possible to set the field directly as an Enum_ instance and to
-filter by Enum_ instance or any symmetric value:
+the field's :class:`enum.Enum` type while leaving all validation checks in place. It will
+still be possible to set the field directly as an :class:`enum.Enum` instance and to
+filter by :class:`enum.Enum` instance or any symmetric value:
 
 .. code-block:: python
 
@@ -210,21 +212,22 @@ filter by Enum_ instance or any symmetric value:
 enum-properties
 ###############
 
-Almost any Enum_ type is supported, so you may make use of Enum_ extension libraries like
-enum-properties_ to define very rich enumeration fields:
+Almost any :class:`enum.Enum` type is supported, so you may make use of :class:`enum.Enum`
+extension libraries like :doc:`enum-properties:index` to define very rich enumeration fields:
 
 .. code:: bash
 
        pip install enum-properties
 
-enum-properties_ is an extension to Enum_ that allows properties to be added to enumeration
-instances using a simple declarative syntax. This is a less awkward and more compatible alternative
-than dataclass enumerations.
+:doc:`enum-properties:index` is an extension to :class:`enum.Enum` that allows properties to be
+added to enumeration instances using a simple declarative syntax. This is a less awkward and more
+compatible alternative than dataclass enumerations.
 
-If you find yourself considering a dataclass enumeration, consider using enum-properties_ instead.
-dataclass enumerations do not work with :class:`~django_enum.fields.EnumField` because their value
-type is a dataclass. Futher, most libraries that expect to be able to work with enumerations expect
-the ``value`` attribute to be a primitive serializable type.
+If you find yourself considering a dataclass enumeration, consider using
+:doc:`enum-properties:index` instead. dataclass enumerations do not work with
+:class:`~django_enum.fields.EnumField` because their value type is a dataclass. Futher, most
+libraries that expect to be able to work with enumerations expect the ``value`` attribute to be a
+primitive serializable type.
 
 .. code-block:: python
 
@@ -295,7 +298,7 @@ compatible with Django's
 (``TextChoices`` and ``IntegerChoices`` django-enum_ provides
 :class:`~django_enum.choices.TextChoices`, :class:`~django_enum.choices.IntegerChoices`,
 :class:`~django_enum.choices.FlagChoices` and :class:`~django_enum.choices.FloatChoices` types that
-derive from enum-properties_ and Django's ``Choices``. So the above enumeration could also be
+derive from :doc:`enum-properties:index` and Django's ``Choices``. So the above enumeration could also be
 written:
 
 .. code-block:: python
@@ -316,7 +319,7 @@ written:
 
 .. note::
 
-    To use these ``Choices`` extensions you will need to install enum-properties_ which is an
+    To use these ``Choices`` extensions you will need to install :doc:`enum-properties:index` which is an
     optional dependency.
 
 .. _forms:
@@ -327,7 +330,7 @@ Forms
 An ``EnumChoiceField`` type is provided that enables symmetric value resolution
 and will automatically coerce any set value to the underlying enumeration type.
 Django_'s ``ModelForms`` will use this form field type to represent
-``EnumFields`` by default. For most scenarios this is sufficient. The
+:class:`~django_enum.fields.EnumField` by default. For most scenarios this is sufficient. The
 ``EnumChoiceField`` can also be explicitly used. For example, using our
 ``TextChoicesExample`` from above - if ``color`` was declared with
 `strict=False`, we could add additional choices to our form field like so:
@@ -453,8 +456,8 @@ dependency on django-filter_ is optional, you must first install it:
     # now filtering by symmetric value in url parameters works:
     # e.g.:  /?color=FF0000
 
-An ``EnumFilterSet`` type is also provided that uses ``EnumFilter`` for ``EnumFields``
-by default. So the above is also equivalent to:
+An ``EnumFilterSet`` type is also provided that uses ``EnumFilter`` for
+:class:`~django_enum.fields.EnumField` by default. So the above is also equivalent to:
 
 .. code-block::
 
@@ -482,13 +485,13 @@ Migrations
     *Never reference or import your enumeration classes in a migration file,
     work with the primitive values instead*.
 
-The deconstructed ``EnumFields`` only include the choices tuple in the
-migration files. This is because Enum_ classes may come and go or be
+The deconstructed :class:`~django_enum.fields.EnumField` only include the choices tuple in the
+migration files. This is because :class:`enum.Enum` classes may come and go or be
 altered but the earlier migration files must still work. Simply treat any
 custom migration routines as if they were operating on a normal model field
 with choices.
 
-``EnumFields`` in migration files will not resolve the field values to
+:class:`~django_enum.fields.EnumField` in migration files will not resolve the field values to
 enumeration types. The fields will be the primitive enumeration values as they
 are with any field with choices.
 
@@ -496,7 +499,7 @@ Flag Enumerations
 #################
 
 Python supports `bit masks <https://en.wikipedia.org/wiki/Mask_(computing)>`_ through the
-`Flag <https://docs.python.org/3/library/enum.html#enum.Flag>`_ extension to Enum_.
+`Flag <https://docs.python.org/3/library/enum.html#enum.Flag>`_ extension to :class:`enum.Enum`.
 
 These enumerations are fully supported and will render as multi select form fields
 by default. For example:
@@ -572,8 +575,8 @@ Flags with more than 64 bits
 ----------------------------
 
 Flag enumerations of arbitrary size are supported, however if the enum has more
-than 64 flags it will be stored as a `BinaryField <https://docs.djangoproject.com/en/stable/ref/models/fields/#binaryfield>`_.
-It is therefore strongly recommended to keep your Flag_ enumerations at 64 bits or less.
+than 64 flags it will be stored as a :class:`django.db.models.BinaryField`. It is therefore
+strongly recommended to keep your :class:`enum.Flag` enumerations at 64 bits or less.
 
 .. warning::
 

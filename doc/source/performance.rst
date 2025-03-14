@@ -9,7 +9,7 @@ Performance
 Enums
 =====
 
-The cost to resolve a raw database value into an Enum_ type object is
+The cost to resolve a raw database value into an :class:`enum.Enum` type object is
 non-zero but negligible and swamped by I/O in most scenarios.
 
 An effort is made to characterize and monitor the performance penalty of
@@ -24,7 +24,7 @@ or eccentric enumeration cases.
 
     The marshalling penalty can be eliminated by setting ``coerce`` to
     ``False``. This will require the developer to manually coerce the
-    :class:`~django_enum.fields.EnumField` value to an Enum_ type object and is therefore usually
+    :class:`~django_enum.fields.EnumField` value to an :class:`enum.Enum` type object and is therefore usually
     not recommended - but may be appropriate if the dominate use case involves
     high volume serialization to a raw value instead.
 
@@ -114,11 +114,11 @@ Indexed All/Any Queries
 -----------------------
 
 :class:`~django_enum.fields.EnumField` supplies new field lookups :ref:`has_all` and :ref:`has_any`
-for fields with Flag_ enums. :ref:`has_all` will return rows where all the flags in the supplied
-value are present on the row's column and :ref:`has_any` will return all rows where any flags on
-the queried value are present on the row's column. These lookups pose challenges for indexing. The
-plot below compares the performance of two indexing strategies for boolean columns to the single
-index strategy for a flag :class:`~django_enum.fields.EnumField`.
+for fields with :class:`enum.Flag` enums. :ref:`has_all` will return rows where all the flags in
+the supplied value are present on the row's column and :ref:`has_any` will return all rows where
+any flags on the queried value are present on the row's column. These lookups pose challenges for
+indexing. The plot below compares the performance of two indexing strategies for boolean columns
+to the single index strategy for a flag :class:`~django_enum.fields.EnumField`.
 
 The test compares a 16 flag bitmask to 16 boolean columns. In the multi index case, all boolean
 columns are indexed together.
