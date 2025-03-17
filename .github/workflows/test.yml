@@ -108,7 +108,7 @@ jobs:
       with:
         enable-cache: true
     - name: Setup Just
-      uses: extractions/setup-just@v2
+      uses: extractions/setup-just@v3
     - name: Install Release Dependencies
       run: |
         just setup ${{ steps.sp.outputs.python-path }}
@@ -169,7 +169,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
@@ -276,7 +276,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
@@ -380,7 +380,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
@@ -480,7 +480,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
       - name: Install Oracle Client
         # https://askubuntu.com/questions/1512196/libaio1-on-noble
         run: |
@@ -540,7 +540,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
@@ -600,7 +600,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
@@ -642,7 +642,7 @@ jobs:
         with:
           enable-cache: true
       - name: Setup Just
-        uses: extractions/setup-just@v2
+        uses: extractions/setup-just@v3
       - name: Install Release Dependencies
         run: |
           just setup ${{ steps.sp.outputs.python-path }}
