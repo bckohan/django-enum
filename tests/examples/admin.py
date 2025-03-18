@@ -1,3 +1,4 @@
+import sys
 from django.contrib import admin
 
 from tests.examples.models import (

@@ -26,7 +26,7 @@ class TextChoicesExample(models.Model):
         # to make it case-insensitive we can override the property
         # and mark it like this:
         @symmetric(case_fold=True)
-        @models.enums.enum_property
+        @property
         def label(self) -> str:
             return self._label_
 

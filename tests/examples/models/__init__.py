@@ -1,3 +1,4 @@
+import sys
 from .mapbox import Map
 from .strict import StrictExample
 from .no_coerce import NoCoerceExample
@@ -12,5 +13,5 @@ from .gnss import GNSSReceiver, Constellation
 from .gnss_vanilla import GNSSReceiverBasic
 from .equivalency import EquivalencyExample
 from .extern import ExternalChoices
-from .text_choices import TextChoicesExample
 from .flag_howto import Group
+from .text_choices import TextChoicesExample

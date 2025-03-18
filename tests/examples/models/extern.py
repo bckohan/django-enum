@@ -1,11 +1,11 @@
-from enum import StrEnum
+from enum import Enum
 from django.db import models
 from django_enum import EnumField
 
 
 class ExternalChoices(models.Model):
 
-    class TextEnum(StrEnum):
+    class TextEnum(str, Enum):
 
         VALUE0 = 'V0'
         VALUE1 = 'V1'
