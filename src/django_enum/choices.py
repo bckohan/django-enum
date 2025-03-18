@@ -5,6 +5,7 @@ IntegerChoices and TextChoices.
 """
 
 import enum
+import typing as t
 
 from django import VERSION as django_version
 from django.db.models import Choices
@@ -33,18 +34,22 @@ class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):  # type: ignore
     """
 
     @property
-    def names(self):
+    def names(self) -> t.List[str]:
         """
         For some eccentric enums list(Enum) is empty, so we override names
-        if empty
+        if empty.
+
+        :returns: list of enum value names
         """
         return super().names or names(self, override=True)
 
     @property
-    def choices(self):
+    def choices(self) -> t.List[t.Tuple[t.Any, str]]:
         """
         For some eccentric enums list(Enum) is empty, so we override
         choices if empty
+
+        :returns: list of enum value choices
         """
         return super().choices or choices(self, override=True)
 
@@ -69,8 +74,6 @@ class TextChoices(
     def __hash__(self):
         return DjangoTextChoices.__hash__(self)
 
-    label: str
-
 
 class IntegerChoices(
     DjangoSymmetricMixin, DjangoIntegerChoices, metaclass=DjangoEnumPropertiesMeta
@@ -82,8 +85,6 @@ class IntegerChoices(
 
     def __hash__(self):
         return DjangoIntegerChoices.__hash__(self)
-
-    label: str
 
 
 class FloatChoices(
@@ -99,8 +100,6 @@ class FloatChoices(
 
     def __str__(self):
         return str(self.value)
-
-    label: str
 
 
 # mult inheritance type hint bug
@@ -121,5 +120,3 @@ class FlagChoices(  # type: ignore
 
     def __hash__(self):
         return enum.IntFlag.__hash__(self)
-
-    label: str

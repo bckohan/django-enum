@@ -3,6 +3,7 @@ import os
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
 from pathlib import Path
+from importlib.util import find_spec
 
 from tests.oracle_patch import patch_oracle
 from dateutil import parser
@@ -14,6 +15,10 @@ duration_rgx1 = re.compile(
 duration_rgx2 = re.compile(
     r"(-)?P(\d+)DT(\d{2})H(\d{2})M(\d{2})(?:\.(\d+))?S", re.IGNORECASE
 )
+
+ENUM_PROPERTIES = bool(find_spec("enum_properties"))
+DJANGO_FILTERS = bool(find_spec("django_filters"))
+DJANGO_REST_FRAMEWORK = bool(find_spec("rest_framework"))
 
 
 def try_convert(primitive, value, raise_on_error=True):

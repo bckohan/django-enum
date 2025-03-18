@@ -1,17 +1,22 @@
+import sys
 from django.contrib import admin
 
 from tests.examples.models import (
-    BitFieldExample,
     Map,
-    MyModel,
+    BasicExample,
+    FlagExample,
     NoCoerceExample,
     StrictExample,
-    TextChoicesExample,
+    PropertyExample,
+    ChoicesWithProperties,
+    TextChoicesExample
 )
 
 admin.site.register(Map)
 admin.site.register(StrictExample)
 admin.site.register(NoCoerceExample)
+admin.site.register(PropertyExample)
+admin.site.register(BasicExample)
+admin.site.register(FlagExample)
+admin.site.register(ChoicesWithProperties)
 admin.site.register(TextChoicesExample)
-admin.site.register(MyModel)
-admin.site.register(BitFieldExample)
