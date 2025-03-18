@@ -28,11 +28,9 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.settings')
 
 # -- Project information -----------------------------------------------------
 
-project = 'django_enum'
-copyright = f'2022-{datetime.now().year}, Brian Kohan'
-author = 'Brian Kohan'
-
-# The full version, including alpha/beta/rc tags
+project = django_enum.__title__
+copyright = django_enum.__copyright__
+author = django_enum.__author__
 release = django_enum.__version__
 
 
@@ -83,6 +81,7 @@ intersphinx_mapping = {
     ),
     "enum-properties": ("https://enum-properties.readthedocs.io/en/stable", None),
     "django-render-static": ("https://django-render-static.readthedocs.io/en/stable", None),
+    "django-filter": ("https://django-filter.readthedocs.io/en/stable", None),
     "python": ('https://docs.python.org/3', None)
 }
 

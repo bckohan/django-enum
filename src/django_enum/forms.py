@@ -2,11 +2,10 @@
 
 from copy import copy
 from decimal import DecimalException
-from enum import Enum
+from enum import Enum, Flag
 from typing import Any, Iterable, List, Optional, Protocol, Sequence, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
-from django.db.models import Choices
 from django.forms.fields import (
     Field,
     TypedChoiceField,
@@ -21,6 +20,7 @@ __all__ = [
     "NonStrictSelect",
     "NonStrictSelectMultiple",
     "FlagSelectMultiple",
+    "ChoiceFieldMixin",
     "EnumChoiceField",
     "EnumFlagField",
 ]
@@ -316,7 +316,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
 
     def __init__(
         self,
-        enum: Optional[Type[Choices]] = None,
+        enum: Optional[Type[Flag]] = None,
         *,
         empty_value: Any = _Unspecified,
         strict: bool = ChoiceFieldMixin._strict_,

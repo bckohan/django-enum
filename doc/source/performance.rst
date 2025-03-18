@@ -9,24 +9,18 @@ Performance
 Enums
 =====
 
-The cost to resolve a raw database value into an :class:`enum.Enum` type object is
-non-zero but negligible and swamped by I/O in most scenarios.
+The cost to resolve a raw database value into an :class:`enum.Enum` type object is non-zero but
+negligible and swamped by I/O in most scenarios.
 
-An effort is made to characterize and monitor the performance penalty of
-using ``EnumFields`` over a Django_ native field with choices and benchmark
-tests ensure performance of future releases will remain stable or improve.
-
-For the nominal case the marshalling penalty is roughly equivalent to a map
-lookup, but may involve several exception stack unwinds in unusual non-strict
-or eccentric enumeration cases.
+For the nominal case the marshalling penalty is roughly equivalent to a map lookup, but may involve
+several exception stack unwinds in unusual non-strict or eccentric enumeration cases.
 
 .. note::
 
-    The marshalling penalty can be eliminated by setting ``coerce`` to
-    ``False``. This will require the developer to manually coerce the
-    :class:`~django_enum.fields.EnumField` value to an :class:`enum.Enum` type object and is therefore usually
-    not recommended - but may be appropriate if the dominate use case involves
-    high volume serialization to a raw value instead.
+    The marshalling penalty can be eliminated by setting ``coerce`` to ``False``. This will require
+    you to manually coerce the :class:`~django_enum.fields.EnumField` value to an :class:`enum.Enum`
+    type object and is therefore usually not recommended - but may be appropriate if the dominate
+    use case involves high volume serialization to a primitive value instead.
 
 
 .. _flag_performance:

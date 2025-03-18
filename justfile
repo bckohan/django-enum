@@ -28,10 +28,11 @@ install_uv:
 install_uv:
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
-# setup the venv and pre-commit hooks
+# setup the venv, pre-commit hooks and playwright dependencies
 setup python="python":
     uv venv -p {{ python }}
     @just run pre-commit install
+    @just run playwright install
 
 # install git pre-commit hooks
 install-precommit:

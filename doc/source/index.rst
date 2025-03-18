@@ -5,7 +5,7 @@ Django Enum
 ===========
 
 |MIT license| |Ruff| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status|
-|Documentation Status| |Code Cov| |Test Status|
+|Documentation Status| |Code Cov| |Test Status| |Django Packages|
 
 
 |Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
@@ -40,6 +40,9 @@ Django Enum
 .. |Lint Status| image:: https://github.com/bckohan/django-enum/workflows/lint/badge.svg
    :target: https://github.com/bckohan/django-enum/actions/workflows/lint.yml
 
+.. |Django Packages| image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
+    :target: https://djangopackages.org/packages/p/django-enum/
+
 .. |Postgres| image:: https://img.shields.io/badge/Postgres-9.6%2B-blue
    :target: https://www.postgresql.org/
 
@@ -64,198 +67,99 @@ Django Enum
 Full and natural support for PEP435_ :class:`enumerations <enum.Enum>` as Django_ model fields.
 
 Many packages aim to ease usage of Python enumerations as model fields. Most were superseded when
-Django provided ``TextChoices`` and ``IntegerChoices`` types. The motivation for django-enum_ was
-to:
+Django provided :ref:`TextChoices <field-choices-enum-types>` and
+:ref:`IntegerChoices <field-choices-enum-types>` types. The motivation for django-enum_ was to:
 
-* Work with any Python PEP 435 Enum including those that do not derive from Django's
-  ``TextChoices`` and ``IntegerChoices``.
-* Coerce fields to instances of the Enum type by default.
-* Allow strict adherence to Enum values to be disabled.
+* Work with any :class:`~enum.Enum` including those that do not derive from
+  Django's :ref:`TextChoices <field-choices-enum-types>` and
+  :ref:`IntegerChoices <field-choices-enum-types>`.
+* Coerce fields to instances of the :class:`~enum.Enum` type by default.
+* Allow strict adherence to :class:`~enum.Enum` values to be disabled.
 * Handle migrations appropriately. (See :ref:`migrations`)
-* Integrate as fully as possible with Django's existing level of enum support.
+* Integrate as fully as possible with Django's
+  :ref:`existing level of enum support <field-choices-enum-types>`.
 * Support :doc:`enum-properties:index` to enable richer enumeration types. (A less awkward
-  alternative to dataclass enumerations with more features)
+  alternative to :ref:`dataclass enumerations <enum-dataclass-support>` with more features)
 * Represent enum fields with the smallest possible column type.
-* Support bit mask queries using standard Python Flag enumerations.
+* Support `bit field <https://en.wikipedia.org/wiki/Bit_field>`_ queries using standard
+  :class:`Python Flag enumerations <enum.Flag>`.
 * Be as simple and light-weight an extension to core Django_ as possible.
-* Enforce enumeration value consistency at the database level using check constraints by default.
+* Enforce enumeration value consistency at the database level using
+  :doc:`check constraints <django:ref/models/constraints>` by default.
 * (TODO) Support native database enumeration column types when available.
 
 django-enum_ provides a new model field type, :class:`~django_enum.fields.EnumField`, that allows
-you to treat almost any PEP 435 enumeration as a database column.
+you to treat almost any PEP435_ enumeration as a database column.
 :class:`~django_enum.fields.EnumField` resolves the correct native Django_ field type for the given
-enumeration based on its value type and range. For example, ``IntegerChoices`` that contain values
-between 0 and 32767 become `PositiveSmallIntegerField <https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield>`_.
+enumeration based on its value type and range. For example,
+:ref:`IntegerChoices <field-choices-enum-types>` that contain values between 0 and 32767 become
+:class:`~django.db.models.PositiveSmallIntegerField`.
 
-.. code-block:: python
-
-    from django.db import models
-    from django_enum import EnumField
-
-    class MyModel(models.Model):
-
-        class TextEnum(models.TextChoices):
-
-            VALUE0 = 'V0', 'Value 0'
-            VALUE1 = 'V1', 'Value 1'
-            VALUE2 = 'V2', 'Value 2'
-
-        class IntEnum(models.IntegerChoices):
-
-            ONE   = 1, 'One'
-            TWO   = 2, 'Two',
-            THREE = 3, 'Three'
-
-        # this is equivalent to:
-        #  CharField(max_length=2, choices=TextEnum.choices, null=True, blank=True)
-        txt_enum = EnumField(TextEnum, null=True, blank=True)
-
-        # this is equivalent to
-        #  PositiveSmallIntegerField(choices=IntEnum.choices, default=IntEnum.ONE.value)
-        int_enum = EnumField(IntEnum, default=IntEnum.ONE)
-
+.. literalinclude:: ../../tests/examples/models/basic.py
+    :language: python
+    :lines: 2-
 
 :class:`~django_enum.fields.EnumField` **is more than just an alias. The fields are now assignable
 and accessible as their enumeration type rather than by-value:**
 
-.. code-block:: python
+.. literalinclude:: ../../tests/examples/basic_example.py
+    :language: python
+    :lines: 2-
 
-    instance = MyModel.objects.create(
-        txt_enum=MyModel.TextEnum.VALUE1,
-        int_enum=3  # by-value assignment also works
-    )
-
-    assert instance.txt_enum is MyModel.TextEnum('V1')
-    assert instance.txt_enum.label is 'Value 1'
-
-    assert instance.int_enum is MyModel.IntEnum['THREE']
-    assert instance.int_enum.value is 3
-
-
-Flag Support
-============
+Flag Support (BitFields)
+========================
 
 :class:`enum.Flag` types are also seamlessly supported! This allows a database column to behave
-like a bit mask and is an alternative to multiple boolean columns. There are mostly positive
-performance implications for using a bit mask instead of booleans depending on the size of the
-bit mask and the types of queries you will run against it. For bit masks more than a few bits long
+like a bit field and is an alternative to having multiple boolean columns. There are positive
+performance implications for using a bit field instead of booleans proportional on the size of the
+bit field and the types of queries you will run against it. For bit fields more than a few bits long
 the size reduction both speeds up queries and reduces the required storage space. See the
 documentation for :ref:`discussion and benchmarks <flag_performance>`.
 
-.. code-block:: python
+.. literalinclude:: ../../tests/examples/models/flag.py
+    :language: python
+    :lines: 2-
 
-    class Permissions(IntFlag):
-
-        READ = 1**2
-        WRITE = 2**2
-        EXECUTE = 3**2
-
-
-    class FlagExample(models.Model):
-
-        permissions = EnumField(Permissions)
-
-
-    FlagExample.objects.create(permissions=Permissions.READ | Permissions.WRITE)
-
-    # get all models with RW:
-    FlagExample.objects.filter(permissions__has_all=Permissions.READ | Permissions.WRITE)
+.. literalinclude:: ../../tests/examples/flag_example.py
+    :language: python
+    :lines: 4-
 
 .. note::
 
     The :ref:`has_all` and :ref:`has_any` field lookups are only available for Flag enumerations.
 
-Complex Enumerations
-====================
+Enums with Properties
+=====================
 
-django-enum_ supports enum types that do not derive from Django's ``IntegerChoices`` and
-``TextChoices``. This allows us to use other libs like :doc:`enum-properties:index` which makes possible very
+django-enum_ supports enum types that do not derive from Django's
+:ref:`IntegerChoices <field-choices-enum-types>` and :ref:`TextChoices <field-choices-enum-types>`.
+This allows us to use other libs like :doc:`enum-properties:index` which makes possible very
 rich enumeration fields:
 
-.. code-block:: console
+.. code-block:: bash
 
-    ?> pip install enum-properties
-
-.. code-block:: python
-
-    from enum_properties import StrEnumProperties
-    from django.db import models
-
-    class TextChoicesExample(models.Model):
-
-        class Color(StrEnumProperties):
-
-            label: Annotated[str, Symmetric()]
-            rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
-            hex: Annotated[str, Symmetric(case_fold=True)]
-
-            # name value label       rgb       hex
-            RED   = "R", "Red",   (1, 0, 0), "ff0000"
-            GREEN = "G", "Green", (0, 1, 0), "00ff00"
-            BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
-
-            # any named s() values in the Enum's inheritance become properties on
-            # each value, and the enumeration value may be instantiated from the
-            # property's value
-
-        color = EnumField(Color)
-
-    instance = TextChoicesExample.objects.create(
-        color=TextChoicesExample.Color('FF0000')
-    )
-    assert instance.color is TextChoicesExample.Color('Red')
-    assert instance.color is TextChoicesExample.Color('R')
-    assert instance.color is TextChoicesExample.Color((1, 0, 0))
-
-    # direct comparison to any symmetric value also works
-    assert instance.color == 'Red'
-    assert instance.color == 'R'
-    assert instance.color == (1, 0, 0)
-
-    # save by any symmetric value
-    instance.color = 'FF0000'
-
-    # access any enum property right from the model field
-    assert instance.color.hex == 'ff0000'
-
-    # this also works!
-    assert instance.color == 'ff0000'
-
-    # and so does this!
-    assert instance.color == 'FF0000'
-
-    instance.save()
-
-    # filtering works by any symmetric value or enum type instance
-    assert TextChoicesExample.objects.filter(
-        color=TextChoicesExample.Color.RED
-    ).first() == instance
-
-    assert TextChoicesExample.objects.filter(color=(1, 0, 0)).first() == instance
-
-    assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
+    > pip install enum-properties
 
 
-While they should be unnecessary if you need to integrate with code that expects an interface fully
-compatible with Django's ``TextChoices`` and ``IntegerChoices`` django-enum_ provides
-``TextChoices``, ``IntegerChoices``, ``FlagChoices`` and ``FloatChoices`` types that derive from
-:doc:`enum-properties:index` and Django's ``Choices``. So the above enumeration could also be written:
+.. literalinclude:: ../../tests/examples/models/properties.py
+    :language: python
+    :lines: 2-
 
-.. code-block:: python
+.. literalinclude:: ../../tests/examples/properties_example.py
+    :language: python
+    :lines: 4-
 
-    from django_enum.choices import TextChoices
+While they should be unnecessary, if you need to integrate with code that expects an interface fully
+compatible with Django's :ref:`TextChoices <field-choices-enum-types>` and
+:ref:`IntegerChoices <field-choices-enum-types>` django-enum_
+provides :class:`~django_enum.choices.TextChoices`, :class:`~django_enum.choices.IntegerChoices`,
+:class:`~django_enum.choices.FlagChoices` and :class:`~django_enum.choices.FloatChoices` types that
+derive from :doc:`enum-properties:index` and Django's ``Choices``. So the above enumeration could
+also be written:
 
-    class Color(TextChoices):
-
-        # label is added as a symmetric property by the base class
-
-        rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
-        hex: Annotated[str, Symmetric(case_fold=True)]
-
-        # name value label       rgb       hex
-        RED   = "R", "Red",   (1, 0, 0), "ff0000"
-        GREEN = "G", "Green", (0, 1, 0), "00ff00"
-        BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
+.. literalinclude:: ../../tests/examples/models/properties_choices.py
+    :language: python
+    :lines: 7-
 
 
 Installation
@@ -263,40 +167,43 @@ Installation
 
 1. Clone django-enum from GitHub_ or install a release off PyPI_:
 
-.. code-block:: console
+.. code-block:: bash
 
-   ?> pip install django-enum
-
-
-django-enum_ has several optional dependencies that are not pulled in by default. ``EnumFields``
-work seamlessly with all Django apps that work with model fields with choices without any
-additional work. Optional integrations are provided with several popular libraries to extend this
-basic functionality.
-
-Integrations are provided that leverage :doc:`enum-properties:index` to make enumerations do more
-work and to provide extended functionality for django-filter_ and djangorestframework_.
-
-.. code-block:: console
-
-    ?> pip install enum-properties
-    ?> pip install django-filter
-    ?> pip install djangorestframework
+   > pip install django-enum
 
 
-Continuous Integration
-======================
+django-enum_ has several optional dependencies that are not installed by default.
+:class:`~django_enum.fields.EnumField` works seamlessly with all Django apps that work with model
+fields with choices without any additional work. Optional integrations are provided with several
+popular libraries to extend this basic functionality, these include:
 
-Like with Django, Postgres is the preferred database for support. The full test suite is run
-against all combinations of currently supported versions of Django, Python, and Postgres as well as
-psycopg3 and psycopg2. The other RDBMS supported by Django are also tested including SQLite, MySQL,
-MariaDB and Oracle. For these RDBMS (with the exception of Oracle), tests are run against the
-minimum and maximum supported version combinations to maximize coverage breadth.
+* :doc:`enum-properties <enum-properties:index>`
+    .. code-block:: bash
+
+        > pip install "django-enum[properties]"
+
+* django-filter_
+* djangorestframework_.
+
+
+Database Support
+================
+
+|Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
+
+Like with Django, PostgreSQL_ is the preferred database for support. The full test suite is run
+against all combinations of currently supported versions of Django_, Python_, and PostgreSQL_ as
+well as psycopg3_ and psycopg2_. The other RDBMS supported by Django_ are also tested including
+SQLite_, MySQL_, MariaDB_ and Oracle_. For these RDBMS (with the exception of Oracle_), tests are
+run against the minimum and maximum supported version combinations to maximize coverage breadth.
 
 **See the** `latest test runs <https://github.com/bckohan/django-enum/actions/workflows/test.yml>`_
 **for our current test matrix**
 
-*For Oracle, only the latest version of the free database is tested against the minimum and
-maximum supported versions of Python, Django and the cx-Oracle driver.*
+.. note::
+
+    For Oracle_, only the latest version of the free database is tested against the minimum and
+    maximum supported versions of Python, Django and the cx-Oracle_ driver.
 
 Further Reading
 ===============
@@ -314,9 +221,9 @@ Please report bugs and discuss features on the
    :maxdepth: 2
    :caption: Contents:
 
-   tutorial
-   howto
+   tutorials/index.rst
+   howto/index.rst
    performance
-   eccentric_enums
+   eccentric
    reference/index
    changelog

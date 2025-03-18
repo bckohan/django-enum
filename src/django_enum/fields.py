@@ -334,6 +334,8 @@ class EnumField(
     and convert any values to the Enumeration type in question.
 
     :param enum: The enum class
+    :param primitive: The primitive type of the enumeration if different than the
+        default
     :param strict: If True (default) the field will throw a :exc:`ValueError` if the
         value is not coercible to a valid enumeration type.
     :param coerce: If True (default) the field will always coerce values to the

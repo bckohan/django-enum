@@ -4,9 +4,10 @@
 Change Log
 ==========
 
-v2.2.0 (2025-03-07)
+v2.2.0 (2025-03-XX)
 ===================
 
+* Implemented `Test all example code in the docs <https://github.com/bckohan/django-enum/issues/99>`_
 * Implemented `Use intersphinx for doc references <https://github.com/bckohan/django-enum/issues/98>`_
 * Implemented `Support Django 5.2 <https://github.com/bckohan/django-enum/issues/96>`_
 * Implemented `Upgrade to enum-properties >=2.2 <https://github.com/bckohan/django-enum/issues/95>`_

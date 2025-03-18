@@ -5,6 +5,7 @@ from pathlib import Path
 
 from django import VERSION as django_version
 
+DEBUG = not os.environ.get("IS_PYTEST_RUN", False)
 SECRET_KEY = "psst"
 SITE_ID = 1
 USE_TZ = False
@@ -96,6 +97,7 @@ TEMPLATES = [
 MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -109,6 +111,8 @@ INSTALLED_APPS = [
     "tests.converters",
     "tests.djenum",
     "tests.tmpls",
+    "debug_toolbar",
+    "django_extensions",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
@@ -116,6 +120,11 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.admin",
+]
+INTERNAL_IPS = [
+    # ...
+    "127.0.0.1",
+    # ...
 ]
 
 if django_version[0:2] >= (5, 0):  # pragma: no cover
