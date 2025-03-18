@@ -97,7 +97,7 @@ TEMPLATES = [
 MIDDLEWARE = (
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    # "debug_toolbar.middleware.DebugToolbarMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
@@ -111,7 +111,7 @@ INSTALLED_APPS = [
     "tests.converters",
     "tests.djenum",
     "tests.tmpls",
-    "debug_toolbar",
+    # "debug_toolbar",
     "django_extensions",
     "django.contrib.auth",
     "django.contrib.contenttypes",

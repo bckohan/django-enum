@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path
-from debug_toolbar.toolbar import debug_toolbar_urls
 
 
 urlpatterns = [
@@ -15,6 +14,3 @@ urlpatterns = [
 
 if "tests.enum_prop" in settings.INSTALLED_APPS:  # pragma: no cover
     urlpatterns.append(path("enum_prop/", include("tests.enum_prop.urls")))
-
-if settings.DEBUG:
-    urlpatterns += debug_toolbar_urls()
