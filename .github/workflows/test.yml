@@ -58,7 +58,7 @@ jobs:
 
           - postgres-version: '9.6'
             django-version: '5.2b1'
-            
+
           - postgres-version: '12'
             django-version: '5.2b1'
 
@@ -121,7 +121,11 @@ jobs:
     - name: Install Release Dependencies
       run: |
         just setup ${{ steps.sp.outputs.python-path }}
-        just test-lock Django~=${{ matrix.django-version }}.0
+        if [ "${{ matrix.django-version }}" = "5.2b1" ]; then
+          just test-lock "Django==${{ matrix.django-version }}"
+        else
+          just test-lock "Django~=${{ matrix.django-version }}.0"
+        fi
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
       run: |
