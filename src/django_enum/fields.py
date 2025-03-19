@@ -674,7 +674,7 @@ class EnumField(
 
         is_multi = self.enum and issubclass(self.enum, Flag)
         if is_multi:
-            kwargs["empty_value"] = self.enum(0)
+            kwargs["empty_value"] = None if self.null else self.enum(0)
             # why fail? - does this fail for single select too?
             # kwargs['show_hidden_initial'] = True
 
@@ -1255,6 +1255,10 @@ class EnumExtraBigIntegerField(IntEnumField, BinaryField):
     """
 
     description = _("A bit field wider than the standard word size.")
+
+    def __init__(self, editable=True, **kwargs):
+        # Django disables form editing on BinaryFields by default, so we override
+        super().__init__(editable=editable, **kwargs)
 
     @cached_property
     def signed(self):

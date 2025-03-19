@@ -39,7 +39,7 @@ install-precommit:
     @just run pre-commit install
 
 # update and install development dependencies
-install *OPTS:
+install *OPTS="--all-extras":
     uv sync {{ OPTS }}
     @just run pre-commit install
 

@@ -46,15 +46,44 @@ class TestFormFieldSymmetric(TestFormField):
         )
 
     def test_flag_choices_model_form(self):
+        from django.forms.models import fields_for_model
+        from django_enum.forms import EnumChoiceField, EnumFlagField
         from tests.examples.models.flag import Permissions
-        from tests.enum_prop.enums import GNSSConstellation
+        from tests.enum_prop.enums import (
+            GNSSConstellation,
+            LargeBitField,
+            LargeNegativeField,
+        )
 
         class FlagChoicesModelForm(ModelForm):
-            class Meta(EnumTesterForm.Meta):
+            class Meta:
+                fields = "__all__"
                 model = BitFieldModel
 
+        fields = fields_for_model(BitFieldModel)
+
+        self.assertEqual(len(fields), 5)
+
+        expected_types = {
+            "bit_field_small": EnumFlagField,
+            "bit_field_large": EnumFlagField,
+            "bit_field_large_empty_default": EnumFlagField,
+            "large_neg": EnumChoiceField,
+            "no_default": EnumFlagField,
+        }
+
+        for field, inst in fields.items():
+            self.assertIsInstance(inst, expected_types[field])
+
         form = FlagChoicesModelForm(
-            data={"bit_field_small": [GNSSConstellation.GPS, GNSSConstellation.GLONASS]}
+            data={
+                "bit_field_small": [
+                    GNSSConstellation.GPS.value,
+                    GNSSConstellation.GLONASS,
+                ],
+                "large_neg": LargeNegativeField.NEG_ONE.value,
+                "no_default": LargeBitField.TWO,
+            }
         )
 
         form.full_clean()
@@ -62,6 +91,21 @@ class TestFormFieldSymmetric(TestFormField):
         self.assertEqual(
             form.cleaned_data["bit_field_small"],
             GNSSConstellation.GPS | GNSSConstellation.GLONASS,
+        )
+        self.assertIsInstance(form.cleaned_data["bit_field_small"], GNSSConstellation)
+        self.assertEqual(
+            form.cleaned_data["large_neg"],
+            LargeNegativeField.NEG_ONE,
+        )
+        self.assertIsInstance(form.cleaned_data["large_neg"], LargeNegativeField)
+        self.assertEqual(form.cleaned_data["no_default"], LargeBitField.TWO)
+        self.assertIsInstance(form.cleaned_data["no_default"], LargeBitField)
+        self.assertEqual(form.cleaned_data["bit_field_large"], None)
+        self.assertEqual(
+            form.cleaned_data["bit_field_large_empty_default"], LargeBitField(0)
+        )
+        self.assertIsInstance(
+            form.cleaned_data["bit_field_large_empty_default"], LargeBitField
         )
         self.assertIsInstance(form.base_fields["bit_field_small"], EnumFlagField)
 

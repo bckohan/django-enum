@@ -383,7 +383,8 @@ class SingleNoCoercePerf(models.Model):
 class BitFieldModel(models.Model):
     bit_field_small = EnumField(GNSSConstellation)
     bit_field_large = EnumField(LargeBitField, null=True, default=None, blank=True)
-    bit_field_large_neg = EnumField(
+    bit_field_large_empty_default = EnumField(LargeBitField, blank=True)
+    large_neg = EnumField(
         LargeNegativeField, default=LargeNegativeField.NEG_ONE, null=True
     )
     no_default = EnumField(LargeBitField)

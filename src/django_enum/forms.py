@@ -333,19 +333,16 @@ class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
 
 class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     """
-    The default ``TypedMultipleChoiceField`` will only accept the base
-    enumeration values. Use this field on forms to accept any value mappable
-    to an enumeration including any labels or symmetric properties.
+    A generic form field for :class:`~enum.Flag` derived enumerations. By default the
+    :class:`~django_enum.forms.FlagSelectMultiple` widget will be used.
 
-    Behavior:
+    After cleaning the value stored in the cleaned data will be a combined enum instance.
+    (e.g. all input flags will be or-ed together)
 
-    if no select value in post data:
-        if null=True, no choice is null.
-        If null=False, no choice is Enum(0)
-    if select value in post data:
-        if null=True or False, no choice is Enum(0)
+    .. note::
 
-    if strict=False, values can be outside of the enumerations
+        The default empty_value is Flag(0) but when used in a ModelForm the empty_value
+        will be automatically set to None if null=True.
     """
 
     widget = FlagSelectMultiple

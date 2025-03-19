@@ -633,7 +633,7 @@ dev = [
     { name = "deepdiff", specifier = ">=8.2.0" },
     { name = "django-extensions", specifier = ">=3.2.3" },
     { name = "django-stubs", extras = ["compatible-mypy"], specifier = ">=5.1.3" },
-    { name = "django-test-migrations", git = "https://github.com/bckohan/django-test-migrations.git?rev=issue-503" },
+    { name = "django-test-migrations", git = "https://github.com/wemake-services/django-test-migrations.git?rev=master" },
     { name = "djlint", specifier = ">=1.36.4" },
     { name = "doc8", specifier = ">=1.1.2" },
     { name = "ipdb", specifier = ">=0.13.13" },
@@ -730,7 +730,7 @@ wheels = [
 [[package]]
 name = "django-test-migrations"
 version = "1.4.0"
-source = { git = "https://github.com/bckohan/django-test-migrations.git?rev=issue-503#0b674ba78807a37f74e402e09d6302051eb6b7c3" }
+source = { git = "https://github.com/wemake-services/django-test-migrations.git?rev=master#f0523aaf62483caf1bc88dc95f125f149ddba925" }
 dependencies = [
     { name = "typing-extensions" },
 ]

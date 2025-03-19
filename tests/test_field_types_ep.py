@@ -23,16 +23,14 @@ class TestFieldTypeResolutionProps(TestFieldTypeResolution):
             tester._meta.get_field("bit_field_small"), PositiveSmallIntegerField
         )
         self.assertIsInstance(tester._meta.get_field("bit_field_large"), BinaryField)
-        self.assertIsInstance(
-            tester._meta.get_field("bit_field_large_neg"), BinaryField
-        )
+        self.assertIsInstance(tester._meta.get_field("large_neg"), BinaryField)
 
         self.assertEqual(
             tester.bit_field_small,
             GNSSConstellation.GPS | GNSSConstellation.GLONASS,
         )
         self.assertEqual(tester.bit_field_large, None)
-        self.assertEqual(tester.bit_field_large_neg, LargeNegativeField.NEG_ONE)
+        self.assertEqual(tester.large_neg, LargeNegativeField.NEG_ONE)
         self.assertEqual(tester.no_default, LargeBitField(0))
 
         self.assertEqual(
@@ -94,7 +92,7 @@ class TestFieldTypeResolutionProps(TestFieldTypeResolution):
         tester2 = BitFieldModel.objects.create(
             bit_field_small=GNSSConstellation.GPS | GNSSConstellation.GLONASS,
             bit_field_large=LargeBitField.ONE | LargeBitField.TWO,
-            bit_field_large_neg=None,
+            large_neg=None,
         )
 
         # has_any and has_all are not supported on ExtraLarge bit fields
@@ -107,14 +105,11 @@ class TestFieldTypeResolutionProps(TestFieldTypeResolution):
             )
 
         with self.assertRaises(FieldError):
-            BitFieldModel.objects.filter(
-                bit_field_large_neg__has_any=LargeNegativeField.NEG_ONE
-            )
+            BitFieldModel.objects.filter(large_neg__has_any=LargeNegativeField.NEG_ONE)
 
         with self.assertRaises(FieldError):
             BitFieldModel.objects.filter(
-                bit_field_large_neg__has_all=LargeNegativeField.NEG_ONE
-                | LargeNegativeField.ZERO
+                large_neg__has_all=LargeNegativeField.NEG_ONE | LargeNegativeField.ZERO
             )
 
 
