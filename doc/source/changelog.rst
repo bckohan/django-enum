@@ -4,10 +4,15 @@
 Change Log
 ==========
 
-v2.2.0 (2025-03-07)
+v2.2.0 (2025-03-XX)
 ===================
 
+* Implemented `Test all example code in the docs <https://github.com/bckohan/django-enum/issues/99>`_
+* Implemented `Use intersphinx for doc references <https://github.com/bckohan/django-enum/issues/98>`_
+* Implemented `Support Django 5.2 <https://github.com/bckohan/django-enum/issues/96>`_
+* Implemented `Upgrade to enum-properties >=2.2 <https://github.com/bckohan/django-enum/issues/95>`_
 * Implemented `Move form imports to locally scoped imports where needed in fields.py <https://github.com/bckohan/django-enum/issues/79>`_
+* Implemented `Reorganize documentation using diataxis <https://github.com/bckohan/django-enum/issues/72>`_
 
 v2.1.0 (2025-02-24)
 ===================
@@ -54,7 +59,8 @@ v2.0.0 (2024-09-09)
 Migration from 1.x -> 2.x
 -------------------------
 
-* Imports of enum-properties_ extended ``TextChoices`` and ``IntegerChoices`` have been changed:
+* Imports of :doc:`enum-properties:index` extended ``TextChoices`` and ``IntegerChoices`` have been
+  changed:
 
     .. code-block:: python
 

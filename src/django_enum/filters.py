@@ -1,4 +1,6 @@
-"""Support for django-filter"""
+"""
+Support for :doc:`django-filter <django-filter:index>`.
+"""
 
 from typing import Tuple, Type
 
@@ -11,24 +13,28 @@ from django_enum.utils import choices
 
 class EnumFilter(TypedChoiceFilter):
     """
-    Use this filter class instead of ``ChoiceFilter`` to get filters to
-    accept Enum labels and symmetric properties.
+    Use this filter class instead of :ref:`ChoiceFilter <django-filter:choice-filter>`
+    to get filters to accept :class:`~enum.Enum` labels and symmetric properties.
 
     For example if we have an enumeration field defined with the following
     Enum:
 
-    .. code-block::
+    .. code-block:: python
 
-        class Color(TextChoices, s('rgb'), s('hex', case_fold=True)):
-            RED = 'R', 'Red', (1, 0, 0), 'ff0000'
+        class Color(TextChoices):
+
+            rgb: Annotated[Tuple[int, int, int], Symmetric()]
+            hex: Annotated[str, Symmetric(case_fold=True)]
+
+            RED   = 'R', 'Red',   (1, 0, 0), 'ff0000'
             GREEN = 'G', 'Green', (0, 1, 0), '00ff00'
-            BLUE = 'B', 'Blue', (0, 0, 1), '0000ff'
+            BLUE  = 'B', 'Blue',  (0, 0, 1), '0000ff'
 
         color = EnumField(Color)
 
-    The default ``ChoiceFilter`` will only work with the enumeration
-    values: ?color=R, ?color=G, ?color=B. ``EnumFilter`` will accept query
-    parameter values from any of the symmetric properties: ?color=Red,
+    The default :ref:`ChoiceFilter <django-filter:choice-filter>` will only work with
+    the enumeration values: ?color=R, ?color=G, ?color=B. ``EnumFilter`` will accept
+    query parameter values from any of the symmetric properties: ?color=Red,
     ?color=ff0000, etc...
 
     :param enum: The class of the enumeration containing the values to
@@ -52,9 +58,11 @@ class EnumFilter(TypedChoiceFilter):
 
 class FilterSet(filterset.FilterSet):
     """
-    Use this class instead of django-filter's ``FilterSet`` class to
-    automatically set all ``EnumField`` filters to ``EnumFilter`` by
-    default instead of ``ChoiceFilter``.
+    Use this class instead of the :doc:`django-filter <django-filter:index>`
+    :doc:`FilterSet <django-filter:ref/filterset>` class to automatically set all
+    :class:`~django_enum.fields.EnumField` filters to
+    :class:`~django_enum.filters.EnumFilter` by default instead of
+    :ref:`ChoiceFilter <django-filter:choice-filter>`.
     """
 
     @classmethod

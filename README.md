@@ -24,23 +24,23 @@
 
 🚨 **See [migration guide](https://django-enum.readthedocs.io/en/latest/changelog.html#migration-1-x-to-2-x) for notes on 1.x to 2.x migration.** 🚨
 
-Full and natural support for [enumerations](https://docs.python.org/3/library/enum.html#enum.Enum) as Django model fields.
+Full and natural support for [PEP435](https://peps.python.org/pep-0435) [enumerations](https://docs.python.org/3/library/enum.html#enum.Enum) as [Django](https://www.djangoproject.com) model fields.
 
-Many packages aim to ease usage of Python enumerations as model fields. Most were superseded when Django provided ``TextChoices`` and ``IntegerChoices`` types. The motivation for [django-enum](https://django-enum.readthedocs.io) was to:
+Many packages aim to ease usage of Python enumerations as model fields. Most were superseded when Django provided [TextChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) and [IntegerChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) types. The motivation for [django-enum](https://pypi.org/project/enum-properties) was to:
 
-* Work with any Python PEP 435 Enum including those that do not derive from Django's TextChoices and IntegerChoices.
-* Coerce fields to instances of the Enum type by default.
-* Allow strict adherence to Enum values to be disabled.
+* Work with any [Enum](https://docs.python.org/3/library/enum.html#enum.Enum) including those that do not derive from Django's [TextChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) and [IntegerChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types).
+* Coerce fields to instances of the [Enum](https://docs.python.org/3/library/enum.html#enum.Enum) type by default.
+* Allow strict adherence to [Enum](https://docs.python.org/3/library/enum.html#enum.Enum) values to be disabled.
 * Handle migrations appropriately. (See [migrations](https://django-enum.readthedocs.io/en/latest/usage.html#migrations))
-* Integrate as fully as possible with [Django's](https://www.djangoproject.com) existing level of enum support.
-* Support [enum-properties](https://pypi.org/project/enum-properties) to enable richer enumeration types. (A less awkward alternative to dataclass enumerations with more features)
+* Integrate as fully as possible with Django's [existing level of enum support](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types).
+* Support [enum-properties](https://pypi.org/project/enum-properties) to enable richer enumeration types. (A less awkward alternative to [dataclass enumerations](https://docs.python.org/3/howto/enum.html#enum-dataclass-support) with more features)
 * Represent enum fields with the smallest possible column type.
-* Support bit mask queries using standard Python Flag enumerations.
+* Support [bit field](https://en.wikipedia.org/wiki/Bit_field) queries using standard Python Flag enumerations.
 * Be as simple and light-weight an extension to core [Django](https://www.djangoproject.com) as possible.
-* Enforce enumeration value consistency at the database level using check constraints by default.
+* Enforce enumeration value consistency at the database level using [check constraints](https://docs.djangoproject.com/en/stable/ref/models/constraints) by default.
 * (TODO) Support native database enumeration column types when available.
 
-[django-enum](https://django-enum.readthedocs.io) works in concert with [Django's](https://www.djangoproject.com) built in ``TextChoices`` and ``IntegerChoices`` to provide a new model field type, ``EnumField``, that resolves the correct native [Django](https://www.djangoproject.com) field type for the given enumeration based on its value type and range. For example, ``IntegerChoices`` that contain values between 0 and 32767 become [PositiveSmallIntegerField](https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield).
+[django-enum](https://pypi.org/project/enum-properties) provides a new model field type, [EnumField](https://django-enum.rtfd.io/en/stable/reference/fields.html#django_enum.fields.EnumField), that allows you to treat almost any [PEP435](https://peps.python.org/pep-0435) enumeration as a database column. [EnumField](https://django-enum.rtfd.io/en/stable/reference/fields.html#django_enum.fields.EnumField) resolves the correct native [Django](https://www.djangoproject.com) field type for the given enumeration based on its value type and range. For example, [IntegerChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) that contain values between 0 and 32767 become [PositiveSmallIntegerField](https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield).
 
 ```python
 
@@ -70,7 +70,7 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
         int_enum = EnumField(IntEnum, default=IntEnum.ONE)
 ```
 
-``EnumField`` **is more than just an alias. The fields are now assignable and accessible as their enumeration type rather than by-value:**
+[EnumField](https://django-enum.rtfd.io/en/stable/reference/fields.html#django_enum.fields.EnumField) **is more than just an alias. The fields are now assignable and accessible as their enumeration type rather than by-value:**
 
 ```python
 
@@ -86,9 +86,9 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
     assert instance.int_enum.value == 3
 ```
 
-## Flag Support
+## Flag Support (BitFields)
 
-[Flag](https://docs.python.org/3/library/enum.html#enum.Flag) types are also seamlessly supported! This allows a database column to behave like a bit mask and is an alternative to multiple boolean columns. There are mostly positive performance implications for using a bit mask instead of booleans depending on the size of the bit mask and the types of queries you will run against it. For bit masks more than a few bits long the size reduction both speeds up queries and reduces the required storage space. See the documentation for [discussion and benchmarks](https://django-enum.readthedocs.io/en/latest/performance.html#flags).
+[Flag](https://docs.python.org/3/library/enum.html#enum.Flag) types are also seamlessly supported! This allows a database column to behave like a bit field and is an alternative to having multiple boolean columns. There are positive performance implications for using a bit field instead of booleans proportional on the size of the bit field and the types of queries you will run against it. For bit fields more than a few bits long the size reduction both speeds up queries and reduces the required storage space. See the documentation for [discussion and benchmarks](https://django-enum.readthedocs.io/en/latest/performance.html#flags).
 
 ```python
 
@@ -112,7 +112,7 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
 
 ## Complex Enumerations
 
-[django-enum](https://django-enum.readthedocs.io) supports enum types that do not derive from Django's ``IntegerChoices`` and ``TextChoices``. This allows us to use other libs like [enum-properties](https://pypi.org/project/enum-properties) which makes possible very rich enumeration fields:
+[django-enum](https://pypi.org/project/django-enum) supports enum types that do not derive from Django's [IntegerChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) and [TextChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types). This allows us to use other libs like [enum-properties](https://pypi.org/project/enum-properties) which makes possible very rich enumeration fields:
 
 ``?> pip install enum-properties``
 
@@ -176,7 +176,7 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
     assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
 ```
 
-While they should be unnecessary if you need to integrate with code that expects an interface fully compatible with Django's ``TextChoices`` and ``IntegerChoices`` django-enum provides ``TextChoices``, ``IntegerChoices``, ``FlagChoices`` and ``FloatChoices`` types that derive from enum-properties and Django's ``Choices``. So the above enumeration could also be written:
+While they should be unnecessary if you need to integrate with code that expects an interface fully compatible with Django's [TextChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) and [IntegerChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) [django-enum](https://pypi.org/project/django-enum) provides [TextChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.TextChoices), [IntegerChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.IntegerChoices), [FlagChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.FlagChoices) and [FloatChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.FloatChoices) types that derive from enum-properties and Django's ``Choices``. So the above enumeration could also be written:
 
 ```python
 
@@ -204,23 +204,30 @@ While they should be unnecessary if you need to integrate with code that expects
    pip install django-enum
 ```
 
-``django-enum`` has several optional dependencies that are not pulled in by default. ``EnumFields`` work seamlessly with all Django apps that work with model fields with choices without any additional work. Optional integrations are provided with several popular libraries to extend this basic functionality.
+[django-enum](https://pypi.org/project/django-enum) has several optional dependencies that are not installed by default. [EnumField](https://django-enum.rtfd.io/en/stable/reference/fields.html#django_enum.fields.EnumField) works seamlessly with all Django apps that work with model fields with choices without any additional work. Optional integrations are provided with several popular libraries to extend this basic functionality, these include:
 
-Integrations are provided that leverage [enum-properties](https://pypi.org/project/enum-properties) to make enumerations do more work and to provide extended functionality for [django-filter](https://pypi.org/project/django-filter) and [djangorestframework](https://www.django-rest-framework.org).
 
-```bash
-    pip install enum-properties
-    pip install django-filter
-    pip install djangorestframework
-```
+* [enum-properties](https://pypi.org/project/enum-properties)
+    ```bash
+    > pip install "django-enum[properties]"
+    ```
+* [django-filter](https://pypi.org/project/django-filter)
+* [djangorestframework](https://www.django-rest-framework.org)
 
-## Continuous Integration
 
-Like with Django, Postgres is the preferred database for support. The full test suite is run against all combinations of currently supported versions of Django, Python, and Postgres as well as psycopg3 and psycopg2. The other RDBMS supported by Django are also tested including SQLite, MySQL, MariaDB and Oracle. For these RDBMS (with the exception of Oracle), tests are run against the minimum and maximum supported version combinations to maximize coverage breadth.
+## Database Support
+
+[![Postgres](https://img.shields.io/badge/Postgres-9.6%2B-blue)](https://www.postgresql.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-5.7%2B-blue)](https://www.mysql.com/)
+[![MariaDB](https://img.shields.io/badge/MariaDB-10.2%2B-blue)](https://mariadb.org/)
+[![SQLite](https://img.shields.io/badge/SQLite-3.8%2B-blue)](https://www.sqlite.org/)
+[![Oracle](https://img.shields.io/badge/Oracle-18%2B-blue)](https://www.oracle.com/database/)
+
+Like with [Django](https://www.djangoproject.com), [PostgreSQL](https://www.postgresql.org) is the preferred database for support. The full test suite is run against all combinations of currently supported versions of [Django](https://www.djangoproject.com), [Python](https://www.python.org), and [PostgreSQL](https://www.postgresql.org) as well as [psycopg3](https://pypi.org/project/psycopg) and [psycopg2](https://pypi.org/project/psycopg2). The other RDBMS supported by [Django](https://www.djangoproject.com) are also tested including [SQLite](https://www.sqlite.org), [MySQL](https://www.mysql.com), [MariaDB](https://mariadb.org) and [Oracle](https://www.oracle.com/database). For these RDBMS (with the exception of [Oracle](https://www.oracle.com/database), tests are run against the minimum and maximum supported version combinations to maximize coverage breadth.
 
 **See the [latest test runs](https://github.com/bckohan/django-enum/actions/workflows/test.yml) for our current test matrix**
 
-*For Oracle, only the latest version of the free database is tested against the minimum and maximum supported versions of Python, Django and the cx-Oracle driver.*
+For [Oracle](https://www.oracle.com/database), only the latest version of the free database is tested against the minimum and maximum supported versions of Python, Django and the [cx-Oracle](https://pypi.org/project/cx-Oracle) driver.
 
 ## Further Reading
 

@@ -70,9 +70,10 @@ class ClassLookupDict:
 class EnumField(ChoiceField):
     """
     A djangorestframework serializer field for Enumeration types. If
-    unspecified ModelSerializers will assign django_enum.fields.EnumField
-    model field types to ChoiceFields. ChoiceFields do not accept
-    symmetrical values, this field will.
+    unspecified ModelSerializers will assign :class:`~django_enum.fields.EnumField`
+    model field types to `ChoiceField
+    <https://www.django-rest-framework.org/api-guide/fields/#choicefield>`_ which will
+    not accept symmetrical values, this field will.
 
     :param enum: The type of the Enumeration of the field
     :param strict: If True (default) only values in the Enumeration type
@@ -143,6 +144,9 @@ class EnumField(ChoiceField):
     def to_internal_value(self, data: Any) -> Union[Enum, Any]:
         """
         Transform the *incoming* primitive data into an enum instance.
+
+        :return: The enum instance or the primitive value if the enum
+            instance could not be found.
         """
         if data == "" and self.allow_blank:
             return ""

@@ -1,6 +1,6 @@
 import os
 import sys
-from django import VERSION
+import django
 from django.db import connection
 import typing as t
 from django.test import TestCase
@@ -44,11 +44,14 @@ class TestEnvironment(TestCase):
             f"{expected_python}"
         )
 
-        expected_django = tuple(int(v) for v in expected_django.split(".") if v)
-        assert VERSION[: len(expected_django)] == expected_django, (
-            f"Django Version Mismatch: {VERSION[: len(expected_django)]} != "
-            f"{expected_django}"
-        )
+        try:
+            expected_django = tuple(int(v) for v in expected_django.split(".") if v)
+            assert django.VERSION[: len(expected_django)] == expected_django, (
+                f"Django Version Mismatch: {django.VERSION[: len(expected_django)]} != "
+                f"{expected_django}"
+            )
+        except ValueError:
+            assert expected_django == django.__version__
 
         if expected_db_ver:
             if rdbms == "postgres":

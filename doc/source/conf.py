@@ -1,10 +1,13 @@
 from datetime import datetime
+import os
 import sys
 from pathlib import Path
 from sphinx.ext.autodoc import between
 
 sys.path.append(str(Path(__file__).parent.parent.parent))
 import django_enum
+
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'tests.settings')
 
 # Configuration file for the Sphinx documentation builder.
 #
@@ -25,11 +28,9 @@ import django_enum
 
 # -- Project information -----------------------------------------------------
 
-project = 'django_enum'
-copyright = f'2022-{datetime.now().year}, Brian Kohan'
-author = 'Brian Kohan'
-
-# The full version, including alpha/beta/rc tags
+project = django_enum.__title__
+copyright = django_enum.__copyright__
+author = django_enum.__author__
 release = django_enum.__version__
 
 
@@ -39,6 +40,8 @@ release = django_enum.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'sphinxcontrib_django',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.autodoc',
     'sphinx.ext.todo'
 ]
@@ -70,6 +73,17 @@ html_theme_options = {
 html_static_path = []
 
 todo_include_todos = True
+
+intersphinx_mapping = {
+    "django": (
+        "https://docs.djangoproject.com/en/stable",
+        "https://docs.djangoproject.com/en/stable/_objects/",
+    ),
+    "enum-properties": ("https://enum-properties.readthedocs.io/en/stable", None),
+    "django-render-static": ("https://django-render-static.readthedocs.io/en/stable", None),
+    "django-filter": ("https://django-filter.readthedocs.io/en/stable", None),
+    "python": ('https://docs.python.org/3', None)
+}
 
 
 def setup(app):

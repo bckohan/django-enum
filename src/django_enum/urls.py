@@ -41,9 +41,14 @@ def register_enum_converter(enum: Type[Enum], type_name="", prop="value"):
     Register an enum converter for Django's URL dispatcher.
 
     :param enum: The enumeration type to register.
-    :param type_name: the name to use for the converter
-    :param prop: The property name to use to generate urls - by default the
-        value is used.
+    :param type_name: the name to use for the converter, defaults to the enum class
+        name:
+
+        .. code-block:: python
+
+            path("<type_name:kwarg_name>", view, view_name)
+
+    :param prop: The property name to use in the urls - by default the value is used.
     """
     register_converter(
         type(

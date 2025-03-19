@@ -7,22 +7,24 @@ class TestEnumConverter(TestCase):
         from django.urls import reverse
         from django.urls.converters import get_converters
 
-        from tests.converters.urls import Enum1, record
+        from tests.converters.urls import TestEnum, record
         from tests.djenum.enums import Constants, DecimalEnum
 
-        converter = get_converters()["Enum1"]
+        converter = get_converters()["TestEnum"]
         self.assertEqual(converter.regex, "1|2")
-        self.assertEqual(converter.to_python("1"), Enum1.A)
-        self.assertEqual(converter.to_python("2"), Enum1.B)
+        self.assertEqual(converter.to_python("1"), TestEnum.A)
+        self.assertEqual(converter.to_python("2"), TestEnum.B)
         self.assertEqual(converter.primitive, int)
-        self.assertEqual(converter.enum, Enum1)
+        self.assertEqual(converter.enum, TestEnum)
         self.assertEqual(converter.prop, "value")
 
-        self.assertEqual(reverse("enum1_view", kwargs={"enum": Enum1.A}), "/1")
+        self.assertEqual(
+            reverse("enum1_view", kwargs={"enum": TestEnum.A}), "/converters/1"
+        )
 
-        response = self.client.get("/1")
+        response = self.client.get("/converters/1")
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(record[0], Enum1.A)
+        self.assertEqual(record[0], TestEnum.A)
 
         converter = get_converters()["decimal_enum"]
         self.assertEqual(converter.regex, "0.99|0.999|0.9999|99.9999|999")
@@ -33,10 +35,11 @@ class TestEnumConverter(TestCase):
         self.assertEqual(converter.prop, "value")
 
         self.assertEqual(
-            reverse("decimal_enum_view", kwargs={"enum": DecimalEnum.ONE}), "/0.99"
+            reverse("decimal_enum_view", kwargs={"enum": DecimalEnum.ONE}),
+            "/converters/0.99",
         )
 
-        response = self.client.get("/0.99")
+        response = self.client.get("/converters/0.99")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(record[1], DecimalEnum.ONE)
 
@@ -51,9 +54,9 @@ class TestEnumConverter(TestCase):
 
         self.assertEqual(
             reverse("constants_view", kwargs={"enum": Constants.GOLDEN_RATIO}),
-            "/Golden%20Ratio",
+            "/converters/Golden%20Ratio",
         )
 
-        response = self.client.get("/Euler's Number")
+        response = self.client.get("/converters/Euler's Number")
         self.assertEqual(response.status_code, 200)
         self.assertEqual(record[2], Constants.e)
