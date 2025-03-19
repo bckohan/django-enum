@@ -673,17 +673,20 @@ class EnumField(
         )
 
         is_multi = self.enum and issubclass(self.enum, Flag)
-        if is_multi and self.enum:
+        if is_multi:
             kwargs["empty_value"] = self.enum(0)
             # why fail? - does this fail for single select too?
             # kwargs['show_hidden_initial'] = True
 
         if not self.strict:
             kwargs.setdefault(
-                "widget", NonStrictSelectMultiple if is_multi else NonStrictSelect
+                "widget",
+                NonStrictSelectMultiple(enum=self.enum)
+                if is_multi
+                else NonStrictSelect,
             )
         elif is_multi:
-            kwargs.setdefault("widget", FlagSelectMultiple)
+            kwargs.setdefault("widget", FlagSelectMultiple(enum=self.enum))
 
         form_field = super().formfield(
             form_class=form_class,
@@ -1216,15 +1219,6 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             # this may have been called by a normal EnumField to bring in flag-like constraints
             # for non flag fields
             IntegerField.contribute_to_class(self, cls, name, private_only=private_only)
-
-    def _coerce_to_value_type(self, value: Any) -> Any:
-        if (
-            isinstance(value, list)
-            or isinstance(value, tuple)
-            or isinstance(value, set)
-        ):
-            value = reduce(or_, value)
-        return super()._coerce_to_value_type(value)
 
 
 class SmallIntegerFlagField(FlagField, EnumPositiveSmallIntegerField):
