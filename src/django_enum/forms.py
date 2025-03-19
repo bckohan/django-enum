@@ -1,8 +1,11 @@
 """Enumeration support for django model forms"""
 
+import sys
 from copy import copy
 from decimal import DecimalException
 from enum import Enum, Flag
+from functools import reduce
+from operator import or_
 from typing import Any, Iterable, List, Optional, Protocol, Sequence, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
@@ -85,8 +88,39 @@ class FlagSelectMultiple(SelectMultiple):
     A SelectMultiple widget for EnumFlagFields.
     """
 
+    enum: Optional[Type[Flag]]
 
-class NonStrictSelectMultiple(NonStrictMixin, SelectMultiple):
+    def __init__(self, enum: Optional[Type[Flag]] = None, **kwargs):
+        self.enum = enum
+        super().__init__(**kwargs)
+
+    def format_value(self, value):
+        """
+        Return a list of the flag's values.
+        """
+        if not isinstance(value, list):
+            # see impl of ChoiceWidget.optgroups
+            # it compares the string conversion of the value of each
+            # choice tuple to the string conversion of the value
+            # to determine selected options
+            if self.enum:
+                if sys.version_info < (3, 11):
+                    return [
+                        str(flg.value)
+                        for flg in self.enum
+                        if flg in self.enum(value) and flg is not self.enum(0)
+                    ]
+                else:
+                    return [str(en.value) for en in self.enum(value)]
+            if isinstance(value, int):
+                # automagically work for IntFlags even if we weren't given the enum
+                return [
+                    str(1 << i) for i in range(value.bit_length()) if (value >> i) & 1
+                ]
+        return value
+
+
+class NonStrictSelectMultiple(NonStrictMixin, FlagSelectMultiple):
     """
     A SelectMultiple widget for non-strict EnumFlagFields that includes any
     existing non-conforming value as a choice option.
@@ -314,6 +348,8 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     if strict=False, values can be outside of the enumerations
     """
 
+    widget = FlagSelectMultiple
+
     def __init__(
         self,
         enum: Optional[Type[Flag]] = None,
@@ -324,6 +360,10 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
         choices: _ChoicesParameter = (),
         **kwargs,
     ):
+        kwargs.setdefault(
+            "widget",
+            self.widget(enum=enum) if strict else NonStrictSelectMultiple(enum=enum),
+        )
         super().__init__(
             enum=enum,
             empty_value=(
@@ -334,3 +374,12 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
             choices=choices,
             **kwargs,
         )
+
+    def _coerce(self, value: Any) -> Any:
+        """Combine the values into a single flag using |"""
+        if self.enum and isinstance(value, self.enum):
+            return value
+        values = TypedMultipleChoiceField._coerce(self, value)  # type: ignore[attr-defined]
+        if values:
+            return reduce(or_, values)
+        return self.empty_value
