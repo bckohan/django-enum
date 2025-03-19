@@ -1,5 +1,6 @@
 """Enumeration support for django model forms"""
 
+import sys
 from copy import copy
 from decimal import DecimalException
 from enum import Enum, Flag
@@ -103,7 +104,14 @@ class FlagSelectMultiple(SelectMultiple):
             # choice tuple to the string conversion of the value
             # to determine selected options
             if self.enum:
-                return [str(en.value) for en in self.enum(value)]
+                if sys.version_info < (3, 11):
+                    return [
+                        str(flg.value)
+                        for flg in self.enum
+                        if flg in self.enum(value) and flg is not self.enum(0)
+                    ]
+                else:
+                    return [str(en.value) for en in self.enum(value)]
             if isinstance(value, int):
                 # automagically work for IntFlags even if we weren't given the enum
                 return [
@@ -369,6 +377,8 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
 
     def _coerce(self, value: Any) -> Any:
         """Combine the values into a single flag using |"""
+        if self.enum and isinstance(value, self.enum):
+            return value
         values = TypedMultipleChoiceField._coerce(self, value)  # type: ignore[attr-defined]
         if values:
             return reduce(or_, values)
