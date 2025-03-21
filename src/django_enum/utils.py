@@ -250,6 +250,8 @@ def decompose(flags: Optional[F]) -> List[F]:
     if not flags:
         return []
     if sys.version_info < (3, 11):
-        return [flg for flg in type(flags) if flg in flags and flg is not flags(0)]
+        return [
+            flg for flg in type(flags) if flg in flags and flg is not type(flags)(0)
+        ]
     else:
         return list(flags)  # type: ignore[arg-type]
