@@ -7,6 +7,10 @@ Change Log
 v2.2.0 (2025-03-XX)
 ===================
 
+* Implemented `If default is not provided for flag fields it should be Flag(0). <https://github.com/bckohan/django-enum/issues/105>`_
+* Fixed `EnumFlagFields set empty values to Flag(0) when model field has null=True, default=None <https://github.com/bckohan/django-enum/issues/104>`_
+* Fixed `Large enum fields that inherit from binaryfield have editable=False by default <https://github.com/bckohan/django-enum/issues/103>`_
+* Fixed `EnumFlagField breaks for Flag types that are not constructible from lists of values <https://github.com/bckohan/django-enum/issues/102>`_
 * Implemented `Test all example code in the docs <https://github.com/bckohan/django-enum/issues/99>`_
 * Implemented `Use intersphinx for doc references <https://github.com/bckohan/django-enum/issues/98>`_
 * Implemented `Support Django 5.2 <https://github.com/bckohan/django-enum/issues/96>`_
@@ -40,6 +44,7 @@ v2.0.0 (2024-09-09)
 * Completed `Reorganize tests <https://github.com/bckohan/django-enum/issues/70>`_
 * Completed `Switch linting and formatting to ruff <https://github.com/bckohan/django-enum/issues/62>`_
 * Implemented `Install django-stubs when running static type checks. <https://github.com/bckohan/django-enum/issues/60>`_
+* Fixed `When a character enum field allows null and blank=True, form fields and drf fields allow '' to pass through causing errors. <https://github.com/bckohan/django-enum/issues/53>`_
 * Implemented `Supply a mixin for DRF ModelSerializers that instantiates the provided DRF EnumField type for model EnumFields. <https://github.com/bckohan/django-enum/issues/47>`_
 * Implemented `EnumField's should inherit from common base titled EnumField <https://github.com/bckohan/django-enum/issues/46>`_
 * Implemented `Add database constraints on enum fields by default. <https://github.com/bckohan/django-enum/issues/45>`_

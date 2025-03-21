@@ -94,9 +94,9 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
 
     class Permissions(IntFlag):
 
-        READ = 1**2
-        WRITE = 2**2
-        EXECUTE = 3**2
+        READ    = 1 << 0
+        WRITE   = 1 << 1
+        EXECUTE = 1 << 2
 
 
     class FlagExample(models.Model):

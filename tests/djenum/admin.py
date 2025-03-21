@@ -1,8 +1,18 @@
 from django.contrib import admin
 
-from tests.djenum.models import AdminDisplayBug35, EnumTester
+from django.forms import ModelForm
+from tests.djenum.models import (
+    AdminDisplayBug35,
+    EnumTester,
+    NullBlankFormTester,
+    NullableBlankFormTester,
+    Bug53Tester,
+)
 
 admin.site.register(EnumTester)
+admin.site.register(NullBlankFormTester)
+admin.site.register(NullableBlankFormTester)
+admin.site.register(Bug53Tester)
 
 
 class AdminDisplayBug35Admin(admin.ModelAdmin):

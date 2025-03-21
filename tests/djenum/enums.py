@@ -47,6 +47,21 @@ class ExternEnum(IntEnum):
         return self.name
 
 
+class NullableExternEnum(Enum):
+    """
+    Tests that externally defined (i.e. not deriving from choices enums
+    are supported.
+    """
+
+    NONE = None
+    ONE = 1
+    TWO = 2
+    THREE = 3
+
+    def __str__(self):
+        return self.name
+
+
 class Constants(FloatChoices):
     PI = 3.14159265358979323846264338327950288, "Pi"
     e = 2.71828, "Euler's Number"
@@ -357,3 +372,12 @@ class StrPropsEnum(Enum):
     STR1 = StrProps("str1")
     STR2 = StrProps("str2")
     STR3 = StrProps("str3")
+
+
+class StrTestEnum(str, Enum):
+    V1 = "v1"
+    V2 = "v2"
+    V3 = "v3"
+
+    def __str__(self):
+        return self.value

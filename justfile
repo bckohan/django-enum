@@ -47,6 +47,12 @@ install *OPTS="--all-extras":
 install-docs:
     uv sync --group docs --all-extras
 
+# run the development server
+runserver:
+    @just manage makemigrations
+    @just manage migrate
+    @just manage runserver 8027
+
 [script]
 _lock-python:
     import tomlkit

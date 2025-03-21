@@ -1,6 +1,5 @@
 """Enumeration support for django model forms"""
 
-import sys
 from copy import copy
 from decimal import DecimalException
 from enum import Enum, Flag
@@ -17,7 +16,12 @@ from django.forms.fields import (
 from django.forms.widgets import Select, SelectMultiple
 
 from django_enum.utils import choices as get_choices
-from django_enum.utils import determine_primitive, with_typehint
+from django_enum.utils import (
+    decompose,
+    determine_primitive,
+    get_set_values,
+    with_typehint,
+)
 
 __all__ = [
     "NonStrictSelect",
@@ -98,25 +102,18 @@ class FlagSelectMultiple(SelectMultiple):
         """
         Return a list of the flag's values.
         """
+        if value is None:
+            return []
         if not isinstance(value, list):
             # see impl of ChoiceWidget.optgroups
             # it compares the string conversion of the value of each
             # choice tuple to the string conversion of the value
             # to determine selected options
             if self.enum:
-                if sys.version_info < (3, 11):
-                    return [
-                        str(flg.value)
-                        for flg in self.enum
-                        if flg in self.enum(value) and flg is not self.enum(0)
-                    ]
-                else:
-                    return [str(en.value) for en in self.enum(value)]
+                return [str(en.value) for en in decompose(self.enum(value))]
             if isinstance(value, int):
                 # automagically work for IntFlags even if we weren't given the enum
-                return [
-                    str(1 << i) for i in range(value.bit_length()) if (value >> i) & 1
-                ]
+                return [str(bit) for bit in get_set_values(value)]
         return value
 
 

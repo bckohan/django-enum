@@ -1,8 +1,9 @@
 """Utility routines for django_enum."""
 
+import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
-from enum import Enum, IntFlag
+from enum import Enum, Flag, IntFlag
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
 
 from typing_extensions import get_args
@@ -21,6 +22,7 @@ __all__ = [
 
 
 T = TypeVar("T")
+F = TypeVar("F", bound=Flag)
 
 SupportedPrimitive = Union[
     int,
@@ -214,11 +216,40 @@ def decimal_params(
     return {"max_digits": max_digits, "decimal_places": decimal_places}
 
 
-def get_set_bits(flag: Union[int, IntFlag]) -> List[int]:
+def get_set_bits(flag: Optional[Union[int, IntFlag]]) -> List[int]:
     """
     Return the indices of the bits set in the flag.
 
     :param flag: The flag to get the set bits for, value must be an int.
     :return: A list of indices of the set bits
     """
-    return [i for i in range(flag.bit_length()) if flag & (1 << i)]
+    if flag:
+        return [i for i in range(flag.bit_length()) if flag & (1 << i)]
+    return []
+
+
+def get_set_values(flag: Optional[Union[int, IntFlag]]) -> List[int]:
+    """
+    Return the integers corresponding to the flags set on the IntFlag or integer.
+
+    :param flag: The flag to get the set bits for, value must be an int.
+    :return: A list of flag integers
+    """
+    if flag:
+        return [1 << i for i in range(flag.bit_length()) if (flag >> i) & 1]
+    return []
+
+
+def decompose(flags: Optional[F]) -> List[F]:
+    """
+    Get the activated flags in a :class:`~enum.Flag` instance.
+
+    :param: flags: The flag instance to decompose
+    :return: A list of the :class:`~enum.Flag` instances comprising the flag.
+    """
+    if not flags:
+        return []
+    if sys.version_info < (3, 11):
+        return [flg for flg in type(flags) if flg in flags and flg is not flags(0)]
+    else:
+        return list(flags)  # type: ignore[arg-type]

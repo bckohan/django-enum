@@ -385,7 +385,7 @@ class BitFieldModel(models.Model):
     bit_field_large = EnumField(LargeBitField, null=True, default=None, blank=True)
     bit_field_large_empty_default = EnumField(LargeBitField, blank=True)
     large_neg = EnumField(
-        LargeNegativeField, default=LargeNegativeField.NEG_ONE, null=True
+        LargeNegativeField, default=LargeNegativeField.NEG_ONE, null=True, blank=True
     )
     no_default = EnumField(LargeBitField)
 

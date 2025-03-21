@@ -25,6 +25,7 @@ from tests.djenum.enums import (
     MultiPrimitiveEnum,
     MultiWithNone,
     NegativeFlagEnum,
+    NullableExternEnum,
     PathEnum,
     PosIntEnum,
     PositiveFlagEnum,
@@ -34,6 +35,7 @@ from tests.djenum.enums import (
     SmallPositiveFlagEnum,
     StrProps,
     StrPropsEnum,
+    StrTestEnum,
     TextEnum,
     TimeEnum,
     NullableConstants,
@@ -328,3 +330,39 @@ class NameOverrideTest(models.Model):
     txt_enum = EnumField(
         TextEnum, name="enum_field", null=True, blank=True, default=None
     )
+
+
+class NullBlankFormTester(models.Model):
+    required = EnumField(ExternEnum)
+    required_default = EnumField(ExternEnum, default=ExternEnum.TWO)
+    # this is allowed but will result in validation errors on form submission with null selected
+    blank = EnumField(ExternEnum, null=False, blank=True)
+    # this is allowed but you will not be able to submit nulls via a form
+    # this is beyond the scope of django-enum - implement custom form logic to do this
+    # nullable = EnumField(ExternEnum, null=True)
+    blank_nullable = EnumField(ExternEnum, null=True, blank=True)
+    blank_nullable_default = EnumField(ExternEnum, null=True, blank=True, default=None)
+
+
+class NullableBlankFormTester(models.Model):
+    required = EnumField(NullableExternEnum)
+    required_default = EnumField(NullableExternEnum, default=NullableExternEnum.TWO)
+    # this is allowed but will result in validation errors on form submission with null selected
+    blank = EnumField(NullableExternEnum, null=False, blank=True)
+    # this is allowed but you will not be able to submit nulls via a form
+    # this is beyond the scope of django-enum - implement custom form logic to do this
+    # nullable = EnumField(ExternEnum, null=True)
+    blank_nullable = EnumField(NullableExternEnum, null=True, blank=True)
+    blank_nullable_default = EnumField(
+        NullableExternEnum, null=True, blank=True, default=None
+    )
+
+
+class Bug53Tester(models.Model):
+    char_blank_null_true = EnumField(StrTestEnum, null=True, blank=True)
+    char_blank_null_false = EnumField(StrTestEnum, null=False, blank=True)
+    char_blank_null_false_default = EnumField(
+        StrTestEnum, null=False, blank=True, default="", strict=False
+    )
+    int_blank_null_false = EnumField(ExternEnum, null=False, blank=True)
+    int_blank_null_true = EnumField(ExternEnum, null=True, blank=True)

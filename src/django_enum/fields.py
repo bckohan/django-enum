@@ -293,7 +293,10 @@ class EnumFieldFactory(type):
                     )
 
             return field_cls(
-                enum=enum, primitive=primitive, bit_length=bit_length, **field_kwargs
+                enum=enum,  # type: ignore[arg-type]
+                primitive=primitive,
+                bit_length=bit_length,
+                **field_kwargs,
             )
 
         if issubclass(primitive, float):
@@ -664,35 +667,14 @@ class EnumField(
         #   we try to pass in. Very annoying because we have to
         #   un-encapsulate some of this initialization logic, this makes our
         #   EnumChoiceField pretty ugly!
-        from django_enum.forms import (
-            EnumChoiceField,
-            EnumFlagField,
-            FlagSelectMultiple,
-            NonStrictSelect,
-            NonStrictSelectMultiple,
-        )
-
-        is_multi = self.enum and issubclass(self.enum, Flag)
-        if is_multi:
-            kwargs["empty_value"] = None if self.null else self.enum(0)
-            # why fail? - does this fail for single select too?
-            # kwargs['show_hidden_initial'] = True
+        from django_enum.forms import EnumChoiceField, NonStrictSelect
 
         if not self.strict:
-            kwargs.setdefault(
-                "widget",
-                NonStrictSelectMultiple(enum=self.enum)
-                if is_multi
-                else NonStrictSelect,
-            )
-        elif is_multi:
-            kwargs.setdefault("widget", FlagSelectMultiple(enum=self.enum))
+            kwargs.setdefault("widget", NonStrictSelect)
 
         form_field = super().formfield(
             form_class=form_class,
-            choices_form_class=(
-                choices_form_class or EnumFlagField if is_multi else EnumChoiceField
-            ),
+            choices_form_class=choices_form_class or EnumChoiceField,
             **kwargs,
         )
 
@@ -709,8 +691,6 @@ class EnumField(
         limit_choices_to=None,
         ordering=(),
     ):
-        if self.enum and issubclass(self.enum, Flag):
-            blank_choice = [(self.enum(0), "---------")]
         return [
             (getattr(choice, "value", choice), label)
             for choice, label in super().get_choices(
@@ -1146,7 +1126,18 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
     support bitwise operations.
     """
 
-    enum: Type[Flag]
+    enum: Type[IntFlag]
+
+    def __init__(
+        self,
+        enum: Optional[Type[IntFlag]] = None,
+        blank=True,
+        default=NOT_PROVIDED,
+        **kwargs,
+    ):
+        if enum and default is NOT_PROVIDED:
+            default = enum(0)
+        super().__init__(enum=enum, default=default, blank=blank, **kwargs)
 
     def contribute_to_class(
         self, cls: Type[Model], name: str, private_only: bool = False
@@ -1219,6 +1210,53 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             # this may have been called by a normal EnumField to bring in flag-like constraints
             # for non flag fields
             IntegerField.contribute_to_class(self, cls, name, private_only=private_only)
+
+    def formfield(self, form_class=None, choices_form_class=None, **kwargs):
+        from django_enum.forms import (
+            ChoiceFieldMixin,
+            EnumFlagField,
+            FlagSelectMultiple,
+            NonStrictSelectMultiple,
+        )
+
+        kwargs["empty_value"] = None if self.default is None else self.enum(0)
+        kwargs.setdefault(
+            "widget",
+            FlagSelectMultiple(enum=self.enum)
+            if self.strict
+            else NonStrictSelectMultiple(enum=self.enum),
+        )
+
+        form_field = Field.formfield(
+            self,
+            form_class=form_class,
+            choices_form_class=choices_form_class or EnumFlagField,
+            **kwargs,
+        )
+
+        # we can't pass these in kwargs because formfield() strips them out
+        if isinstance(form_field, ChoiceFieldMixin):
+            form_field.enum = self.enum
+            form_field.strict = self.strict
+            form_field.primitive = self.primitive
+        return form_field
+
+    def get_choices(
+        self,
+        include_blank=False,
+        blank_choice=tuple(BLANK_CHOICE_DASH),
+        limit_choices_to=None,
+        ordering=(),
+    ):
+        return [
+            (getattr(choice, "value", choice), label)
+            for choice, label in super().get_choices(
+                include_blank=False,
+                blank_choice=blank_choice,
+                limit_choices_to=limit_choices_to,
+                ordering=ordering,
+            )
+        ]
 
 
 class SmallIntegerFlagField(FlagField, EnumPositiveSmallIntegerField):

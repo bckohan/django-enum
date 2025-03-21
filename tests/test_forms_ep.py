@@ -109,6 +109,17 @@ class TestFormFieldSymmetric(TestFormField):
         )
         self.assertIsInstance(form.base_fields["bit_field_small"], EnumFlagField)
 
+        self.assertEqual(
+            form.base_fields["bit_field_small"].empty_value, GNSSConstellation(0)
+        )
+        self.assertEqual(form.base_fields["bit_field_large"].empty_value, None)
+        self.assertEqual(
+            form.base_fields["bit_field_large_empty_default"].empty_value,
+            LargeBitField(0),
+        )
+        self.assertEqual(form.base_fields["large_neg"].empty_value, None)
+        self.assertEqual(form.base_fields["no_default"].empty_value, LargeBitField(0))
+
     def test_extern_flag_admin_form(self):
         from django.contrib import admin
 
@@ -121,7 +132,8 @@ class TestFormFieldSymmetric(TestFormField):
         from tests.examples.models.flag import Permissions
 
         class FlagModelForm(ModelForm):
-            class Meta(EnumTesterForm.Meta):
+            class Meta:
+                fields = "__all__"
                 model = FlagExample
 
         form = FlagModelForm(
