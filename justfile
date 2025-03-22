@@ -1,6 +1,9 @@
 set windows-shell := ["powershell.exe", "-NoLogo", "-Command"]
 set unstable := true
-set script-interpreter := ['uv', 'run', '--script']
+
+#set script-interpreter := ['uv', 'run', '--script']
+
+set script-interpreter := ['python']
 
 export PYTHONPATH := source_directory()
 

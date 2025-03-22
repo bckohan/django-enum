@@ -11,8 +11,14 @@ from tests.djenum.models import (
     NullBlankFormTester,
     NullableBlankFormTester,
     Bug53Tester,
+    NullableStrFormTester,
 )
-from tests.djenum.enums import ExternEnum, NullableExternEnum, StrTestEnum
+from tests.djenum.enums import (
+    ExternEnum,
+    NullableExternEnum,
+    StrTestEnum,
+    NullableStrEnum,
+)
 from playwright.sync_api import sync_playwright, Page, expect
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -76,6 +82,9 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
     HEADLESS = True
 
     __test__ = False
+
+    def enum(self, field):
+        return self.MODEL_CLASS._meta.get_field(field).enum
 
     @property
     def changes(self) -> t.List[t.Dict[str, Enum]]:
@@ -148,18 +157,23 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
     def set_form_value(
         self, field_name: str, value: t.Optional[t.Union[Enum, str]], flag=False
     ):
-        # should override this if needed
-        if value is None and not flag:
-            self.page.select_option(f"select[name='{field_name}']", "")
-        elif flag:
-            self.page.select_option(
-                f"select[name='{field_name}']",
-                [str(flag.value) for flag in decompose(value)],
-            )
-        else:
-            self.page.select_option(
-                f"select[name='{field_name}']", str(getattr(value, "value", value))
-            )
+        try:
+            if value is None and None in self.enum(field_name):
+                value = self.enum(field_name)(value)
+            # should override this if needed
+            if getattr(value, "value", value) is None and not flag:
+                self.page.select_option(f"select[name='{field_name}']", "")
+            elif flag:
+                self.page.select_option(
+                    f"select[name='{field_name}']",
+                    [str(flag.value) for flag in decompose(value)],
+                )
+            else:
+                self.page.select_option(
+                    f"select[name='{field_name}']", str(getattr(value, "value", value))
+                )
+        except Exception:
+            self.page.pause()
 
     def verify_changes(self, obj: Model, expected: t.Dict[str, t.Any]):
         count = 0
@@ -324,6 +338,7 @@ class TestNullBlankAdminBehavior(_GenericAdminFormTest):
 class TestNullableBlankAdminBehavior(_GenericAdminFormTest):
     MODEL_CLASS = NullableBlankFormTester
     __test__ = True
+    HEADLESS = True
 
     @property
     def changes(self) -> t.Dict[str, Enum]:
@@ -347,6 +362,39 @@ class TestNullableBlankAdminBehavior(_GenericAdminFormTest):
                 "required": NullableExternEnum.ONE,
                 "required_default": NullableExternEnum.THREE,
                 "blank": NullableExternEnum.ONE,
+                "blank_nullable": "",
+                "blank_nullable_default": "",
+            },
+        ]
+
+
+class TestNullableStrAdminBehavior(_GenericAdminFormTest):
+    MODEL_CLASS = NullableStrFormTester
+    __test__ = True
+    HEADLESS = True
+
+    @property
+    def changes(self) -> t.Dict[str, Enum]:
+        return [
+            {"required": NullableStrEnum.STR1, "blank": NullableStrEnum.STR2},
+            {
+                "required": NullableStrEnum.STR2,
+                "required_default": NullableStrEnum.STR1,
+                "blank": NullableStrEnum.STR2,
+                "blank_nullable": None,
+                "blank_nullable_default": None,
+            },
+            {
+                "required": NullableStrEnum.STR1,
+                "required_default": NullableStrEnum.STR2,
+                "blank": NullableStrEnum.STR2,
+                "blank_nullable": NullableStrEnum.STR1,
+                "blank_nullable_default": NullableStrEnum.NONE,
+            },
+            {
+                "required": NullableStrEnum.STR2,
+                "required_default": NullableStrEnum.STR2,
+                "blank": None,
                 "blank_nullable": "",
                 "blank_nullable_default": "",
             },

@@ -62,6 +62,15 @@ class NullableExternEnum(Enum):
         return self.name
 
 
+class NullableStrEnum(Enum):
+    NONE = None
+    STR1 = "str1"
+    STR2 = "str2"
+
+    def __str__(self):
+        return self.name
+
+
 class Constants(FloatChoices):
     PI = 3.14159265358979323846264338327950288, "Pi"
     e = 2.71828, "Euler's Number"

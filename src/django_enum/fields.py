@@ -12,7 +12,13 @@ from typing import Any, Generic, List, Optional, Tuple, Type, TypeVar, Union
 
 from django import VERSION as django_version
 from django.core.exceptions import ValidationError
-from django.core.validators import DecimalValidator
+from django.core.validators import (
+    DecimalValidator,
+    MaxLengthValidator,
+    MaxValueValidator,
+    MinLengthValidator,
+    MinValueValidator,
+)
 from django.db.models import (
     NOT_PROVIDED,
     BigIntegerField,
@@ -89,12 +95,17 @@ class EnumValidatorAdapter:
     """
 
     wrapped: Type
+    allow_null: bool
 
-    def __init__(self, wrapped):
+    def __init__(self, wrapped, allow_null):
         self.wrapped = wrapped
+        self.allow_null = allow_null
 
     def __call__(self, value):
-        return self.wrapped(value.value if isinstance(value, Enum) else value)
+        value = value.value if isinstance(value, Enum) else value
+        if value is None and self.allow_null:
+            return
+        return self.wrapped(value)
 
     def __eq__(self, other):
         return self.wrapped == other
@@ -792,6 +803,14 @@ class EnumCharField(EnumField[Type[str]], CharField):
                 ),
             )
         super().__init__(enum=enum, primitive=primitive, **kwargs)
+        self.validators = [
+            (
+                EnumValidatorAdapter(validator, self.null)  # type: ignore
+                if isinstance(validator, (MinLengthValidator, MaxLengthValidator))
+                else validator
+            )
+            for validator in self.validators
+        ]
 
 
 class EnumFloatField(EnumField[Type[float]], FloatField):
@@ -850,6 +869,8 @@ class IntEnumField(EnumField[Type[int]]):
     supporting enumerations with integer values.
     """
 
+    validators: List[Any]
+
     @property
     def bit_length(self):
         """
@@ -875,6 +896,14 @@ class IntEnumField(EnumField[Type[int]]):
     ):
         self._bit_length_ = bit_length
         super().__init__(enum=enum, primitive=primitive, **kwargs)
+        self.validators = [
+            (
+                EnumValidatorAdapter(validator, self.null)  # type: ignore
+                if isinstance(validator, (MinValueValidator, MaxValueValidator))
+                else validator
+            )
+            for validator in self.validators
+        ]
 
 
 class EnumSmallIntegerField(IntEnumField, SmallIntegerField):
@@ -1082,6 +1111,14 @@ class EnumDecimalField(EnumField[Type[Decimal]], DecimalField):
                 ),
             },
         )
+        self.validators = [
+            (
+                EnumValidatorAdapter(validator, self.null)  # type: ignore
+                if isinstance(validator, DecimalValidator)
+                else validator
+            )
+            for validator in self.validators
+        ]
 
     def to_python(self, value: Any) -> Union[Enum, Any]:
         if not self.enum:
@@ -1089,17 +1126,6 @@ class EnumDecimalField(EnumField[Type[Decimal]], DecimalField):
         if not isinstance(value, self.enum):
             value = DecimalField.to_python(self, value)
         return EnumField.to_python(self, value)
-
-    @cached_property
-    def validators(self):
-        return [
-            (
-                EnumValidatorAdapter(validator)  # type: ignore
-                if isinstance(validator, DecimalValidator)
-                else validator
-            )
-            for validator in super().validators
-        ]
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)

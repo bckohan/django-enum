@@ -27,6 +27,7 @@ jobs:
       actions: write
     # Service containers to run with `container-job`  
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
         postgres-version: ['9.6', '12', 'latest']
@@ -158,6 +159,7 @@ jobs:
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ '3.9', '3.13']
         django-version:
@@ -214,6 +216,7 @@ jobs:
       contents: read
       actions: write
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ '3.9', '3.13']
         mysql-version: ['5.7', 'latest']
@@ -321,6 +324,7 @@ jobs:
       TEST_DATABASE_VERSION: ${{ matrix.mariadb-version }}
 
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ '3.9', '3.13']
         mysqlclient-version: ['1.4.3', '']
@@ -427,6 +431,7 @@ jobs:
       IGNORE_ORA_01843: True
       IGNORE_ORA_00932: True
     strategy:
+      fail-fast: false
       matrix:
         python-version: ['3.9', '3.10', '3.12']
         django-version:
@@ -530,6 +535,7 @@ jobs:
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ '3.9', '3.13']
         django-version:
@@ -590,6 +596,7 @@ jobs:
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
     strategy:
+      fail-fast: false
       matrix:
         python-version: [ '3.9', '3.13']
         django-version:

@@ -26,6 +26,7 @@ from tests.djenum.enums import (
     MultiWithNone,
     NegativeFlagEnum,
     NullableExternEnum,
+    NullableStrEnum,
     PathEnum,
     PosIntEnum,
     PositiveFlagEnum,
@@ -355,6 +356,20 @@ class NullableBlankFormTester(models.Model):
     blank_nullable = EnumField(NullableExternEnum, null=True, blank=True)
     blank_nullable_default = EnumField(
         NullableExternEnum, null=True, blank=True, default=None
+    )
+
+
+class NullableStrFormTester(models.Model):
+    required = EnumField(NullableStrEnum)
+    required_default = EnumField(NullableStrEnum, default=NullableStrEnum.STR2)
+    # this is allowed but will result in validation errors on form submission with null selected
+    blank = EnumField(NullableStrEnum, null=False, blank=True)
+    # this is allowed but you will not be able to submit nulls via a form
+    # this is beyond the scope of django-enum - implement custom form logic to do this
+    # nullable = EnumField(ExternEnum, null=True)
+    blank_nullable = EnumField(NullableStrEnum, null=True, blank=True)
+    blank_nullable_default = EnumField(
+        NullableStrEnum, null=True, blank=True, default=NullableStrEnum.NONE
     )
 
 

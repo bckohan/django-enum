@@ -7,12 +7,14 @@ from tests.djenum.models import (
     NullBlankFormTester,
     NullableBlankFormTester,
     Bug53Tester,
+    NullableStrFormTester,
 )
 
 admin.site.register(EnumTester)
 admin.site.register(NullBlankFormTester)
 admin.site.register(NullableBlankFormTester)
 admin.site.register(Bug53Tester)
+admin.site.register(NullableStrFormTester)
 
 
 class AdminDisplayBug35Admin(admin.ModelAdmin):

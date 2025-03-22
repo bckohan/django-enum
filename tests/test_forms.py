@@ -1,6 +1,6 @@
 from django.test import TestCase
 from tests.utils import EnumTypeMixin
-from tests.djenum.models import EnumTester, Bug53Tester
+from tests.djenum.models import EnumTester, Bug53Tester, NullableStrEnum
 from tests.djenum.forms import EnumTesterForm
 from django.forms import Form, ModelForm
 from django_enum.forms import EnumChoiceField
@@ -140,7 +140,7 @@ class NullBlankBehaviorTests(TestCase):
         self.assertEqual(form.base_fields["int_blank_null_false"].empty_value, "")
         self.assertEqual(form.base_fields["int_blank_null_true"].empty_value, None)
 
-    def test_nullable_blank_tester_form(self):
+    def test_null_blank_tester_form(self):
         from tests.djenum.models import NullBlankFormTester
         from tests.djenum.enums import ExternEnum
 
@@ -179,10 +179,111 @@ class NullBlankBehaviorTests(TestCase):
             [("", "---------"), (1, "ONE"), (2, "TWO"), (3, "THREE")],
         )
 
+        # with self.assertRaises(ValueError):
+        # because blank will error out on save
         form.full_clean()
+
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["required"], ExternEnum.TWO)
         self.assertEqual(form.cleaned_data["required_default"], ExternEnum.ONE)
+        self.assertIsInstance(form.base_fields["required"], EnumChoiceField)
+
+    def test_nullable_blank_tester_form(self):
+        from tests.djenum.models import NullableBlankFormTester
+        from tests.djenum.enums import NullableExternEnum
+
+        class NullableBlankFormTesterForm(ModelForm):
+            class Meta:
+                fields = "__all__"
+                model = NullableBlankFormTester
+
+        form = NullableBlankFormTesterForm(
+            data={
+                "required": NullableExternEnum.TWO,
+                "required_default": NullableExternEnum.ONE,
+            }
+        )
+
+        # null=False, blank=false
+        self.assertEqual(
+            form.base_fields["required"].choices,
+            [(None, "NONE"), (1, "ONE"), (2, "TWO"), (3, "THREE")],
+        )
+        # null=False, blank=false, default=TWO
+        self.assertEqual(
+            form.base_fields["required_default"].choices,
+            [(None, "NONE"), (1, "ONE"), (2, "TWO"), (3, "THREE")],
+        )
+        # null=False, blank=True
+        self.assertEqual(
+            form.base_fields["blank"].choices,
+            [(None, "NONE"), (1, "ONE"), (2, "TWO"), (3, "THREE")],
+        )
+        # null=True, blank=True
+        self.assertEqual(
+            form.base_fields["blank_nullable"].choices,
+            [(None, "NONE"), (1, "ONE"), (2, "TWO"), (3, "THREE")],
+        )
+        # null=True, blank=True, default=None
+        self.assertEqual(
+            form.base_fields["blank_nullable_default"].choices,
+            [(None, "NONE"), (1, "ONE"), (2, "TWO"), (3, "THREE")],
+        )
+
+        form.full_clean()
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["required"], NullableExternEnum.TWO)
+        self.assertEqual(form.cleaned_data["required_default"], NullableExternEnum.ONE)
+        self.assertIsInstance(form.base_fields["required"], EnumChoiceField)
+
+    def test_nullable_str_tester_form(self):
+        from tests.djenum.models import NullableStrFormTester
+        from tests.djenum.enums import NullableStrEnum
+
+        class NullableStrEnumForm(ModelForm):
+            class Meta:
+                fields = "__all__"
+                model = NullableStrFormTester
+
+        form = NullableStrEnumForm(
+            data={
+                "required": NullableStrEnum.STR1,
+                "required_default": NullableStrEnum.STR2,
+            }
+        )
+
+        # null=False, blank=false
+        self.assertEqual(
+            form.base_fields["required"].choices,
+            [(None, "NONE"), ("str1", "STR1"), ("str2", "STR2")],
+        )
+        # null=False, blank=false, default=TWO
+        self.assertEqual(
+            form.base_fields["required_default"].choices,
+            [(None, "NONE"), ("str1", "STR1"), ("str2", "STR2")],
+        )
+        # null=False, blank=True
+        self.assertEqual(
+            form.base_fields["blank"].choices,
+            [(None, "NONE"), ("str1", "STR1"), ("str2", "STR2")],
+        )
+        # null=True, blank=True
+        self.assertEqual(
+            form.base_fields["blank_nullable"].choices,
+            [(None, "NONE"), ("str1", "STR1"), ("str2", "STR2")],
+        )
+        # null=True, blank=True, default=None
+        self.assertEqual(
+            form.base_fields["blank_nullable_default"].choices,
+            [(None, "NONE"), ("str1", "STR1"), ("str2", "STR2")],
+        )
+
+        form.full_clean()
+
+        self.assertTrue(form.is_valid(), form.errors)
+        self.assertEqual(form.cleaned_data["required"], NullableStrEnum.STR1)
+        self.assertEqual(form.cleaned_data["required_default"], NullableStrEnum.STR2)
         self.assertIsInstance(form.base_fields["required"], EnumChoiceField)
 
 
@@ -279,7 +380,7 @@ class TestFormField(EnumTypeMixin, TestCase):
         for field, bad_value in self.bad_values.items():
             form = self.FORM_CLASS(data={**self.model_params, field: bad_value})
             form.full_clean()
-            self.assertFalse(form.is_valid())
+            self.assertFalse(form.is_valid(), f"{field}={bad_value}")
             self.assertTrue(field in form.errors)
 
         form = self.FORM_CLASS(data=self.bad_values)
