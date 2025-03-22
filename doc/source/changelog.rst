@@ -18,6 +18,7 @@ v2.2.0 (2025-03-XX)
 * Implemented `Upgrade to enum-properties >=2.2 <https://github.com/bckohan/django-enum/issues/95>`_
 * Implemented `Move form imports to locally scoped imports where needed in fields.py <https://github.com/bckohan/django-enum/issues/79>`_
 * Implemented `Reorganize documentation using diataxis <https://github.com/bckohan/django-enum/issues/72>`_
+* Implemented `Provide an EnumMultipleChoiceField <https://github.com/bckohan/django-enum/issues/72>`_
 
 v2.1.0 (2025-02-24)
 ===================

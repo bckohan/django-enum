@@ -1,10 +1,12 @@
 from django.test import TestCase
+import pytest
 import django
+from django.db import connection
 from tests.utils import EnumTypeMixin
 from tests.djenum.models import EnumTester, Bug53Tester, NullableStrEnum
-from tests.djenum.forms import EnumTesterForm
+from tests.djenum.forms import EnumTesterForm, EnumTesterMultipleChoiceForm
 from django.forms import Form, ModelForm
-from django_enum.forms import EnumChoiceField
+from django_enum.forms import EnumChoiceField, EnumMultipleChoiceField
 from django.core.exceptions import ValidationError
 from datetime import date, datetime, timedelta, time
 from decimal import Decimal
@@ -198,6 +200,10 @@ class NullBlankBehaviorTests(TestCase):
         self.assertEqual(form.cleaned_data["required_default"], ExternEnum.ONE)
         self.assertIsInstance(form.base_fields["required"], EnumChoiceField)
 
+    @pytest.mark.skipif(
+        connection.vendor == "oracle",
+        reason="Null/blank form behavior on oracle broken",
+    )
     def test_nullable_blank_tester_form(self):
         from tests.djenum.models import NullableBlankFormTester
         from tests.djenum.enums import NullableExternEnum
@@ -247,6 +253,10 @@ class NullBlankBehaviorTests(TestCase):
         self.assertEqual(form.cleaned_data["required_default"], NullableExternEnum.ONE)
         self.assertIsInstance(form.base_fields["required"], EnumChoiceField)
 
+    @pytest.mark.skipif(
+        connection.vendor == "oracle",
+        reason="Null/blank form behavior on oracle broken",
+    )
     def test_nullable_str_tester_form(self):
         from tests.djenum.models import NullableStrFormTester
         from tests.djenum.enums import NullableStrEnum
@@ -468,3 +478,170 @@ class TestFormField(EnumTypeMixin, TestCase):
             form["non_strict_int"].field.to_python(form["non_strict_int"].value()),
             self.enum_primitive("non_strict_int"),
         )
+
+
+class TestEnumMultipleChoiceFormField(EnumTypeMixin, TestCase):
+    MODEL_CLASS = EnumTester
+    FORM_CLASS = EnumTesterMultipleChoiceForm
+    form_type = None
+
+    @property
+    def model_params(self):
+        return {
+            "small_pos_int": [0],
+            "small_int": [self.SmallIntEnum.VAL2, self.SmallIntEnum.VALn1],
+            "pos_int": [2147483647, self.PosIntEnum.VAL3],
+            "int": [self.IntEnum.VALn1],
+            "big_pos_int": [2, self.BigPosIntEnum.VAL3],
+            "big_int": [self.BigIntEnum.VAL0],
+            "constant": [2.71828, self.Constants.GOLDEN_RATIO],
+            "text": [self.TextEnum.VALUE3, self.TextEnum.VALUE2],
+            "extern": [self.ExternEnum.THREE],
+            "date_enum": [self.DateEnum.BRIAN, date(1989, 7, 27)],
+            "datetime_enum": [self.DateTimeEnum.ST_HELENS, self.DateTimeEnum.ST_HELENS],
+            "duration_enum": [self.DurationEnum.FORTNIGHT],
+            "time_enum": [self.TimeEnum.COB, self.TimeEnum.LUNCH],
+            "decimal_enum": [self.DecimalEnum.ONE],
+            "non_strict_int": [self.SmallPosIntEnum.VAL2],
+            "non_strict_text": ["arbitrary", "A" * 13],
+            "no_coerce": [self.SmallPosIntEnum.VAL1],
+        }
+
+    @property
+    def bad_values(self):
+        return {
+            "small_pos_int": [4.1],
+            "small_int": ["Value 12"],
+            "pos_int": [5.3],
+            "int": [10],
+            "big_pos_int": ["-12"],
+            "big_int": ["-12"],
+            "constant": [2.7],
+            "text": ["143 emma"],
+            "date_enum": ["20159-01-01"],
+            "datetime_enum": ["AAAA-01-01 00:00:00"],
+            "duration_enum": ["1 elephant"],
+            "time_enum": ["2.a"],
+            "decimal_enum": ["alpha"],
+            "extern": [6],
+            "non_strict_int": ["Not an int"],
+            "non_strict_text": [],
+            "no_coerce": ["Value 0"],
+        }
+
+    from json import encoder
+
+    def verify_field(self, form, field, values):
+        # this doesnt work with coerce=False fields
+        for idx, value in enumerate(values):
+            if self.MODEL_CLASS._meta.get_field(field).strict:
+                self.assertEqual(
+                    form[field].value()[idx], self.enum_type(field)(value).value
+                )
+                self.assertIsInstance(
+                    form[field].field.to_python(form[field].value())[idx],
+                    self.enum_type(field),
+                )
+
+    def test_initial(self):
+        form = self.FORM_CLASS(initial=self.model_params)
+        for field, values in self.model_params.items():
+            self.verify_field(form, field, values)
+
+    def test_data(self):
+        form = self.FORM_CLASS(data=self.model_params)
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+        for field, values in self.model_params.items():
+            self.verify_field(form, field, values)
+
+    def test_error(self):
+        for field, bad_value in self.bad_values.items():
+            form = self.FORM_CLASS(data={**self.model_params, field: bad_value})
+            form.full_clean()
+            self.assertFalse(form.is_valid(), f"{field}={bad_value}: {form.errors}")
+            self.assertTrue(field in form.errors)
+
+        form = self.FORM_CLASS(data=self.bad_values)
+        form.full_clean()
+        self.assertFalse(form.is_valid())
+        for field in self.bad_values.keys():
+            self.assertTrue(field in form.errors)
+
+    def test_field_validation(self):
+        for enum_field, bad_value in [
+            (EnumMultipleChoiceField(self.SmallPosIntEnum), 4.1),
+            (EnumMultipleChoiceField(self.SmallIntEnum), 123123123),
+            (EnumMultipleChoiceField(self.PosIntEnum), -1),
+            (EnumMultipleChoiceField(self.IntEnum), "63"),
+            (EnumMultipleChoiceField(self.BigPosIntEnum), None),
+            (EnumMultipleChoiceField(self.BigIntEnum), ""),
+            (EnumMultipleChoiceField(self.Constants), "y"),
+            (EnumMultipleChoiceField(self.TextEnum), 42),
+            (EnumMultipleChoiceField(self.DateEnum), "20159-01-01"),
+            (EnumMultipleChoiceField(self.DateTimeEnum), "AAAA-01-01 00:00:00"),
+            (EnumMultipleChoiceField(self.DurationEnum), "1 elephant"),
+            (EnumMultipleChoiceField(self.TimeEnum), "2.a"),
+            (EnumMultipleChoiceField(self.DecimalEnum), "alpha"),
+            (EnumMultipleChoiceField(self.ExternEnum), 0),
+            (EnumMultipleChoiceField(self.DJIntEnum), "5.3"),
+            (EnumMultipleChoiceField(self.DJTextEnum), 12),
+            (EnumMultipleChoiceField(self.SmallPosIntEnum, strict=False), "not an int"),
+        ]:
+            self.assertRaises(ValidationError, enum_field.validate, [bad_value])
+
+        for enum_field, bad_value in [
+            (EnumMultipleChoiceField(self.SmallPosIntEnum, strict=False), 4),
+            (EnumMultipleChoiceField(self.SmallIntEnum, strict=False), 123123123),
+            (EnumMultipleChoiceField(self.PosIntEnum, strict=False), -1),
+            (EnumMultipleChoiceField(self.IntEnum, strict=False), "63"),
+            (EnumMultipleChoiceField(self.BigPosIntEnum, strict=False), 18),
+            (EnumMultipleChoiceField(self.BigIntEnum, strict=False), "-8"),
+            (EnumMultipleChoiceField(self.Constants, strict=False), "1.976"),
+            (EnumMultipleChoiceField(self.TextEnum, strict=False), 42),
+            (EnumMultipleChoiceField(self.ExternEnum, strict=False), 0),
+            (EnumMultipleChoiceField(self.DJIntEnum, strict=False), "5"),
+            (EnumMultipleChoiceField(self.DJTextEnum, strict=False), 12),
+            (EnumMultipleChoiceField(self.SmallPosIntEnum, strict=False), "12"),
+            (
+                EnumMultipleChoiceField(self.DateEnum, strict=False),
+                date(year=2015, month=1, day=1),
+            ),
+            (
+                EnumMultipleChoiceField(self.DateTimeEnum, strict=False),
+                datetime(year=2014, month=1, day=1, hour=0, minute=0, second=0),
+            ),
+            (
+                EnumMultipleChoiceField(self.DurationEnum, strict=False),
+                timedelta(seconds=15),
+            ),
+            (
+                EnumMultipleChoiceField(self.TimeEnum, strict=False),
+                time(hour=2, minute=0, second=0),
+            ),
+            (EnumMultipleChoiceField(self.DecimalEnum, strict=False), Decimal("0.5")),
+        ]:
+            try:
+                enum_field.clean([bad_value])
+            except ValidationError:  # pragma: no cover
+                self.fail(
+                    f"non-strict choice field for {enum_field.enum} "
+                    f"raised ValidationError on {bad_value} during clean"
+                )
+
+    def test_non_strict_field(self):
+        form = self.FORM_CLASS(data={**self.model_params, "non_strict_int": [200, 203]})
+        form.full_clean()
+        self.assertTrue(form.is_valid())
+        for idx in range(0, 2):
+            self.assertIsInstance(
+                form["non_strict_int"].value()[idx],
+                self.enum_primitive("non_strict_int"),
+            )
+            self.assertIsInstance(
+                form["non_strict_int"].field.to_python(form["non_strict_int"].value())[
+                    idx
+                ],
+                self.enum_primitive("non_strict_int"),
+            )
+        self.assertEqual(form["non_strict_int"].value(), [200, 203])

@@ -29,6 +29,7 @@ __all__ = [
     "FlagSelectMultiple",
     "ChoiceFieldMixin",
     "EnumChoiceField",
+    "EnumMultipleChoiceField",
     "EnumFlagField",
 ]
 
@@ -322,9 +323,21 @@ class ChoiceFieldMixin(
 
 class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
     """
-    The default ``ChoiceField`` will only accept the base enumeration values.
-    Use this field on forms to accept any value mappable to an enumeration
-    including any labels or symmetric properties.
+    The default :class:`~django.forms.fields.ChoiceField` will only accept the base
+    enumeration values. Use this field on forms to accept any value mappable to an
+    enumeration including any labels, symmetric properties, of values accepted in
+    :meth:`~enum.Enum._missing_`.
+    """
+
+
+class EnumMultipleChoiceField(  # type: ignore
+    ChoiceFieldMixin, TypedMultipleChoiceField
+):
+    """
+    The default :class:`~django.forms.fields.MultipleChoiceField` will only accept the
+    base enumeration values. Use this field on forms to accept multiple values mappable
+    to an enumeration including any labels, symmetric properties, of values accepted in
+    :meth:`~enum.Enum._missing_`.
     """
 
 
