@@ -1,4 +1,5 @@
 from django.test import TestCase
+import django
 from tests.utils import EnumTypeMixin
 from tests.djenum.models import EnumTester, Bug53Tester, NullableStrEnum
 from tests.djenum.forms import EnumTesterForm
@@ -150,7 +151,11 @@ class NullBlankBehaviorTests(TestCase):
                 model = NullBlankFormTester
 
         form = NullBlankFormTesterForm(
-            data={"required": ExternEnum.TWO, "required_default": ExternEnum.ONE}
+            data={
+                "required": ExternEnum.TWO,
+                "required_default": ExternEnum.ONE,
+                "blank": None,
+            }
         )
 
         # null=False, blank=false
@@ -179,10 +184,15 @@ class NullBlankBehaviorTests(TestCase):
             [("", "---------"), (1, "ONE"), (2, "TWO"), (3, "THREE")],
         )
 
-        # with self.assertRaises(ValueError):
-        # because blank will error out on save
-        form.full_clean()
+        with self.assertRaises(ValueError):
+            # because blank will error out on save - this is correct behavior
+            # because the form allows blank, but the field does not - this is an
+            # issue with how the user specifies their field (null=False, blank=True)
+            # with no blank value conversion
+            form.full_clean()
+            form.save()
 
+        # the form is valid because the error happens on model save!
         self.assertTrue(form.is_valid(), form.errors)
         self.assertEqual(form.cleaned_data["required"], ExternEnum.TWO)
         self.assertEqual(form.cleaned_data["required_default"], ExternEnum.ONE)

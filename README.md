@@ -43,47 +43,45 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
 [django-enum](https://pypi.org/project/enum-properties) provides a new model field type, [EnumField](https://django-enum.rtfd.io/en/stable/reference/fields.html#django_enum.fields.EnumField), that allows you to treat almost any [PEP435](https://peps.python.org/pep-0435) enumeration as a database column. [EnumField](https://django-enum.rtfd.io/en/stable/reference/fields.html#django_enum.fields.EnumField) resolves the correct native [Django](https://www.djangoproject.com) field type for the given enumeration based on its value type and range. For example, [IntegerChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) that contain values between 0 and 32767 become [PositiveSmallIntegerField](https://docs.djangoproject.com/en/stable/ref/models/fields/#positivesmallintegerfield).
 
 ```python
+from django.db import models
+from django_enum import EnumField
 
-    from django.db import models
-    from django_enum import EnumField
+class MyModel(models.Model):
 
-    class MyModel(models.Model):
+    class TextEnum(models.TextChoices):
 
-        class TextEnum(models.TextChoices):
+        VALUE0 = 'V0', 'Value 0'
+        VALUE1 = 'V1', 'Value 1'
+        VALUE2 = 'V2', 'Value 2'
 
-            VALUE0 = 'V0', 'Value 0'
-            VALUE1 = 'V1', 'Value 1'
-            VALUE2 = 'V2', 'Value 2'
+    class IntEnum(models.IntegerChoices):
 
-        class IntEnum(models.IntegerChoices):
+        ONE   = 1, 'One'
+        TWO   = 2, 'Two',
+        THREE = 3, 'Three'
 
-            ONE   = 1, 'One'
-            TWO   = 2, 'Two',
-            THREE = 3, 'Three'
+    # this is equivalent to:
+    #  CharField(max_length=2, choices=TextEnum.choices, null=True, blank=True)
+    txt_enum = EnumField(TextEnum, null=True, blank=True)
 
-        # this is equivalent to:
-        #  CharField(max_length=2, choices=TextEnum.choices, null=True, blank=True)
-        txt_enum = EnumField(TextEnum, null=True, blank=True)
-
-        # this is equivalent to
-        #  PositiveSmallIntegerField(choices=IntEnum.choices, default=IntEnum.ONE.value)
-        int_enum = EnumField(IntEnum, default=IntEnum.ONE)
+    # this is equivalent to
+    #  PositiveSmallIntegerField(choices=IntEnum.choices, default=IntEnum.ONE.value)
+    int_enum = EnumField(IntEnum, default=IntEnum.ONE)
 ```
 
 [EnumField](https://django-enum.rtfd.io/en/stable/reference/fields.html#django_enum.fields.EnumField) **is more than just an alias. The fields are now assignable and accessible as their enumeration type rather than by-value:**
 
 ```python
+instance = MyModel.objects.create(
+    txt_enum=MyModel.TextEnum.VALUE1,
+    int_enum=3  # by-value assignment also works
+)
 
-    instance = MyModel.objects.create(
-        txt_enum=MyModel.TextEnum.VALUE1,
-        int_enum=3  # by-value assignment also works
-    )
+assert instance.txt_enum == MyModel.TextEnum('V1')
+assert instance.txt_enum.label == 'Value 1'
 
-    assert instance.txt_enum == MyModel.TextEnum('V1')
-    assert instance.txt_enum.label == 'Value 1'
-
-    assert instance.int_enum == MyModel.IntEnum['THREE']
-    assert instance.int_enum.value == 3
+assert instance.int_enum == MyModel.IntEnum['THREE']
+assert instance.int_enum.value == 3
 ```
 
 ## Flag Support (BitFields)
@@ -91,23 +89,22 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
 [Flag](https://docs.python.org/3/library/enum.html#enum.Flag) types are also seamlessly supported! This allows a database column to behave like a bit field and is an alternative to having multiple boolean columns. There are positive performance implications for using a bit field instead of booleans proportional on the size of the bit field and the types of queries you will run against it. For bit fields more than a few bits long the size reduction both speeds up queries and reduces the required storage space. See the documentation for [discussion and benchmarks](https://django-enum.readthedocs.io/en/latest/performance.html#flags).
 
 ```python
+class Permissions(IntFlag):
 
-    class Permissions(IntFlag):
-
-        READ    = 1 << 0
-        WRITE   = 1 << 1
-        EXECUTE = 1 << 2
-
-
-    class FlagExample(models.Model):
-
-        permissions = EnumField(Permissions)
+    READ    = 1 << 0
+    WRITE   = 1 << 1
+    EXECUTE = 1 << 2
 
 
-    FlagExample.objects.create(permissions=Permissions.READ | Permissions.WRITE)
+class FlagExample(models.Model):
 
-    # get all models with RW:
-    FlagExample.objects.filter(permissions__has_all=Permissions.READ | Permissions.WRITE)
+    permissions = EnumField(Permissions)
+
+
+FlagExample.objects.create(permissions=Permissions.READ | Permissions.WRITE)
+
+# get all models with RW:
+FlagExample.objects.filter(permissions__has_all=Permissions.READ | Permissions.WRITE)
 ```
 
 ## Complex Enumerations
@@ -117,82 +114,81 @@ Many packages aim to ease usage of Python enumerations as model fields. Most wer
 ``?> pip install enum-properties``
 
 ```python
+from enum_properties import StrEnumProperties
+from django.db import models
 
-    from enum_properties import StrEnumProperties
-    from django.db import models
+class TextChoicesExample(models.Model):
 
-    class TextChoicesExample(models.Model):
+    class Color(StrEnumProperties):
 
-        class Color(StrEnumProperties):
+        # attribute type hints become properties on each value,
+        # and the enumeration may be instantiated from any symmetric
+        # property's value
 
-            label: Annotated[str, Symmetric()]
-            rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
-            hex: Annotated[str, Symmetric(case_fold=True)]
+        label: Annotated[str, Symmetric()]
+        rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
+        hex: Annotated[str, Symmetric(case_fold=True)]
 
-            # name value label       rgb       hex
-            RED   = "R", "Red",   (1, 0, 0), "ff0000"
-            GREEN = "G", "Green", (0, 1, 0), "00ff00"
-            BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
+        # properties specified in type hint order after the value
+        # name value label       rgb       hex
+        RED   = "R", "Red",   (1, 0, 0), "ff0000"
+        GREEN = "G", "Green", (0, 1, 0), "00ff00"
+        BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
 
-            # any named s() values in the Enum's inheritance become properties on
-            # each value, and the enumeration value may be instantiated from the
-            # property's value
+    color = EnumField(Color)
 
-        color = EnumField(Color)
+instance = TextChoicesExample.objects.create(
+    color=TextChoicesExample.Color('FF0000')
+)
+assert instance.color == TextChoicesExample.Color('Red')
+assert instance.color == TextChoicesExample.Color('R')
+assert instance.color == TextChoicesExample.Color((1, 0, 0))
 
-    instance = TextChoicesExample.objects.create(
-        color=TextChoicesExample.Color('FF0000')
-    )
-    assert instance.color == TextChoicesExample.Color('Red')
-    assert instance.color == TextChoicesExample.Color('R')
-    assert instance.color == TextChoicesExample.Color((1, 0, 0))
+# direct comparison to any symmetric value also works
+assert instance.color == 'Red'
+assert instance.color == 'R'
+assert instance.color == (1, 0, 0)
 
-    # direct comparison to any symmetric value also works
-    assert instance.color == 'Red'
-    assert instance.color == 'R'
-    assert instance.color == (1, 0, 0)
+# save by any symmetric value
+instance.color = 'FF0000'
 
-    # save by any symmetric value
-    instance.color = 'FF0000'
+# access any enum property right from the model field
+assert instance.color.hex == 'ff0000'
 
-    # access any enum property right from the model field
-    assert instance.color.hex == 'ff0000'
+# this also works!
+assert instance.color == 'ff0000'
 
-    # this also works!
-    assert instance.color == 'ff0000'
+# and so does this!
+assert instance.color == 'FF0000'
 
-    # and so does this!
-    assert instance.color == 'FF0000'
+instance.save()
 
-    instance.save()
+# filtering works by any symmetric value or enum type instance
+assert TextChoicesExample.objects.filter(
+    color=TextChoicesExample.Color.RED
+).first() == instance
 
-    # filtering works by any symmetric value or enum type instance
-    assert TextChoicesExample.objects.filter(
-        color=TextChoicesExample.Color.RED
-    ).first() == instance
+assert TextChoicesExample.objects.filter(color=(1, 0, 0)).first() == instance
 
-    assert TextChoicesExample.objects.filter(color=(1, 0, 0)).first() == instance
-
-    assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
+assert TextChoicesExample.objects.filter(color='FF0000').first() == instance
 ```
 
 While they should be unnecessary if you need to integrate with code that expects an interface fully compatible with Django's [TextChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) and [IntegerChoices](https://docs.djangoproject.com/en/stable/ref/models/fields/#field-choices-enum-types) [django-enum](https://pypi.org/project/django-enum) provides [TextChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.TextChoices), [IntegerChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.IntegerChoices), [FlagChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.FlagChoices) and [FloatChoices](https://django-enum.rtfd.io/en/stable/reference/choices.html#django_enum.choices.FloatChoices) types that derive from enum-properties and Django's ``Choices``. So the above enumeration could also be written:
 
 ```python
+from django_enum.choices import TextChoices
 
-    from django_enum.choices import TextChoices
+class Color(TextChoices):
 
-    class Color(TextChoices):
+    # label is added as a symmetric property by the base class
 
-        # label is added as a symmetric property by the base class
+    rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
+    hex: Annotated[str, Symmetric(case_fold=True)]
 
-        rgb: Annotated[t.Tuple[int, int, int], Symmetric()]
-        hex: Annotated[str, Symmetric(case_fold=True)]
-
-        # name value label       rgb       hex
-        RED   = "R", "Red",   (1, 0, 0), "ff0000"
-        GREEN = "G", "Green", (0, 1, 0), "00ff00"
-        BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
+    # name value label       rgb       hex
+    RED   = "R", "Red",   (1, 0, 0), "ff0000"
+    GREEN = "G", "Green", (0, 1, 0), "00ff00"
+    BLUE  = "B", "Blue",  (0, 0, 1), "0000ff"
 
 ```
 

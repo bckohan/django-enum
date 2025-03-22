@@ -19,13 +19,12 @@ from tests.djenum.enums import (
     StrTestEnum,
     NullableStrEnum,
 )
-from playwright.sync_api import sync_playwright, Page, expect
+from playwright.sync_api import sync_playwright, expect
 from django.urls import reverse
 from django.contrib.auth import get_user_model
 from django.db.models import Model
 from django.db.models.fields import NOT_PROVIDED
 from django_enum.utils import decompose
-from asgiref.sync import sync_to_async
 
 
 class TestAdmin(EnumTypeMixin, LiveServerTestCase):
@@ -394,7 +393,7 @@ class TestNullableStrAdminBehavior(_GenericAdminFormTest):
             {
                 "required": NullableStrEnum.STR2,
                 "required_default": NullableStrEnum.STR2,
-                "blank": None,
+                "blank": NullableStrEnum.STR1,
                 "blank_nullable": "",
                 "blank_nullable_default": "",
             },
