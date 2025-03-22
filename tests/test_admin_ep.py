@@ -29,7 +29,7 @@ class TestBitFieldAdminForm(_GenericAdminFormTest):
     __test__ = True
 
     @property
-    def changes(self) -> t.Dict[str, Enum]:
+    def changes(self) -> t.List[t.Dict[str, t.Any]]:
         return [
             {
                 "bit_field_small": GNSSConstellation.GLONASS | GNSSConstellation.GPS,
