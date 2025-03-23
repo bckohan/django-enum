@@ -95,7 +95,26 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 try:
     from django_filters.views import FilterView
 
-    from django_enum.filters import FilterSet as EnumFilterSet
+    from django_enum.filters import FilterSet as EnumFilterSet, MultipleEnumFilter
+
+    from .enums import (
+        BigIntEnum,
+        BigPosIntEnum,
+        Constants,
+        DateEnum,
+        DateTimeEnum,
+        DecimalEnum,
+        DJIntEnum,
+        DJTextEnum,
+        DurationEnum,
+        ExternEnum,
+        IntEnum,
+        PosIntEnum,
+        SmallIntEnum,
+        SmallPosIntEnum,
+        TextEnum,
+        TimeEnum,
+    )
 
     class EnumTesterFilterViewSet(URLMixin, FilterView):
         class EnumTesterFilter(EnumFilterSet):
@@ -104,6 +123,59 @@ try:
                 fields = "__all__"
 
         filterset_class = EnumTesterFilter
+        model = EnumTester
+        template_name = "enumtester_list.html"
+
+    class EnumTesterMultipleFilterViewSet(URLMixin, FilterView):
+        class EnumTesterMultipleFilter(EnumFilterSet):
+            small_pos_int = MultipleEnumFilter(enum=SmallPosIntEnum)
+            small_int = MultipleEnumFilter(enum=SmallIntEnum)
+            pos_int = MultipleEnumFilter(enum=PosIntEnum)
+            int = MultipleEnumFilter(enum=IntEnum)
+            big_pos_int = MultipleEnumFilter(enum=BigPosIntEnum)
+            big_int = MultipleEnumFilter(enum=BigIntEnum)
+            constant = MultipleEnumFilter(enum=Constants)
+            text = MultipleEnumFilter(enum=TextEnum)
+            extern = MultipleEnumFilter(enum=ExternEnum)
+
+            dj_int_enum = MultipleEnumFilter(enum=DJIntEnum)
+            dj_text_enum = MultipleEnumFilter(enum=DJTextEnum)
+
+            # Non-strict
+            non_strict_int = MultipleEnumFilter(enum=SmallPosIntEnum, strict=False)
+            non_strict_text = MultipleEnumFilter(enum=TextEnum, strict=False)
+            no_coerce = MultipleEnumFilter(enum=SmallPosIntEnum, strict=False)
+
+            # eccentric enums
+            date_enum = MultipleEnumFilter(enum=DateEnum)
+            datetime_enum = MultipleEnumFilter(enum=DateTimeEnum)
+            time_enum = MultipleEnumFilter(enum=TimeEnum)
+            duration_enum = MultipleEnumFilter(enum=DurationEnum)
+            decimal_enum = MultipleEnumFilter(enum=DecimalEnum)
+
+            class Meta:
+                fields = [
+                    "small_pos_int",
+                    "small_int",
+                    "pos_int",
+                    "int",
+                    "big_pos_int",
+                    "big_int",
+                    "constant",
+                    "text",
+                    "extern",
+                    "non_strict_int",
+                    "non_strict_text",
+                    "no_coerce",
+                    "date_enum",
+                    "datetime_enum",
+                    "time_enum",
+                    "duration_enum",
+                    "decimal_enum",
+                ]
+                model = EnumTester
+
+        filterset_class = EnumTesterMultipleFilter
         model = EnumTester
         template_name = "enumtester_list.html"
 

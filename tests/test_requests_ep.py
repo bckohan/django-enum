@@ -94,6 +94,13 @@ class TestRequestsProps(TestRequests):
                 skip_non_strict=False,
             )
 
+        def test_django_filter_multiple(self):
+            self.do_test_django_filter(
+                reverse(f"{self.NAMESPACE}:enum-filter-multiple"),
+                multi=True,
+                skip_non_strict=False,
+            )
+
     else:
         pass  # pragma: no cover
 

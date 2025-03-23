@@ -2,13 +2,26 @@
 Support for :doc:`django-filter <django-filter:index>`.
 """
 
-from typing import Tuple, Type
+import typing as t
+from enum import Enum
 
 from django.db.models import Field as ModelField
-from django_filters import Filter, TypedChoiceFilter, filterset
+from django_filters import (
+    Filter,
+    TypedChoiceFilter,
+    TypedMultipleChoiceFilter,
+    filterset,
+)
 
-from django_enum.forms import EnumChoiceField
+from django_enum.fields import EnumField
+from django_enum.forms import EnumChoiceField, EnumMultipleChoiceField
 from django_enum.utils import choices
+
+__all__ = [
+    "EnumFilter",
+    "MultipleEnumFilter",
+    "FilterSet",
+]
 
 
 class EnumFilter(TypedChoiceFilter):
@@ -44,9 +57,37 @@ class EnumFilter(TypedChoiceFilter):
     :param kwargs: Any additional arguments for base classes
     """
 
+    enum: t.Type[Enum]
     field_class = EnumChoiceField
 
-    def __init__(self, *, enum, strict=False, **kwargs):
+    def __init__(self, *, enum: t.Type[Enum], strict: bool = False, **kwargs):
+        self.enum = enum
+        super().__init__(
+            enum=enum,
+            choices=kwargs.pop("choices", choices(self.enum)),
+            strict=strict,
+            **kwargs,
+        )
+
+
+class MultipleEnumFilter(TypedMultipleChoiceFilter):
+    """
+    Use this filter class instead of
+    :ref:`MultipleChoiceFilter <django-filter:multiple-choice-filter>`
+    to get filters to accept multiple :class:`~enum.Enum` labels and symmetric
+    properties.
+
+    :param enum: The class of the enumeration containing the values to
+        filter on
+    :param strict: If False (default), values not in the enumeration will
+        be searchable.
+    :param kwargs: Any additional arguments for base classes
+    """
+
+    enum: t.Type[Enum]
+    field_class = EnumMultipleChoiceField
+
+    def __init__(self, *, enum: t.Type[Enum], strict: bool = False, **kwargs):
         self.enum = enum
         super().__init__(
             enum=enum,
@@ -68,9 +109,9 @@ class FilterSet(filterset.FilterSet):
     @classmethod
     def filter_for_lookup(
         cls, field: ModelField, lookup_type: str
-    ) -> Tuple[Type[Filter], dict]:
+    ) -> t.Tuple[t.Optional[t.Type[Filter]], t.Dict[str, t.Any]]:
         """For EnumFields use the EnumFilter class by default"""
-        if hasattr(field, "enum"):
+        if isinstance(field, EnumField):
             return EnumFilter, {
                 "enum": field.enum,
                 "strict": getattr(field, "strict", False),

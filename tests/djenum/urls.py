@@ -37,7 +37,10 @@ except ImportError:  # pragma: no cover
 try:
     from django_filters.views import FilterView
 
-    from tests.djenum.views import EnumTesterFilterViewSet
+    from tests.djenum.views import (
+        EnumTesterFilterViewSet,
+        EnumTesterMultipleFilterViewSet,
+    )
 
     urlpatterns.extend(
         [
@@ -54,6 +57,11 @@ try:
                 "enum/filter/symmetric/",
                 EnumTesterFilterViewSet.as_view(),
                 name="enum-filter-symmetric",
+            ),
+            path(
+                "enum/filter/multiple/",
+                EnumTesterMultipleFilterViewSet.as_view(),
+                name="enum-filter-multiple",
             ),
         ]
     )

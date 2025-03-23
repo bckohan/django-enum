@@ -1241,8 +1241,8 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
         from django_enum.forms import (
             ChoiceFieldMixin,
             EnumFlagField,
+            FlagNonStrictSelectMultiple,
             FlagSelectMultiple,
-            NonStrictSelectMultiple,
         )
 
         kwargs["empty_value"] = None if self.default is None else self.enum(0)
@@ -1250,7 +1250,7 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             "widget",
             FlagSelectMultiple(enum=self.enum)
             if self.strict
-            else NonStrictSelectMultiple(enum=self.enum),
+            else FlagNonStrictSelectMultiple(enum=self.enum),
         )
 
         form_field = Field.formfield(

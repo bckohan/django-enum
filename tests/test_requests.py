@@ -1,4 +1,5 @@
 from importlib.util import find_spec
+import typing as t
 from tests.utils import EnumTypeMixin, try_convert
 from django.test import TestCase
 from tests.djenum.models import EnumTester
@@ -673,13 +674,19 @@ class TestRequests(EnumTypeMixin, TestCase):
         def test_django_filter(self):
             self.do_test_django_filter(reverse(f"{self.NAMESPACE}:enum-filter"))
 
-        def do_test_django_filter(self, url, skip_non_strict=True):
+        def test_django_filter_multiple(self):
+            self.do_test_django_filter(
+                reverse(f"{self.NAMESPACE}:enum-filter-multiple"), multi=True
+            )
+
+        def do_test_django_filter(self, url, skip_non_strict=True, multi=False):
             """
             Exhaustively test query parameter permutations based on data
             created in setUp
             """
             client = Client()
             for attr, val_map in self.values.items():
+                tests: t.List[t.Tuple[t.Any, t.List[int]]] = []
                 for val, objs in val_map.items():
                     if (
                         skip_non_strict
@@ -695,16 +702,39 @@ class TestRequests(EnumTypeMixin, TestCase):
                     if val in {None, ""}:
                         # todo how to query None or empty?
                         continue
+                    if multi:
+                        # split up into several multi searches
+                        if not tests or len(tests[-1][0]) > 1:
+                            tests.append(([val], objs))
+                        else:
+                            tests[-1][0].append(val)
+                            tests[-1][1].extend(objs)
+                    else:
+                        tests.append((val, objs))
+
+                for val, objs in tests:
                     for prop in self.field_filter_properties[attr]:
                         qry = QueryDict(mutable=True)
-                        try:
-                            prop_vals = getattr(val, prop)
-                        except AttributeError:
-                            prop_vals = val
-                        if not isinstance(prop_vals, (set, list)):
+                        if not isinstance(val, list):
+                            val = [val]
+
+                        prop_vals = []
+                        for v in val:
+                            try:
+                                resolved = getattr(v, prop)
+                                if isinstance(resolved, (list, tuple, set)):
+                                    prop_vals.extend(resolved)
+                                else:
+                                    prop_vals.append(resolved)
+                            except AttributeError:
+                                prop_vals.append(v)
+                        if multi:
                             prop_vals = [prop_vals]
                         for prop_val in prop_vals:
-                            qry[attr] = prop_val
+                            if isinstance(prop_val, list):
+                                qry.setlist(attr, prop_val)
+                            else:
+                                qry[attr] = prop_val
                             objects = {
                                 obj.pk: {
                                     attr: getattr(obj, attr)

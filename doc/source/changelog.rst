@@ -4,7 +4,7 @@
 Change Log
 ==========
 
-v2.2.0 (2025-03-XX)
+v2.2.0 (2025-03-23)
 ===================
 
 * Fixed `Enum types that resolve to primitives of str or int but that do not inherit from those types can result in validation errors. <https://github.com/bckohan/django-enum/issues/109>`_
@@ -18,7 +18,8 @@ v2.2.0 (2025-03-XX)
 * Implemented `Upgrade to enum-properties >=2.2 <https://github.com/bckohan/django-enum/issues/95>`_
 * Implemented `Move form imports to locally scoped imports where needed in fields.py <https://github.com/bckohan/django-enum/issues/79>`_
 * Implemented `Reorganize documentation using diataxis <https://github.com/bckohan/django-enum/issues/72>`_
-* Implemented `Provide an EnumMultipleChoiceField <https://github.com/bckohan/django-enum/issues/72>`_
+* Implemented `Provide a MultipleEnumChoiceFilter <https://github.com/bckohan/django-enum/issues/25>`_
+* Implemented `Provide an EnumMultipleChoiceField <https://github.com/bckohan/django-enum/issues/24>`_
 
 v2.1.0 (2025-02-24)
 ===================

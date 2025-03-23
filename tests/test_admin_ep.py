@@ -33,23 +33,18 @@ class TestBitFieldAdminForm(_GenericAdminFormTest):
         return [
             {
                 "bit_field_small": GNSSConstellation.GLONASS | GNSSConstellation.GPS,
-                # "bit_field_large": LargeBitField.TWO | LargeBitField.ONE,
-                # "bit_field_large_empty_default": LargeBitField.TWO,
-                "large_neg": LargeNegativeField.NEG_ONE,
                 "no_default": LargeBitField.ONE | LargeBitField.TWO,
             },
             {
                 "bit_field_small": GNSSConstellation.GLONASS,
                 "bit_field_large": LargeBitField.TWO | LargeBitField.ONE,
                 "bit_field_large_empty_default": LargeBitField.TWO,
-                "large_neg": LargeNegativeField.ZERO,
                 "no_default": LargeBitField.TWO,
             },
             {
                 "bit_field_small": GNSSConstellation(0),
                 "bit_field_large": None,
                 "bit_field_large_empty_default": LargeBitField(0),
-                "large_neg": None,
                 "no_default": LargeBitField(0),
             },
         ]

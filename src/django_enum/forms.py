@@ -13,7 +13,7 @@ from django.forms.fields import (
     TypedChoiceField,
     TypedMultipleChoiceField,
 )
-from django.forms.widgets import Select, SelectMultiple
+from django.forms.widgets import ChoiceWidget, Select, SelectMultiple
 
 from django_enum.utils import choices as get_choices
 from django_enum.utils import (
@@ -27,6 +27,7 @@ __all__ = [
     "NonStrictSelect",
     "NonStrictSelectMultiple",
     "FlagSelectMultiple",
+    "FlagNonStrictSelectMultiple",
     "ChoiceFieldMixin",
     "EnumChoiceField",
     "EnumMultipleChoiceField",
@@ -118,7 +119,14 @@ class FlagSelectMultiple(SelectMultiple):
         return value
 
 
-class NonStrictSelectMultiple(NonStrictMixin, FlagSelectMultiple):
+class NonStrictSelectMultiple(NonStrictMixin, SelectMultiple):
+    """
+    A SelectMultiple widget for non-strict EnumFlagFields that includes any
+    existing non-conforming value as a choice option.
+    """
+
+
+class FlagNonStrictSelectMultiple(NonStrictMixin, FlagSelectMultiple):
     """
     A SelectMultiple widget for non-strict EnumFlagFields that includes any
     existing non-conforming value as a choice option.
@@ -157,6 +165,8 @@ class ChoiceFieldMixin(
 
     choices: _ChoicesParameter
 
+    non_strict_widget: Type[ChoiceWidget] = NonStrictSelect
+
     def __init__(
         self,
         enum: Optional[Type[Enum]] = _enum_,
@@ -172,7 +182,7 @@ class ChoiceFieldMixin(
         self._strict_ = strict
         self._primitive_ = primitive
         if not self.strict:
-            kwargs.setdefault("widget", NonStrictSelect)
+            kwargs.setdefault("widget", self.non_strict_widget)
 
         if empty_values is _Unspecified:
             self.empty_values = copy(list(TypedChoiceField.empty_values))
@@ -323,7 +333,7 @@ class ChoiceFieldMixin(
 
 class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
     """
-    The default :class:`~django.forms.fields.ChoiceField` will only accept the base
+    The default :class:`~django.forms.ChoiceField` will only accept the base
     enumeration values. Use this field on forms to accept any value mappable to an
     enumeration including any labels, symmetric properties, of values accepted in
     :meth:`~enum.Enum._missing_`.
@@ -334,11 +344,13 @@ class EnumMultipleChoiceField(  # type: ignore
     ChoiceFieldMixin, TypedMultipleChoiceField
 ):
     """
-    The default :class:`~django.forms.fields.MultipleChoiceField` will only accept the
+    The default :class:`~django.forms.MultipleChoiceField` will only accept the
     base enumeration values. Use this field on forms to accept multiple values mappable
     to an enumeration including any labels, symmetric properties, of values accepted in
     :meth:`~enum.Enum._missing_`.
     """
+
+    non_strict_widget = NonStrictSelectMultiple
 
 
 class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
@@ -346,8 +358,8 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     A generic form field for :class:`~enum.Flag` derived enumerations. By default the
     :class:`~django_enum.forms.FlagSelectMultiple` widget will be used.
 
-    After cleaning the value stored in the cleaned data will be a combined enum instance.
-    (e.g. all input flags will be or-ed together)
+    After cleaning the value stored in the cleaned data will be a combined enum
+    instance. (e.g. all input flags will be or-ed together)
 
     .. note::
 
@@ -356,6 +368,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     """
 
     widget = FlagSelectMultiple
+    non_strict_widget = FlagNonStrictSelectMultiple
 
     def __init__(
         self,
@@ -369,7 +382,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     ):
         kwargs.setdefault(
             "widget",
-            self.widget(enum=enum) if strict else NonStrictSelectMultiple(enum=enum),
+            self.widget(enum=enum) if strict else self.non_strict_widget(enum=enum),  # type: ignore[call-arg]
         )
         super().__init__(
             enum=enum,
