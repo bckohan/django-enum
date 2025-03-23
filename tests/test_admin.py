@@ -193,7 +193,9 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
             if not field.coerce:
                 exp = getattr(exp, "value", exp)
             if exp is None or (isinstance(exp, str) and not exp):
-                if isinstance(obj_val, Enum):
+                if isinstance(obj_val, Flag) and connection.vendor == "oracle":
+                    self.assertEqual(obj_val, self.enum(field.name)(0))
+                elif isinstance(obj_val, Enum):
                     self.assertIsNone(
                         obj_val.value, f"{obj._meta.model_name}.{field.name}"
                     )
