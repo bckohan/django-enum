@@ -645,3 +645,59 @@ class TestEnumMultipleChoiceFormField(EnumTypeMixin, TestCase):
                 self.enum_primitive("non_strict_int"),
             )
         self.assertEqual(form["non_strict_int"].value(), [200, 203])
+
+    def test_has_changed(self):
+        {
+            "small_pos_int": [0],
+            "small_int": [self.SmallIntEnum.VAL2, self.SmallIntEnum.VALn1],
+            "pos_int": [2147483647, self.PosIntEnum.VAL3],
+            "int": [self.IntEnum.VALn1],
+            "big_pos_int": [2, self.BigPosIntEnum.VAL3],
+            "big_int": [self.BigIntEnum.VAL0],
+            "constant": [2.71828, self.Constants.GOLDEN_RATIO],
+            "text": [self.TextEnum.VALUE3, self.TextEnum.VALUE2],
+            "extern": [self.ExternEnum.THREE],
+            "date_enum": [self.DateEnum.BRIAN, date(1989, 7, 27)],
+            "datetime_enum": [self.DateTimeEnum.ST_HELENS, self.DateTimeEnum.ST_HELENS],
+            "duration_enum": [self.DurationEnum.FORTNIGHT],
+            "time_enum": [self.TimeEnum.COB, self.TimeEnum.LUNCH],
+            "decimal_enum": [self.DecimalEnum.ONE],
+            "non_strict_int": [self.SmallPosIntEnum.VAL2],
+            "non_strict_text": ["arbitrary", "A" * 13],
+            "no_coerce": [self.SmallPosIntEnum.VAL1],
+        }
+        form = self.FORM_CLASS(
+            data={"small_pos_int": [self.SmallPosIntEnum.VAL1]},
+            initial={"small_pos_int": [0]},
+        )
+        self.assertFalse(form.has_changed())
+
+        form = self.FORM_CLASS(
+            data={"small_pos_int": [self.SmallPosIntEnum.VAL2]},
+            initial={"small_pos_int": [0]},
+        )
+        self.assertTrue(form.has_changed())
+
+        form = self.FORM_CLASS(
+            data={"small_pos_int": [self.SmallPosIntEnum.VAL1.value]},
+            initial={"small_pos_int": [self.SmallPosIntEnum.VAL1]},
+        )
+        self.assertFalse(form.has_changed())
+
+        form = self.FORM_CLASS(
+            data={"small_pos_int": [self.SmallPosIntEnum.VAL2.value]},
+            initial={"small_pos_int": [self.SmallPosIntEnum.VAL1]},
+        )
+        self.assertTrue(form.has_changed())
+
+        form = self.FORM_CLASS(
+            data={"small_pos_int": [str(self.SmallPosIntEnum.VAL1.value)]},
+            initial={"small_pos_int": [self.SmallPosIntEnum.VAL1]},
+        )
+        self.assertFalse(form.has_changed())
+
+        form = self.FORM_CLASS(
+            data={"small_pos_int": [str(self.SmallPosIntEnum.VAL2.value)]},
+            initial={"small_pos_int": [self.SmallPosIntEnum.VAL1]},
+        )
+        self.assertTrue(form.has_changed())

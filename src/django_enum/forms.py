@@ -424,8 +424,15 @@ class EnumMultipleChoiceField(  # type: ignore
     non_strict_widget = NonStrictSelectMultiple
 
     def has_changed(self, initial, data):
-        # TODO
-        return super().has_changed(initial, data)
+        return super().has_changed(
+            *(
+                [
+                    (str(en.value) if isinstance(en, Enum) else en)
+                    for en in initial or []
+                ],
+                [(str(en.value) if isinstance(en, Enum) else en) for en in data or []],
+            )
+        )
 
 
 class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
