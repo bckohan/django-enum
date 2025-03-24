@@ -8,6 +8,7 @@ from tests.utils import EnumTypeMixin
 from django.test import LiveServerTestCase
 from django.contrib.staticfiles.testing import StaticLiveServerTestCase
 from django_enum import EnumField
+from django_enum.utils import values
 from tests.djenum.models import (
     AdminDisplayBug35,
     EnumTester,
@@ -168,41 +169,47 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
     def set_form_value(
         self, field_name: str, value: t.Optional[t.Union[Enum, str]], flag=False
     ):
-        try:
-            if value is None and None in self.enum(field_name):
-                value = self.enum(field_name)(value)
-            # should override this if needed
-            if getattr(value, "value", value) is None and not flag:
-                if self.use_radio:
-                    self.page.click(f"input[name='{field_name}'][value='']")
-                else:
-                    self.page.select_option(f"select[name='{field_name}']", "")
-            elif flag:
-                if self.use_checkbox:
-                    for checkbox in self.page.locator(
-                        f"input[type='checkbox'][name='{field_name}']"
-                    ).all():
-                        if checkbox.is_checked():
-                            checkbox.uncheck()
+        # if field_name == "constellation_null" and value is None:
+        #     import ipdb
+        #     ipdb.set_trace()
+        if value is None and None in values(self.enum(field_name)):
+            value = self.enum(field_name)(value)
+        # should override this if needed
+        if getattr(value, "value", value) is None and not flag:
+            if self.use_radio:
+                self.page.click(f"input[name='{field_name}'][value='']")
+            else:
+                self.page.select_option(f"select[name='{field_name}']", "")
+        elif flag:
+            if self.use_checkbox:
+                for checkbox in self.page.locator(
+                    f"input[type='checkbox'][name='{field_name}']"
+                ).all():
+                    if checkbox.is_checked():
+                        checkbox.uncheck()
+                if value is not None:
+                    assert isinstance(value, Flag)
                     for flag in decompose(value):
                         self.page.check(
                             f"input[name='{field_name}'][value='{flag.value}']"
                         )
-                else:
+            else:
+                if value is not None:
+                    assert isinstance(value, Flag)
                     self.page.select_option(
                         f"select[name='{field_name}']",
                         [str(flag.value) for flag in decompose(value)],
                     )
-            else:
-                if self.use_radio:
-                    self.page.click(f"input[name='{field_name}'][value='{value}']")
                 else:
-                    self.page.select_option(
-                        f"select[name='{field_name}']",
-                        str(getattr(value, "value", value)),
-                    )
-        except Exception:
-            self.page.pause()
+                    self.page.select_option(f"select[name='{field_name}']", [])
+        else:
+            if self.use_radio:
+                self.page.click(f"input[name='{field_name}'][value='{value}']")
+            else:
+                self.page.select_option(
+                    f"select[name='{field_name}']",
+                    str(getattr(value, "value", value)),
+                )
 
     def verify_changes(self, obj: Model, expected: t.Dict[str, t.Any]):
         count = 0
@@ -559,7 +566,7 @@ class TestAltWidgetAdminForm(_GenericAdminFormTest):
         text_null_radios = self.page.locator("input[type='radio'][name='text_null']")
         self.assertEqual(text_null_radios.count(), len(TextEnum) + 1)
         verify_labels(
-            text_null_radios, [BLANK_CHOICE_DASH] + [en.label for en in TextEnum]
+            text_null_radios, [BLANK_CHOICE_DASH[0][1]] + [en.label for en in TextEnum]
         )
 
         # text_non_strict

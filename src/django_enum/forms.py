@@ -1,11 +1,11 @@
 """Enumeration support for django model forms"""
 
+import typing as t
 from copy import copy
 from decimal import DecimalException
 from enum import Enum, Flag
 from functools import reduce
 from operator import or_
-from typing import Any, Iterable, List, Optional, Protocol, Sequence, Tuple, Type, Union
 
 from django.core.exceptions import ValidationError
 from django.forms.fields import (
@@ -42,22 +42,24 @@ __all__ = [
 ]
 
 
-_SelectChoices = Iterable[Union[Tuple[Any, Any], Tuple[str, Iterable[Tuple[Any, Any]]]]]
+_SelectChoices = t.Iterable[
+    t.Union[t.Tuple[t.Any, t.Any], t.Tuple[str, t.Iterable[t.Tuple[t.Any, t.Any]]]]
+]
 
-_Choice = Tuple[Any, Any]
-_ChoiceNamedGroup = Tuple[str, Iterable[_Choice]]
-_FieldChoices = Iterable[Union[_Choice, _ChoiceNamedGroup]]
+_Choice = t.Tuple[t.Any, t.Any]
+_ChoiceNamedGroup = t.Tuple[str, t.Iterable[_Choice]]
+_FieldChoices = t.Iterable[t.Union[_Choice, _ChoiceNamedGroup]]
 
 
-class _ChoicesCallable(Protocol):
+class _ChoicesCallable(t.Protocol):
     def __call__(self) -> _FieldChoices: ...  # pragma: no cover
 
 
-_ChoicesParameter = Union[_FieldChoices, _ChoicesCallable]
+_ChoicesParameter = t.Union[_FieldChoices, _ChoicesCallable]
 
 
-class _CoerceCallable(Protocol):
-    def __call__(self, value: Any, /) -> Any: ...  # pragma: no cover
+class _CoerceCallable(t.Protocol):
+    def __call__(self, value: t.Any, /) -> t.Any: ...  # pragma: no cover
 
 
 class _Unspecified:
@@ -81,7 +83,7 @@ class NonStrictMixin:
         one of our choices, we add it as an option.
         """
 
-        value: Any = getattr(kwargs.get("value"), "value", kwargs.get("value"))
+        value: t.Any = getattr(kwargs.get("value"), "value", kwargs.get("value"))
         if value not in EnumChoiceField.empty_values and value not in (
             choice[0] for choice in self.choices
         ):
@@ -135,9 +137,9 @@ class FlagMixin:
     This mixin adapts a widget to work with :class:`~enum.IntFlag` types.
     """
 
-    enum: Optional[Type[Flag]]
+    enum: t.Optional[t.Type[Flag]]
 
-    def __init__(self, enum: Optional[Type[Flag]] = None, **kwargs):
+    def __init__(self, enum: t.Optional[t.Type[Flag]] = None, **kwargs):
         self.enum = enum
         super().__init__(**kwargs)
 
@@ -223,29 +225,29 @@ class ChoiceFieldMixin(
     :param kwargs: Any additional parameters to pass to ChoiceField base class.
     """
 
-    _enum_: Optional[Type[Enum]] = None
-    _primitive_: Optional[Type] = None
+    _enum_: t.Optional[t.Type[Enum]] = None
+    _primitive_: t.Optional[t.Type] = None
     _strict_: bool = True
-    empty_value: Any = ""
-    empty_values: Sequence[Any] = list(TypedChoiceField.empty_values)
+    empty_value: t.Any = ""
+    empty_values: t.Sequence[t.Any] = list(TypedChoiceField.empty_values)
 
     _empty_value_overridden_: bool = False
     _empty_values_overridden_: bool = False
 
     choices: _ChoicesParameter
 
-    non_strict_widget: Optional[Type[ChoiceWidget]] = NonStrictSelect
+    non_strict_widget: t.Optional[t.Type[ChoiceWidget]] = NonStrictSelect
 
     def __init__(
         self,
-        enum: Optional[Type[Enum]] = _enum_,
-        primitive: Optional[Type] = _primitive_,
+        enum: t.Optional[t.Type[Enum]] = _enum_,
+        primitive: t.Optional[t.Type] = _primitive_,
         *,
-        empty_value: Any = _Unspecified,
+        empty_value: t.Any = _Unspecified,
         strict: bool = _strict_,
-        empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
+        empty_values: t.Union[t.List[t.Any], t.Type[_Unspecified]] = _Unspecified,
         choices: _ChoicesParameter = (),
-        coerce: Optional[_CoerceCallable] = None,
+        coerce: t.Optional[_CoerceCallable] = None,
         **kwargs,
     ):
         self._strict_ = strict
@@ -328,22 +330,22 @@ class ChoiceFieldMixin(
                 f"specify a non-conflicting empty_value."
             )
 
-    def _coerce_to_value_type(self, value: Any) -> Any:
+    def _coerce_to_value_type(self, value: t.Any) -> t.Any:
         """Coerce the value to the enumerations value type"""
         return self.primitive(value)
 
-    def prepare_value(self, value: Any) -> Any:
+    def prepare_value(self, value: t.Any) -> t.Any:
         """Must return the raw enumeration value type"""
         value = self._coerce(value)
         return super().prepare_value(
             value.value if isinstance(value, self.enum) else value
         )
 
-    def to_python(self, value: Any) -> Any:
+    def to_python(self, value: t.Any) -> t.Any:
         """Return the value as its full enumeration object"""
         return self._coerce(value)
 
-    def valid_value(self, value: Any) -> bool:
+    def valid_value(self, value: t.Any) -> bool:
         """Return false if this value is not valid"""
         try:
             self._coerce(value)
@@ -351,7 +353,7 @@ class ChoiceFieldMixin(
         except ValidationError:
             return False
 
-    def default_coerce(self, value: Any) -> Any:
+    def default_coerce(self, value: t.Any) -> t.Any:
         """
         Attempt conversion of value to an enumeration value and return it
         if successful.
@@ -421,6 +423,10 @@ class EnumMultipleChoiceField(  # type: ignore
 
     non_strict_widget = NonStrictSelectMultiple
 
+    def has_changed(self, initial, data):
+        # TODO
+        return super().has_changed(initial, data)
+
 
 class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     """
@@ -441,11 +447,11 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
 
     def __init__(
         self,
-        enum: Optional[Type[Flag]] = None,
+        enum: t.Optional[t.Type[Flag]] = None,
         *,
-        empty_value: Any = _Unspecified,
+        empty_value: t.Any = _Unspecified,
         strict: bool = ChoiceFieldMixin._strict_,
-        empty_values: Union[List[Any], Type[_Unspecified]] = _Unspecified,
+        empty_values: t.Union[t.List[t.Any], t.Type[_Unspecified]] = _Unspecified,
         choices: _ChoicesParameter = (),
         **kwargs,
     ):
@@ -466,7 +472,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
             **kwargs,
         )
 
-    def _coerce(self, value: Any) -> Any:
+    def _coerce(self, value: t.Any) -> t.Any:
         """Combine the values into a single flag using |"""
         if self.enum and isinstance(value, self.enum):
             return value
@@ -474,3 +480,15 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
         if values:
             return reduce(or_, values)
         return self.empty_value
+
+    def has_changed(self, initial, data):
+        return super().has_changed(
+            *(
+                [str(en.value) for en in decompose(initial)]
+                if isinstance(initial, Flag)
+                else initial,
+                [str(en.value) for en in decompose(data)]
+                if isinstance(data, Flag)
+                else data,
+            )
+        )
