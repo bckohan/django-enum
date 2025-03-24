@@ -676,7 +676,7 @@ class EnumField(
         #   we try to pass in. Very annoying because we have to
         #   un-encapsulate some of this initialization logic, this makes our
         #   EnumChoiceField pretty ugly!
-        from django_enum.forms import EnumChoiceField, NonStrictSelect
+        from django_enum.forms import ChoiceFieldMixin, EnumChoiceField, NonStrictSelect
 
         if not self.strict:
             kwargs.setdefault("widget", NonStrictSelect)
@@ -687,10 +687,12 @@ class EnumField(
             **kwargs,
         )
 
-        # we can't pass these in kwargs because formfield() strips them out
-        form_field.enum = self.enum
-        form_field.strict = self.strict
-        form_field.primitive = self.primitive
+        if isinstance(form_field, ChoiceFieldMixin):
+            # we can't pass these in kwargs because formfield() strips them out
+            form_field.enum = self.enum
+            form_field.strict = self.strict
+            form_field.primitive = self.primitive
+        # pragma: no cover
         return form_field
 
     def get_choices(
@@ -1263,6 +1265,7 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             form_field.enum = self.enum
             form_field.strict = self.strict
             form_field.primitive = self.primitive
+        # pragma: no cover
         return form_field
 
     def get_choices(
