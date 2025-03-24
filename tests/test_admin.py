@@ -1,4 +1,6 @@
 import pytest
+import django
+from django.db.models.fields import BLANK_CHOICE_DASH
 import typing as t
 import os
 from enum import Enum, Flag
@@ -13,12 +15,15 @@ from tests.djenum.models import (
     NullableBlankFormTester,
     Bug53Tester,
     NullableStrFormTester,
+    AltWidgetTester,
 )
 from tests.djenum.enums import (
     ExternEnum,
     NullableExternEnum,
     StrTestEnum,
     NullableStrEnum,
+    GNSSConstellation,
+    TextEnum,
 )
 from playwright.sync_api import sync_playwright, expect
 from django.urls import reverse
@@ -83,6 +88,9 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
     HEADLESS = True
 
     __test__ = False
+
+    use_radio = False
+    use_checkbox = False
 
     def enum(self, field: str) -> t.Type[Enum]:
         enum = t.cast(EnumField, self.MODEL_CLASS._meta.get_field(field)).enum
@@ -165,16 +173,34 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
                 value = self.enum(field_name)(value)
             # should override this if needed
             if getattr(value, "value", value) is None and not flag:
-                self.page.select_option(f"select[name='{field_name}']", "")
+                if self.use_radio:
+                    self.page.click(f"input[name='{field_name}'][value='']")
+                else:
+                    self.page.select_option(f"select[name='{field_name}']", "")
             elif flag:
-                self.page.select_option(
-                    f"select[name='{field_name}']",
-                    [str(flag.value) for flag in decompose(value)],
-                )
+                if self.use_checkbox:
+                    for checkbox in self.page.locator(
+                        f"input[type='checkbox'][name='{field_name}']"
+                    ).all():
+                        if checkbox.is_checked():
+                            checkbox.uncheck()
+                    for flag in decompose(value):
+                        self.page.check(
+                            f"input[name='{field_name}'][value='{flag.value}']"
+                        )
+                else:
+                    self.page.select_option(
+                        f"select[name='{field_name}']",
+                        [str(flag.value) for flag in decompose(value)],
+                    )
             else:
-                self.page.select_option(
-                    f"select[name='{field_name}']", str(getattr(value, "value", value))
-                )
+                if self.use_radio:
+                    self.page.click(f"input[name='{field_name}'][value='{value}']")
+                else:
+                    self.page.select_option(
+                        f"select[name='{field_name}']",
+                        str(getattr(value, "value", value)),
+                    )
         except Exception:
             self.page.pause()
 
@@ -452,3 +478,149 @@ class TestBug53AdminBehavior(_GenericAdminFormTest):
         # save
         with self.page.expect_response(lambda response: response.status == 500):
             self.page.click("input[name='_save']")
+
+
+class TestAltWidgetAdminForm(_GenericAdminFormTest):
+    MODEL_CLASS = AltWidgetTester
+    __test__ = True
+    HEADLESS = True
+
+    use_radio = True
+    use_checkbox = True
+
+    @property
+    def changes(self) -> t.List[t.Dict[str, t.Any]]:
+        return [
+            {
+                "text": TextEnum.VALUE1,
+                "constellation": GNSSConstellation.BEIDOU | GNSSConstellation.GPS,
+                "constellation_non_strict": (
+                    GNSSConstellation.BEIDOU | GNSSConstellation.QZSS
+                ),
+            },
+            {
+                "text": TextEnum.VALUE2,
+                "text_null": TextEnum.VALUE2,
+                "constellation": GNSSConstellation(0),
+                "constellation_null": GNSSConstellation.GLONASS | GNSSConstellation.GPS,
+                "constellation_non_strict": (GNSSConstellation(0)),
+            },
+            {
+                "text": TextEnum.DEFAULT,
+                "text_null": None,
+                "constellation": GNSSConstellation.GALILEO,
+                "constellation_null": None,
+                "constellation_non_strict": (GNSSConstellation.GALILEO),
+            },
+        ]
+
+    def test_non_strict_radio_and_checkbox(self):
+        obj = AltWidgetTester.objects.create(
+            text_non_strict="A" * 10,
+            constellation_non_strict=(
+                GNSSConstellation.BEIDOU | GNSSConstellation.QZSS | 1 << 7
+            ),
+        )
+
+        self.page.goto(self.change_url(obj.pk))
+
+        def verify_labels(inputs, expected):
+            # there is a bug in django 3.2 where the group label uses the id of the first
+            # label which means this verification breaks. Since 3.2 is already out we
+            # just elide the check < 4.2
+            if django.VERSION[:2] < (4, 2):
+                return
+            for i in range(inputs.count()):
+                radio = inputs.nth(i)
+                rid = radio.get_attribute("id")
+                label = (
+                    self.page.locator(f"label[for='{rid}']").first.inner_text().strip()
+                )
+                self.assertTrue(label in expected, f"{label} not in {expected}")
+                expected.remove(label)
+
+        # text
+        checked_text = self.page.locator("input[type='radio'][name='text']:checked")
+        self.assertEqual(checked_text.count(), 1)
+        self.assertEqual(
+            checked_text.first.get_attribute("value"),
+            str(AltWidgetTester._meta.get_field("text").default.value),
+        )
+        text_radios = self.page.locator("input[type='radio'][name='text']")
+        self.assertEqual(text_radios.count(), len(TextEnum))
+        verify_labels(text_radios, [en.label for en in TextEnum])
+
+        # text_null
+        checked_text_null = self.page.locator(
+            "input[type='radio'][name='text_null']:checked"
+        )
+        self.assertEqual(checked_text_null.count(), 1)
+        self.assertEqual(checked_text_null.first.get_attribute("value"), "")
+        text_null_radios = self.page.locator("input[type='radio'][name='text_null']")
+        self.assertEqual(text_null_radios.count(), len(TextEnum) + 1)
+        verify_labels(
+            text_null_radios, [BLANK_CHOICE_DASH] + [en.label for en in TextEnum]
+        )
+
+        # text_non_strict
+        checked_text_non_strict = self.page.locator(
+            "input[type='radio'][name='text_non_strict']:checked"
+        )
+        self.assertEqual(checked_text_non_strict.count(), 1)
+        self.assertEqual(checked_text_non_strict.first.get_attribute("value"), "A" * 10)
+        text_non_strict_radios = self.page.locator(
+            "input[type='radio'][name='text_non_strict']"
+        )
+        self.assertEqual(text_non_strict_radios.count(), len(TextEnum) + 1)
+        verify_labels(
+            text_non_strict_radios, [en.label for en in TextEnum] + ["A" * 10]
+        )
+
+        # constellation
+        constellation_checkboxes = self.page.locator(
+            "input[type='checkbox'][name='constellation']"
+        )
+        self.assertEqual(constellation_checkboxes.count(), 5)
+        constellation_checked = self.page.locator(
+            "input[type='checkbox'][name='constellation']:checked"
+        )
+        self.assertEqual(constellation_checked.count(), 0)
+        verify_labels(constellation_checkboxes, [en.name for en in GNSSConstellation])
+
+        # constellation_null
+        constellation_null_checkboxes = self.page.locator(
+            "input[type='checkbox'][name='constellation_null']"
+        )
+        self.assertEqual(constellation_null_checkboxes.count(), 5)
+        constellation_null_checked = self.page.locator(
+            "input[type='checkbox'][name='constellation_null']:checked"
+        )
+        self.assertEqual(constellation_null_checked.count(), 0)
+        verify_labels(
+            constellation_null_checkboxes, [en.name for en in GNSSConstellation]
+        )
+
+        # constellation_non_strict
+        constellation_non_strict_checkboxes = self.page.locator(
+            "input[type='checkbox'][name='constellation_non_strict']"
+        )
+        self.assertEqual(constellation_non_strict_checkboxes.count(), 6)
+        constellation_non_strict_checked = self.page.locator(
+            "input[type='checkbox'][name='constellation_non_strict']:checked"
+        )
+        self.assertEqual(constellation_non_strict_checked.count(), 3)
+        verify_labels(
+            constellation_non_strict_checkboxes,
+            [en.name for en in GNSSConstellation] + ["7"],
+        )
+        for i in range(constellation_non_strict_checked.count()):
+            checkbox = constellation_non_strict_checked.nth(i)
+            value = checkbox.get_attribute("value")
+            self.assertTrue(
+                value
+                in [
+                    str(GNSSConstellation.BEIDOU.value),
+                    str(GNSSConstellation.QZSS.value),
+                    "128",
+                ]
+            )

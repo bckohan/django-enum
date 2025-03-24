@@ -13,12 +13,19 @@ from django.forms.fields import (
     TypedChoiceField,
     TypedMultipleChoiceField,
 )
-from django.forms.widgets import ChoiceWidget, Select, SelectMultiple
+from django.forms.widgets import (
+    CheckboxSelectMultiple,
+    ChoiceWidget,
+    RadioSelect,
+    Select,
+    SelectMultiple,
+)
 
 from django_enum.utils import choices as get_choices
 from django_enum.utils import (
     decompose,
     determine_primitive,
+    get_set_bits,
     get_set_values,
     with_typehint,
 )
@@ -27,7 +34,7 @@ __all__ = [
     "NonStrictSelect",
     "NonStrictSelectMultiple",
     "FlagSelectMultiple",
-    "FlagNonStrictSelectMultiple",
+    "NonStrictRadioSelect",
     "ChoiceFieldMixin",
     "EnumChoiceField",
     "EnumMultipleChoiceField",
@@ -60,7 +67,7 @@ class _Unspecified:
     """
 
 
-class NonStrictMixin(with_typehint(Select)):  # type: ignore
+class NonStrictMixin:
     """
     Mixin to add non-strict behavior to a widget, this makes sure the set value
     appears as a choice if it is not one of the enumeration choices.
@@ -79,19 +86,53 @@ class NonStrictMixin(with_typehint(Select)):  # type: ignore
             choice[0] for choice in self.choices
         ):
             self.choices = list(self.choices) + [(value, str(value))]
-        return super().render(*args, **kwargs)
+        return super().render(*args, **kwargs)  # type: ignore[misc]
+
+
+class NonStrictFlagMixin:
+    """
+    Mixin to add non-strict behavior to a multiple choice flag widget, this makes sure
+    that set flags outside of the enumerated flags will show up as choices. They will
+    be displayed as the index of the set bit.
+    """
+
+    choices: _SelectChoices
+
+    def render(self, *args, **kwargs):
+        """
+        Before rendering if we're a non-strict flag field and bits are set that are
+        not part of our flag enumeration we add them as (integer value, bit index)
+        to our (value, label) choice list.
+        """
+
+        raw_choices = zip(
+            get_set_values(kwargs.get("value")), get_set_bits(kwargs.get("value"))
+        )
+        self.choices = list(self.choices)
+        choice_values = set(choice[0] for choice in self.choices)
+        for value, label in raw_choices:
+            if value not in choice_values:
+                self.choices.append((value, label))
+        return super().render(*args, **kwargs)  # type: ignore[misc]
 
 
 class NonStrictSelect(NonStrictMixin, Select):
     """
-    A Select widget for non-strict EnumChoiceFields that includes any existing
-    non-conforming value as a choice option.
+    This widget renders a select box that includes an option for each value on the
+    enumeration.
     """
 
 
-class FlagSelectMultiple(SelectMultiple):
+class NonStrictRadioSelect(NonStrictMixin, RadioSelect):
     """
-    A SelectMultiple widget for EnumFlagFields.
+    This widget renders a radio select field that includes an option for each value on
+    the enumeration and for any non-value that is set.
+    """
+
+
+class FlagMixin:
+    """
+    This mixin adapts a widget to work with :class:`~enum.IntFlag` types.
     """
 
     enum: Optional[Type[Flag]]
@@ -119,17 +160,45 @@ class FlagSelectMultiple(SelectMultiple):
         return value
 
 
+class FlagSelectMultiple(FlagMixin, SelectMultiple):
+    """
+    This widget will render :class:`~enum.IntFlag` types as a multi select field with
+    an option for each flag value.
+    """
+
+
+class FlagCheckbox(FlagMixin, CheckboxSelectMultiple):
+    """
+    This widget will render :class:`~enum.IntFlag` types as checkboxes with a checkbox
+    for each flag value.
+    """
+
+
 class NonStrictSelectMultiple(NonStrictMixin, SelectMultiple):
     """
-    A SelectMultiple widget for non-strict EnumFlagFields that includes any
-    existing non-conforming value as a choice option.
+    This widget will render a multi select box that includes an option for each
+    value on the enumeration and for any non-value that is passed in.
     """
 
 
-class FlagNonStrictSelectMultiple(NonStrictMixin, FlagSelectMultiple):
+class NonStrictFlagSelectMultiple(NonStrictFlagMixin, FlagSelectMultiple):
     """
-    A SelectMultiple widget for non-strict EnumFlagFields that includes any
-    existing non-conforming value as a choice option.
+    This widget will render a multi select box that includes an option for each flag
+    on the enumeration and also for each bit lot listed in the enumeration that is set
+    on the value.
+
+    Options for extra bits only appear if they are set. You should pass choices to the
+    form field if you want additional options to always appear.
+    """
+
+
+class NonStrictFlagCheckbox(NonStrictFlagMixin, FlagCheckbox):
+    """
+    This widget will render a checkbox for each flag on the enumeration and also
+    for each bit not listed in the enumeration that is set on the value.
+
+    Checkboxes for extra bits only appear if they are set. You should pass choices to
+    the form field if you want additional checkboxes to always appear.
     """
 
 
@@ -165,7 +234,7 @@ class ChoiceFieldMixin(
 
     choices: _ChoicesParameter
 
-    non_strict_widget: Type[ChoiceWidget] = NonStrictSelect
+    non_strict_widget: Optional[Type[ChoiceWidget]] = NonStrictSelect
 
     def __init__(
         self,
@@ -181,7 +250,7 @@ class ChoiceFieldMixin(
     ):
         self._strict_ = strict
         self._primitive_ = primitive
-        if not self.strict:
+        if not self.strict and self.non_strict_widget:
             kwargs.setdefault("widget", self.non_strict_widget)
 
         if empty_values is _Unspecified:
@@ -294,7 +363,7 @@ class ChoiceFieldMixin(
 
         :param value: The value to convert
         :raises ValidationError: if a valid return value cannot be determined.
-        :return: An enumeration value or the canonical empty value if value is
+        :returns: An enumeration value or the canonical empty value if value is
             one of our empty_values, or the value itself if this is a
             non-strict field and the value is of a matching primitive type
         """
@@ -368,7 +437,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     """
 
     widget = FlagSelectMultiple
-    non_strict_widget = FlagNonStrictSelectMultiple
+    non_strict_widget = NonStrictFlagSelectMultiple
 
     def __init__(
         self,
@@ -380,10 +449,12 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
         choices: _ChoicesParameter = (),
         **kwargs,
     ):
-        kwargs.setdefault(
-            "widget",
-            self.widget(enum=enum) if strict else self.non_strict_widget(enum=enum),  # type: ignore[call-arg]
+        widget = kwargs.get(
+            "widget", self.widget if self.strict else self.non_strict_widget
         )
+        if isinstance(widget, type) and issubclass(widget, FlagMixin):
+            widget = widget(enum=enum)
+        kwargs["widget"] = widget
         super().__init__(
             enum=enum,
             empty_value=(

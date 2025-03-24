@@ -8,6 +8,8 @@ v2.2.0 (2025-03-23)
 ===================
 
 * Fixed `Enum types that resolve to primitives of str or int but that do not inherit from those types can result in validation errors. <https://github.com/bckohan/django-enum/issues/109>`_
+* Implemented `Support checkboxes for FlagEnumField <https://github.com/bckohan/django-enum/issues/107>`_
+* Implemented `Support radio buttons for EnumChoiceField <https://github.com/bckohan/django-enum/issues/106>`_
 * Implemented `If default is not provided for flag fields it should be Flag(0). <https://github.com/bckohan/django-enum/issues/105>`_
 * Fixed `EnumFlagFields set empty values to Flag(0) when model field has null=True, default=None <https://github.com/bckohan/django-enum/issues/104>`_
 * Fixed `Large enum fields that inherit from binaryfield have editable=False by default <https://github.com/bckohan/django-enum/issues/103>`_

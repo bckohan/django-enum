@@ -40,6 +40,7 @@ from tests.djenum.enums import (
     TextEnum,
     TimeEnum,
     NullableConstants,
+    GNSSConstellation,
 )
 
 
@@ -381,3 +382,16 @@ class Bug53Tester(models.Model):
     )
     int_blank_null_false = EnumField(ExternEnum, null=False, blank=True)
     int_blank_null_true = EnumField(ExternEnum, null=True, blank=True)
+
+
+class AltWidgetTester(models.Model):
+    text = EnumField(TextEnum, default=TextEnum.VALUE1)
+    text_null = EnumField(TextEnum, default=None, blank=True, null=True)
+    text_non_strict = EnumField(
+        TextEnum, default=TextEnum.VALUE1, strict=False, max_length=10
+    )
+    constellation = EnumField(GNSSConstellation)
+    constellation_null = EnumField(
+        GNSSConstellation, null=True, blank=True, default=None
+    )
+    constellation_non_strict = EnumField(GNSSConstellation, strict=False)

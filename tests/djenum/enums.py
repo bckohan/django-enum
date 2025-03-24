@@ -390,3 +390,11 @@ class StrTestEnum(str, Enum):
 
     def __str__(self):
         return self.value
+
+
+class GNSSConstellation(IntFlag):
+    GPS = 1 << 0
+    GLONASS = 1 << 1
+    GALILEO = 1 << 2
+    BEIDOU = 1 << 3
+    QZSS = 1 << 4
