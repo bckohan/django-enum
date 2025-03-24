@@ -701,3 +701,13 @@ class TestEnumMultipleChoiceFormField(EnumTypeMixin, TestCase):
             initial={"small_pos_int": [self.SmallPosIntEnum.VAL1]},
         )
         self.assertTrue(form.has_changed())
+
+
+def test_flag_mixin_value_passthrough():
+    """
+    This test is mostly for coverage - we may need to alter this behavior later,
+    it catches the passthrough case for unrecognized Flag field values during rendering.
+    """
+    from django_enum.forms import FlagMixin
+
+    assert FlagMixin().format_value((1, 2, 3)) == (1, 2, 3)
