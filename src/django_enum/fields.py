@@ -639,8 +639,6 @@ class EnumField(
                 return self.to_python(super().get_default())
             except ValidationError:
                 return super().get_default()
-        elif self.enum and issubclass(self.enum, Flag):
-            return 0
         return super().get_default()
 
     def validate(self, value: Any, model_instance: Optional[Model]):
