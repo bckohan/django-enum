@@ -166,7 +166,7 @@ addopts = [
 omit = ["tests/**/*py"]
 branch = true
 source = ["django_enum"]
-concurrency = ["multiprocessing"]
+concurrency = ["thread", "multiprocessing"]
 parallel = true
 relative_files = true
 command_line = "-m pytest --cov=django_enum"
