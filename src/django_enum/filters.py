@@ -58,12 +58,15 @@ class EnumFilter(TypedChoiceFilter):
     """
 
     enum: t.Type[Enum]
+    strict: bool
     field_class = EnumChoiceField
 
-    def __init__(self, *, enum: t.Type[Enum], **kwargs):
+    def __init__(self, *, enum: t.Type[Enum], strict: bool = True, **kwargs):
         self.enum = enum
+        self.strict = strict
         super().__init__(
             enum=enum,
+            strict=strict,
             choices=kwargs.pop("choices", choices(self.enum)),
             **kwargs,
         )
@@ -85,18 +88,22 @@ class MultipleEnumFilter(TypedMultipleChoiceFilter):
     """
 
     enum: t.Type[Enum]
+    strict: bool
     field_class = EnumMultipleChoiceField
 
     def __init__(
         self,
         *,
         enum: t.Type[Enum],
+        strict: bool = True,
         conjoined: bool = False,
         **kwargs,
     ):
         self.enum = enum
+        self.strict = strict
         super().__init__(
             enum=enum,
+            strict=strict,
             choices=kwargs.pop("choices", choices(self.enum)),
             conjoined=conjoined,
             **kwargs,
@@ -126,8 +133,8 @@ class EnumFlagFilter(TypedMultipleChoiceFilter):
         self,
         *,
         enum: t.Type[Flag],
+        strict: bool = True,
         conjoined: bool = False,
-        strict: bool = False,
         **kwargs,
     ):
         self.enum = enum
@@ -165,7 +172,7 @@ class FilterSet(filterset.FilterSet):
 
     @staticmethod
     def enum_extra(f: EnumField) -> t.Dict[str, t.Any]:
-        return {"enum": f.enum, "choices": f.choices}
+        return {"enum": f.enum, "strict": f.strict, "choices": f.choices}
 
     FILTER_DEFAULTS = {
         **{
