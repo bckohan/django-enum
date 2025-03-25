@@ -41,15 +41,15 @@ try:
 
     urlpatterns.extend(
         [
-            path(
-                "enum/filter/",
-                FilterView.as_view(
-                    model=EnumTester,
-                    filterset_fields="__all__",
-                    template_name="enumtester_list.html",
-                ),
-                name="enum-filter",
-            ),
+            # path(
+            #     "enum/filter/",
+            #     FilterView.as_view(
+            #         model=EnumTester,
+            #         filterset_fields="__all__",
+            #         template_name="enumtester_list.html",
+            #     ),
+            #     name="enum-filter",
+            # ),
             path(
                 "enum/filter/symmetric/",
                 EnumTesterPropFilterViewSet.as_view(),

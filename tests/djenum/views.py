@@ -94,8 +94,12 @@ except (ImportError, ModuleNotFoundError):  # pragma: no cover
 
 try:
     from django_filters.views import FilterView
-
-    from django_enum.filters import FilterSet as EnumFilterSet, MultipleEnumFilter
+    from django_enum.fields import EnumField
+    from django_enum.filters import (
+        FilterSet as EnumFilterSet,
+        EnumFilter,
+        MultipleEnumFilter,
+    )
 
     from .enums import (
         BigIntEnum,
@@ -126,6 +130,18 @@ try:
         model = EnumTester
         template_name = "enumtester_list.html"
 
+    class EnumTesterFilterExcludeViewSet(EnumTesterFilterViewSet):
+        class EnumTesterExcludeFilter(EnumTesterFilterViewSet.EnumTesterFilter):
+            class Meta(EnumTesterFilterViewSet.EnumTesterFilter.Meta):
+                filter_overrides = {
+                    EnumField: {
+                        "filter_class": EnumFilter,
+                        "extra": lambda f: {"exclude": True},
+                    }
+                }
+
+        filterset_class = EnumTesterExcludeFilter
+
     class EnumTesterMultipleFilterViewSet(URLMixin, FilterView):
         class EnumTesterMultipleFilter(EnumFilterSet):
             small_pos_int = MultipleEnumFilter(enum=SmallPosIntEnum)
@@ -152,6 +168,65 @@ try:
             time_enum = MultipleEnumFilter(enum=TimeEnum)
             duration_enum = MultipleEnumFilter(enum=DurationEnum)
             decimal_enum = MultipleEnumFilter(enum=DecimalEnum)
+
+            class Meta:
+                fields = [
+                    "small_pos_int",
+                    "small_int",
+                    "pos_int",
+                    "int",
+                    "big_pos_int",
+                    "big_int",
+                    "constant",
+                    "text",
+                    "extern",
+                    "non_strict_int",
+                    "non_strict_text",
+                    "no_coerce",
+                    "date_enum",
+                    "datetime_enum",
+                    "time_enum",
+                    "duration_enum",
+                    "decimal_enum",
+                ]
+                model = EnumTester
+
+        filterset_class = EnumTesterMultipleFilter
+        model = EnumTester
+        template_name = "enumtester_list.html"
+
+    class EnumTesterMultipleFilterExcludeViewSet(URLMixin, FilterView):
+        class EnumTesterMultipleFilter(EnumFilterSet):
+            small_pos_int = MultipleEnumFilter(enum=SmallPosIntEnum, exclude=True)
+            small_int = MultipleEnumFilter(enum=SmallIntEnum, exclude=True)
+            pos_int = MultipleEnumFilter(enum=PosIntEnum, exclude=True)
+            int = MultipleEnumFilter(enum=IntEnum, exclude=True)
+            big_pos_int = MultipleEnumFilter(enum=BigPosIntEnum, exclude=True)
+            big_int = MultipleEnumFilter(enum=BigIntEnum, exclude=True)
+            constant = MultipleEnumFilter(enum=Constants, exclude=True)
+            text = MultipleEnumFilter(enum=TextEnum, exclude=True)
+            extern = MultipleEnumFilter(enum=ExternEnum, exclude=True)
+
+            dj_int_enum = MultipleEnumFilter(enum=DJIntEnum, exclude=True)
+            dj_text_enum = MultipleEnumFilter(enum=DJTextEnum, exclude=True)
+
+            # Non-strict
+            non_strict_int = MultipleEnumFilter(
+                enum=SmallPosIntEnum, strict=False, exclude=True
+            )
+            non_strict_text = MultipleEnumFilter(
+                enum=TextEnum, strict=False, exclude=True
+            )
+            no_coerce = MultipleEnumFilter(
+                enum=SmallPosIntEnum, strict=False, exclude=True
+            )
+
+            # eccentric enums
+            date_enum = MultipleEnumFilter(enum=DateEnum, exclude=True)
+            datetime_enum = MultipleEnumFilter(enum=DateTimeEnum, exclude=True)
+            time_enum = MultipleEnumFilter(enum=TimeEnum, exclude=True)
+            duration_enum = MultipleEnumFilter(enum=DurationEnum, exclude=True)
+            decimal_enum = MultipleEnumFilter(enum=DecimalEnum, exclude=True)
 
             class Meta:
                 fields = [

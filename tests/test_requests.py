@@ -673,17 +673,35 @@ class TestRequests(EnumTypeMixin, TestCase):
 
         def test_django_filter(self):
             self.do_test_django_filter(reverse(f"{self.NAMESPACE}:enum-filter"))
+            self.do_test_django_filter(reverse(f"{self.NAMESPACE}:enum-filter-viewset"))
+
+        def test_django_filter_exclude(self):
+            self.do_test_django_filter(
+                reverse(f"{self.NAMESPACE}:enum-filter-viewset-exclude"), exclude=True
+            )
 
         def test_django_filter_multiple(self):
             self.do_test_django_filter(
                 reverse(f"{self.NAMESPACE}:enum-filter-multiple"), multi=True
             )
+            self.do_test_django_filter(
+                reverse(f"{self.NAMESPACE}:enum-filter-multiple-exclude"),
+                multi=True,
+                exclude=True,
+            )
 
-        def do_test_django_filter(self, url, skip_non_strict=True, multi=False):
+        def do_test_django_filter(
+            self, url, skip_non_strict=True, multi=False, conjoined=False, exclude=False
+        ):
             """
             Exhaustively test query parameter permutations based on data
             created in setUp
             """
+            filter = (
+                self.MODEL_CLASS.objects.exclude
+                if exclude
+                else self.MODEL_CLASS.objects.filter
+            )
             client = Client()
             for attr, val_map in self.values.items():
                 tests: t.List[t.Tuple[t.Any, t.List[int]]] = []
@@ -740,14 +758,17 @@ class TestRequests(EnumTypeMixin, TestCase):
                                     attr: getattr(obj, attr)
                                     for attr in self.compared_attributes
                                 }
-                                for obj in self.MODEL_CLASS.objects.filter(id__in=objs)
+                                for obj in filter(id__in=objs)
                             }
-                            self.assertEqual(len(objects), len(objs))
+                            if exclude:
+                                self.assertEqual(
+                                    len(set(objects)),
+                                    self.MODEL_CLASS.objects.count() - len(set(objs)),
+                                )
+                            else:
+                                self.assertEqual(len(objects), len(objs))
                             response = client.get(f"{url}?{qry.urlencode()}")
                             resp_objects = self.list_to_objects(
                                 Soup(response.content, features="html.parser")
                             )
                             self.assertEqual(objects, resp_objects)
-
-    else:
-        pass  # pragma: no cover

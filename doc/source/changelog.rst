@@ -7,6 +7,8 @@ Change Log
 v2.2.0 (2025-03-23)
 ===================
 
+* Fixed `FilterSet override of filter_for_lookup disregards meta options. <https://github.com/bckohan/django-enum/issues/111>`_
+* Implemented `Add EnumFlagFilter to support has_any and has_all flag queries. <https://github.com/bckohan/django-enum/issues/110>`_
 * Fixed `Enum types that resolve to primitives of str or int but that do not inherit from those types can result in validation errors. <https://github.com/bckohan/django-enum/issues/109>`_
 * Implemented `Support checkboxes for FlagEnumField <https://github.com/bckohan/django-enum/issues/107>`_
 * Implemented `Support radio buttons for EnumChoiceField <https://github.com/bckohan/django-enum/issues/106>`_

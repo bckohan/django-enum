@@ -39,7 +39,9 @@ try:
 
     from tests.djenum.views import (
         EnumTesterFilterViewSet,
+        EnumTesterFilterExcludeViewSet,
         EnumTesterMultipleFilterViewSet,
+        EnumTesterMultipleFilterExcludeViewSet,
     )
 
     urlpatterns.extend(
@@ -54,14 +56,24 @@ try:
                 name="enum-filter",
             ),
             path(
-                "enum/filter/symmetric/",
+                "enum/filter/viewset/",
                 EnumTesterFilterViewSet.as_view(),
-                name="enum-filter-symmetric",
+                name="enum-filter-viewset",
+            ),
+            path(
+                "enum/filter/viewset/exclude",
+                EnumTesterFilterExcludeViewSet.as_view(),
+                name="enum-filter-viewset-exclude",
             ),
             path(
                 "enum/filter/multiple/",
                 EnumTesterMultipleFilterViewSet.as_view(),
                 name="enum-filter-multiple",
+            ),
+            path(
+                "enum/filter/multiple/exclude/",
+                EnumTesterMultipleFilterExcludeViewSet.as_view(),
+                name="enum-filter-multiple-exclude",
             ),
         ]
     )
