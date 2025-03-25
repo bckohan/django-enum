@@ -690,6 +690,18 @@ class TestRequests(EnumTypeMixin, TestCase):
                 exclude=True,
             )
 
+        def test_django_filter_flags(self):
+            pass
+
+        def test_django_filter_flags_exclude(self):
+            pass
+
+        def test_django_filter_flags_conjoined(self):
+            pass
+
+        def test_django_filter_flags_conjoined_exclude(self):
+            pass
+
         def do_test_django_filter(
             self, url, skip_non_strict=True, multi=False, conjoined=False, exclude=False
         ):

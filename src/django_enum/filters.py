@@ -163,11 +163,15 @@ class EnumFlagFilter(TypedMultipleChoiceFilter):
 
 class FilterSet(filterset.FilterSet):
     """
-    Use this class instead of the :doc:`django-filter <django-filter:index>`
-    :class:`~django_filters.filterset.FilterSet` to automatically set all
-    :class:`~django_enum.fields.EnumField` filters to
-    :class:`~django_enum.filters.EnumFilter` by default instead of
-    :class:`~django_filters.filters.ChoiceFilter`.
+    This filterset behaves the same way as the :doc:`django-filter <django-filter:index>`
+    :class:`~django_filters.filterset.FilterSet` except the following fields will be set
+    to the following filter types:
+
+    * :class:`~django_enum.fields.EnumField` -> :class:`~django_enum.filters.EnumFilter`
+    * :class:`~django_enum.fields.FlagField` -> :class:`~django_enum.filters.FlagFilter`
+
+    **If you have a custom** :class:`~django_filters.filterset.FilterSet`
+    **implementation, this class can also be used as a mixin.**
     """
 
     @staticmethod
@@ -178,11 +182,11 @@ class FilterSet(filterset.FilterSet):
         **{
             FlagField: {
                 "filter_class": EnumFlagFilter,
-                "extra": enum_extra,
+                "extra": lambda f: FilterSet.enum_extra(f),  # TODO 3.9 compat
             },
             EnumField: {
                 "filter_class": EnumFilter,
-                "extra": enum_extra,
+                "extra": lambda f: FilterSet.enum_extra(f),  # TODO 3.9 compat
             },
         },
         **filterset.FilterSet.FILTER_DEFAULTS,
@@ -193,6 +197,8 @@ class FilterSet(filterset.FilterSet):
         cls, field: ModelField, lookup_type: str
     ) -> t.Tuple[t.Optional[t.Type[Filter]], t.Dict[str, t.Any]]:
         """For EnumFields use the EnumFilter class by default"""
+        # we can't just pass this up to the base implementation because if it sees
+        # choices on a field it will hard set to ChoiceField
         if isinstance(field, EnumField):
             data = (
                 try_dbfield(
@@ -209,7 +215,7 @@ class FilterSet(filterset.FilterSet):
             return (
                 data["filter_class"],
                 {
-                    **cls.enum_extra(field),
+                    **FilterSet.enum_extra(field),
                     **data.get("extra", lambda f: {})(field),
                 },
             )
