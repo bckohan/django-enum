@@ -217,3 +217,33 @@ class EnumTypeMixin:
             return Decimal
         else:  # pragma: no cover
             raise RuntimeError(f"Missing enum type primitive for {enum_type}")
+
+
+class FlagTypeMixin:
+    """
+    We make use of inheritance to re-run lots of tests with vanilla Django choices
+    enumerations and enumerations defined with integration with enum-properties.
+
+    Since most of this code is identical, we use this mixin to resolve the correct
+    type at the specific test in question.
+    """
+
+    fields = ["small_flag", "flag", "flag_no_coerce", "big_flag"]
+
+    @property
+    def SmallPositiveFlagEnum(self):
+        return self.enum_type("small_flag")
+
+    @property
+    def PositiveFlagEnum(self):
+        return self.enum_type("flag")
+
+    @property
+    def BigPositiveFlagEnum(self):
+        return self.enum_type("big_flag")
+
+    def enum_type(self, field_name):
+        return self.MODEL_CLASS._meta.get_field(field_name).enum
+
+    def enum_primitive(self, field_name):
+        return self.MODEL_CLASS._meta.get_field(field_name).primitive

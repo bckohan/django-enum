@@ -395,3 +395,14 @@ class AltWidgetTester(models.Model):
         GNSSConstellation, null=True, blank=True, default=None
     )
     constellation_non_strict = EnumField(GNSSConstellation, strict=False)
+
+
+class FlagFilterTester(models.Model):
+    small_flag = EnumField(enum=SmallPositiveFlagEnum, null=True, default=None)
+    flag = EnumField(enum=PositiveFlagEnum)
+    flag_no_coerce = EnumField(enum=PositiveFlagEnum, coerce=False)
+    big_flag = EnumField(enum=BigPositiveFlagEnum, strict=False)
+    # extra_big_flag = EnumField(enum=ExtraBigPositiveFlagEnum)
+
+    def get_absolute_url(self):
+        return reverse("tests_djenum:flag-detail", kwargs={"pk": self.pk})

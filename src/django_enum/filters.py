@@ -138,7 +138,6 @@ class EnumFlagFilter(TypedMultipleChoiceFilter):
         **kwargs,
     ):
         self.enum = enum
-        self.lookup_expr = "has_all" if conjoined else "has_any"
         super().__init__(
             enum=enum,
             choices=kwargs.pop("choices", choices(self.enum)),
@@ -146,15 +145,21 @@ class EnumFlagFilter(TypedMultipleChoiceFilter):
             conjoined=conjoined,
             **kwargs,
         )
+        self.lookup_expr = "has_all" if conjoined else "has_any"
 
     def filter(self, qs, value):
-        if value == self.null_value:
-            value = None
-
-        if not value:
+        if value in {None, ""} or self.is_noop(qs, value):
             return qs
 
-        if self.is_noop(qs, value):
+        if value == self.null_value:
+            return self.get_method(qs)(Q(**{f"{self.field_name}__isnull": True}))
+
+        # special case of no activate flags, performs an exact lookup
+        # the form cleans unsupplied fields into 0s so we make sure this was supplied
+        # before filtering on it
+        if not value:
+            if not self.parent or self.field_name in self.parent.form.data:
+                return self.get_method(qs)(Q(**{f"{self.field_name}": 0}))
             return qs
 
         qs = self.get_method(qs)(Q(**self.get_filter_predicate(value)))

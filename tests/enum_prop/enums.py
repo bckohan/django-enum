@@ -346,35 +346,43 @@ class ExternEnum(IntEnumProperties):
 
 
 class SmallPositiveFlagEnum(FlagChoices):
-    ONE = 2**10, "One"
-    TWO = 2**11, "Two"
-    THREE = 2**12, "Three"
-    FOUR = 2**13, "Four"
-    FIVE = 2**14, "Five"
+    number: Annotated[int, Symmetric()]
+
+    ONE = 2**10, "One", 1
+    TWO = 2**11, "Two", 2
+    THREE = 2**12, "Three", 3
+    FOUR = 2**13, "Four", 4
+    FIVE = 2**14, "Five", 5
 
 
 class PositiveFlagEnum(FlagChoices):
-    ONE = 2**26, "One"
-    TWO = 2**27, "Two"
-    THREE = 2**28, "Three"
-    FOUR = 2**29, "Four"
-    FIVE = 2**30, "Five"
+    number: Annotated[int, Symmetric()]
+
+    ONE = 2**26, "One", 1
+    TWO = 2**27, "Two", 2
+    THREE = 2**28, "Three", 3
+    FOUR = 2**29, "Four", 4
+    FIVE = 2**30, "Five", 5
 
 
 class BigPositiveFlagEnum(FlagChoices):
-    ONE = 2**58, "One"
-    TWO = 2**59, "Two"
-    THREE = 2**60, "Three"
-    FOUR = 2**61, "Four"
-    FIVE = 2**62, "Five"
+    version: Annotated[float, Symmetric()]
+
+    ONE = 2**58, "One", 1.1
+    TWO = 2**59, "Two", 2.2
+    THREE = 2**60, "Three", 3.3
+    FOUR = 2**61, "Four", 4.4
+    FIVE = 2**62, "Five", 5.5
 
 
 class ExtraBigPositiveFlagEnum(FlagChoices):
-    ONE = 2**61, "One"
-    TWO = 2**62, "Two"
-    THREE = 2**63, "Three"
-    FOUR = 2**64, "Four"
-    FIVE = 2**65, "Five"
+    version: Annotated[float, Symmetric()]
+
+    ONE = 2**61, "One", 1.1
+    TWO = 2**62, "Two", 2.2
+    THREE = 2**63, "Three", 3.3
+    FOUR = 2**64, "Four", 4.4
+    FIVE = 2**65, "Five", 5.5
 
 
 class SmallNegativeFlagEnum(FlagChoices):

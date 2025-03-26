@@ -30,6 +30,25 @@ class UtilsTests(TestCase):
         )
 
         self.assertEqual(
+            get_set_values(
+                (
+                    SmallPositiveFlagEnum.ONE
+                    | SmallPositiveFlagEnum.TWO
+                    | SmallPositiveFlagEnum.THREE
+                    | SmallPositiveFlagEnum.FOUR
+                    | SmallPositiveFlagEnum.FIVE
+                ).value,
+            ),
+            [
+                SmallPositiveFlagEnum.ONE.value,
+                SmallPositiveFlagEnum.TWO.value,
+                SmallPositiveFlagEnum.THREE.value,
+                SmallPositiveFlagEnum.FOUR.value,
+                SmallPositiveFlagEnum.FIVE.value,
+            ],
+        )
+
+        self.assertEqual(
             get_set_values(SmallPositiveFlagEnum.FOUR),
             [SmallPositiveFlagEnum.FOUR.value],
         )

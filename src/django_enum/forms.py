@@ -155,10 +155,17 @@ class FlagMixin:
             # choice tuple to the string conversion of the value
             # to determine selected options
             if self.enum:
-                return [str(en.value) for en in decompose(self.enum(value))]
+                named = [str(en.value) for en in decompose(self.enum(value))]
+                named_set = set(named)
+                unnamed = [
+                    str(val)
+                    for val in get_set_values(value)
+                    if str(val) not in named_set
+                ]
+                return [*named, *unnamed]
             if isinstance(value, int):
                 # automagically work for IntFlags even if we weren't given the enum
-                return [str(bit) for bit in get_set_values(value)]
+                return [str(val) for val in get_set_values(value)]
         return value
 
 
@@ -483,7 +490,9 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
         """Combine the values into a single flag using |"""
         if self.enum and isinstance(value, self.enum):
             return value
-        values = TypedMultipleChoiceField._coerce(self, value)  # type: ignore[attr-defined]
+        values = TypedMultipleChoiceField._coerce(  # type: ignore[attr-defined]
+            self, [value] if value and not isinstance(value, list) else value
+        )
         if values:
             return reduce(or_, values)
         return self.empty_value

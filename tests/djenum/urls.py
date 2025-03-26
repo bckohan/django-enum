@@ -7,6 +7,11 @@ from tests.djenum.views import (
     EnumTesterDetailView,
     EnumTesterListView,
     EnumTesterUpdateView,
+    FlagTesterCreateView,
+    FlagTesterDeleteView,
+    FlagTesterDetailView,
+    FlagTesterListView,
+    FlagTesterUpdateView,
 )
 
 app_name = "tests_djenum"
@@ -18,6 +23,11 @@ urlpatterns = [
     path("enum/add/", EnumTesterCreateView.as_view(), name="enum-add"),
     path("enum/<int:pk>/", EnumTesterUpdateView.as_view(), name="enum-update"),
     path("enum/<int:pk>/delete/", EnumTesterDeleteView.as_view(), name="enum-delete"),
+    path("flag/<int:pk>", FlagTesterDetailView.as_view(), name="flag-detail"),
+    path("flag/list/", FlagTesterListView.as_view(), name="flag-list"),
+    path("flag/add/", FlagTesterCreateView.as_view(), name="flag-add"),
+    path("flag/<int:pk>/", FlagTesterUpdateView.as_view(), name="flag-update"),
+    path("flag/<int:pk>/delete/", FlagTesterDeleteView.as_view(), name="flag-delete"),
 ]
 
 
@@ -42,6 +52,10 @@ try:
         EnumTesterFilterExcludeViewSet,
         EnumTesterMultipleFilterViewSet,
         EnumTesterMultipleFilterExcludeViewSet,
+        FlagTesterFilterViewSet,
+        FlagTesterFilterExcludeViewSet,
+        FlagTesterFilterConjoinedViewSet,
+        FlagTesterFilterConjoinedExcludeViewSet,
     )
 
     urlpatterns.extend(
@@ -74,6 +88,22 @@ try:
                 "enum/filter/multiple/exclude/",
                 EnumTesterMultipleFilterExcludeViewSet.as_view(),
                 name="enum-filter-multiple-exclude",
+            ),
+            path("flag/filter/", FlagTesterFilterViewSet.as_view(), name="flag-filter"),
+            path(
+                "flag/filter/exclude",
+                FlagTesterFilterExcludeViewSet.as_view(),
+                name="flag-filter-exclude",
+            ),
+            path(
+                "flag/filter/conjoined",
+                FlagTesterFilterConjoinedViewSet.as_view(),
+                name="flag-filter-conjoined",
+            ),
+            path(
+                "flag/filter/conjoined/exclude",
+                FlagTesterFilterConjoinedExcludeViewSet.as_view(),
+                name="flag-filter-conjoined-exclude",
             ),
         ]
     )

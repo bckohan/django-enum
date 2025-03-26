@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+{% load test_tags %}
+
+{% block content %}
+    <div id="{{object.pk}}" class="enum">
+    <h1>{{ object.pk }}</h1>
+
+    <p class="small_flag">small_flag: <b><span class="value">{{ object.small_flag.value|to_str }}</span></b> <b><span class="label">{{ object.small_flag|flags_str }}</span></b></p>
+    <p class="flag">flag: <b><span class="value">{{ object.flag.value|to_str }}</span></b> <b><span class="label">{{ object.flag|flags_str }}</span></b></p>
+    <p class="flag_no_coerce">flag: <b><span class="value">{{ object.flag_no_coerce|to_str }}</span></b> <b><span class="label">{{ object.flag_no_coerce|flags_str }}</span></b></p>
+    <p class="big_flag">big_flag: <b><span class="value">{{ object.big_flag.value|to_str }}</span></b> <b><span class="label">{{ object.big_flag|flags_str }}</span></b></p>
+
+    <p>
+    {% if update_path %}
+    <a href="{% url update_path pk=object.pk %}">Edit</a>
+    {% endif %}
+    {% if delete_path %}
+    <a href="{% url delete_path pk=object.pk %}">Delete</a>
+    {% endif %}
+    </p>
+    </div>
+{% endblock %}

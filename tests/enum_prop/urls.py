@@ -7,6 +7,11 @@ from tests.enum_prop.views import (
     EnumTesterDetailView,
     EnumTesterListView,
     EnumTesterUpdateView,
+    FlagTesterCreateView,
+    FlagTesterDeleteView,
+    FlagTesterDetailView,
+    FlagTesterListView,
+    FlagTesterUpdateView,
 )
 
 app_name = "tests_enum_prop"
@@ -17,6 +22,11 @@ urlpatterns = [
     path("enum/add/", EnumTesterCreateView.as_view(), name="enum-add"),
     path("enum/<int:pk>/", EnumTesterUpdateView.as_view(), name="enum-update"),
     path("enum/<int:pk>/delete/", EnumTesterDeleteView.as_view(), name="enum-delete"),
+    path("flag/<int:pk>", FlagTesterDetailView.as_view(), name="flag-detail"),
+    path("flag/list/", FlagTesterListView.as_view(), name="flag-list"),
+    path("flag/add/", FlagTesterCreateView.as_view(), name="flag-add"),
+    path("flag/<int:pk>/", FlagTesterUpdateView.as_view(), name="flag-update"),
+    path("flag/<int:pk>/delete/", FlagTesterDeleteView.as_view(), name="flag-delete"),
 ]
 
 try:
@@ -36,29 +46,56 @@ try:
 
     from tests.enum_prop.views import (
         EnumTesterPropFilterViewSet,
+        EnumTesterFilterExcludeViewSet,
         EnumTesterPropMultipleFilterViewSet,
+        EnumTesterPropMultipleExcludeFilterViewSet,
+        FlagTesterFilterViewSet,
+        FlagTesterFilterExcludeViewSet,
+        FlagTesterFilterConjoinedViewSet,
+        FlagTesterFilterConjoinedExcludeViewSet,
     )
 
     urlpatterns.extend(
         [
-            # path(
-            #     "enum/filter/",
-            #     FilterView.as_view(
-            #         model=EnumTester,
-            #         filterset_fields="__all__",
-            #         template_name="enumtester_list.html",
-            #     ),
-            #     name="enum-filter",
-            # ),
             path(
                 "enum/filter/symmetric/",
                 EnumTesterPropFilterViewSet.as_view(),
                 name="enum-filter-symmetric",
             ),
             path(
+                "enum/filter/symmetric/exclude",
+                EnumTesterFilterExcludeViewSet.as_view(),
+                name="enum-filter-symmetric-exclude",
+            ),
+            path(
                 "enum/filter/multiple/",
                 EnumTesterPropMultipleFilterViewSet.as_view(),
                 name="enum-filter-multiple",
+            ),
+            path(
+                "enum/filter/multiple/exclude",
+                EnumTesterPropMultipleExcludeFilterViewSet.as_view(),
+                name="enum-filter-multiple-exclude",
+            ),
+            path(
+                "flag/filter/",
+                FlagTesterFilterViewSet.as_view(),
+                name="flag-filter-symmetric",
+            ),
+            path(
+                "flag/filter/exclude",
+                FlagTesterFilterExcludeViewSet.as_view(),
+                name="flag-filter-exclude-symmetric",
+            ),
+            path(
+                "flag/filter/conjoined",
+                FlagTesterFilterConjoinedViewSet.as_view(),
+                name="flag-filter-conjoined-symmetric",
+            ),
+            path(
+                "flag/filter/conjoined/exclude",
+                FlagTesterFilterConjoinedExcludeViewSet.as_view(),
+                name="flag-filter-conjoined-exclude-symmetric",
             ),
         ]
     )

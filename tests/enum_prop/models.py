@@ -458,3 +458,14 @@ class EnumFlagPropTesterRelated(BaseEnumFlagPropTester):
     related_flags = models.ManyToManyField(
         EnumFlagPropTester, related_name="related_flags"
     )
+
+
+class FlagFilterTester(models.Model):
+    small_flag = EnumField(enum=SmallPositiveFlagEnum, null=True, default=None)
+    flag = EnumField(enum=PositiveFlagEnum)
+    flag_no_coerce = EnumField(enum=PositiveFlagEnum, coerce=False)
+    big_flag = EnumField(enum=BigPositiveFlagEnum, strict=False)
+    # extra_big_flag = EnumField(enum=ExtraBigPositiveFlagEnum)
+
+    def get_absolute_url(self):
+        return reverse("tests_enum_prop:flag-detail", kwargs={"pk": self.pk})

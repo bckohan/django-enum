@@ -3,8 +3,9 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView, DeleteView, UpdateView
 
 from django_enum import EnumField
+from django_enum.fields import FlagField
 from tests.djenum import enums as dj_enums
-from tests.djenum.models import EnumTester
+from tests.djenum.models import EnumTester, FlagFilterTester
 
 
 class URLMixin:
@@ -33,6 +34,22 @@ class URLMixin:
             "NAMESPACE": self.NAMESPACE,
             "update_path": f"{self.NAMESPACE}:enum-update",
             "delete_path": f"{self.NAMESPACE}:enum-delete",
+        }
+
+
+class FlagURLMixin:
+    NAMESPACE = "tests_djenum"
+    enums = dj_enums
+
+    def get_context_data(self, **kwargs):
+        return {
+            **super().get_context_data(**kwargs),
+            "SmallPositiveFlagEnum": self.enums.SmallPositiveFlagEnum,
+            "PositiveFlagEnum": self.enums.PositiveFlagEnum,
+            "BigPositiveFlagEnum": self.enums.BigPositiveFlagEnum,
+            "NAMESPACE": self.NAMESPACE,
+            "update_path": f"{self.NAMESPACE}:flag-update",
+            "delete_path": f"{self.NAMESPACE}:flag-delete",
         }
 
 
@@ -74,6 +91,44 @@ class EnumTesterDeleteView(URLMixin, DeleteView):
         return reverse(f"{self.NAMESPACE}:enum-list")
 
 
+class FlagTesterDetailView(FlagURLMixin, DetailView):
+    model = FlagFilterTester
+    template_name = "flagtester_detail.html"
+    fields = "__all__"
+
+
+class FlagTesterListView(FlagURLMixin, ListView):
+    model = FlagFilterTester
+    template_name = "flagtester_list.html"
+    fields = "__all__"
+
+
+class FlagTesterCreateView(FlagURLMixin, CreateView):
+    model = FlagFilterTester
+    template_name = "flagtester_form.html"
+    fields = "__all__"
+
+    def post(self, request, *args, **kwargs):
+        return super().post(request, *args, **kwargs)
+
+
+class FlagTesterUpdateView(FlagURLMixin, UpdateView):
+    model = FlagFilterTester
+    template_name = "flagtester_form.html"
+    fields = "__all__"
+
+    def get_success_url(self):  # pragma: no cover
+        return reverse(f"{self.NAMESPACE}:flag-update", kwargs={"pk": self.object.pk})
+
+
+class FlagTesterDeleteView(FlagURLMixin, DeleteView):
+    model = FlagFilterTester
+    template_name = "flagtester_form.html"
+
+    def get_success_url(self):  # pragma: no cover
+        return reverse(f"{self.NAMESPACE}:flag-list")
+
+
 try:
     from rest_framework import serializers, viewsets
 
@@ -98,6 +153,7 @@ try:
     from django_enum.filters import (
         FilterSet as EnumFilterSet,
         EnumFilter,
+        EnumFlagFilter,
         MultipleEnumFilter,
     )
 
@@ -253,6 +309,64 @@ try:
         filterset_class = EnumTesterMultipleFilter
         model = EnumTester
         template_name = "enumtester_list.html"
+
+    class FlagTesterFilterViewSet(FlagURLMixin, FilterView):
+        class FlagTesterFilter(EnumFilterSet):
+            class Meta:
+                model = FlagFilterTester
+                fields = "__all__"
+
+        filterset_class = FlagTesterFilter
+        model = FlagFilterTester
+        template_name = "flagtester_list.html"
+
+    class FlagTesterFilterExcludeViewSet(FlagURLMixin, FilterView):
+        class FlagTesterExcludeFilter(EnumFilterSet):
+            class Meta:
+                model = FlagFilterTester
+                fields = "__all__"
+                filter_overrides = {
+                    FlagField: {
+                        "filter_class": EnumFlagFilter,
+                        "extra": lambda f: {"exclude": True},
+                    }
+                }
+
+        filterset_class = FlagTesterExcludeFilter
+        model = FlagFilterTester
+        template_name = "flagtester_list.html"
+
+    class FlagTesterFilterConjoinedViewSet(FlagURLMixin, FilterView):
+        class FlagTesterConjoinedFilter(EnumFilterSet):
+            class Meta:
+                model = FlagFilterTester
+                fields = "__all__"
+                filter_overrides = {
+                    FlagField: {
+                        "filter_class": EnumFlagFilter,
+                        "extra": lambda f: {"conjoined": True},
+                    }
+                }
+
+        filterset_class = FlagTesterConjoinedFilter
+        model = FlagFilterTester
+        template_name = "flagtester_list.html"
+
+    class FlagTesterFilterConjoinedExcludeViewSet(FlagURLMixin, FilterView):
+        class FlagTesterConjoinedExcludeFilter(EnumFilterSet):
+            class Meta:
+                model = FlagFilterTester
+                fields = "__all__"
+                filter_overrides = {
+                    FlagField: {
+                        "filter_class": EnumFlagFilter,
+                        "extra": lambda f: {"exclude": True, "conjoined": True},
+                    }
+                }
+
+        filterset_class = FlagTesterConjoinedExcludeFilter
+        model = FlagFilterTester
+        template_name = "flagtester_list.html"
 
 except ImportError:  # pragma: no cover
     pass

@@ -164,7 +164,7 @@ class TestFormFieldSymmetric(TestFormField):
             [str(Permissions.WRITE.value), str(Permissions.EXECUTE.value)],
         )
 
-        widget = FlagSelectMultiple(enum=Permissions)  # no enum
+        widget = FlagSelectMultiple(enum=Permissions)
         self.assertEqual(
             widget.format_value(Permissions.READ | Permissions.WRITE),
             [str(Permissions.READ.value), str(Permissions.WRITE.value)],
