@@ -1307,6 +1307,38 @@ class TestFlagRequests(FlagTypeMixin, TestCase):
 
     if find_spec("django_filters"):  # pragma: no cover
 
+        def test_filter_misc_behavior(self):
+            from django_enum.filters import EnumFlagFilter
+
+            filter = EnumFlagFilter(enum=self.SmallPositiveFlagEnum)
+            qry = FlagFilterTester.objects
+            self.assertTrue(filter.is_noop(qry, None))
+            self.assertTrue(filter.is_noop(qry, ""))
+            self.assertFalse(
+                filter.is_noop(
+                    qry,
+                    [
+                        self.SmallPositiveFlagEnum.ONE,
+                        self.SmallPositiveFlagEnum.TWO,
+                        self.SmallPositiveFlagEnum.THREE,
+                        self.SmallPositiveFlagEnum.FOUR,
+                        self.SmallPositiveFlagEnum.FIVE,
+                    ],
+                )
+            )
+            self.assertFalse(
+                filter.is_noop(
+                    qry,
+                    self.SmallPositiveFlagEnum.ONE
+                    | self.SmallPositiveFlagEnum.TWO
+                    | self.SmallPositiveFlagEnum.THREE
+                    | self.SmallPositiveFlagEnum.FOUR
+                    | self.SmallPositiveFlagEnum.FIVE,
+                )
+            )
+            self.assertIs(qry, filter.filter(qry, None))
+            self.assertIs(qry, filter.filter(qry, ""))
+
         def test_django_filter_flags(self):
             self.do_test_django_filter(reverse(f"{self.NAMESPACE}:flag-filter"))
 

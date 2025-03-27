@@ -147,12 +147,12 @@ class EnumFlagFilter(TypedMultipleChoiceFilter):
         )
         self.lookup_expr = "has_all" if conjoined else "has_any"
 
-    def filter(self, qs, value):
-        if value in {None, ""} or self.is_noop(qs, value):
-            return qs
+    def is_noop(self, qs, value):
+        return value is None or value == ""
 
-        if value == self.null_value:
-            return self.get_method(qs)(Q(**{f"{self.field_name}__isnull": True}))
+    def filter(self, qs, value):
+        if self.is_noop(qs, value):
+            return qs
 
         # special case of no activate flags, performs an exact lookup
         # the form cleans unsupplied fields into 0s so we make sure this was supplied
