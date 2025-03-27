@@ -1,11 +1,13 @@
 """Support for django rest framework symmetric serialization"""
 
-__all__ = ["EnumField", "EnumFieldMixin"]
+__all__ = ["EnumField", "FlagField", "EnumFieldMixin"]
 
 import inspect
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
-from enum import Enum
+from enum import Enum, Flag
+from functools import reduce
+from operator import or_
 from typing import Any, Dict, Optional, Type, Union
 
 from rest_framework.fields import (
@@ -23,7 +25,8 @@ from rest_framework.fields import (
 from rest_framework.serializers import ModelSerializer
 from rest_framework.utils.field_mapping import get_field_kwargs
 
-from django_enum import EnumField as EnumModelField
+from django_enum.fields import EnumField as EnumModelField
+from django_enum.fields import FlagField as FlagModelField
 from django_enum.utils import (
     choices,
     decimal_params,
@@ -172,6 +175,80 @@ class EnumField(ChoiceField):
         return getattr(value, "value", value)
 
 
+class FlagField(ChoiceField):
+    """
+    A djangorestframework serializer field for :class:`~enum.Flag` types. If
+    unspecified ModelSerializers will assign :class:`~django_enum.fields.FlagField`
+    model field types to `ChoiceField
+    <https://www.django-rest-framework.org/api-guide/fields/#choicefield>`_ which will
+    not combine composite flag values appropriately. This field will also allow any
+    symmetric values to be used (e.g. labels or names instead of values).
+
+    **You should add** :class:`~django_enum.drf.EnumFieldMixin` **to your serializer to
+    automatically use this field.**
+
+    :param enum: The type of the flag of the field
+    :param strict: If True (default) only values in the flag type
+        will be acceptable. If False, no errors will be thrown if other
+        values of the same primitive type are used
+    :param kwargs: Any other named arguments applicable to a ChoiceField
+        will be passed up to the base classes.
+    """
+
+    enum: Type[Flag]
+    strict: bool = True
+
+    def __init__(self, enum: Type[Flag], strict: bool = strict, **kwargs):
+        self.enum = enum
+        self.strict = strict
+        self.choices = kwargs.pop("choices", choices(enum))
+        kwargs.pop("field_name", None)
+        kwargs.pop("model_field", None)
+        super().__init__(choices=self.choices, **kwargs)
+
+    def to_internal_value(self, data: Any) -> Union[Enum, Any]:
+        """
+        Transform the *incoming* primitive data into an enum instance.
+        We accept a composite flag value or a list of values. If a list,
+        each element will be converted to a flag value and then the values
+        will be reduced into a composite value with the or operator.
+
+        :return: A composite flag value.
+        """
+        if not data:
+            if self.allow_null and (data is None or data == ""):
+                return None
+            return self.enum(0)
+
+        if not isinstance(data, self.enum):
+            try:
+                return self.enum(data)
+            except (TypeError, ValueError):
+                try:
+                    if isinstance(data, str):
+                        return self.enum[data]
+                    if isinstance(data, (list, tuple)):
+                        values = []
+                        for val in data:
+                            try:
+                                values.append(self.enum(val))
+                            except (TypeError, ValueError):
+                                values.append(self.enum[val])
+                        return reduce(or_, values)
+                except (TypeError, ValueError, KeyError):
+                    pass
+                self.fail("invalid_choice", input=data)
+        return data
+
+    def to_representation(self, value: Any) -> Any:
+        """
+        Transform the *outgoing* enum value into its primitive value.
+
+        :return: The primitive composite value of the flag (most likely an integer).
+        """
+        return getattr(value, "value", value)
+
+
 class EnumFieldMixin(with_typehint(ModelSerializer)):  # type: ignore
     """
     A mixin for ModelSerializers that adds auto-magic support for
@@ -204,7 +281,9 @@ class EnumFieldMixin(with_typehint(ModelSerializer)):  # type: ignore
         :return: A 2-tuple, the first element is the field class, the
             second is the kwargs for the field
         """
-        field_class = ClassLookupDict({EnumModelField: EnumField})[model_field]
+        field_class = ClassLookupDict(
+            {FlagModelField: FlagField, EnumModelField: EnumField}
+        )[model_field]
         if field_class:
             return field_class, {
                 "enum": model_field.enum,

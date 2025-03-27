@@ -32,10 +32,11 @@ urlpatterns = [
 try:
     from rest_framework import routers
 
-    from tests.enum_prop.views import DRFView
+    from tests.enum_prop.views import DRFView, DRFFlagView
 
     router = routers.DefaultRouter()
     router.register(r"enumtesters", DRFView)
+    router.register(r"flagtesters", DRFFlagView)
     urlpatterns.append(path("drf/", include(router.urls)))
 
 except ImportError:  # pragma: no cover

@@ -143,6 +143,16 @@ try:
         queryset = EnumTester.objects.all()
         serializer_class = EnumTesterSerializer
 
+    class FlagTesterSerializer(EnumFieldMixin, serializers.ModelSerializer):
+        class Meta:
+            model = FlagFilterTester
+            fields = "__all__"
+
+    class DRFFlagView(viewsets.ModelViewSet):
+        queryset = FlagFilterTester.objects.all()
+        serializer_class = FlagTesterSerializer
+
+
 except (ImportError, ModuleNotFoundError):  # pragma: no cover
     pass
 

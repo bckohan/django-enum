@@ -105,236 +105,195 @@ class TestFlagRequests(FlagTypeMixin, TestCase):
     def post_params_symmetric(self):
         return {**self.post_params}
 
-    # if find_spec("rest_framework"):  # pragma: no cover
+    if find_spec("rest_framework"):
 
-    #     def test_non_strict_drf_field(self):
-    #         from rest_framework import fields
+        def test_drf_flag_field(self):
+            from django_enum.drf import FlagField
 
-    #         from django_enum.drf import EnumField
+            field = FlagField(self.SmallPositiveFlagEnum, allow_null=True)
+            self.assertEqual(field.to_internal_value(""), None)
+            self.assertEqual(field.to_internal_value(None), None)
+            self.assertEqual(field.to_internal_value([]), self.SmallPositiveFlagEnum(0))
+            self.assertEqual(
+                field.to_internal_value(
+                    [self.SmallPositiveFlagEnum.ONE, self.SmallPositiveFlagEnum.TWO]
+                ),
+                (self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO),
+            )
+            self.assertEqual(
+                field.to_internal_value(
+                    [
+                        self.SmallPositiveFlagEnum.ONE.name,
+                        self.SmallPositiveFlagEnum.TWO.name,
+                    ]
+                ),
+                (self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO),
+            )
+            self.assertEqual(
+                field.to_internal_value(
+                    [
+                        self.SmallPositiveFlagEnum.ONE.value,
+                        self.SmallPositiveFlagEnum.TWO.name,
+                    ]
+                ),
+                (self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO),
+            )
+            self.assertEqual(
+                field.to_internal_value(
+                    (
+                        self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO
+                    ).value
+                ),
+                (self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO),
+            )
 
-    #         field = EnumField(self.SmallPosIntEnum, strict=False)
-    #         self.assertEqual(field.to_internal_value("1"), 1)
-    #         self.assertEqual(field.to_representation(1), 1)
-    #         self.assertEqual(field.primitive_field.__class__, fields.IntegerField)
+            self.assertEqual(field.to_representation(self.SmallPositiveFlagEnum(0)), 0)
+            self.assertEqual(field.to_representation(0), 0)
+            self.assertEqual(
+                field.to_representation(
+                    self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO
+                ),
+                (self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO).value,
+            )
 
-    #         field = EnumField(self.Constants, strict=False)
-    #         self.assertEqual(field.to_internal_value("5.43"), 5.43)
-    #         self.assertEqual(field.to_representation(5.43), 5.43)
-    #         self.assertEqual(field.primitive_field.__class__, fields.FloatField)
+            field = FlagField(self.PositiveFlagEnum, allow_null=False)
+            self.assertEqual(field.to_internal_value(""), self.PositiveFlagEnum(0))
+            self.assertEqual(field.to_internal_value(None), self.PositiveFlagEnum(0))
+            self.assertEqual(field.to_internal_value([]), self.PositiveFlagEnum(0))
+            self.assertEqual(
+                field.to_internal_value(
+                    [
+                        self.PositiveFlagEnum.ONE.value,
+                        self.PositiveFlagEnum.TWO.name,
+                        1 << 8,
+                    ]
+                ),
+                (self.PositiveFlagEnum.ONE | self.PositiveFlagEnum.TWO | (1 << 8)),
+            )
 
-    #         field = EnumField(self.TextEnum, strict=False)
-    #         self.assertEqual(field.to_internal_value("random text"), "random text")
-    #         self.assertEqual(field.to_representation("random text"), "random text")
-    #         self.assertEqual(field.primitive_field.__class__, fields.CharField)
+            field = FlagField(self.BigPositiveFlagEnum)
+            self.assertEqual(field.to_internal_value(""), self.BigPositiveFlagEnum(0))
+            self.assertEqual(field.to_internal_value(None), self.BigPositiveFlagEnum(0))
+            self.assertEqual(field.to_internal_value([]), self.BigPositiveFlagEnum(0))
 
-    #         field = EnumField(self.DateEnum, strict=False)
-    #         self.assertEqual(
-    #             field.to_internal_value("2017-12-05"), date(year=2017, day=5, month=12)
-    #         )
-    #         self.assertEqual(
-    #             field.to_representation(date(year=2017, day=5, month=12)),
-    #             date(year=2017, day=5, month=12),
-    #         )
-    #         self.assertEqual(field.primitive_field.__class__, fields.DateField)
+        def test_drf_serializer(self):
+            from rest_framework import serializers
 
-    #         field = EnumField(self.DateTimeEnum, strict=False)
-    #         self.assertEqual(
-    #             field.to_internal_value("2017-12-05T01:02:30Z"),
-    #             datetime(year=2017, day=5, month=12, hour=1, minute=2, second=30),
-    #         )
-    #         self.assertEqual(
-    #             field.to_representation(
-    #                 datetime(year=2017, day=5, month=12, hour=1, minute=2, second=30)
-    #             ),
-    #             datetime(year=2017, day=5, month=12, hour=1, minute=2, second=30),
-    #         )
-    #         self.assertEqual(field.primitive_field.__class__, fields.DateTimeField)
+            from django_enum.drf import FlagField
 
-    #         field = EnumField(self.DurationEnum, strict=False)
-    #         self.assertEqual(
-    #             field.to_internal_value("P5DT01H00M01.312500S"),
-    #             timedelta(days=5, hours=1, seconds=1.3125),
-    #         )
-    #         self.assertEqual(
-    #             field.to_representation(timedelta(days=5, hours=1, seconds=1.3125)),
-    #             timedelta(days=5, hours=1, seconds=1.3125),
-    #         )
-    #         self.assertEqual(field.primitive_field.__class__, fields.DurationField)
+            class TestSerializer(serializers.ModelSerializer):
+                small_flag = FlagField(
+                    self.SmallPositiveFlagEnum,
+                    allow_null=True,
+                    allow_blank=True,
+                    required=False,
+                )
+                flag = FlagField(self.PositiveFlagEnum)
+                flag_no_coerce = FlagField(self.PositiveFlagEnum)
+                big_flag = FlagField(self.BigPositiveFlagEnum, strict=False)
 
-    #         field = EnumField(self.TimeEnum, strict=False)
-    #         self.assertEqual(
-    #             field.to_internal_value("01:02:30"), time(hour=1, minute=2, second=30)
-    #         )
-    #         self.assertEqual(
-    #             field.to_representation(time(hour=1, minute=2, second=30)),
-    #             time(hour=1, minute=2, second=30),
-    #         )
-    #         self.assertEqual(field.primitive_field.__class__, fields.TimeField)
+                class Meta:
+                    model = self.MODEL_CLASS
+                    fields = "__all__"
 
-    #         field = EnumField(self.DecimalEnum, strict=False)
-    #         self.assertEqual(field.to_internal_value("1.67"), Decimal("1.67"))
-    #         self.assertEqual(field.to_representation(Decimal("1.67")), Decimal("1.67"))
-    #         self.assertEqual(field.primitive_field.__class__, fields.DecimalField)
+            ser = TestSerializer(data=self.post_params)
+            self.assertTrue(ser.is_valid())
+            inst = ser.save()
+            for param, value in self.post_params.items():
+                self.assertEqual(value, getattr(inst, param))
 
-    #         from enum import Enum
+            ser_bad = TestSerializer(
+                data={
+                    **self.post_params,
+                    "small_flag": 9.2,
+                    "flag": "3.14",
+                    "flag_no_coerce": "wrong",
+                    "big_flag": "-2.0",
+                }
+            )
 
-    #         class UnsupportedPrimitiveEnum(Enum):
-    #             VAL1 = (1,)
-    #             VAL2 = (1, 2)
-    #             VAL3 = (1, 2, 3)
+            self.assertFalse(ser_bad.is_valid())
+            self.assertTrue("small_flag" in ser_bad.errors)
+            self.assertTrue("flag" in ser_bad.errors)
+            self.assertTrue("flag_no_coerce" in ser_bad.errors)
+            self.assertTrue("big_flag" in ser_bad.errors)
 
-    #         field = EnumField(
-    #             UnsupportedPrimitiveEnum,
-    #             strict=False,
-    #             choices=[
-    #                 (UnsupportedPrimitiveEnum.VAL1, "VAL1"),
-    #                 (UnsupportedPrimitiveEnum.VAL2, "VAL2"),
-    #                 (UnsupportedPrimitiveEnum.VAL3, "VAL3"),
-    #             ],
-    #         )
-    #         self.assertEqual(field.to_internal_value((1, 2, 4)), (1, 2, 4))
-    #         self.assertEqual(field.to_representation((1, 2, 4)), (1, 2, 4))
-    #         self.assertIsNone(field.primitive_field)
+        def test_drf_read(self):
+            c = Client()
+            response = c.get(reverse(f"{self.NAMESPACE}:flagfiltertester-list"))
+            read_objects = response.json()
+            self.assertEqual(len(read_objects), len(self.objects))
 
-    #     def test_drf_serializer(self):
-    #         from rest_framework import serializers
+            for idx, obj in enumerate(response.json()):
+                # should be same order
+                self.assertEqual(obj["id"], self.objects[idx].id)
+                for field in self.fields:
+                    self.assertEqual(obj[field], getattr(self.objects[idx], field))
+                    if obj[field] is not None:
+                        self.assertIsInstance(obj[field], int)
 
-    #         from django_enum.drf import EnumField
+        def test_drf_update(self):
+            c = Client()
+            params = self.post_params_symmetric
+            response = c.put(
+                reverse(
+                    f"{self.NAMESPACE}:flagfiltertester-detail",
+                    kwargs={"pk": self.objects[0].id},
+                ),
+                params,
+                follow=True,
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 200)
+            fetched = c.get(
+                reverse(
+                    f"{self.NAMESPACE}:flagfiltertester-detail",
+                    kwargs={"pk": self.objects[0].id},
+                ),
+                follow=True,
+            ).json()
 
-    #         class TestSerializer(serializers.ModelSerializer):
-    #             small_pos_int = EnumField(self.SmallPosIntEnum)
-    #             small_int = EnumField(self.SmallIntEnum)
-    #             pos_int = EnumField(self.PosIntEnum)
-    #             int = EnumField(self.IntEnum)
-    #             big_pos_int = EnumField(self.BigPosIntEnum)
-    #             big_int = EnumField(self.BigIntEnum)
-    #             constant = EnumField(self.Constants)
-    #             date_enum = EnumField(self.DateEnum)
-    #             datetime_enum = EnumField(self.DateTimeEnum, strict=False)
-    #             duration_enum = EnumField(self.DurationEnum)
-    #             time_enum = EnumField(self.TimeEnum)
-    #             decimal_enum = EnumField(self.DecimalEnum)
-    #             text = EnumField(self.TextEnum)
-    #             extern = EnumField(self.ExternEnum)
-    #             dj_int_enum = EnumField(self.DJIntEnum)
-    #             dj_text_enum = EnumField(self.DJTextEnum)
-    #             non_strict_int = EnumField(self.SmallPosIntEnum, strict=False)
-    #             non_strict_text = EnumField(
-    #                 self.TextEnum, strict=False, allow_blank=True
-    #             )
-    #             no_coerce = EnumField(self.SmallPosIntEnum)
+            obj = self.MODEL_CLASS.objects.get(pk=self.objects[0].id)
 
-    #             class Meta:
-    #                 model = self.MODEL_CLASS
-    #                 fields = "__all__"
+            self.assertEqual(fetched["id"], obj.id)
+            for field in self.fields:
+                self.assertEqual(
+                    fetched[field],
+                    getattr(obj, field),
+                )
+                model_field = self.MODEL_CLASS._meta.get_field(field)
 
-    #         ser = TestSerializer(data=self.post_params)
-    #         self.assertTrue(ser.is_valid())
-    #         inst = ser.save()
-    #         for param, value in self.post_params.items():
-    #             self.assertEqual(value, getattr(inst, param))
+                self.assertEqual(
+                    params.get(
+                        field, None if model_field.null else model_field.enum(0)
+                    ),
+                    getattr(obj, field),
+                )
 
-    #         ser_bad = TestSerializer(
-    #             data={
-    #                 **self.post_params,
-    #                 "small_pos_int": -1,
-    #                 "constant": 3.14,
-    #                 "text": "wrong",
-    #                 "extern": 0,
-    #                 "pos_int": -50,
-    #                 "date_enum": date(year=2017, day=5, month=12),
-    #                 "decimal_enum": Decimal("1.89"),
-    #             }
-    #         )
+        def test_drf_post(self):
+            c = Client()
+            params = {**self.post_params_symmetric, "non_strict_text": "", "text": None}
+            response = c.post(
+                reverse(f"{self.NAMESPACE}:flagfiltertester-list"),
+                params,
+                follow=True,
+                content_type="application/json",
+            )
+            self.assertEqual(response.status_code, 201)
+            created = response.json()
 
-    #         self.assertFalse(ser_bad.is_valid())
-    #         self.assertTrue("small_pos_int" in ser_bad.errors)
-    #         self.assertTrue("constant" in ser_bad.errors)
-    #         self.assertTrue("text" in ser_bad.errors)
-    #         self.assertTrue("extern" in ser_bad.errors)
-    #         self.assertTrue("pos_int" in ser_bad.errors)
-    #         self.assertTrue("date_enum" in ser_bad.errors)
-    #         self.assertTrue("decimal_enum" in ser_bad.errors)
+            obj = self.MODEL_CLASS.objects.last()
 
-    #     def test_drf_read(self):
-    #         c = Client()
-    #         response = c.get(reverse(f"{self.NAMESPACE}:enumtester-list"))
-    #         read_objects = response.json()
-    #         self.assertEqual(len(read_objects), len(self.objects))
-
-    #         for idx, obj in enumerate(response.json()):
-    #             # should be same order
-    #             self.assertEqual(obj["id"], self.objects[idx].id)
-    #             for field in self.fields:
-    #                 self.assertEqual(obj[field], getattr(self.objects[idx], field))
-    #                 if obj[field] is not None:
-    #                     self.assertIsInstance(
-    #                         try_convert(
-    #                             self.enum_primitive(field),
-    #                             obj[field],
-    #                             raise_on_error=False,
-    #                         ),
-    #                         self.enum_primitive(field),
-    #                     )
-
-    #     def test_drf_update(self):
-    #         c = Client()
-    #         params = self.post_params_symmetric
-    #         response = c.put(
-    #             reverse(
-    #                 f"{self.NAMESPACE}:enumtester-detail",
-    #                 kwargs={"pk": self.objects[0].id},
-    #             ),
-    #             params,
-    #             follow=True,
-    #             content_type="application/json",
-    #         )
-    #         self.assertEqual(response.status_code, 200)
-    #         fetched = c.get(
-    #             reverse(
-    #                 f"{self.NAMESPACE}:enumtester-detail",
-    #                 kwargs={"pk": self.objects[0].id},
-    #             ),
-    #             follow=True,
-    #         ).json()
-
-    #         obj = self.MODEL_CLASS.objects.get(pk=self.objects[0].id)
-
-    #         self.assertEqual(fetched["id"], obj.id)
-    #         for field in self.fields:
-    #             self.assertEqual(
-    #                 try_convert(
-    #                     self.enum_primitive(field), fetched[field], raise_on_error=False
-    #                 ),
-    #                 getattr(obj, field),
-    #             )
-    #             if self.MODEL_CLASS._meta.get_field(field).coerce:
-    #                 self.assertEqual(params[field], getattr(obj, field))
-
-    #     def test_drf_post(self):
-    #         c = Client()
-    #         params = {**self.post_params_symmetric, "non_strict_text": "", "text": None}
-    #         response = c.post(
-    #             reverse(f"{self.NAMESPACE}:enumtester-list"),
-    #             params,
-    #             follow=True,
-    #             content_type="application/json",
-    #         )
-    #         self.assertEqual(response.status_code, 201)
-    #         created = response.json()
-
-    #         obj = self.MODEL_CLASS.objects.last()
-
-    #         self.assertEqual(created["id"], obj.id)
-    #         for field in self.fields:
-    #             self.assertEqual(
-    #                 getattr(obj, field),
-    #                 try_convert(
-    #                     self.enum_primitive(field), created[field], raise_on_error=False
-    #                 ),
-    #             )
-    #             if self.MODEL_CLASS._meta.get_field(field).coerce:
-    #                 self.assertEqual(getattr(obj, field), params[field])
+            self.assertEqual(created["id"], obj.id)
+            for field in self.fields:
+                model_field = self.MODEL_CLASS._meta.get_field(field)
+                self.assertEqual(getattr(obj, field), created[field])
+                self.assertEqual(
+                    params.get(
+                        field, None if model_field.null else model_field.enum(0)
+                    ),
+                    getattr(obj, field),
+                )
 
     def test_add(self):
         """

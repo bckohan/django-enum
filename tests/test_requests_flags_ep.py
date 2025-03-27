@@ -44,6 +44,24 @@ class TestFlagRequestsProps(TestFlagRequests):
             return None
         return enum(value)
 
+    if find_spec("rest_framework"):  # pragma: no cover
+
+        def test_drf_flag_field(self):
+            from django_enum.drf import FlagField
+
+            super().test_drf_flag_field()
+
+            field = FlagField(self.SmallPositiveFlagEnum)
+            self.assertEqual(
+                field.to_internal_value(
+                    [
+                        self.SmallPositiveFlagEnum.ONE.label,
+                        self.SmallPositiveFlagEnum.TWO.number,
+                    ]
+                ),
+                (self.SmallPositiveFlagEnum.ONE | self.SmallPositiveFlagEnum.TWO),
+            )
+
     if find_spec("django_filters"):
 
         def test_django_filter_flags(self):
