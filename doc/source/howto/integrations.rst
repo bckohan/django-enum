@@ -84,8 +84,13 @@ By default `DRF ModelSerializer
 `ChoiceField <https://www.django-rest-framework.org/api-guide/fields/#choicefield>`_ to represent an
 :class:`~django_enum.fields.EnumField`. This works great, but it will not accept :ref:`symmetric
 enumeration values <enum-properties:howto_symmetric_properties>`. A serializer field
-:class:`~django_enum.drf.EnumField` is provided that will. The dependency on DRF_ is optional so
-to use the provided serializer field you must install DRF_:
+:class:`django_enum.drf.EnumField` is provided that will. :class:`~django_enum.fields.FlagField`
+fields do not work well with DRF's builtin
+`MultipleChoiceField <https://www.django-rest-framework.org/api-guide/fields/#multiplechoicefield>`_
+so we provide also provide a :class:`django_enum.drf.FlagField`.
+
+The dependency on DRF_ is optional so to use the provided serializer field you must install DRF_:
+
 
 .. code:: bash
 
@@ -97,7 +102,7 @@ to use the provided serializer field you must install DRF_:
 
 
 
-The serializer :class:`~django_enum.drf.EnumField` accepts any arguments that
+The serializer :class:`django_enum.drf.EnumField` accepts any arguments that
 `ChoiceField <https://www.django-rest-framework.org/api-guide/fields/#choicefield>`_ does. It also
 accepts the ``strict`` parameter which behaves the same way as it does on the model field.
 
@@ -110,6 +115,20 @@ accepts the ``strict`` parameter which behaves the same way as it does on the mo
     2. You have non-strict model fields and want to allow your API to accept values outside of
        the enumeration.
 
+The :class:`django_enum.drf.EnumField` must be used for any :class:`~django_enum.fields.FlagField`
+fields. It will accept a composite integer or a list of any values coercible to a flag. The
+serialized output will be an composite integer holding the full bitfield.
+
+ModelSerializers
+~~~~~~~~~~~~~~~~
+
+An :class:`django_enum.drf.EnumFieldMixin` class is provided that when added to
+`ModelSerializers <https://www.django-rest-framework.org/api-guide/serializers/#modelserializer>`_
+will be sure that the serializer instantiates the correct django-enum serializer field type:
+
+.. literalinclude:: ../../../tests/examples/drf_modelserializer_howto.py
+    :lines: 3-
+
 .. _filtering:
 
 django-filter
@@ -117,7 +136,7 @@ django-filter
 
 As shown above, filtering by any value, enumeration type instance or symmetric value works with
 :doc:`Django's ORM <django:topics/db/queries>`. This is not natively true for the default
-:doc:`FilterSet <django-filter:ref/filterset>` from :doc:`django-filter <django-filter:index>`.
+:class:`django_filters.filterset.FilterSet` from :doc:`django-filter <django-filter:index>`.
 Those filter sets will only be filterable by direct enumeration value by default. An
 :class:`~django_enum.filters.EnumFilter` class is provided to enable filtering by symmetric property
 values, but since the dependency on :doc:`django-filter <django-filter:index>` is optional, you must
@@ -128,11 +147,24 @@ first install it:
        pip install django-filter
 
 .. literalinclude:: ../../../tests/examples/filterfield_howto.py
-    :lines: 3-
+    :lines: 2-
 
-An :class:`~django_enum.filters.FilterSet` class is also provided that uses
+A :class:`~django_enum.filters.FilterSet` class is also provided that uses
 :class:`~django_enum.filters.EnumFilter` for :class:`~django_enum.fields.EnumField` by default.
 So the above is also equivalent to:
 
 .. literalinclude:: ../../../tests/examples/filterset_howto.py
     :lines: 3-
+
+.. tip::
+
+    :class:`~django_enum.filters.FilterSet` may also be used as a mixin.
+
+
+FlagFields
+~~~~~~~~~~
+
+An :class:`~django_enum.filters.EnumFlagFilter` field for flag fields is also provided:
+
+.. literalinclude:: ../../../tests/examples/flagfilterfield_howto.py
+    :lines: 2-

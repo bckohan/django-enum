@@ -20,6 +20,7 @@ from rest_framework.fields import (
     Field,
     FloatField,
     IntegerField,
+    MultipleChoiceField,
     TimeField,
 )
 from rest_framework.serializers import ModelSerializer
@@ -175,7 +176,7 @@ class EnumField(ChoiceField):
         return getattr(value, "value", value)
 
 
-class FlagField(ChoiceField):
+class FlagField(MultipleChoiceField):
     """
     A djangorestframework serializer field for :class:`~enum.Flag` types. If
     unspecified ModelSerializers will assign :class:`~django_enum.fields.FlagField`
@@ -264,7 +265,7 @@ class EnumFieldMixin(with_typehint(ModelSerializer)):  # type: ignore
         To use this mixin, include it before ModelSerializer in your
         serializer's class hierarchy:
 
-        ..code-block:: python
+        .. code-block:: python
 
             from django_enum.drf import EnumFieldMixin
             from rest_framework.serializers import ModelSerializer

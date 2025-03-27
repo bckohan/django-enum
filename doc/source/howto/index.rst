@@ -40,8 +40,8 @@ are possible with :class:`~django_enum.fields.EnumField`. See :ref:`enum_props`.
 
    external
    options
-   integrations
    flags
    forms
+   integrations
    migrations
    urls

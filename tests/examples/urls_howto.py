@@ -4,6 +4,7 @@ try:
     from .filterset_howto import (
         TextChoicesExampleFilterViewSet as TextChoicesExampleFilterSetViewSet
     )
+    from .flagfilterfield_howto import FlagExampleFilterViewSet
 
     app_name = "howto"
 
@@ -18,6 +19,7 @@ try:
             TextChoicesExampleFilterSetViewSet.as_view(),
             name='filterset'
         ),
+        path('flagfilterfield/', FlagExampleFilterViewSet.as_View(), name="flagfilterfield")
     ]
 except ImportError:
     urlpatterns = []

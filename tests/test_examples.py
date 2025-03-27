@@ -305,6 +305,10 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
     def test_drf_serializer_howto(self):
         from tests.examples import drf_serializer_howto
 
+    @pytest.mark.skipif(not DJANGO_REST_FRAMEWORK, reason="DRF not installed")
+    def test_drf_modelserializer_howto(self):
+        from tests.examples import drf_modelserializer_howto
+
     def _filterset_webcheck(self, name):
         from tests.examples.models import TextChoicesExample
         from django.urls import reverse
@@ -357,6 +361,13 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
         from tests.examples import filterfield_howto
 
         self._filterset_webcheck("howto:filterfield")
+
+    @pytest.mark.skipif(not DJANGO_FILTERS, reason="django-filters not installed")
+    def test_flagfilterfield_howto(self):
+        from tests.examples import flagfilterfield_howto
+
+        # TODO
+        # self._filterset_webcheck("howto:flagfilterfield")
 
     @pytest.mark.skipif(not DJANGO_FILTERS, reason="django-filters not installed")
     def test_filterset_howto(self):
