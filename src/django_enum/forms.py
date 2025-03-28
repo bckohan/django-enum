@@ -42,6 +42,9 @@ __all__ = [
     "EnumChoiceField",
     "EnumMultipleChoiceField",
     "EnumFlagField",
+    "NonStrictMixin",
+    "FlagMixin",
+    "NonStrictFlagMixin",
 ]
 
 
@@ -123,15 +126,42 @@ class NonStrictFlagMixin:
 
 class NonStrictSelect(NonStrictMixin, Select):
     """
-    This widget renders a select box that includes an option for each value on the
-    enumeration.
+    **This is the default widget used for** :class:`~django_enum.fields.EnumField`
+    **fields that have** ``strict`` **set to** ``False``.
+
+    This widget will render a drop down select field that includes an option for each
+    value on the enumeration, but if the field is set to a value outside of the
+    enumeration it will be included and selected in the drop down:
+
+    For example, using our :ref:`Color <color_ex>` enumeration:
+
+    .. code-block:: python
+
+        class Model(models.Model):
+            color = EnumField(Color, strict=False, max_length=12)
+
+        Model.objects.create(color="YELLOW")
+
+    .. image:: ../widgets/NonStrictSelect.png
     """
 
 
 class NonStrictRadioSelect(NonStrictMixin, RadioSelect):
     """
-    This widget renders a radio select field that includes an option for each value on
-    the enumeration and for any non-value that is set.
+    This widget will render a radio button select field that includes an option for each
+    value on the enumeration, but if the field is set to a value outside of the
+    enumeration it will be included and selected:
+
+    For example, using our :ref:`Color <color_ex>` enumeration:
+
+    .. code-block:: python
+
+        class Model(models.Model):
+            color = EnumField(Color, strict=False, max_length=12)
+
+        Model.objects.create(color="YELLOW")
+
+    .. image:: ../widgets/NonStrictRadioSelect.png
     """
 
 
@@ -148,7 +178,7 @@ class FlagMixin:
 
     def format_value(self, value):
         """
-        Return a list of the flag's values.
+        Return a list of the flag's values, unpacking it if necessary.
         """
         if value is None:
             return []
@@ -174,8 +204,23 @@ class FlagMixin:
 
 class FlagSelectMultiple(FlagMixin, SelectMultiple):
     """
+    **This is the default widget used for** :class:`~django_enum.fields.FlagField`
+    **fields.**
+
     This widget will render :class:`~enum.IntFlag` types as a multi select field with
-    an option for each flag value.
+    an option for each flag value. Values outside of the enumeration will not be
+    displayed.
+
+    For example, using our :ref:`Permissions <permissions_ex>` enumeration:
+
+    .. code-block:: python
+
+        class Model(models.Model):
+            permissions = EnumField(Permissions)
+
+        Model.objects.create(permissions=Permissions.READ | Permissions.EXECUTE)
+
+    .. image:: ../widgets/FlagSelectMultiple.png
     """
 
 
@@ -183,6 +228,17 @@ class FlagCheckbox(FlagMixin, CheckboxSelectMultiple):
     """
     This widget will render :class:`~enum.IntFlag` types as checkboxes with a checkbox
     for each flag value.
+
+    For example, using our :ref:`Permissions <permissions_ex>` enumeration:
+
+    .. code-block:: python
+
+        class Model(models.Model):
+            permissions = EnumField(Permissions)
+
+        Model.objects.create(permissions=Permissions.READ | Permissions.EXECUTE)
+
+    .. image:: ../widgets/FlagCheckbox.png
     """
 
 
@@ -201,6 +257,17 @@ class NonStrictFlagSelectMultiple(NonStrictFlagMixin, FlagSelectMultiple):
 
     Options for extra bits only appear if they are set. You should pass choices to the
     form field if you want additional options to always appear.
+
+    .. code-block:: python
+
+        class Model(models.Model):
+            permissions = EnumField(Permissions, strict=False)
+
+        Model.objects.create(
+            permissions=Permissions.READ | Permissions.EXECUTE | ( 1 << 4 )
+        )
+
+    .. image:: ../widgets/NonStrictFlagSelectMultiple.png
     """
 
 
@@ -211,6 +278,19 @@ class NonStrictFlagCheckbox(NonStrictFlagMixin, FlagCheckbox):
 
     Checkboxes for extra bits only appear if they are set. You should pass choices to
     the form field if you want additional checkboxes to always appear.
+
+    For example, using our :ref:`Permissions <permissions_ex>` enumeration:
+
+    .. code-block:: python
+
+        class Model(models.Model):
+            permissions = EnumField(Permissions, strict=False)
+
+        Model.objects.create(
+            permissions=Permissions.READ | Permissions.EXECUTE | ( 1 << 4 )
+        )
+
+    .. image:: ../widgets/NonStrictFlagCheckbox.png
     """
 
 

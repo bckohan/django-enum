@@ -5,7 +5,18 @@ pytest.importorskip("enum_properties")
 from django.test import TestCase
 from django.core.exceptions import ValidationError
 from django.forms import ModelForm
+from django.db.models import Model
+from django.contrib import admin
+from pathlib import Path
+from tests.test_admin import _GenericAdminFormTest
 from tests.utils import DJANGO_FILTERS, DJANGO_REST_FRAMEWORK
+from tests.examples.models import (
+    WidgetDemoNonStrict,
+    WidgetDemoStrict,
+    WidgetDemoRadiosAndChecks,
+    WidgetDemoRadiosAndChecksNulls,
+    WidgetDemoRadiosAndChecksNonStrict,
+)
 
 
 class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
@@ -448,3 +459,137 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
 
     def test_no_coerce_example(self):
         from tests.examples import no_coerce_howto
+
+
+class _WidgetDemoTest(_GenericAdminFormTest):
+    WIDGET_IMAGE_DIR = Path(__file__).parent.parent / "doc" / "source" / "widgets"
+
+    WIDTH_ADJUST = -600
+
+    def image_name(self, field: str):
+        admin_instance = admin.site._registry.get(self.MODEL_CLASS)
+        form_class = admin_instance.get_form(None)
+        form = form_class()
+        widget = form.fields[field].widget
+        return widget.__class__.__name__
+
+    def screenshot(self, obj: Model):
+        """
+        Use playwright to take a screenshot of the admin change form for the object.
+        """
+        url = self.change_url(obj.pk)
+        self.page.goto(url)
+        # Take a picture of the form for the permissions
+        # field and the color field
+        for field in ["color", "permissions"]:
+            locator = self.page.locator(f".form-row.field-{field}")
+            locator.wait_for()
+            box = locator.bounding_box()
+            self.page.screenshot(
+                path=self.WIDGET_IMAGE_DIR / f"{self.image_name(field)}.png",
+                clip={
+                    "x": box["x"],
+                    "y": box["y"],
+                    "width": box["width"] + self.WIDTH_ADJUST,
+                    "height": box["height"],
+                },
+            )
+
+    @property
+    def screenshot_values(self):
+        return self.changes[0]
+
+    def test_screenshot(self):
+        obj = self.MODEL_CLASS.objects.create(**self.screenshot_values)
+        self.screenshot(obj)
+
+
+class WidgetDemoStrictTest(_WidgetDemoTest):
+    MODEL_CLASS = WidgetDemoStrict
+
+    HEADLESS = True
+
+    __test__ = True
+
+    use_radio = False
+    use_checkbox = False
+
+    @property
+    def changes(self):
+        from tests.examples.enums import Permissions, Color
+
+        return [
+            {"color": Color.RED, "permissions": Permissions.READ | Permissions.EXECUTE},
+            {"color": Color.GREEN, "permissions": Permissions(0)},
+        ]
+
+
+class WidgetDemoNonStrictTest(_WidgetDemoTest):
+    MODEL_CLASS = WidgetDemoNonStrict
+
+    HEADLESS = True
+
+    __test__ = True
+
+    use_radio = False
+    use_checkbox = False
+
+    @property
+    def changes(self):
+        from tests.examples.enums import Permissions, Color
+
+        return [
+            {"color": Color.RED, "permissions": Permissions.READ | Permissions.EXECUTE},
+            {"color": Color.GREEN, "permissions": Permissions(0)},
+        ]
+
+    @property
+    def screenshot_values(self):
+        from tests.examples.enums import Permissions
+
+        return {
+            "color": "YELLOW",
+            "permissions": Permissions.READ | Permissions.EXECUTE | (1 << 4),
+        }
+
+
+class WidgetDemoRadiosAndChecksTest(WidgetDemoStrictTest):
+    MODEL_CLASS = WidgetDemoRadiosAndChecks
+
+    HEADLESS = True
+
+    use_radio = True
+    use_checkbox = True
+
+
+class WidgetDemoRadiosAndChecksNullsTest(_WidgetDemoTest):
+    MODEL_CLASS = WidgetDemoRadiosAndChecksNulls
+
+    HEADLESS = True
+
+    __test__ = True
+
+    use_radio = True
+    use_checkbox = True
+
+    def image_name(self, field: str):
+        return super().image_name(field) + "_nulls"
+
+    @property
+    def changes(self):
+        from tests.examples.enums import Permissions, Color
+
+        return [
+            {},
+            {
+                "color": Color.GREEN,
+                "permissions": Permissions.READ | Permissions.EXECUTE,
+            },
+        ]
+
+
+class WidgetDemoRadiosAndChecksNonStrictTest(WidgetDemoNonStrictTest):
+    MODEL_CLASS = WidgetDemoRadiosAndChecksNonStrict
+
+    use_radio = True
+    use_checkbox = True

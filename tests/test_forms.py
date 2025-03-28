@@ -2,6 +2,7 @@ from django.test import TestCase
 import pytest
 import django
 from django.db import connection
+from django.contrib import admin
 from tests.utils import EnumTypeMixin
 from tests.djenum.models import EnumTester, Bug53Tester, NullableStrEnum
 from tests.djenum.forms import EnumTesterForm, EnumTesterMultipleChoiceForm

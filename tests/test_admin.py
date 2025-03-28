@@ -204,7 +204,9 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
                     self.page.select_option(f"select[name='{field_name}']", [])
         else:
             if self.use_radio:
-                self.page.click(f"input[name='{field_name}'][value='{value}']")
+                self.page.click(
+                    f"input[name='{field_name}'][value='{getattr(value, 'value', value)}']"
+                )
             else:
                 self.page.select_option(
                     f"select[name='{field_name}']",
@@ -255,9 +257,7 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
         # sanity check
         self.assertEqual(count, len(expected))
 
-    def test_admin_form_add_change_delete(self):
-        """Tests add, change, and delete operations in Django Admin."""
-
+    def do_add(self) -> Model:
         obj_ids = set(self.get_object_ids())
 
         self.page.goto(self.add_url)
@@ -270,7 +270,11 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
             )
 
         # create with all default fields
-        self.page.click("input[name='_save']")
+        with self.page.expect_navigation() as nav_info:
+            self.page.click("input[name='_save']")
+
+        response = nav_info.value
+        assert response.status < 400
 
         # verify the add
         added_obj = self.MODEL_CLASS.objects.get(
@@ -291,11 +295,13 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
             defaults[field.name] = expected
 
         self.verify_changes(added_obj, {**defaults, **self.changes[0]})
+        return added_obj
 
+    def do_change(self, obj: Model):
         # test change forms
         for changes in self.changes[1:]:
             # go to the change page
-            self.page.goto(self.change_url(added_obj.id))
+            self.page.goto(self.change_url(obj.pk))
 
             # make form selections
             for field, value in changes.items():
@@ -308,16 +314,24 @@ class _GenericAdminFormTest(StaticLiveServerTestCase):
             # save
             self.page.click("input[name='_save']")
 
-            added_obj.refresh_from_db()
-            self.verify_changes(added_obj, changes)
+            obj.refresh_from_db()
+            self.verify_changes(obj, changes)
 
+    def do_delete(self, obj: Model):
         # delete the object
-        self.page.goto(self.change_url(added_obj.id))
+        self.page.goto(self.change_url(obj.pk))
         self.page.click("a.deletelink")
         self.page.click("input[type='submit']")
 
         # verify deletion
-        self.assertFalse(self.MODEL_CLASS.objects.filter(pk=added_obj.pk).exists())
+        self.assertFalse(self.MODEL_CLASS.objects.filter(pk=obj.pk).exists())
+
+    def test_admin_form_add_change_delete(self):
+        """Tests add, change, and delete operations in Django Admin."""
+
+        obj = self.do_add()
+        self.do_change(obj)
+        self.do_delete(obj)
 
 
 class TestEnumTesterAdminForm(EnumTypeMixin, _GenericAdminFormTest):

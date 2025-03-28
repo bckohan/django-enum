@@ -18,6 +18,7 @@ Reference
    choices
    filters
    forms
+   widgets
    query
    DRF
    urls

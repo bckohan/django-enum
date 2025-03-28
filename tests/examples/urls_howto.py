@@ -19,7 +19,7 @@ try:
             TextChoicesExampleFilterSetViewSet.as_view(),
             name='filterset'
         ),
-        path('flagfilterfield/', FlagExampleFilterViewSet.as_View(), name="flagfilterfield")
+        path('flagfilterfield/', FlagExampleFilterViewSet.as_view(), name="flagfilterfield")
     ]
 except ImportError:
     urlpatterns = []

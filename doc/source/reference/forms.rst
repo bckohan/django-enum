@@ -2,12 +2,9 @@
 
 .. _forms_ref:
 
-=====
-Forms
-=====
-
-Fields
-------
+===========
+Form Fields
+===========
 
 .. autoclass:: django_enum.forms.ChoiceFieldMixin
    :members:
@@ -22,36 +19,5 @@ Fields
    :show-inheritance:
 
 .. autoclass:: django_enum.forms.EnumMultipleChoiceField
-   :members:
-   :show-inheritance:
-
-Widgets
--------
-
-.. autoclass:: django_enum.forms.NonStrictSelect
-   :members:
-   :show-inheritance:
-
-.. autoclass:: django_enum.forms.NonStrictSelectMultiple
-   :members:
-   :show-inheritance:
-
-.. autoclass:: django_enum.forms.FlagSelectMultiple
-   :members:
-   :show-inheritance:
-
-.. autoclass:: django_enum.forms.FlagCheckbox
-   :members:
-   :show-inheritance:
-
-.. autoclass:: django_enum.forms.NonStrictFlagSelectMultiple
-   :members:
-   :show-inheritance:
-
-.. autoclass:: django_enum.forms.NonStrictFlagCheckbox
-   :members:
-   :show-inheritance:
-
-.. autoclass:: django_enum.forms.NonStrictRadioSelect
    :members:
    :show-inheritance:
