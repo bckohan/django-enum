@@ -12,6 +12,8 @@ Python supports `bit fields <https://en.wikipedia.org/wiki/Bit_field>`_ through 
 These enumerations are fully supported and will render as multi select form fields by default. For
 example:
 
+.. _group_permissions_ex:
+
 .. literalinclude:: ../../../tests/examples/models/flag_howto.py
     :lines: 2-
 

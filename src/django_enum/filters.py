@@ -112,9 +112,13 @@ class MultipleEnumFilter(TypedMultipleChoiceFilter):
 
 class EnumFlagFilter(TypedMultipleChoiceFilter):
     """
-    Use this filter class instead of
-    :class:`~django_filters.filters.MultipleChoiceFilter` to get filters to accept
-    multiple :class:`~enum.Enum` labels and symmetric properties.
+    Use this filter class with :class:`~django_enum.fields.FlagField` fields. It will
+    allow the field to be listed multiple times in URL query strings
+    (e.g. ``field=value&field=value``). By default the filter will query on these values with
+    :ref:`has_any` these values together. Use ``conjoined`` to use :ref:`has_all` instead.
+
+    This filter also respects the :class:`~django_filters.filters.TypedMultipleChoiceFilter`
+    base class parameters such as ``exclude``.
 
     :param enum: The class of the enumeration containing the values to
         filter on

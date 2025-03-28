@@ -672,6 +672,13 @@ class EnumField(
             ) from err
 
     def formfield(self, form_class=None, choices_form_class=None, **kwargs):
+        """
+        An override of :meth:`~django.db.models.Field.formfield` that ensures
+        we use the correct django-enum_ form field type:
+
+            * :class:`~django_enum.fields.EnumField` -> :class:`~django_enum.forms.EnumChoiceField`
+            * :class:`~django_enum.fields.FlagField` -> :class:`~django_enum.forms.EnumFlagField`
+        """
         # super().formfield deletes anything unrecognized from kwargs that
         #   we try to pass in. Very annoying because we have to
         #   un-encapsulate some of this initialization logic, this makes our
@@ -1235,6 +1242,13 @@ class FlagField(with_typehint(IntEnumField)):  # type: ignore
             IntegerField.contribute_to_class(self, cls, name, private_only=private_only)
 
     def formfield(self, form_class=None, choices_form_class=None, **kwargs):
+        """
+        An override of :meth:`~django.db.models.Field.formfield` that ensures
+        we use :class:`~django_enum.forms.EnumFlagField`.
+
+        The default widget will be :class:`~django_enum.forms.FlagSelectMultiple` if the field
+        is strict, and :class:`~django_enum.forms.NonStrictFlagSelectMultiple` if not.
+        """
         from django_enum.forms import (
             EnumFlagField,
             FlagSelectMultiple,

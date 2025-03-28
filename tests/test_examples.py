@@ -17,6 +17,12 @@ from tests.examples.models import (
     WidgetDemoRadiosAndChecksNulls,
     WidgetDemoRadiosAndChecksNonStrict,
 )
+from django_enum.forms import (
+    FlagSelectMultiple,
+    NonStrictFlagSelectMultiple,
+    FlagCheckbox,
+    NonStrictFlagCheckbox,
+)
 
 
 class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
@@ -344,7 +350,8 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             self.assertFalse("Green" in list_items)
             self.assertFalse("Blue" in list_items)
             self.assertEqual(
-                page.locator("select#id_color option:checked").text_content(), "Red"
+                page.locator("select#id_permissions option:checked").text_content(),
+                "Red",
             )
 
             page.set_content(green_content)
@@ -353,7 +360,8 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             self.assertTrue("Green" in list_items)
             self.assertFalse("Blue" in list_items)
             self.assertEqual(
-                page.locator("select#id_color option:checked").text_content(), "Green"
+                page.locator("select#id_permissions option:checked").text_content(),
+                "Green",
             )
 
             page.set_content(blue_content)
@@ -362,7 +370,8 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             self.assertFalse("Green" in list_items)
             self.assertTrue("Blue" in list_items)
             self.assertEqual(
-                page.locator("select#id_color option:checked").text_content(), "Blue"
+                page.locator("select#id_permissions option:checked").text_content(),
+                "Blue",
             )
 
             browser.close()
@@ -424,35 +433,362 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
 
             page.set_content(initial_content)
             self.assertEqual(
-                page.locator("select#id_color option:checked").text_content(), "Red"
+                page.locator("select#id_permissions option:checked").text_content(),
+                "Red",
             )
             self.assertEqual(
-                page.locator("select#id_color_ext option:checked").text_content(), "Y"
+                page.locator("select#id_permissions_ext option:checked").text_content(),
+                "Y",
             )
 
             page.set_content(post_green_purple_content)
             self.assertEqual(
-                page.locator("select#id_color option:checked").text_content(), "Green"
+                page.locator("select#id_permissions option:checked").text_content(),
+                "Green",
             )
             self.assertEqual(
-                page.locator("select#id_color_ext option:checked").text_content(),
+                page.locator("select#id_permissions_ext option:checked").text_content(),
                 "Purple",
             )
 
             page.set_content(post_blue_x_content)
             self.assertEqual(
-                page.locator("select#id_color option:checked").text_content(), "Blue"
+                page.locator("select#id_permissions option:checked").text_content(),
+                "Blue",
             )
             self.assertEqual(
-                page.locator("select#id_color_ext option:checked").text_content(), "X"
+                page.locator("select#id_permissions_ext option:checked").text_content(),
+                "X",
+            )
+
+        with self.assertRaises(ValidationError):
+            response = self.client.post(url, {"color": "X", "color_ext": "G"})
+
+    def test_radio_form_howto(self):
+        from tests.examples import radio_form_howto
+        from django.urls import reverse
+        from playwright.sync_api import sync_playwright
+
+        url = reverse("howto_forms:radio")
+
+        initial_content = self.client.get(url).content.decode()
+
+        response = self.client.post(url, {"color": "00FF00", "color_ext": "P"})
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertTrue(form.is_valid())
+        self.assertEqual(
+            form.cleaned_data["color"], radio_form_howto.TextChoicesExample.Color.GREEN
+        )
+        self.assertEqual(form.cleaned_data["color_ext"], "P")
+        post_green_purple_content = response.content.decode()
+
+        response = self.client.post(url, {"color": "BlUe", "color_ext": "X"})
+        self.assertEqual(response.status_code, 200)
+        form = response.context["form"]
+        self.assertTrue(form.is_valid())
+        self.assertEqual(
+            form.cleaned_data["color"], radio_form_howto.TextChoicesExample.Color.BLUE
+        )
+        self.assertEqual(form.cleaned_data["color_ext"], "X")
+        post_blue_x_content = response.content.decode()
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+            page.set_content(initial_content)
+            page.pause()
+            self.assertEqual(
+                page.locator("input[type='radio'][name='color']:checked").get_attribute(
+                    "value"
+                ),
+                "R",
+            )
+            self.assertEqual(
+                page.locator(
+                    "input[type='radio'][name='color_ext']:checked"
+                ).get_attribute("value"),
+                "Y",
+            )
+
+            page.set_content(post_green_purple_content)
+            self.assertEqual(
+                page.locator("input[type='radio'][name='color']:checked").get_attribute(
+                    "value"
+                ),
+                "G",
+            )
+            self.assertEqual(
+                page.locator(
+                    "input[type='radio'][name='color_ext']:checked"
+                ).get_attribute("value"),
+                "P",
+            )
+
+            page.set_content(post_blue_x_content)
+            self.assertEqual(
+                page.locator("input[type='radio'][name='color']:checked").get_attribute(
+                    "value"
+                ),
+                "B",
+            )
+            self.assertEqual(
+                page.locator(
+                    "input[type='radio'][name='color_ext']:checked"
+                ).get_attribute("value"),
+                "X",
             )
 
         with self.assertRaises(ValidationError):
             response = self.client.post(url, {"color": "X", "color_ext": "G"})
 
     def test_flag_form_howto(self):
-        # TODO
-        pass
+        from tests.examples import flag_form_howto
+        from tests.examples.models.flag_howto import Group
+        from django.urls import reverse
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+
+            Permissions = Group.Permissions
+
+            url = reverse("howto_forms:flag")
+
+            initial_content = self.client.get(url).content.decode()
+
+            page.set_content(initial_content)
+            page.pause()
+
+            response = self.client.post(
+                url,
+                {
+                    "permissions": Permissions.READ | Permissions.EXECUTE,
+                    "permissions_ext": (
+                        Permissions.READ | Permissions.WRITE | (1 << 3)
+                    ).value,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            form = response.context["form"]
+            self.assertTrue(form.is_valid())
+            self.assertEqual(
+                form.cleaned_data["permissions"], Permissions.READ | Permissions.EXECUTE
+            )
+            self.assertEqual(
+                form.cleaned_data["permissions_ext"],
+                Permissions.READ | Permissions.WRITE | (1 << 3),
+            )
+            rw_content = response.content.decode()
+
+            response = self.client.post(
+                url,
+                {
+                    "permissions": ["READ"],
+                    "permissions_ext": ["READ", "WRITE", "EXECUTE"],
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            form = response.context["form"]
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.cleaned_data["permissions"], Permissions.READ)
+            self.assertEqual(form.cleaned_data["permissions_ext"], Permissions.RWX)
+            rwx_content = response.content.decode()
+
+            assert isinstance(form.fields["permissions"].widget, FlagSelectMultiple)
+            assert isinstance(
+                form.fields["permissions_ext"].widget, NonStrictFlagSelectMultiple
+            )
+
+            page.set_content(initial_content)
+            page.pause()
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [
+                    str(Group.Permissions.READ.value),
+                    str(Group.Permissions.EXECUTE.value),
+                ],
+            )
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions_ext']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [
+                    str(Group.Permissions.READ.value),
+                    str(Group.Permissions.WRITE.value),
+                    str(1 << 3),
+                ],
+            )
+
+            page.set_content(rw_content)
+            self.assertEqual(
+                page.locator("select#id_permissions option:checked").evaluate_all(
+                    "elements => elements.map(element => element.value)"
+                ),
+                [str(Permissions.READ.value), str(Permissions.EXECUTE.value)],
+            )
+            self.assertEqual(
+                page.locator("select#id_permissions_ext option:checked").evaluate_all(
+                    "elements => elements.map(element => element.value)"
+                ),
+                [
+                    str(Permissions.READ.value),
+                    str(Permissions.WRITE.value),
+                    str(1 << 3),
+                ],
+            )
+
+            page.set_content(rwx_content)
+            self.assertEqual(
+                page.locator("select#id_permissions option:checked").evaluate_all(
+                    "elements => elements.map(element => element.value)"
+                ),
+                [
+                    str(Permissions.READ.value),
+                ],
+            )
+            self.assertEqual(
+                page.locator("select#id_permissions_ext option:checked").evaluate_all(
+                    "elements => elements.map(element => element.value)"
+                ),
+                [
+                    str(Permissions.READ.value),
+                    str(Permissions.WRITE.value),
+                    str(Permissions.EXECUTE.value),
+                ],
+            )
+
+        with self.assertRaises(ValidationError):
+            response = self.client.post(
+                url, {"permissions": "RWX", "permissions_ext": "RWXT"}
+            )
+
+    def test_checkboxes_form_howto(self):
+        from tests.examples import checkboxes_form_howto
+        from tests.examples.models.flag_howto import Group
+        from django.urls import reverse
+        from playwright.sync_api import sync_playwright
+
+        with sync_playwright() as p:
+            browser = p.chromium.launch(headless=True)
+            page = browser.new_page()
+
+            Permissions = Group.Permissions
+
+            url = reverse("howto_forms:checkboxes")
+
+            initial_content = self.client.get(url).content.decode()
+
+            page.set_content(initial_content)
+            page.pause()
+
+            response = self.client.post(
+                url,
+                {
+                    "permissions": Permissions.READ | Permissions.EXECUTE,
+                    "permissions_ext": (
+                        Permissions.READ | Permissions.WRITE | (1 << 3)
+                    ).value,
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            form = response.context["form"]
+            self.assertTrue(form.is_valid())
+            self.assertEqual(
+                form.cleaned_data["permissions"], Permissions.READ | Permissions.EXECUTE
+            )
+            self.assertEqual(
+                form.cleaned_data["permissions_ext"],
+                Permissions.READ | Permissions.WRITE | (1 << 3),
+            )
+            rw_content = response.content.decode()
+
+            response = self.client.post(
+                url,
+                {
+                    "permissions": ["READ"],
+                    "permissions_ext": ["READ", "WRITE", "EXECUTE"],
+                },
+            )
+            self.assertEqual(response.status_code, 200)
+            form = response.context["form"]
+            self.assertTrue(form.is_valid())
+            self.assertEqual(form.cleaned_data["permissions"], Permissions.READ)
+            self.assertEqual(form.cleaned_data["permissions_ext"], Permissions.RWX)
+            rwx_content = response.content.decode()
+
+            assert isinstance(form.fields["permissions"].widget, FlagCheckbox)
+            assert isinstance(
+                form.fields["permissions_ext"].widget, NonStrictFlagCheckbox
+            )
+
+            page.set_content(initial_content)
+            page.pause()
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [
+                    str(Group.Permissions.READ.value),
+                    str(Group.Permissions.EXECUTE.value),
+                ],
+            )
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions_ext']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [
+                    str(Group.Permissions.READ.value),
+                    str(Group.Permissions.WRITE.value),
+                    str(1 << 3),
+                ],
+            )
+
+            page.set_content(rw_content)
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [str(Permissions.READ.value), str(Permissions.EXECUTE.value)],
+            )
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions_ext']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [
+                    str(Permissions.READ.value),
+                    str(Permissions.WRITE.value),
+                    str(1 << 3),
+                ],
+            )
+
+            page.set_content(rwx_content)
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [
+                    str(Permissions.READ.value),
+                ],
+            )
+            self.assertEqual(
+                page.locator(
+                    "input[type='checkbox'][name='permissions_ext']:checked"
+                ).evaluate_all("elements => elements.map(element => element.value)"),
+                [
+                    str(Permissions.READ.value),
+                    str(Permissions.WRITE.value),
+                    str(Permissions.EXECUTE.value),
+                ],
+            )
+
+        with self.assertRaises(ValidationError):
+            response = self.client.post(
+                url, {"permissions": "RWX", "permissions_ext": "RWXT"}
+            )
 
     def test_strict_example(self):
         from tests.examples import strict_howto

@@ -1,12 +1,12 @@
 from .models.flag_howto import Group
 from django.forms import Form
-from django_enum.forms import EnumFlagField
+from django_enum.forms import EnumFlagField, FlagCheckbox, NonStrictFlagCheckbox
 from django_enum import utils
 
 
 class PermissionsExampleForm(Form):
 
-    permissions = EnumFlagField(Group.Permissions)
+    permissions = EnumFlagField(Group.Permissions, widget=FlagCheckbox)
 
     # form fields can be non-strict just like model fields.
     # for this field we add an additional flag for delete and
@@ -17,7 +17,8 @@ class PermissionsExampleForm(Form):
         choices=[
             *utils.choices(Group.Permissions),
             (1 << 3, "DELETE")
-        ]
+        ],
+        widget=NonStrictFlagCheckbox
     )
 
 

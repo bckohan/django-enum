@@ -298,7 +298,8 @@ class ChoiceFieldMixin(
     with_typehint(TypedChoiceField)  # type: ignore
 ):
     """
-    Mixin to adapt base model form ChoiceFields to use on EnumFields.
+    Mixin to adapt :class:`django.forms.ChoiceField` to use with
+    :class:`~django_enum.fields.EnumField`.
 
     :param enum: The Enumeration type
     :param empty_value: Allow users to define what empty is because some
@@ -498,6 +499,11 @@ class EnumChoiceField(ChoiceFieldMixin, TypedChoiceField):  # type: ignore
     enumeration values. Use this field on forms to accept any value mappable to an
     enumeration including any labels, symmetric properties, of values accepted in
     :meth:`~enum.Enum._missing_`.
+
+    .. tip::
+
+        See :class:`~django_enum.forms.ChoiceFieldMixin` for the list of parameters accepted by the
+        form fields. These parameters mirror the parameters for :class:`~django_enum.fields.EnumField`.
     """
 
 
@@ -552,9 +558,7 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
         choices: _ChoicesParameter = (),
         **kwargs,
     ):
-        widget = kwargs.get(
-            "widget", self.widget if self.strict else self.non_strict_widget
-        )
+        widget = kwargs.get("widget", self.widget if strict else self.non_strict_widget)
         if isinstance(widget, type) and issubclass(widget, FlagMixin):
             widget = widget(enum=enum)
         kwargs["widget"] = widget
@@ -583,10 +587,14 @@ class EnumFlagField(ChoiceFieldMixin, TypedMultipleChoiceField):  # type: ignore
     def has_changed(self, initial, data):
         return super().has_changed(
             *(
-                [str(en.value) for en in decompose(initial)]
+                [str(v) for v in get_set_values(initial)]
+                if isinstance(initial, int)
+                else [str(en.value) for en in decompose(initial)]
                 if isinstance(initial, Flag)
                 else initial,
-                [str(en.value) for en in decompose(data)]
+                [str(v) for v in get_set_values(data)]
+                if isinstance(data, int)
+                else [str(en.value) for en in decompose(data)]
                 if isinstance(data, Flag)
                 else data,
             )

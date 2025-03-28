@@ -19,6 +19,7 @@ __all__ = [
     "decimal_params",
     "get_set_values",
     "get_set_bits",
+    "decompose",
 ]
 
 
@@ -243,7 +244,20 @@ def get_set_values(flag: Optional[Union[int, IntFlag]]) -> List[int]:
 
 def decompose(flags: Optional[F]) -> List[F]:
     """
-    Get the activated flags in a :class:`~enum.Flag` instance.
+    Get the activated flags in a :class:`~enum.Flag` instance. For example:
+
+    .. code-block:: python
+
+        class Permissions(IntFlag):
+
+            READ    = 1 << 0
+            WRITE   = 1 << 1
+            EXECUTE = 1 << 2
+
+        assert decompose(Permissions.READ | Permissions.WRITE) == (
+            [Permissions.READ, Permissions.Write]
+        )
+
 
     :param: flags: The flag instance to decompose
     :return: A list of the :class:`~enum.Flag` instances comprising the flag.

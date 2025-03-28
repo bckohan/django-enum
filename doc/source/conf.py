@@ -43,7 +43,9 @@ extensions = [
     'sphinxcontrib_django',
     'sphinx.ext.intersphinx',
     'sphinx.ext.autodoc',
-    'sphinx.ext.todo'
+    'sphinx.ext.todo',
+    'sphinx_tabs.tabs',
+    "sphinx.ext.viewcode",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
