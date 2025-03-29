@@ -4,7 +4,19 @@ import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
 from enum import Enum, Flag, IntFlag
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, TypeVar, Union
+from importlib.util import find_spec
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    Generator,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+)
 
 from typing_extensions import get_args
 
@@ -20,10 +32,17 @@ __all__ = [
     "get_set_values",
     "get_set_bits",
     "decompose",
+    "members",
 ]
 
 
+PROPERTIES_ENABLED = find_spec("enum_properties")
+"""
+True if enum-properties is installed, False otherwise.
+"""
+
 T = TypeVar("T")
+E = TypeVar("E", bound=Enum)
 F = TypeVar("F", bound=Flag)
 
 SupportedPrimitive = Union[
@@ -54,7 +73,7 @@ def with_typehint(baseclass: Type[T]) -> Type[T]:
 
 
 def choices(
-    enum_cls: Optional[Type[Enum]], override: bool = False
+    enum_cls: Optional[Type[Enum]], override: bool = False, aliases: bool = True
 ) -> List[Tuple[Any, str]]:
     """
     Get the Django choices for an enumeration type. If the enum type has a
@@ -67,6 +86,7 @@ def choices(
 
     :param enum_cls: The enumeration type
     :param override: Do not defer to choices attribute on the class if True
+    :param aliases: Include first-class aliases in the result if True (default: True)
     :return: A list of (value, label) pairs
     """
     return (
@@ -80,7 +100,7 @@ def choices(
                 ),
                 *[
                     (member.value, getattr(member, "label", getattr(member, "name")))
-                    for member in list(enum_cls) or enum_cls.__members__.values()
+                    for member in members(enum_cls, aliases=aliases)
                 ],
             ]
         )
@@ -89,13 +109,16 @@ def choices(
     )
 
 
-def names(enum_cls: Optional[Type[Enum]], override: bool = False) -> List[Any]:
+def names(
+    enum_cls: Optional[Type[Enum]], override: bool = False, aliases: bool = True
+) -> List[Any]:
     """
     Return a list of names to use for the enumeration type. This is used
     for compat with enums that do not inherit from Django's Choices type.
 
     :param enum_cls: The enumeration type
     :param override: Do not defer to names attribute on the class if True
+    :param aliases: Include first-class aliases in the result if True (default: True)
     :return: A list of labels
     """
     return (
@@ -103,10 +126,7 @@ def names(enum_cls: Optional[Type[Enum]], override: bool = False) -> List[Any]:
         or (
             [
                 *(["__empty__"] if hasattr(enum_cls, "__empty__") else []),
-                *[
-                    member.name
-                    for member in list(enum_cls) or enum_cls.__members__.values()
-                ],
+                *[member.name for member in members(enum_cls, aliases=aliases)],
             ]
         )
         if enum_cls
@@ -189,6 +209,16 @@ def determine_primitive(enum: Type[Enum]) -> Optional[Type]:
     return primitive
 
 
+def is_power_of_two(n: int) -> bool:
+    """
+    Check if an integer is a power of two.
+
+    :param n: The integer to check
+    :return: True if the number is a power of two, False otherwise
+    """
+    return n != 0 and (n & (n - 1)) == 0
+
+
 def decimal_params(
     enum: Optional[Type[Enum]],
     decimal_places: Optional[int] = None,
@@ -264,9 +294,49 @@ def decompose(flags: Optional[F]) -> List[F]:
     """
     if not flags:
         return []
-    if sys.version_info < (3, 11):
-        return [
-            flg for flg in type(flags) if flg in flags and flg is not type(flags)(0)
-        ]
+    return [
+        flg
+        for flg in type(flags).__members__.values()
+        if flg in flags and flg is not type(flags)(0)
+    ]
+
+
+def members(enum: Type[E], aliases: bool = True) -> Generator[E, None, None]:
+    """
+    Get the members of an enumeration class. This can be tricky to do
+    in a python version agnostic way, so it is recommended to
+    use this function.
+
+    .. note:
+
+        Composite flag values, such as `A | B` when named on a
+        :class:`~enum.IntFlag` class are considered aliases by this function.
+
+    :param enum_cls: The enumeration class
+    :param aliases: Include aliases in the result if True (default: True)
+    :return: A generator that yields the enumeration members
+    """
+    if aliases:
+        if PROPERTIES_ENABLED:
+            from enum_properties import SymmetricMixin
+
+            if issubclass(enum, SymmetricMixin):
+                for member in enum.__first_class_members__:
+                    yield enum[member]  # type: ignore[index]
+                return
+        yield from enum.__members__.values()
     else:
-        return list(flags)  # type: ignore[arg-type]
+        if issubclass(enum, Flag) and (
+            issubclass(enum, int)
+            or isinstance(next(iter(enum.__members__.values())).value, int)
+        ):
+            for name in enum._member_names_:
+                en = enum[name]
+                value = en.value
+                if value < 0 or is_power_of_two(value):
+                    yield en  # type: ignore[misc]
+        elif sys.version_info[:2] >= (3, 11):
+            yield from enum  # type: ignore[misc]
+        else:
+            for name in enum._member_names_:
+                yield enum[name]

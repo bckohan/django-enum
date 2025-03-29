@@ -4,7 +4,7 @@
 Change Log
 ==========
 
-v2.2.0 (2025-03-27)
+v2.2.0 (2025-03-28)
 ===================
 
 * Implemented `Need a DRF integration for FlagFields <https://github.com/bckohan/django-enum/issues/113>`_

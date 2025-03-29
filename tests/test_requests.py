@@ -1,5 +1,6 @@
 from importlib.util import find_spec
 import typing as t
+from enum import Enum
 from tests.utils import EnumTypeMixin, try_convert
 from django.test import TestCase
 from tests.djenum.models import EnumTester
@@ -562,6 +563,9 @@ class TestRequests(EnumTypeMixin, TestCase):
                         self.assertTrue(option.has_attr("selected"))
                     del expected[value]
                 except KeyError:  # pragma: no cover
+                    import ipdb
+
+                    ipdb.set_trace()
                     self.fail(
                         f"{field.name} did not expect option "
                         f"{option['value']}: {option.text}."

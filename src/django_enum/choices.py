@@ -33,6 +33,20 @@ class DjangoEnumPropertiesMeta(EnumPropertiesMeta, ChoicesType):  # type: ignore
     enum-properties' generic property support.
     """
 
+    def __new__(mcs, classname, bases, classdict, **kwargs):
+        cls = super().__new__(mcs, classname, bases, classdict, **kwargs)
+        # choices does not allow duplicates, but base class construction breaks
+        # this member, so we alias it here to stay compatible with enum-properties
+        # interface
+        # TODO - is this a fixable bug in ChoicesType?
+        cls._member_names_ = (
+            list(classdict._member_names.keys())
+            if isinstance(classdict._member_names, dict)  # changes based on py ver
+            else classdict._member_names
+        )
+        cls.__first_class_members__ = cls._member_names_
+        return cls
+
     @property
     def names(self) -> t.List[str]:
         """

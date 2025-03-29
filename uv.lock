@@ -621,7 +621,7 @@ requires-dist = [
     { name = "django", specifier = ">=3.2,<6.0" },
     { name = "django-filter", marker = "extra == 'filters'", specifier = ">=21" },
     { name = "djangorestframework", marker = "extra == 'rest'", specifier = ">=3.9,<4.0" },
-    { name = "enum-properties", marker = "extra == 'properties'", specifier = ">=2.2.0" },
+    { name = "enum-properties", marker = "extra == 'properties'", specifier = ">=2.3.0" },
 ]
 provides-extras = ["properties", "filters", "rest"]
 
@@ -825,11 +825,11 @@ wheels = [
 
 [[package]]
 name = "enum-properties"
-version = "2.2.2"
+version = "2.3.0"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/d5/50/27d1a305ccbb77ec907f9e82fc2931029dfeac435ee6f714024a913ff3ee/enum_properties-2.2.2.tar.gz", hash = "sha256:82cccf28f23b3d52368048ee626fcc12166f06a4fd757cd5c87bd638db53a632", size = 162416 }
+sdist = { url = "https://files.pythonhosted.org/packages/8b/82/dba17e657ac1753b5730861e42434c8bb6605973e8ff83415fa2c341a728/enum_properties-2.3.0.tar.gz", hash = "sha256:2243c7813e55c72bce8e60eab43a443ef6b05e1f1a8cbc11ab65aff323f57d6a", size = 164265 }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/eb/84/ee619ef2ae94f6b7aaa3834603e20f8f7c04a88fd13971c05f0572eb7832/enum_properties-2.2.2-py3-none-any.whl", hash = "sha256:f0990571b5d1d35aef4d7c81669c26bb2450f082caf7481246cdee9f88681bbf", size = 10934 },
+    { url = "https://files.pythonhosted.org/packages/66/a2/6849233f0092b72da8bbd6f78fcc9dbcc87fe04501bee7bb9ff08d6ca4b5/enum_properties-2.3.0-py3-none-any.whl", hash = "sha256:544166ab2ba4874b22f008565d119a8807c4506fb1d00cf2876493181a60f80f", size = 11225 },
 ]
 
 [[package]]
