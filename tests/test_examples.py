@@ -341,7 +341,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
         green_content = self.client.get(f"{url}?color=00Ff00").content.decode()
         blue_content = self.client.get(f"{url}?color=B").content.decode()
         with sync_playwright() as p:
-            browser = p.chromium.launch()
+            browser = p.chromium.launch(headless=True)
             page = browser.new_page()
 
             page.set_content(red_content)
@@ -349,8 +349,9 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             self.assertTrue("Red" in list_items)
             self.assertFalse("Green" in list_items)
             self.assertFalse("Blue" in list_items)
+            page.pause()
             self.assertEqual(
-                page.locator("select#id_permissions option:checked").text_content(),
+                page.locator("select#id_color option:checked").text_content(),
                 "Red",
             )
 
@@ -360,7 +361,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             self.assertTrue("Green" in list_items)
             self.assertFalse("Blue" in list_items)
             self.assertEqual(
-                page.locator("select#id_permissions option:checked").text_content(),
+                page.locator("select#id_color option:checked").text_content(),
                 "Green",
             )
 
@@ -370,7 +371,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             self.assertFalse("Green" in list_items)
             self.assertTrue("Blue" in list_items)
             self.assertEqual(
-                page.locator("select#id_permissions option:checked").text_content(),
+                page.locator("select#id_color option:checked").text_content(),
                 "Blue",
             )
 
@@ -428,36 +429,37 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
         post_blue_x_content = response.content.decode()
 
         with sync_playwright() as p:
-            browser = p.chromium.launch()
+            browser = p.chromium.launch(headless=True)
             page = browser.new_page()
 
             page.set_content(initial_content)
+            page.pause()
             self.assertEqual(
-                page.locator("select#id_permissions option:checked").text_content(),
+                page.locator("select#id_color option:checked").text_content(),
                 "Red",
             )
             self.assertEqual(
-                page.locator("select#id_permissions_ext option:checked").text_content(),
+                page.locator("select#id_color_ext option:checked").text_content(),
                 "Y",
             )
 
             page.set_content(post_green_purple_content)
             self.assertEqual(
-                page.locator("select#id_permissions option:checked").text_content(),
+                page.locator("select#id_color option:checked").text_content(),
                 "Green",
             )
             self.assertEqual(
-                page.locator("select#id_permissions_ext option:checked").text_content(),
+                page.locator("select#id_color_ext option:checked").text_content(),
                 "Purple",
             )
 
             page.set_content(post_blue_x_content)
             self.assertEqual(
-                page.locator("select#id_permissions option:checked").text_content(),
+                page.locator("select#id_color option:checked").text_content(),
                 "Blue",
             )
             self.assertEqual(
-                page.locator("select#id_permissions_ext option:checked").text_content(),
+                page.locator("select#id_color_ext option:checked").text_content(),
                 "X",
             )
 
@@ -564,7 +566,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             response = self.client.post(
                 url,
                 {
-                    "permissions": Permissions.READ | Permissions.EXECUTE,
+                    "permissions": (Permissions.READ | Permissions.EXECUTE).value,
                     "permissions_ext": (
                         Permissions.READ | Permissions.WRITE | (1 << 3)
                     ).value,
@@ -604,9 +606,9 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             page.set_content(initial_content)
             page.pause()
             self.assertEqual(
-                page.locator(
-                    "input[type='checkbox'][name='permissions']:checked"
-                ).evaluate_all("elements => elements.map(element => element.value)"),
+                page.locator("select[name=permissions] option:checked").evaluate_all(
+                    "elements => elements.map(element => element.value)"
+                ),
                 [
                     str(Group.Permissions.READ.value),
                     str(Group.Permissions.EXECUTE.value),
@@ -614,7 +616,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             )
             self.assertEqual(
                 page.locator(
-                    "input[type='checkbox'][name='permissions_ext']:checked"
+                    "select[name=permissions_ext] option:checked"
                 ).evaluate_all("elements => elements.map(element => element.value)"),
                 [
                     str(Group.Permissions.READ.value),
@@ -658,6 +660,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
                     str(Permissions.READ.value),
                     str(Permissions.WRITE.value),
                     str(Permissions.EXECUTE.value),
+                    str(Permissions.RWX.value),
                 ],
             )
 
@@ -688,7 +691,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
             response = self.client.post(
                 url,
                 {
-                    "permissions": Permissions.READ | Permissions.EXECUTE,
+                    "permissions": (Permissions.READ | Permissions.EXECUTE).value,
                     "permissions_ext": (
                         Permissions.READ | Permissions.WRITE | (1 << 3)
                     ).value,
@@ -782,6 +785,7 @@ class ExampleTests(TestCase):  # pragma: no cover  - why is this necessary?
                     str(Permissions.READ.value),
                     str(Permissions.WRITE.value),
                     str(Permissions.EXECUTE.value),
+                    str(Permissions.RWX.value),
                 ],
             )
 
