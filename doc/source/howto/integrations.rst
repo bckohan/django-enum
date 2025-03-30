@@ -87,7 +87,7 @@ enumeration values <enum-properties:howto_symmetric_properties>`. A serializer f
 :class:`django_enum.drf.EnumField` is provided that will. :class:`~django_enum.fields.FlagField`
 fields do not work well with DRF's builtin
 `MultipleChoiceField <https://www.django-rest-framework.org/api-guide/fields/#multiplechoicefield>`_
-so we provide also provide a :class:`django_enum.drf.FlagField`.
+so we also provide a :class:`django_enum.drf.FlagField`.
 
 The dependency on DRF_ is optional so to use the provided serializer field you must install DRF_:
 
