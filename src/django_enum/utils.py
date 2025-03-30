@@ -339,4 +339,4 @@ def members(enum: Type[E], aliases: bool = True) -> Generator[E, None, None]:
             yield from enum  # type: ignore[misc]
         else:
             for name in enum._member_names_:
-                yield enum[name]
+                yield enum[name]  # type: ignore[misc]
