@@ -21,6 +21,8 @@ from enum_properties import (
 
 from django_enum.utils import choices, names
 
+__all__ = ["TextChoices", "IntegerChoices", "FloatChoices", "FlagChoices"]
+
 ChoicesType = (
     model_enums.ChoicesType
     if django_version[0:2] >= (5, 0)

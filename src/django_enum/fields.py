@@ -2,6 +2,8 @@
 Support for Django model fields built from enumeration types.
 """
 
+from __future__ import annotations
+
 import sys
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
@@ -150,10 +152,10 @@ class EnumFieldFactory(type):
     def __call__(
         cls,
         enum: type[EnumT] | None = None,
-        primitive: type[SupportedPrimitive] | None = None,
+        primitive: type[PrimitiveT] | None = None,
         bit_length: int | None = None,
         **field_kwargs,
-    ) -> "EnumField":
+    ) -> EnumField[PrimitiveT, EnumT]:
         """
         Construct a new Django Field class object given the Enumeration class.
         The correct Django field class to inherit from is determined based on
@@ -305,7 +307,7 @@ class EnumFieldFactory(type):
                         else EnumPositiveSmallIntegerField
                     )
 
-            return field_cls(
+            return field_cls(  # type: ignore[return-value]
                 enum=enum,  # type: ignore[arg-type]
                 primitive=primitive,
                 bit_length=bit_length,
@@ -313,25 +315,25 @@ class EnumFieldFactory(type):
             )
 
         if issubclass(primitive, float):
-            return EnumFloatField(enum=enum, primitive=primitive, **field_kwargs)
+            return EnumFloatField(enum=enum, primitive=primitive, **field_kwargs)  # type: ignore[return-value]
 
         if issubclass(primitive, str):
-            return EnumCharField(enum=enum, primitive=primitive, **field_kwargs)
+            return EnumCharField(enum=enum, primitive=primitive, **field_kwargs)  # type: ignore[return-value]
 
         if issubclass(primitive, datetime):
-            return EnumDateTimeField(enum=enum, primitive=primitive, **field_kwargs)
+            return EnumDateTimeField(enum=enum, primitive=primitive, **field_kwargs)  # type: ignore[return-value]
 
         if issubclass(primitive, date):
-            return EnumDateField(enum=enum, primitive=primitive, **field_kwargs)
+            return EnumDateField(enum=enum, primitive=primitive, **field_kwargs)  # type: ignore[return-value]
 
         if issubclass(primitive, timedelta):
-            return EnumDurationField(enum=enum, primitive=primitive, **field_kwargs)
+            return EnumDurationField(enum=enum, primitive=primitive, **field_kwargs)  # type: ignore[return-value]
 
         if issubclass(primitive, time):
-            return EnumTimeField(enum=enum, primitive=primitive, **field_kwargs)
+            return EnumTimeField(enum=enum, primitive=primitive, **field_kwargs)  # type: ignore[return-value]
 
         if issubclass(primitive, Decimal):
-            return EnumDecimalField(enum=enum, primitive=primitive, **field_kwargs)
+            return EnumDecimalField(enum=enum, primitive=primitive, **field_kwargs)  # type: ignore[return-value]
 
         raise NotImplementedError(
             f"EnumField does not support enumerations of primitive type {primitive}"
@@ -805,9 +807,16 @@ class EnumField(_FieldBase, Generic[PrimitiveT, EnumT], metaclass=EnumFieldFacto
             )
 
 
-class EnumCharField(
-    EnumField[str, EnumT], CharField[str | EnumT, EnumT], Generic[EnumT]
-):
+if TYPE_CHECKING:
+    # Avoid CharField's _pyi_private_* types overriding EnumField's generics
+    # in the django-stubs mypy plugin. EnumField[str, EnumT] already provides
+    # Field[str | EnumT, EnumT] via _FieldBase.
+    _EnumCharFieldBase: type = Field
+else:
+    _EnumCharFieldBase = CharField
+
+
+class EnumCharField(EnumField[str, EnumT], _EnumCharFieldBase, Generic[EnumT]):
     """
     A database field supporting enumerations with character values.
     """
@@ -940,9 +949,7 @@ class IntEnumField(EnumField[int, EnumT], Generic[EnumT]):
         ]
 
 
-class EnumSmallIntegerField(
-    IntEnumField[EnumT], SmallIntegerField[int | EnumT, EnumT], Generic[EnumT]
-):
+class EnumSmallIntegerField(IntEnumField[EnumT], SmallIntegerField, Generic[EnumT]):
     """
     A database field supporting enumerations with integer values that fit into
     2 bytes or fewer
@@ -950,7 +957,7 @@ class EnumSmallIntegerField(
 
 
 class EnumPositiveSmallIntegerField(
-    IntEnumField[EnumT], PositiveSmallIntegerField[int | EnumT, EnumT], Generic[EnumT]
+    IntEnumField[EnumT], PositiveSmallIntegerField, Generic[EnumT]
 ):
     """
     A database field supporting enumerations with positive (but signed) integer
@@ -958,9 +965,7 @@ class EnumPositiveSmallIntegerField(
     """
 
 
-class EnumIntegerField(
-    IntEnumField[EnumT], IntegerField[int | EnumT, EnumT], Generic[EnumT]
-):
+class EnumIntegerField(IntEnumField[EnumT], IntegerField, Generic[EnumT]):
     """
     A database field supporting enumerations with integer values that fit into
     32 bytes or fewer
@@ -968,7 +973,7 @@ class EnumIntegerField(
 
 
 class EnumPositiveIntegerField(
-    IntEnumField[EnumT], PositiveIntegerField[int | EnumT, EnumT], Generic[EnumT]
+    IntEnumField[EnumT], PositiveIntegerField, Generic[EnumT]
 ):
     """
     A database field supporting enumerations with positive (but signed) integer
@@ -976,9 +981,7 @@ class EnumPositiveIntegerField(
     """
 
 
-class EnumBigIntegerField(
-    IntEnumField[EnumT], BigIntegerField[int | EnumT, EnumT], Generic[EnumT]
-):
+class EnumBigIntegerField(IntEnumField[EnumT], BigIntegerField, Generic[EnumT]):
     """
     A database field supporting enumerations with integer values that fit into
     64 bytes or fewer
@@ -986,7 +989,7 @@ class EnumBigIntegerField(
 
 
 class EnumPositiveBigIntegerField(
-    IntEnumField[EnumT], PositiveBigIntegerField[int | EnumT, EnumT], Generic[EnumT]
+    IntEnumField[EnumT], PositiveBigIntegerField, Generic[EnumT]
 ):
     """
     A database field supporting enumerations with positive (but signed) integer
