@@ -132,12 +132,15 @@ jobs:
       uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
     - name: Install Release Dependencies
       shell: bash
+      env:
+        PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+        DJANGO_VERSION: ${{ matrix.django-version }}
       run: |
-        just setup ${{ steps.sp.outputs.python-path }}
-        if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-          just test-lock Django==${{ matrix.django-version }}
+        just setup "$PYTHON_PATH"
+        if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+          just test-lock Django==$DJANGO_VERSION
         else
-          just test-lock Django~=${{ matrix.django-version }}.0
+          just test-lock Django~=$DJANGO_VERSION.0
         fi
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
@@ -215,13 +218,15 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
@@ -344,12 +349,15 @@ jobs:
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
         shell: bash
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       
       - name: Install mysqlclient if needed
@@ -474,12 +482,15 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       
       - name: Install mysqlclient if needed
@@ -612,12 +623,15 @@ jobs:
           fi
           sudo ldconfig
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       - name: Run Full Unit Tests
         run: |
@@ -689,15 +703,16 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
-          $version = "${{ matrix.django-version }}"
+          just setup "$PYTHON_PATH"
 
-          if ($version -match "(a|b|rc)") {
-            just test-lock "Django==$version"
+          if ($env:DJANGO_VERSION -match "(a|b|rc)") {
+            just test-lock "Django==$env:DJANGO_VERSION"
           } else {
-            just test-lock "Django~=$version.0"
+            just test-lock "Django~=$env:DJANGO_VERSION.0"
           }
         shell: pwsh
       - name: install-vim-windows
@@ -775,13 +790,15 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       - name: install-emacs-macos
         if: ${{ github.event.inputs.debug == 'true' }}
@@ -827,9 +844,10 @@ jobs:
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
+          just setup "$PYTHON_PATH"
 
       - name: Get coverage files
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131

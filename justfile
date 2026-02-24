@@ -40,7 +40,6 @@ install-precommit:
 
 # update and install development dependencies
 install *OPTS="--all-extras":
-    @just install-precommit
     uv sync {{ OPTS }}
 
 _install-docs:
@@ -266,7 +265,7 @@ debug-test *TESTS:
     @just run pytest \
       -o addopts='-ra -q' \
       -s --trace --pdbcls=IPython.terminal.debugger:Pdb \
-      {{ TESTS }}
+      --headed {{ TESTS }}
 
 # run the pre-commit checks
 precommit:
