@@ -11,6 +11,7 @@
 [![Test Status](https://github.com/django-commons/django-enum/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/django-commons/django-enum/actions/workflows/test.yml?query=branch:main)
 [![Lint Status](https://github.com/django-commons/django-enum/actions/workflows/lint.yml/badge.svg?branch=main)](https://github.com/django-commons/django-enum/actions/workflows/lint.yml?query=branch:main)
 [![Published on Django Packages](https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26)](https://djangopackages.org/packages/p/django-enum/)
+[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/django-commons/django-enum/badge)](https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-enum)
 
 ---------------------------------------------------------------------------------------------------
 

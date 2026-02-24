@@ -124,9 +124,7 @@ def require_db_version(django_db_setup, django_db_blocker):
                     f"Django Version Mismatch: {dj_actual} != {expected_django}"
                 )
         except ValueError:
-            pytest.fail(
-                f"Invalid Django version format: {expected_django}"
-            )
+            pytest.fail(f"Invalid Django version format: {expected_django}")
 
         def get_postgresql_version():
             with connection.cursor() as cursor:
@@ -165,7 +163,8 @@ def require_db_version(django_db_setup, django_db_blocker):
                     if not psycopg.__version__[0] == "3":
                         pytest.fail(
                             f"Unexpected psycopg version: got {psycopg.__version__}, "
-                            f" expected 3.x", pytrace=False,
+                            f" expected 3.x",
+                            pytrace=False,
                         )
                 else:
                     import psycopg2
@@ -173,7 +172,8 @@ def require_db_version(django_db_setup, django_db_blocker):
                     if not psycopg2.__version__[0] == "2":
                         pytest.fail(
                             f"Unexpected psycopg version: got {psycopg2.__version__}, "
-                            f" expected 2.x", pytrace=False,
+                            f" expected 2.x",
+                            pytrace=False,
                         )
             elif rdbms == "mysql":
                 pass

@@ -21,12 +21,12 @@ manage *COMMAND:
 # install the uv package manager
 [linux]
 [macos]
-install_uv:
+install-uv:
     curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # install the uv package manager
 [windows]
-install_uv:
+install-uv:
     powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
 
 # setup the venv, pre-commit hooks
@@ -142,12 +142,12 @@ docs: build-docs-html open-docs
 docs-live: _install-docs
     @just run --no-default-groups --group docs sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8000 --delay 1
 
-_link_check:
+_link-check:
     -uv run --no-default-groups --group docs sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
 
 # check the documentation links for broken links
 [script]
-check-docs-links: _link_check
+check-docs-links: _link-check
     import os
     import sys
     import json
@@ -257,6 +257,7 @@ test-drf *TESTS:
 test-filters *TESTS:
     @just run --no-default-groups --extra filters --group test --exact --isolated pytest {{ TESTS }} --cov-append
 
+# run specific tests
 test *TESTS:
     @just run --no-default-groups --exact --all-extras --group test --isolated pytest {{ TESTS }} --cov-append
 
@@ -305,8 +306,8 @@ validate_version VERSION:
     assert raw_version == django_enum.__version__
     print(raw_version)
 
-# issue a relase for the given semver string (e.g. 2.1.0)
+# issue a release for the given semver string (e.g. 2.1.0)
 release VERSION: install check-all
     @just validate_version v{{ VERSION }}
     git tag -s v{{ VERSION }} -m "{{ VERSION }} Release"
-    git push origin v{{ VERSION }}
+    git push https://github.com/django-commons/django-enum.git v{{ VERSION }}
