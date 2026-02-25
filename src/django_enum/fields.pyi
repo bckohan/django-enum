@@ -65,16 +65,14 @@ class EnumValidatorAdapter:
     def __repr__(self) -> str: ...
     def __getattribute__(self, name: str) -> Any: ...
 
-
 class ToPythonDeferredAttribute(DeferredAttribute, Generic[PrimitiveT, EnumT]):
     @overload  # type: ignore[override]
-    def __get__(self, instance: None, owner: Any) -> ToPythonDeferredAttribute[PrimitiveT, EnumT]: ...
+    def __get__(
+        self, instance: None, owner: Any
+    ) -> ToPythonDeferredAttribute[PrimitiveT, EnumT]: ...
     @overload
     def __get__(self, instance: Model, owner: Any) -> EnumT: ...
-    def __set__(
-        self, instance: Model, value: PrimitiveT | EnumT | None
-    ) -> None: ...
-
+    def __set__(self, instance: Model, value: PrimitiveT | EnumT | None) -> None: ...
 
 # ---------------------------------------------------------------------------
 # EnumField
@@ -170,14 +168,11 @@ class EnumField(Field[PrimitiveT | EnumT, EnumT], Generic[PrimitiveT, EnumT]):
         null: Literal[True] = ...,
         **kwargs: Any,
     ) -> EnumField[_PT, _ET | None]: ...
-
     def deconstruct(self) -> tuple[str, str, Sequence[Any], dict[str, Any]]: ...
-
     @staticmethod
     def constraint_name(
         model_class: type[Model], field_name: str, enum: type[EnumT]
     ) -> str: ...
-
 
 # ---------------------------------------------------------------------------
 # Concrete enum fields
@@ -209,7 +204,6 @@ class EnumCharField(EnumField[str, EnumT], Generic[EnumT]):
         **kwargs: Any,
     ) -> EnumCharField[_ET | None]: ...
 
-
 class EnumFloatField(EnumField[float, EnumT], Generic[EnumT]):
     """A database field supporting enumerations with floating point values."""
 
@@ -230,13 +224,11 @@ class EnumFloatField(EnumField[float, EnumT], Generic[EnumT]):
         **kwargs: Any,
     ) -> EnumFloatField[_ET | None]: ...
 
-
 class IntEnumField(EnumField[int, EnumT], Generic[EnumT]):
     """Base class for integer-backed enum fields."""
 
     @property
     def bit_length(self) -> int: ...
-
     @overload
     def __new__(
         cls,
@@ -256,42 +248,41 @@ class IntEnumField(EnumField[int, EnumT], Generic[EnumT]):
         **kwargs: Any,
     ) -> IntEnumField[_ET | None]: ...
 
-
 class EnumSmallIntegerField(IntEnumField[EnumT], SmallIntegerField, Generic[EnumT]):
     """Enum field backed by a SmallIntegerField (2 bytes)."""
-    ...
 
+    ...
 
 class EnumPositiveSmallIntegerField(
     IntEnumField[EnumT], PositiveSmallIntegerField, Generic[EnumT]
 ):
     """Enum field backed by a PositiveSmallIntegerField (2 bytes)."""
-    ...
 
+    ...
 
 class EnumIntegerField(IntEnumField[EnumT], IntegerField, Generic[EnumT]):
     """Enum field backed by an IntegerField (32 bytes)."""
-    ...
 
+    ...
 
 class EnumPositiveIntegerField(
     IntEnumField[EnumT], PositiveIntegerField, Generic[EnumT]
 ):
     """Enum field backed by a PositiveIntegerField (32 bytes)."""
-    ...
 
+    ...
 
 class EnumBigIntegerField(IntEnumField[EnumT], BigIntegerField, Generic[EnumT]):
     """Enum field backed by a BigIntegerField (64 bytes)."""
-    ...
 
+    ...
 
 class EnumPositiveBigIntegerField(
     IntEnumField[EnumT], PositiveBigIntegerField, Generic[EnumT]
 ):
     """Enum field backed by a PositiveBigIntegerField (64 bytes)."""
-    ...
 
+    ...
 
 class EnumDateField(EnumField[date, EnumT], Generic[EnumT]):
     """A database field supporting enumerations with date values."""
@@ -313,7 +304,6 @@ class EnumDateField(EnumField[date, EnumT], Generic[EnumT]):
         **kwargs: Any,
     ) -> EnumDateField[_ET | None]: ...
 
-
 class EnumDateTimeField(EnumField[datetime, EnumT], Generic[EnumT]):
     """A database field supporting enumerations with datetime values."""
 
@@ -333,7 +323,6 @@ class EnumDateTimeField(EnumField[datetime, EnumT], Generic[EnumT]):
         null: Literal[True] = ...,
         **kwargs: Any,
     ) -> EnumDateTimeField[_ET | None]: ...
-
 
 class EnumDurationField(EnumField[timedelta, EnumT], Generic[EnumT]):
     """A database field supporting enumerations with duration values."""
@@ -355,7 +344,6 @@ class EnumDurationField(EnumField[timedelta, EnumT], Generic[EnumT]):
         **kwargs: Any,
     ) -> EnumDurationField[_ET | None]: ...
 
-
 class EnumTimeField(EnumField[time, EnumT], Generic[EnumT]):
     """A database field supporting enumerations with time values."""
 
@@ -375,7 +363,6 @@ class EnumTimeField(EnumField[time, EnumT], Generic[EnumT]):
         null: Literal[True] = ...,
         **kwargs: Any,
     ) -> EnumTimeField[_ET | None]: ...
-
 
 class EnumDecimalField(EnumField[Decimal, EnumT], Generic[EnumT]):
     """A database field supporting enumerations with Decimal values."""
@@ -400,7 +387,6 @@ class EnumDecimalField(EnumField[Decimal, EnumT], Generic[EnumT]):
         null: Literal[True] = ...,
         **kwargs: Any,
     ) -> EnumDecimalField[_ET | None]: ...
-
 
 # ---------------------------------------------------------------------------
 # Flag fields
@@ -428,27 +414,26 @@ class FlagField(IntEnumField[FlagT], Generic[FlagT]):
         **kwargs: Any,
     ) -> FlagField[_FT | None]: ...
 
-
 class SmallIntegerFlagField(
     FlagField[FlagT], EnumPositiveSmallIntegerField[FlagT], Generic[FlagT]
 ):
     """Flag field stored in a PositiveSmallIntegerField (2 bytes)."""
-    ...
 
+    ...
 
 class IntegerFlagField(
     FlagField[FlagT], EnumPositiveIntegerField[FlagT], Generic[FlagT]
 ):
     """Flag field stored in a PositiveIntegerField (32 bytes)."""
-    ...
 
+    ...
 
 class BigIntegerFlagField(
     FlagField[FlagT], EnumPositiveBigIntegerField[FlagT], Generic[FlagT]
 ):
     """Flag field stored in a PositiveBigIntegerField (64 bytes)."""
-    ...
 
+    ...
 
 class EnumExtraBigIntegerField(IntEnumField[FlagT], BinaryField, Generic[FlagT]):
     """Enum field for integers wider than 64 bits, stored as binary."""
@@ -468,9 +453,9 @@ class EnumExtraBigIntegerField(IntEnumField[FlagT], BinaryField, Generic[FlagT])
         **kwargs: Any,
     ) -> EnumExtraBigIntegerField[_FT | None]: ...
 
-
 class ExtraBigIntegerFlagField(
     FlagField[FlagT], EnumExtraBigIntegerField[FlagT], Generic[FlagT]
 ):
     """Flag field for integers wider than 64 bits."""
+
     ...
