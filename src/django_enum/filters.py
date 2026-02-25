@@ -10,7 +10,12 @@ from enum import Enum, Flag
 from django.db.models import Field as ModelField
 from django.db.models import Q
 from django_filters import filterset
-from django_filters.filters import Filter, TypedChoiceFilter, TypedMultipleChoiceFilter
+from django_filters.constants import EMPTY_VALUES
+from django_filters.filters import (
+    Filter,
+    TypedChoiceFilter,
+    TypedMultipleChoiceFilter,
+)
 from django_filters.utils import try_dbfield
 
 from django_enum.fields import EnumField, FlagField
@@ -72,6 +77,21 @@ class EnumFilter(TypedChoiceFilter):
             choices=kwargs.pop("choices", choices(self.enum)),
             **kwargs,
         )
+
+    def filter(self, qs, value):
+        if value in EMPTY_VALUES:
+            return qs
+        if self.distinct:
+            qs = qs.distinct()
+        lookup = f"{self.field_name}__{self.lookup_expr}"
+        if self.exclude:
+            # qs.exclude(field=value) generates WHERE NOT (field = value) in SQL,
+            # which drops NULL rows on databases with strict NULL semantics (e.g. Oracle).
+            # Use an explicit Q expression to preserve NULL rows when excluding a value.
+            return qs.filter(
+                Q(**{f"{self.field_name}__isnull": True}) | ~Q(**{lookup: value})
+            )
+        return qs.filter(**{lookup: value})
 
 
 class MultipleEnumFilter(TypedMultipleChoiceFilter):
