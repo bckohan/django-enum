@@ -115,6 +115,8 @@ jobs:
       if: ${{ github.event.inputs.clear_cache == 'true' }}
       run: sudo rm -rf /opt/hostedtoolcache
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      with:
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
       id: sp
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
@@ -124,7 +126,7 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
-        enable-cache: true
+        enable-cache: false
     - name: Upgrade all dependencies for our weekly runs
       if: github.event_name == 'schedule'
       run: uv lock --upgrade
@@ -153,8 +155,10 @@ jobs:
         detached: true
       timeout-minutes: 60
     - name: Run Unit Tests
+      env:
+        PSYCOPG_VERSION: ${{ matrix.psycopg-version }}
       run: |
-        just test-all ${{ matrix.psycopg-version }}
+        just test-all "$PSYCOPG_VERSION"
     - name: Store coverage files
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
@@ -202,6 +206,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -211,7 +217,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -322,6 +328,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -341,7 +349,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -361,8 +369,10 @@ jobs:
           fi
       
       - name: Install mysqlclient if needed
+        env:
+          MYSQL_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just test-lock mysqlclient==$MYSQL_CLIENT_VERSION
       - name: Run Unit Tests
         run: |
           just test-all mysql
@@ -456,6 +466,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -475,7 +487,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -494,8 +506,10 @@ jobs:
           fi
       
       - name: Install mysqlclient if needed
+        env:
+          MYSQL_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just test-lock mysqlclient==$MYSQL_CLIENT_VERSION
       - name: Run Unit Tests
         run: |
           just test-all mysql
@@ -555,7 +569,7 @@ jobs:
 
     services:
       oracle:
-        image: gvenzl/${{ matrix.oracle-version }}
+        image: gvenzl/${{ matrix.oracle-version }}  # zizmor: ignore[unpinned-images]
         env:
           ORACLE_PASSWORD: password
         # Forward Oracle port
@@ -582,6 +596,8 @@ jobs:
             echo "ORACLE_DATABASE=FREEPDB1" >> $GITHUB_ENV
           fi
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         id: sp
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
@@ -601,7 +617,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -634,8 +650,10 @@ jobs:
             just test-lock Django~=$DJANGO_VERSION.0
           fi
       - name: Run Full Unit Tests
+        env: 
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          if [[ "${{ matrix.django-version }}" == "4.2" ]]; then
+          if [[ "$DJANGO_VERSION" == "4.2" ]]; then
             just test-all cx_oracle
           else
             just test-all oracledb
@@ -687,6 +705,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -696,7 +716,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -774,6 +794,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -783,7 +805,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -830,6 +852,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
@@ -837,7 +861,7 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade

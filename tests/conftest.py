@@ -127,18 +127,20 @@ def require_db_version(django_db_setup, django_db_blocker):
             pytest.fail(f"Invalid Django version format: {expected_django}")
 
         def get_postgresql_version():
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT version();")
-                version = cursor.fetchone()
-                db, ver = version[0].split(" ")[:2]
-                assert db == "PostgreSQL"
-                return tuple(int(v) for v in ver.split(".")[:2] if v)
+            with django_db_blocker.unblock():
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT version();")
+                    version = cursor.fetchone()
+                    db, ver = version[0].split(" ")[:2]
+                    assert db == "PostgreSQL"
+                    return tuple(int(v) for v in ver.split(".")[:2] if v)
 
         def get_mysql_version():
-            with connection.cursor() as cursor:
-                cursor.execute("SELECT VERSION();")
-                version = cursor.fetchone()
-                return version[0]
+            with django_db_blocker.unblock():
+                with connection.cursor() as cursor:
+                    cursor.execute("SELECT VERSION();")
+                    version = cursor.fetchone()
+                    return version[0]
 
         if expected_db_ver:
             if rdbms == "postgres":
