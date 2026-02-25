@@ -10,7 +10,7 @@ from decimal import Decimal, DecimalException
 from enum import Enum, Flag, IntFlag
 from functools import reduce
 from operator import or_
-from typing import TYPE_CHECKING, Any, Generic, Sequence, TypeVar, cast, overload
+from typing import Any, Generic, Sequence, TypeVar, cast, overload
 
 from django import VERSION as django_version
 from django.core.exceptions import ValidationError
@@ -340,13 +340,11 @@ class EnumFieldFactory(type):
         )
 
 
-if TYPE_CHECKING:
-    _FieldBase = Field[PrimitiveT | EnumT, EnumT]
-else:
-    _FieldBase = Field
-
-
-class EnumField(_FieldBase, Generic[PrimitiveT, EnumT], metaclass=EnumFieldFactory):
+class EnumField(
+    Field,
+    Generic[PrimitiveT, EnumT],
+    metaclass=EnumFieldFactory,
+):
     """
     This mixin class turns any Django database field into an enumeration field.
     It works by overriding validation and pre/post database hooks to validate
@@ -807,16 +805,7 @@ class EnumField(_FieldBase, Generic[PrimitiveT, EnumT], metaclass=EnumFieldFacto
             )
 
 
-if TYPE_CHECKING:
-    # Avoid CharField's _pyi_private_* types overriding EnumField's generics
-    # in the django-stubs mypy plugin. EnumField[str, EnumT] already provides
-    # Field[str | EnumT, EnumT] via _FieldBase.
-    _EnumCharFieldBase: type = Field
-else:
-    _EnumCharFieldBase = CharField
-
-
-class EnumCharField(EnumField[str, EnumT], _EnumCharFieldBase, Generic[EnumT]):
+class EnumCharField(EnumField[str, EnumT], CharField, Generic[EnumT]):
     """
     A database field supporting enumerations with character values.
     """
@@ -1015,8 +1004,8 @@ class EnumDateField(EnumField[date, EnumT], DateField, Generic[EnumT]):  # type:
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        val = cast(date | None, val.value if isinstance(val, Enum) else val)
-        return "" if val is None else val.isoformat()
+        prim_val = cast(date | None, val.value if isinstance(val, Enum) else val)
+        return "" if prim_val is None else prim_val.isoformat()
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
         return DateField.get_db_prep_value(
@@ -1049,8 +1038,8 @@ class EnumDateTimeField(EnumField[datetime, EnumT], DateTimeField, Generic[EnumT
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        val = cast(datetime | None, val.value if isinstance(val, Enum) else val)
-        return "" if val is None else val.isoformat()
+        prim_val = cast(datetime | None, val.value if isinstance(val, Enum) else val)
+        return "" if prim_val is None else prim_val.isoformat()
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
         return DateTimeField.get_db_prep_value(
@@ -1083,8 +1072,8 @@ class EnumDurationField(EnumField[timedelta, EnumT], DurationField, Generic[Enum
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        val = cast(timedelta | None, val.value if isinstance(val, Enum) else val)
-        return "" if val is None else duration_string(val)
+        prim_val = cast(timedelta | None, val.value if isinstance(val, Enum) else val)
+        return "" if prim_val is None else duration_string(prim_val)
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
         return DurationField.get_db_prep_value(
@@ -1117,8 +1106,8 @@ class EnumTimeField(EnumField[time, EnumT], TimeField, Generic[EnumT]):
 
     def value_to_string(self, obj):
         val = self.value_from_object(obj)
-        val = cast(time | None, val.value if isinstance(val, Enum) else val)
-        return "" if val is None else val.isoformat()
+        prim_val = cast(time | None, val.value if isinstance(val, Enum) else val)
+        return "" if prim_val is None else prim_val.isoformat()
 
     def get_db_prep_value(self, value, connection, prepared=False) -> Any:
         return TimeField.get_db_prep_value(

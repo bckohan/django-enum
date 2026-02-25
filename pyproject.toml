@@ -181,6 +181,12 @@ reportOptionalMemberAccess = false
 reportGeneralTypeIssues = false
 reportOptionalSubscript = false
 reportPrivateImportUsage = false
+# The __new__ overloads in fields.pyi use TypeVars (_ET, _FT) in the return type that
+# are bound to the optional `enum` parameter. Pyright warns that these TypeVars may go
+# unsolved if `enum` is not supplied (e.g. EnumField(null=True)). This is intentional:
+# callers are expected to supply the enum type, and when omitted the TypeVar defaults
+# to its bound (Enum / Flag). Suppress the resulting warnings.
+reportInvalidTypeVarUse = "none"
 
 
 # todo doc8 configuration here is not being picked up and doesnt seem to be working
