@@ -86,8 +86,8 @@ class EnumFilter(TypedChoiceFilter):
         lookup = f"{self.field_name}__{self.lookup_expr}"
         if self.exclude:
             # qs.exclude(field=value) generates WHERE NOT (field = value) in SQL,
-            # which drops NULL rows on databases with strict NULL semantics (e.g. Oracle).
-            # Use an explicit Q expression to preserve NULL rows when excluding a value.
+            # which drops NULL rows on databases with strict NULL semantics
+            # (e.g. Oracle). Use Q objects to preserve NULL rows when excluding.
             return qs.filter(
                 Q(**{f"{self.field_name}__isnull": True}) | ~Q(**{lookup: value})
             )
@@ -131,15 +131,35 @@ class MultipleEnumFilter(TypedMultipleChoiceFilter):
             **kwargs,
         )
 
+    def filter(self, qs, value):
+        if not value:
+            return qs
+        if self.is_noop(qs, value):
+            return qs
+        if self.exclude:
+            # qs.exclude(Q(f=v1) | Q(f=v2)) generates WHERE NOT (f=v1 OR f=v2)
+            # in SQL, which drops NULL rows on databases with strict NULL
+            # semantics (e.g. Oracle). Build a combined Q then add isnull.
+            q = Q()
+            for v in set(value):
+                if v == self.null_value:
+                    v = None
+                q |= Q(**self.get_filter_predicate(v))
+            qs = qs.filter(Q(**{f"{self.field_name}__isnull": True}) | ~q)
+            return qs.distinct() if self.distinct else qs
+        return super().filter(qs, value)
+
 
 class EnumFlagFilter(TypedMultipleChoiceFilter):
     """
     Use this filter class with :class:`~django_enum.fields.FlagField` fields. It will
     allow the field to be listed multiple times in URL query strings
-    (e.g. ``field=value&field=value``). By default the filter will query on these values with
-    :ref:`has_any` these values together. Use ``conjoined`` to use :ref:`has_all` instead.
+    (e.g. ``field=value&field=value``). By default the filter will query on these values
+    with :ref:`has_any` these values together. Use ``conjoined`` to use
+    :ref:`has_all` instead.
 
-    This filter also respects the :class:`~django_filters.filters.TypedMultipleChoiceFilter`
+    This filter also respects the
+    :class:`~django_filters.filters.TypedMultipleChoiceFilter`
     base class parameters such as ``exclude``.
 
     :param enum: The class of the enumeration containing the values to
@@ -196,7 +216,8 @@ class EnumFlagFilter(TypedMultipleChoiceFilter):
 
 class FilterSet(filterset.FilterSet):
     """
-    This filterset behaves the same way as the :doc:`django-filter <django-filter:index>`
+    This filterset behaves the same way as the
+    :doc:`django-filter <django-filter:index>`
     :class:`~django_filters.filterset.FilterSet` except the following fields will be set
     to the following filter types:
 
