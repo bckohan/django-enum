@@ -34,28 +34,31 @@ Django Enum
 .. |Code Cov| image:: https://codecov.io/gh/django-commons/django-enum/branch/main/graph/badge.svg?token=0IZOKN2DYL
    :target: https://codecov.io/gh/django-commons/django-enum
 
-.. |Test Status| image:: https://github.com/django-commons/django-enum/workflows/test/badge.svg
+.. |Test Status| image:: https://github.com/django-commons/django-enum/actions/workflows/test.yml/badge.svg?branch=main
    :target: https://github.com/django-commons/django-enum/actions/workflows/test.yml
 
-.. |Lint Status| image:: https://github.com/django-commons/django-enum/workflows/lint/badge.svg
+.. |Lint Status| image:: https://github.com/django-commons/django-enum/actions/workflows/lint.yml/badge.svg
    :target: https://github.com/django-commons/django-enum/actions/workflows/lint.yml
 
 .. |Django Packages| image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
     :target: https://djangopackages.org/packages/p/django-enum/
 
-.. |Postgres| image:: https://img.shields.io/badge/Postgres-9.6%2B-blue
+.. |OpenSSF Scorecard| image:: https://api.securityscorecards.dev/projects/github.com/django-commons/django-enum/badge
+   :target: https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-enum
+
+.. |Postgres| image:: https://img.shields.io/badge/Postgres-12+-blue
    :target: https://www.postgresql.org/
 
-.. |MySQL| image:: https://img.shields.io/badge/MySQL-5.7%2B-blue
+.. |MySQL| image:: https://img.shields.io/badge/MySQL-8.0+-blue
     :target: https://www.mysql.com
 
-.. |MariaDB| image:: https://img.shields.io/badge/MariaDB-10.2%2B-blue
+.. |MariaDB| image:: https://img.shields.io/badge/MariaDB-10.4+-blue
     :target: https://mariadb.org/
 
-.. |SQLite| image:: https://img.shields.io/badge/SQLite-3.8%2B-blue
+.. |SQLite| image:: https://img.shields.io/badge/SQLite-3.8+-blue
     :target: https://www.sqlite.org/
 
-.. |Oracle| image:: https://img.shields.io/badge/Oracle-18%2B-blue
+.. |Oracle| image:: https://img.shields.io/badge/Oracle-21c+-blue
     :target: https://www.oracle.com/database/
 
 ----
