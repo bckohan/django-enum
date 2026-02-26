@@ -5,7 +5,10 @@ Django Enum
 ===========
 
 |MIT license| |Ruff| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status|
-|Documentation Status| |Code Cov| |Test Status| |Django Packages|
+|Documentation Status| |Code Cov| |Test Status|
+
+
+|Django Packages| |OpenSSF Scorecard| |OpenSSF Best Practices|
 
 
 |Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
@@ -41,10 +44,13 @@ Django Enum
    :target: https://github.com/django-commons/django-enum/actions/workflows/lint.yml
 
 .. |Django Packages| image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
-    :target: https://djangopackages.org/packages/p/django-enum/
+   :target: https://djangopackages.org/packages/p/django-enum/
 
 .. |OpenSSF Scorecard| image:: https://api.securityscorecards.dev/projects/github.com/django-commons/django-enum/badge
    :target: https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-enum
+
+.. |OpenSSF Best Practices| image:: https://www.bestpractices.dev/projects/12044/badge
+   :target: https://www.bestpractices.dev/projects/12044
 
 .. |Postgres| image:: https://img.shields.io/badge/Postgres-12+-blue
    :target: https://www.postgresql.org/
