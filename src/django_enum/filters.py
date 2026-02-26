@@ -10,7 +10,6 @@ from enum import Enum, Flag
 from django.db.models import Field as ModelField
 from django.db.models import Q
 from django_filters import filterset
-from django_filters.constants import EMPTY_VALUES
 from django_filters.filters import (
     Filter,
     TypedChoiceFilter,
@@ -78,20 +77,6 @@ class EnumFilter(TypedChoiceFilter):
             **kwargs,
         )
 
-    def filter(self, qs, value):
-        if value in EMPTY_VALUES:
-            return qs
-        if self.distinct:
-            qs = qs.distinct()
-        lookup = f"{self.field_name}__{self.lookup_expr}"
-        if self.exclude:
-            # qs.exclude(field=value) generates WHERE NOT (field = value) in SQL,
-            # which drops NULL rows on databases with strict NULL semantics
-            # (e.g. Oracle). Find matching PKs via subquery and exclude by PK -
-            # since PKs are never NULL, NOT IN (pk_list) works correctly.
-            return qs.exclude(pk__in=qs.filter(**{lookup: value}).values("pk"))
-        return qs.filter(**{lookup: value})
-
 
 class MultipleEnumFilter(TypedMultipleChoiceFilter):
     """
@@ -129,24 +114,6 @@ class MultipleEnumFilter(TypedMultipleChoiceFilter):
             conjoined=conjoined,
             **kwargs,
         )
-
-    def filter(self, qs, value):
-        if not value:
-            return qs
-        if self.is_noop(qs, value):
-            return qs
-        if self.exclude:
-            # qs.exclude(Q(f=v1) | Q(f=v2)) generates WHERE NOT (f=v1 OR f=v2)
-            # in SQL, which drops NULL rows on databases with strict NULL
-            # semantics (e.g. Oracle). Find matching PKs via subquery and exclude
-            # by PK - since PKs are never NULL, NOT IN (pk_list) works correctly.
-            q = Q()
-            for v in set(value):
-                if v == self.null_value:
-                    v = None
-                q |= Q(**self.get_filter_predicate(v))
-            return qs.exclude(pk__in=qs.filter(q).values("pk"))
-        return super().filter(qs, value)
 
 
 class EnumFlagFilter(TypedMultipleChoiceFilter):
