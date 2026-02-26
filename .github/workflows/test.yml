@@ -548,15 +548,15 @@ jobs:
             django-version: '5.2'
 
           - python-version: '3.10'
-            django-version: '5.0'
+            django-version: '6.0'
           - python-version: '3.12'
-            django-version: '5.0'
+            django-version: '6.0'
 
           - django-version: '4.2'
             oracle-version: 'oracle-free:latest'
           - django-version: '5.2'
             oracle-version: 'oracle-xe:21'
-          - django-version: '5.0'
+          - django-version: '6.0'
             oracle-version: 'oracle-xe:21'
 
     services:
