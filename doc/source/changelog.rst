@@ -8,6 +8,7 @@ v2.4.0 (2026-02-25)
 ===================
 
 * Implemented `Support mypy <https://github.com/django-commons/django-enum/issues/129>`_
+  
   * EnumFields now type hint appropriately on model instances.
 
 v2.3.0 (2025-11-21)
