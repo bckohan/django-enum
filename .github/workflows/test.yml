@@ -131,7 +131,7 @@ jobs:
       if: github.event_name == 'schedule'
       run: uv lock --upgrade
     - name: Setup Just
-      uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+      uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
     - name: Install Release Dependencies
       shell: bash
       env:
@@ -220,7 +220,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Release Dependencies
         env:
           PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
@@ -348,7 +348,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Release Dependencies
         shell: bash
         env:
@@ -484,7 +484,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Release Dependencies
         env:
           PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
@@ -612,7 +612,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Oracle Client
         # https://askubuntu.com/questions/1512196/libaio1-on-noble
         run: |
@@ -711,7 +711,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Release Dependencies
         env:
           PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
@@ -798,7 +798,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Release Dependencies
         env:
           PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
@@ -852,7 +852,7 @@ jobs:
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
-        uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
+        uses: extractions/setup-just@f8a3cce218d9f83db3a2ecd90e41ac3de6cdfd9b
       - name: Install Release Dependencies
         env:
           PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
