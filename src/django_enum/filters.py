@@ -87,10 +87,9 @@ class EnumFilter(TypedChoiceFilter):
         if self.exclude:
             # qs.exclude(field=value) generates WHERE NOT (field = value) in SQL,
             # which drops NULL rows on databases with strict NULL semantics
-            # (e.g. Oracle). Use Q objects to preserve NULL rows when excluding.
-            return qs.filter(
-                Q(**{f"{self.field_name}__isnull": True}) | ~Q(**{lookup: value})
-            )
+            # (e.g. Oracle). Find matching PKs via subquery and exclude by PK -
+            # since PKs are never NULL, NOT IN (pk_list) works correctly.
+            return qs.exclude(pk__in=qs.filter(**{lookup: value}).values("pk"))
         return qs.filter(**{lookup: value})
 
 
@@ -139,14 +138,14 @@ class MultipleEnumFilter(TypedMultipleChoiceFilter):
         if self.exclude:
             # qs.exclude(Q(f=v1) | Q(f=v2)) generates WHERE NOT (f=v1 OR f=v2)
             # in SQL, which drops NULL rows on databases with strict NULL
-            # semantics (e.g. Oracle). Build a combined Q then add isnull.
+            # semantics (e.g. Oracle). Find matching PKs via subquery and exclude
+            # by PK - since PKs are never NULL, NOT IN (pk_list) works correctly.
             q = Q()
             for v in set(value):
                 if v == self.null_value:
                     v = None
                 q |= Q(**self.get_filter_predicate(v))
-            qs = qs.filter(Q(**{f"{self.field_name}__isnull": True}) | ~q)
-            return qs.distinct() if self.distinct else qs
+            return qs.exclude(pk__in=qs.filter(q).values("pk"))
         return super().filter(qs, value)
 
 
