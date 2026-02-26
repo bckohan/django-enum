@@ -115,6 +115,8 @@ jobs:
       if: ${{ github.event.inputs.clear_cache == 'true' }}
       run: sudo rm -rf /opt/hostedtoolcache
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+      with:
+        persist-credentials: false
     - name: Set up Python ${{ matrix.python-version }}
       id: sp
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
@@ -124,7 +126,7 @@ jobs:
     - name: Install uv
       uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
       with:
-        enable-cache: true
+        enable-cache: false
     - name: Upgrade all dependencies for our weekly runs
       if: github.event_name == 'schedule'
       run: uv lock --upgrade
@@ -132,12 +134,15 @@ jobs:
       uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
     - name: Install Release Dependencies
       shell: bash
+      env:
+        PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+        DJANGO_VERSION: ${{ matrix.django-version }}
       run: |
-        just setup ${{ steps.sp.outputs.python-path }}
-        if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-          just test-lock Django==${{ matrix.django-version }}
+        just setup "$PYTHON_PATH"
+        if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+          just test-lock Django==$DJANGO_VERSION
         else
-          just test-lock Django~=${{ matrix.django-version }}.0
+          just test-lock Django~=$DJANGO_VERSION.0
         fi
     - name: Install Emacs
       if: ${{ github.event.inputs.debug == 'true' }}
@@ -146,12 +151,12 @@ jobs:
     - name: Setup tmate session
       if: ${{ github.event.inputs.debug == 'true' }}
       uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      with:
-        detached: true
       timeout-minutes: 60
     - name: Run Unit Tests
+      env:
+        PSYCOPG_VERSION: ${{ matrix.psycopg-version }}
       run: |
-        just test-all ${{ matrix.psycopg-version }}
+        just test-all "$PSYCOPG_VERSION"
     - name: Store coverage files
       uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f
       with:
@@ -199,6 +204,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -208,20 +215,22 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       - name: Install Emacs
         if: ${{ github.event.inputs.debug == 'true' }}
@@ -230,8 +239,6 @@ jobs:
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
@@ -317,6 +324,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -330,13 +339,11 @@ jobs:
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
         timeout-minutes: 60
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -344,17 +351,22 @@ jobs:
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
         shell: bash
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       
       - name: Install mysqlclient if needed
+        env:
+          MYSQL_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just test-lock mysqlclient==$MYSQL_CLIENT_VERSION
       - name: Run Unit Tests
         run: |
           just test-all mysql
@@ -448,6 +460,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -461,30 +475,33 @@ jobs:
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
         timeout-minutes: 60
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       
       - name: Install mysqlclient if needed
+        env:
+          MYSQL_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
         if: ${{ matrix.mysqlclient-version != '' }}
-        run: just test-lock mysqlclient==${{ matrix.mysqlclient-version }}
+        run: just test-lock mysqlclient==$MYSQL_CLIENT_VERSION
       - name: Run Unit Tests
         run: |
           just test-all mysql
@@ -514,8 +531,8 @@ jobs:
         python-version: ['3.10', '3.12', '3.14']
         django-version:
           - '4.2' # LTS April 2026
-          - '5.2.10' # LTS April 2028
-          - '6.0.1' # April 2027
+          - '5.2' # LTS April 2028
+          - '6.0' # April 2027
         oracle-version:
           - 'oracle-xe:21'
           - 'oracle-free:latest'
@@ -526,25 +543,25 @@ jobs:
             django-version: '4.2'
 
           - python-version: '3.10'
-            django-version: '5.2.10'
+            django-version: '5.2'
           - python-version: '3.14'
-            django-version: '5.2.10'
+            django-version: '5.2'
 
           - python-version: '3.10'
-            django-version: '6.0.1'
+            django-version: '6.0'
           - python-version: '3.12'
-            django-version: '6.0.1'
+            django-version: '6.0'
 
           - django-version: '4.2'
             oracle-version: 'oracle-free:latest'
-          - django-version: '5.2.10'
+          - django-version: '5.2'
             oracle-version: 'oracle-xe:21'
-          - django-version: '6.0.1'
+          - django-version: '6.0'
             oracle-version: 'oracle-xe:21'
 
     services:
       oracle:
-        image: gvenzl/${{ matrix.oracle-version }}
+        image: gvenzl/${{ matrix.oracle-version }}  # zizmor: ignore[unpinned-images]
         env:
           ORACLE_PASSWORD: password
         # Forward Oracle port
@@ -571,6 +588,8 @@ jobs:
             echo "ORACLE_DATABASE=FREEPDB1" >> $GITHUB_ENV
           fi
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         id: sp
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
@@ -584,13 +603,11 @@ jobs:
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
         timeout-minutes: 60
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
@@ -612,16 +629,21 @@ jobs:
           fi
           sudo ldconfig
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       - name: Run Full Unit Tests
+        env: 
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          if [[ "${{ matrix.django-version }}" == "4.2" ]]; then
+          if [[ "$DJANGO_VERSION" == "4.2" ]]; then
             just test-all cx_oracle
           else
             just test-all oracledb
@@ -673,6 +695,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -682,22 +706,23 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
-          $version = "${{ matrix.django-version }}"
+          just setup "$PYTHON_PATH"
 
-          if ($version -match "(a|b|rc)") {
-            just test-lock "Django==$version"
+          if ($env:DJANGO_VERSION -match "(a|b|rc)") {
+            just test-lock "Django==$env:DJANGO_VERSION"
           } else {
-            just test-lock "Django~=$version.0"
+            just test-lock "Django~=$env:DJANGO_VERSION.0"
           }
         shell: pwsh
       - name: install-vim-windows
@@ -706,8 +731,6 @@ jobs:
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
@@ -759,6 +782,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
@@ -768,20 +793,22 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
+          DJANGO_VERSION: ${{ matrix.django-version }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
-          if [[ "${{ matrix.django-version }}" =~ (a|b|rc) ]]; then
-            just test-lock Django==${{ matrix.django-version }}
+          just setup "$PYTHON_PATH"
+          if [[ "$DJANGO_VERSION" =~ (a|b|rc) ]]; then
+            just test-lock Django==$DJANGO_VERSION
           else
-            just test-lock Django~=${{ matrix.django-version }}.0
+            just test-lock Django~=$DJANGO_VERSION.0
           fi
       - name: install-emacs-macos
         if: ${{ github.event.inputs.debug == 'true' }}
@@ -790,8 +817,6 @@ jobs:
       - name: Setup tmate session
         if: ${{ github.event.inputs.debug == 'true' }}
         uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-        with:
-          detached: true
         timeout-minutes: 60
       - name: Run Unit Tests
         run: |
@@ -813,6 +838,8 @@ jobs:
         if: ${{ github.event.inputs.clear_cache == 'true' }}
         run: sudo rm -rf /opt/hostedtoolcache
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
@@ -820,16 +847,17 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@eac588ad8def6316056a12d4907a9d4d84ff7a3b
         with:
-          enable-cache: true
+          enable-cache: false
       - name: Upgrade all dependencies for our weekly runs
         if: github.event_name == 'schedule'
         run: uv lock --upgrade
       - name: Setup Just
         uses: extractions/setup-just@e33e0265a09d6d736e2ee1e0eb685ef1de4669ff
       - name: Install Release Dependencies
+        env:
+          PYTHON_PATH: ${{ steps.sp.outputs.python-path }}
         run: |
-          just setup ${{ steps.sp.outputs.python-path }}
-          just install
+          just setup "$PYTHON_PATH"
 
       - name: Get coverage files
         uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131

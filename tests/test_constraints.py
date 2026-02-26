@@ -184,11 +184,14 @@ class ConstraintTests(EnumTypeMixin, TestCase):
 
                 do_insert(field, insert)
 
-                qry = MultiPrimitiveTestModel.objects.raw(
-                    f"SELECT * FROM {table_name} WHERE {field.column} = {insert}"
-                )
+                with connection.cursor() as db_cursor:
+                    db_cursor.execute(
+                        f"SELECT {field.column} FROM {table_name}"
+                        f" WHERE {field.column} = {insert}"
+                    )
+                    raw_val = db_cursor.fetchone()[0]
                 with self.assertRaises(ValueError):
-                    qry[0]
+                    field.from_db_value(raw_val, None, connection)
 
         for field, vals in [
             (

@@ -14,7 +14,7 @@ We provide a platform independent justfile with recipes for all the development 
 `django-enum` uses [uv](https://docs.astral.sh/uv) for environment, package and dependency management:
 
 ```bash
-    just install_uv
+    just install-uv
 ```
 
 Next, initialize and install the development environment:
@@ -29,7 +29,6 @@ Next, initialize and install the development environment:
 `django-enum` documentation is generated using [Sphinx](https://www.sphinx-doc.org). Any new feature PRs must provide updated documentation for the features added. To build the docs run:
 
 ```bash
-    just install-docs
     just docs
 ```
 
@@ -95,6 +94,16 @@ Additional dependency groups will need to be installed for some RDBMS, to run th
     just test-all oracle  # for oracle
 ```
 
+### Debugging tests
+
+To debug a test use the ``debug-test`` recipe:
+
+```bash
+just debug-test tests/test_examples.py::ExampleTests::test_color
+```
+
+This will set a breakpoint at the start of the test.
+
 ## Issuing Releases
 
 The release workflow is triggered by tag creation. You must have [git tag signing enabled](https://docs.github.com/en/authentication/managing-commit-signature-verification/signing-commits). Our justfile has a release shortcut:
@@ -106,43 +115,54 @@ The release workflow is triggered by tag creation. You must have [git tag signin
 ## Just Recipes
 
 ```bash
-build                        # build docs and package
-build-docs                   # build the docs
-build-docs-html              # build html documentation
-build-docs-pdf               # build pdf documentation
-check                        # run all static checks
-check-docs                   # lint the documentation
-check-docs-links             # check the documentation links for broken links
-check-format                 # check if the code needs formatting
-check-lint                   # lint the code
-check-package                # run package checks
-check-readme                 # check that the readme renders
-check-types                  # run static type checking
-clean                        # remove all non repository artifacts
-clean-docs                   # remove doc build artifacts
-clean-env                    # remove the virtual environment
-clean-git-ignored            # remove all git ignored files
-coverage                     # generate the test coverage report
-docs                         # build and open the documentation
-docs-live                    # serve the documentation, with auto-reload
-fetch-refs LIB               # fetch the intersphinx references for the given package
-fix                          # fix formatting, linting issues and import sorting
-format                       # format the code and sort imports
-install *OPTS="--all-extras" # update and install development dependencies
-install-docs                 # install documentation dependencies
-install-precommit            # install git pre-commit hooks
-install_uv                   # install the uv package manager
-lint                         # sort the imports and fix linting issues
-manage *COMMAND              # run the django admin
-open-docs                    # open the html documentation
-precommit                    # run the pre-commit checks
-release VERSION              # issue a relase for the given semver string (e.g. 2.1.0)
-run +ARGS                    # run the command in the virtual environment
-runserver                    # run the development server
-setup python="python"        # setup the venv, pre-commit hooks and playwright dependencies
-sort-imports                 # sort the python imports
-test *TESTS                  # run tests
-test-all DB_CLIENT="dev"     # run all tests
-test-lock +PACKAGES          # lock to specific python and versions of given dependencies
-validate_version VERSION     # validate the given version string against the lib version
+build                         # build docs and package
+build-docs                    # build the docs
+build-docs-html               # build html documentation
+build-docs-pdf                # build pdf documentation
+check                         # run all static checks
+check-all                     # run all checks including documentation link checking (slow)
+check-docs                    # lint the documentation
+check-docs-links              # check the documentation links for broken links
+check-format                  # check if the code needs formatting
+check-lint                    # lint the code
+check-package                 # run package checks
+check-readme                  # check that the readme renders
+check-types                   # run all static type checking
+check-types-isolated          # run all static type checking in an isolated environment
+check-types-mypy *RUN_ARGS    # run static type checking with mypy
+check-types-pyright *RUN_ARGS # run static type checking with pyright
+clean                         # remove all non repository artifacts
+clean-docs                    # remove doc build artifacts
+clean-env                     # remove the virtual environment
+clean-git-ignored             # remove all git ignored files
+coverage                      # generate the test coverage report
+debug-test *TESTS             # debug an test
+docs                          # build and open the documentation
+docs-live                     # serve the documentation, with auto-reload
+fetch-refs LIB                # fetch the intersphinx references for the given package
+fix                           # fix formatting, linting issues and import sorting
+format                        # format the code and sort imports
+generate-screenshots *TESTS   # run the tests and capture screenshots for the docs
+install *OPTS="--all-extras"  # update and install development dependencies
+install-precommit             # install git pre-commit hooks
+install-uv                    # install the uv package manager
+lint                          # sort the imports and fix linting issues
+make-test-migrations          # make test migrations
+manage *COMMAND               # run the django admin
+open-docs                     # open the html documentation
+precommit                     # run the pre-commit checks
+release VERSION               # issue a release for the given semver string (e.g. 2.1.0)
+remake-test-migrations        # regenerate test migrations using the lowest version of Django
+revert-screenshots            # revert screenshots to HEAD
+run +ARGS                     # run the command in the virtual environment
+runserver                     # run the development server
+setup python="python"         # setup the venv, pre-commit hooks
+sort-imports                  # sort the python imports
+test *TESTS                   # run specific tests
+test-all DB_CLIENT="dev"      # run all tests
+test-drf *TESTS               # test drf integration
+test-filters *TESTS           # test filters integration
+test-lock +PACKAGES           # lock to specific python and versions of given dependencies
+test-properties *TESTS        # test properties integration
+validate_version VERSION      # validate the given version string against the lib version
 ```
