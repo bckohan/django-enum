@@ -1,7 +1,10 @@
 import inspect
+import json
 import os
 import subprocess
 import sys
+from importlib.metadata import distributions
+from pathlib import Path
 
 import pytest
 import django
@@ -15,6 +18,43 @@ def pytest_addoption(parser):
         default=False,
         help="Record screenshots for the documentation",
     )
+    parser.addoption(
+        "--log-env",
+        action="store_true",
+        default=False,
+        help="Log the installed environment to requirements-test-N.txt",
+    )
+
+
+def pytest_sessionstart(session: pytest.Session) -> None:
+    if os.getenv("GITHUB_ACTIONS") == "true" or session.config.getoption("--log-env"):
+
+        def freeze():
+            lines = []
+            for dist in distributions():
+                name = dist.metadata["Name"]
+                version = dist.version
+                direct_url = dist.read_text("direct_url.json")
+                if direct_url:
+                    data = json.loads(direct_url)
+                    if "url" in data:
+                        lines.append(f"{name} @ {data['url']}")
+                        continue
+                lines.append(f"{name}=={version}")
+            return sorted(lines)
+
+        def write_reqs(number: int) -> True:
+            with open(f"requirements-test-{number}.txt", "x", encoding="utf-8") as f:
+                f.write("\n".join(freeze()) + "\n")
+            return True
+
+        num = 0
+        written = False
+        while not written:
+            try:
+                written = write_reqs(num)
+            except FileExistsError:
+                num += 1
 
 
 @pytest.fixture(autouse=True)
@@ -105,7 +145,9 @@ def require_db_version(django_db_setup, django_db_blocker):
     if os.getenv("GITHUB_ACTIONS") == "true":
         rdbms = os.environ["RDBMS"]
         expected_python = os.environ["TEST_PYTHON_VERSION"]
-        expected_django = os.environ["TEST_DJANGO_VERSION"]
+        expected_django = os.environ.get("TEST_DJANGO_VERSION", "").removeprefix("dj")
+        if expected_django.isdigit():
+            expected_django = ".".join(expected_django)
         expected_db_ver = os.environ.get("TEST_DATABASE_VERSION", None)
         expected_client = os.environ.get("TEST_DATABASE_CLIENT_VERSION", None)
 

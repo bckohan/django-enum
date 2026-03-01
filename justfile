@@ -51,35 +51,23 @@ runserver:
     @just manage migrate
     @just manage runserver 8027
 
-[script]
-_lock-python:
-    import tomlkit
-    import sys
-    f='pyproject.toml'
-    d=tomlkit.parse(open(f).read())
-    d['project']['requires-python']='=={}'.format(sys.version.split()[0])
-    open(f,'w').write(tomlkit.dumps(d))
-
-# lock to specific python and versions of given dependencies
-test-lock +PACKAGES: _lock-python
-    uv add --no-sync {{ PACKAGES }}
-    uv sync --reinstall --no-default-groups --no-install-project
-
 # run static type checking with mypy
-check-types-mypy *RUN_ARGS:
-    @just run --no-default-groups --all-extras --group typing {{ RUN_ARGS }} mypy
+check-types-mypy *ENV:
+    @just run {{ ENV }} --no-default-groups --all-extras --group typing mypy
 
 # run static type checking with pyright
-check-types-pyright *RUN_ARGS:
-    @just run --no-default-groups --all-extras --group typing {{ RUN_ARGS }} pyright
+check-types-pyright *ENV:
+    @just run {{ ENV }} --no-default-groups --all-extras --group typing pyright
 
 # run all static type checking
-check-types: check-types-mypy check-types-pyright
+check-types *ENV:
+    @just check-types-mypy {{ ENV }}
+    @just check-types-pyright {{ ENV }}
 
 # run all static type checking in an isolated environment
-check-types-isolated:
-    @just check-types-mypy --exact --isolated
-    @just check-types-pyright --exact --isolated
+check-types-isolated *ENV:
+    @just check-types-mypy {{ ENV }} --exact --isolated
+    @just check-types-pyright {{ ENV }} --exact --isolated
 
 # run package checks
 check-package:
@@ -92,11 +80,8 @@ clean-docs:
     shutil.rmtree('./doc/build', ignore_errors=True)
 
 # remove the virtual environment
-[script]
 clean-env:
-    import shutil
-    import sys
-    shutil.rmtree(".venv", ignore_errors=True)
+    python -c "import shutil, pathlib; p=pathlib.Path('.venv'); shutil.rmtree(p, ignore_errors=True) if p.exists() else None"
 
 # remove all git ignored files
 clean-git-ignored:
@@ -167,8 +152,8 @@ check-docs-links: _link-check
         sys.exit(1)
 
 # lint the documentation
-check-docs:
-    @just run --no-default-groups --group docs doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
+check-docs *ENV:
+    @just run {{ ENV }} --no-default-groups --group docs doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
 
 # fetch the intersphinx references for the given package
 [script]
@@ -193,39 +178,51 @@ fetch-refs LIB: _install-docs
     raise SystemExit(inspect_main([url]))
 
 # lint the code
-check-lint:
-    @just run --no-default-groups --group lint ruff check --select I
-    @just run --no-default-groups --group lint ruff check
+check-lint *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --select I
+    @just run {{ ENV }} --no-default-groups --group lint ruff check
 
 # check if the code needs formatting
-check-format:
-    @just run --no-default-groups --group lint ruff format --check
+check-format *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff format --check
 
 # check that the readme renders
-check-readme:
-    @just run --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
+check-readme *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint -m readme_renderer ./README.md -o /tmp/README.html
 
 # sort the python imports
-sort-imports:
-    @just run --no-default-groups --group lint ruff check --fix --select I
+sort-imports *ENV:
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --fix --select I
 
 # format the code and sort imports
-format: sort-imports
+format *ENV:
+    @just sort-imports {{ ENV }}
     just --fmt --unstable
-    @just run --no-default-groups --group lint ruff format
+    @just run {{ ENV }} --no-default-groups --group lint ruff format
 
 # sort the imports and fix linting issues
-lint: sort-imports
-    @just run --no-default-groups --group lint ruff check --fix
+lint *ENV:
+    @just sort-imports {{ ENV }}
+    @just run {{ ENV }} --no-default-groups --group lint ruff check --fix
 
 # fix formatting, linting issues and import sorting
-fix: lint format
+fix *ENV:
+    @just lint {{ ENV }}
+    @just format {{ ENV }}
 
 # run all static checks
-check: check-lint check-format check-types check-package check-docs check-readme
+check *ENV:
+    @just check-lint {{ ENV }}
+    @just check-format {{ ENV }}
+    @just check-types {{ ENV }}
+    @just check-package
+    @just check-docs {{ ENV }}
+    @just check-readme {{ ENV }}
 
 # run all checks including documentation link checking (slow)
-check-all: check check-docs-links
+check-all *ENV:
+    @just check {{ ENV }}
+    @just check-docs-links
 
 # regenerate test migrations using the lowest version of Django
 remake-test-migrations:
@@ -237,13 +234,13 @@ make-test-migrations:
     uv run --no-default-groups  --exact --isolated --resolution lowest-direct --all-extras --group test django-admin makemigrations
 
 # run all tests
-test-all DB_CLIENT="dev":
+test-all *ENV:
     # No Optional Dependency Unit Tests
     # todo clean this up, rerunning a lot of tests
-    @just run --no-default-groups --exact --group test --group {{ DB_CLIENT }} --isolated pytest --cov-append
-    @just run --no-default-groups --exact --extra properties --group test --group {{ DB_CLIENT }} --isolated pytest --cov-append
-    @just run --no-default-groups --exact --extra rest --group test --group {{ DB_CLIENT }} --isolated pytest --cov-append
-    @just run --no-default-groups --exact --all-extras --group test --group {{ DB_CLIENT }} --isolated pytest --cov-append
+    @just run {{ ENV }} --no-default-groups --exact --group test --isolated pytest --cov-append
+    @just run {{ ENV }} --no-default-groups --exact --extra properties --group test --isolated pytest --cov-append
+    @just run {{ ENV }} --no-default-groups --exact --extra rest --group test --isolated pytest --cov-append
+    @just run {{ ENV }} --no-default-groups --exact --all-extras --group test --isolated pytest --cov-append
 
 # test properties integration
 test-properties *TESTS:
@@ -259,7 +256,7 @@ test-filters *TESTS:
 
 # run specific tests
 test *TESTS:
-    @just run --no-default-groups --exact --all-extras --group test --isolated pytest {{ TESTS }} --cov-append
+    @just run --group test --no-sync pytest {{ TESTS }}
 
 # debug an test
 debug-test *TESTS:
