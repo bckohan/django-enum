@@ -138,6 +138,5 @@ type_check.py
 
 .DS_Store
 CLAUDE.md
-uv.lock
 requirements-test*.txt
 constraints.txt
