@@ -5,7 +5,7 @@ Django Enum
 ===========
 
 |MIT license| |Ruff| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status|
-|Documentation Status| |Code Cov| |Test Status| |Lint Status|
+|PyPi Typed| |Documentation Status| |Code Cov| |Test Status| |Lint Status|
 
 
 |Django Packages| |OpenSSF Scorecard| |OpenSSF Best Practices|
@@ -29,6 +29,9 @@ Django Enum
    :target: https://pypi.org/project/django-enum/
 
 .. |PyPI status| image:: https://img.shields.io/pypi/status/django-enum.svg
+   :target: https://pypi.python.org/pypi/django-enum
+
+.. |PyPI Typed| image:: https://img.shields.io/pypi/types/django-enum.svg
    :target: https://pypi.python.org/pypi/django-enum
 
 .. |Documentation Status| image:: https://readthedocs.org/projects/django-enum/badge/?version=latest
