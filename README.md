@@ -6,6 +6,7 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/django-enum.svg)](https://pypi.python.org/pypi/django-enum/)
 [![PyPI djversions](https://img.shields.io/pypi/djversions/django-enum.svg)](https://pypi.org/project/django-enum/)
 [![PyPI status](https://img.shields.io/pypi/status/django-enum.svg)](https://pypi.python.org/pypi/django-enum)
+[![PyPI - Types](https://img.shields.io/pypi/types/django-enum.svg)](https://pypi.python.org/pypi/django-enum)
 [![Documentation Status](https://readthedocs.org/projects/django-enum/badge/?version=latest)](http://django-enum.readthedocs.io/?badge=latest/)
 [![Code Cov](https://codecov.io/gh/django-commons/django-enum/branch/main/graph/badge.svg?token=0IZOKN2DYL)](https://codecov.io/gh/django-commons/django-enum)
 [![Test Status](https://github.com/django-commons/django-enum/actions/workflows/test.yml/badge.svg?branch=main)](https://github.com/django-commons/django-enum/actions/workflows/test.yml?query=branch:main)
