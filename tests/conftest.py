@@ -235,9 +235,9 @@ def require_db_version(django_db_setup, django_db_blocker):
                 if expected_client == "mysqlclient2x":
                     import MySQLdb
 
-                    if not MySQLdb.__version__[0] == "2":
+                    if MySQLdb.version_info[0] != 2:
                         pytest.fail(
-                            f"Unexpected mysqlclient version: got {MySQLdb.__version__},"
+                            f"Unexpected mysqlclient version: got {MySQLdb.version_info},"
                             f" expected 2.x",
                             pytrace=False,
                         )
@@ -259,9 +259,9 @@ def require_db_version(django_db_setup, django_db_blocker):
                 if expected_client == "mysqlclient2x":
                     import MySQLdb
 
-                    if not MySQLdb.__version__[0] == "2":
+                    if MySQLdb.version_info[0] != 2:
                         pytest.fail(
-                            f"Unexpected mysqlclient version: got {MySQLdb.__version__},"
+                            f"Unexpected mysqlclient version: got {MySQLdb.version_info},"
                             f" expected 2.x",
                             pytrace=False,
                         )
@@ -276,10 +276,7 @@ def require_db_version(django_db_setup, django_db_blocker):
                 )
                 if tag != "latest":
                     with django_db_blocker.unblock():
-                        with connection.cursor() as cursor:
-                            cursor.execute("SELECT VERSION FROM V$INSTANCE")
-                            row = cursor.fetchone()
-                            actual_ver = row[0]  # e.g. "21.3.0.0.0"
+                        actual_ver = connection.connection.version  # e.g. "21.3.0.0.0"
                     actual_major = int(actual_ver.split(".")[0])
                     expected_major = int(tag)
                     if actual_major != expected_major:
