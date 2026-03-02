@@ -4,7 +4,6 @@ import os
 import subprocess
 import sys
 from importlib.metadata import distributions
-from pathlib import Path
 
 import pytest
 import django
@@ -43,18 +42,19 @@ def pytest_sessionstart(session: pytest.Session) -> None:
                 lines.append(f"{name}=={version}")
             return sorted(lines)
 
-        def write_reqs(number: int) -> True:
-            with open(f"requirements-test-{number}.txt", "x", encoding="utf-8") as f:
-                f.write("\n".join(freeze()) + "\n")
-            return True
-
-        num = 0
-        written = False
-        while not written:
+        def write_reqs(number: int) -> bool:
             try:
-                written = write_reqs(num)
+                with open(
+                    f"requirements-test-{number}.txt", "x", encoding="utf-8"
+                ) as f:
+                    f.write("\n".join(freeze()) + "\n")
+                return True
             except FileExistsError:
-                num += 1
+                return False
+
+        run = 0
+        while not write_reqs(run):
+            run += 1
 
 
 @pytest.fixture(autouse=True)
@@ -220,10 +220,14 @@ def require_db_version(django_db_setup, django_db_blocker):
                             pytrace=False,
                         )
             elif rdbms == "mysql":
+                # todo
                 pass
             elif rdbms == "mariadb":
+                # todo
                 pass
             elif rdbms == "sqlite":
+                # todo
                 pass
             elif rdbms == "oracle":
+                # todo
                 pass
