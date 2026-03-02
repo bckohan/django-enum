@@ -187,8 +187,7 @@ def require_db_version(django_db_setup, django_db_blocker):
         if expected_db_ver:
             if rdbms == "postgres":
                 if expected_db_ver == "latest":
-                    # todo
-                    pass
+                    get_postgresql_version()  # verify accessible and is PostgreSQL
                 else:
                     expected_version = tuple(
                         int(v) for v in expected_db_ver.split(".") if v
@@ -220,14 +219,72 @@ def require_db_version(django_db_setup, django_db_blocker):
                             pytrace=False,
                         )
             elif rdbms == "mysql":
-                # todo
-                pass
+                if expected_db_ver != "latest":
+                    mysql_ver = get_mysql_version()
+                    actual = tuple(
+                        int(v) for v in mysql_ver.split(".")[:2] if v.isdigit()
+                    )
+                    expected = tuple(
+                        int(v) for v in expected_db_ver.split(".") if v.isdigit()
+                    )
+                    if actual[: len(expected)] != expected:
+                        pytest.fail(
+                            f"Unexpected MySQL version: got {mysql_ver}, expected {expected_db_ver}",
+                            pytrace=False,
+                        )
+                if expected_client == "mysqlclient2x":
+                    import MySQLdb
+
+                    if not MySQLdb.__version__[0] == "2":
+                        pytest.fail(
+                            f"Unexpected mysqlclient version: got {MySQLdb.__version__},"
+                            f" expected 2.x",
+                            pytrace=False,
+                        )
             elif rdbms == "mariadb":
-                # todo
-                pass
+                if expected_db_ver != "latest":
+                    mariadb_ver = get_mysql_version()
+                    ver_str = mariadb_ver.split("-")[0]  # strip "-MariaDB" suffix
+                    actual = tuple(
+                        int(v) for v in ver_str.split(".")[:2] if v.isdigit()
+                    )
+                    expected = tuple(
+                        int(v) for v in expected_db_ver.split(".") if v.isdigit()
+                    )
+                    if actual[: len(expected)] != expected:
+                        pytest.fail(
+                            f"Unexpected MariaDB version: got {mariadb_ver}, expected {expected_db_ver}",
+                            pytrace=False,
+                        )
+                if expected_client == "mysqlclient2x":
+                    import MySQLdb
+
+                    if not MySQLdb.__version__[0] == "2":
+                        pytest.fail(
+                            f"Unexpected mysqlclient version: got {MySQLdb.__version__},"
+                            f" expected 2.x",
+                            pytrace=False,
+                        )
             elif rdbms == "sqlite":
-                # todo
-                pass
+                pass  # no server version to verify for SQLite
             elif rdbms == "oracle":
-                # todo
-                pass
+                # expected_db_ver is the image tag, e.g. 'oracle-xe:21' or 'oracle-free:latest'
+                tag = (
+                    expected_db_ver.split(":")[-1]
+                    if ":" in expected_db_ver
+                    else expected_db_ver
+                )
+                if tag != "latest":
+                    with django_db_blocker.unblock():
+                        with connection.cursor() as cursor:
+                            cursor.execute("SELECT VERSION FROM V$INSTANCE")
+                            row = cursor.fetchone()
+                            actual_ver = row[0]  # e.g. "21.3.0.0.0"
+                    actual_major = int(actual_ver.split(".")[0])
+                    expected_major = int(tag)
+                    if actual_major != expected_major:
+                        pytest.fail(
+                            f"Unexpected Oracle version: got {actual_ver},"
+                            f" expected {expected_major}c",
+                            pytrace=False,
+                        )
