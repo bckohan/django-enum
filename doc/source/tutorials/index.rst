@@ -7,8 +7,8 @@ Tutorials
 =========
 
 Enumerations in Python can provide rich class based interfaces well suited to many use cases. We
-present several real world scenarios here that demonstrate the capability of django-enum_ to get
-your :class:`~django_enum.fields.EnumField` to do more work.
+present several real world scenarios here that demonstrate the capability of :pypi:`django-enum` to
+get your :class:`~django_enum.fields.EnumField` to do more work.
 
 In the :ref:`properties <properties>` tutorial, we leverage :doc:`enum-properties:index` to
 encapsulate more information onto our :class:`~enum.Enum` values so that any information needed in

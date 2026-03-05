@@ -13,13 +13,13 @@ Integrate with ...
     :class:`~django_enum.fields.EnumField` *should work with any third party libraries and will
     behave as a core field with a defined choice tuple list would*.
 
-However, you may want to take advantage of some of the extra features provided by django-enum_. We
-provide out-of-the-box integration with the following libraries:
+However, you may want to take advantage of some of the extra features provided by
+:pypi:`django-enum`. We provide out-of-the-box integration with the following libraries:
 
 .. _enum_props:
 
-enum-properties
----------------
+:pypi:`enum-properties`
+-----------------------
 
 Almost any :class:`enum.Enum` type is supported, so you may make use of :class:`enum.Enum`
 extension libraries like :doc:`enum-properties <enum-properties:index>` to define very rich
@@ -47,13 +47,13 @@ to the enumeration values and can be used to instantiate enumeration instances.
 It should be unnecessary, but if you need to integrate with code that expects an interface fully
 compatible with Django's
 `enumeration types <https://docs.djangoproject.com/en/stable/ref/models/fields/#enumeration-types>`_
-(``TextChoices`` and ``IntegerChoices`` django-enum_ provides
+(``TextChoices`` and ``IntegerChoices`` :pypi:`django-enum` provides
 :class:`~django_enum.choices.TextChoices`, :class:`~django_enum.choices.IntegerChoices`,
 :class:`~django_enum.choices.FlagChoices` and :class:`~django_enum.choices.FloatChoices` types that
 derive from :doc:`enum-properties <enum-properties:index>` and Django's ``Choices``. For instance,
 you may be using a third party library that uses :func:`isinstance` checks on your enum types
-instead of duck typing. For compatibility in these cases simply use django-enum_'s ``Choices`` types
-as the base class for your enumeration instead:
+instead of duck typing. For compatibility in these cases simply use :pypi:`django-enum`'s
+``Choices`` types as the base class for your enumeration instead:
 
 .. literalinclude:: ../../../tests/examples/models/text_choices.py
     :lines: 2-
@@ -76,8 +76,8 @@ All of the expected :doc:`enum-properties <enum-properties:index>` behavior work
 
 .. _rest_framework:
 
-Django Rest Framework
----------------------
+:pypi:`djangorestframework`
+---------------------------
 
 By default `DRF ModelSerializer
 <https://www.django-rest-framework.org/api-guide/serializers/#modelserializer>`_ will use a
@@ -131,8 +131,8 @@ will be sure that the serializer instantiates the correct django-enum serializer
 
 .. _filtering:
 
-django-filter
--------------
+:pypi:`django-filter`
+---------------------
 
 As shown above, filtering by any value, enumeration type instance or symmetric value works with
 :doc:`Django's ORM <django:topics/db/queries>`. This is not natively true for the default

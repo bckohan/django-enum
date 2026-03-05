@@ -80,7 +80,8 @@ Full and natural support for PEP435_ :class:`enumerations <enum.Enum>` as Django
 
 Many packages aim to ease usage of Python enumerations as model fields. Most were superseded when
 Django provided :ref:`TextChoices <field-choices-enum-types>` and
-:ref:`IntegerChoices <field-choices-enum-types>` types. The motivation for django-enum_ was to:
+:ref:`IntegerChoices <field-choices-enum-types>` types. The motivation for :pypi:`django-enum` was
+to:
 
 * Work with any :class:`~enum.Enum` including those that do not derive from
   Django's :ref:`TextChoices <field-choices-enum-types>` and
@@ -100,8 +101,8 @@ Django provided :ref:`TextChoices <field-choices-enum-types>` and
   :doc:`check constraints <django:ref/models/constraints>` by default.
 * (TODO) Support native database enumeration column types when available.
 
-django-enum_ provides a new model field type, :class:`~django_enum.fields.EnumField`, that allows
-you to treat almost any PEP435_ enumeration as a database column.
+:pypi:`django-enum` provides a new model field type, :class:`~django_enum.fields.EnumField`, that
+allows you to treat almost any PEP435_ enumeration as a database column.
 :class:`~django_enum.fields.EnumField` resolves the correct native Django_ field type for the given
 enumeration based on its value type and range. For example,
 :ref:`IntegerChoices <field-choices-enum-types>` that contain values between 0 and 32767 become
@@ -143,7 +144,7 @@ documentation for :ref:`discussion and benchmarks <flag_performance>`.
 Enums with Properties
 =====================
 
-django-enum_ supports enum types that do not derive from Django's
+:pypi:`django-enum` supports enum types that do not derive from Django's
 :ref:`IntegerChoices <field-choices-enum-types>` and :ref:`TextChoices <field-choices-enum-types>`.
 This allows us to use other libs like :doc:`enum-properties:index` which makes possible very
 rich enumeration fields:
@@ -163,7 +164,7 @@ rich enumeration fields:
 
 While they should be unnecessary, if you need to integrate with code that expects an interface fully
 compatible with Django's :ref:`TextChoices <field-choices-enum-types>` and
-:ref:`IntegerChoices <field-choices-enum-types>` django-enum_
+:ref:`IntegerChoices <field-choices-enum-types>` :pypi:`django-enum`
 provides :class:`~django_enum.choices.TextChoices`, :class:`~django_enum.choices.IntegerChoices`,
 :class:`~django_enum.choices.FlagChoices` and :class:`~django_enum.choices.FloatChoices` types that
 derive from :doc:`enum-properties:index` and Django's ``Choices``. So the above enumeration could
@@ -184,7 +185,7 @@ Installation
    > pip install django-enum
 
 
-django-enum_ has several optional dependencies that are not installed by default.
+:pypi:`django-enum` has several optional dependencies that are not installed by default.
 :class:`~django_enum.fields.EnumField` works seamlessly with all Django apps that work with model
 fields with choices without any additional work. Optional integrations are provided with several
 popular libraries to extend this basic functionality, these include:
@@ -194,8 +195,8 @@ popular libraries to extend this basic functionality, these include:
 
         > pip install "django-enum[properties]"
 
-* django-filter_
-* djangorestframework_.
+* :pypi:`django-filter`
+* :pypi:`djangorestframework`
 
 
 Database Support
@@ -205,9 +206,10 @@ Database Support
 
 Like with Django, PostgreSQL_ is the preferred database for support. The full test suite is run
 against all combinations of currently supported versions of Django_, Python_, and PostgreSQL_ as
-well as psycopg3_ and psycopg2_. The other RDBMS supported by Django_ are also tested including
-SQLite_, MySQL_, MariaDB_ and Oracle_. For these RDBMS (with the exception of Oracle_), tests are
-run against the minimum and maximum supported version combinations to maximize coverage breadth.
+well as :pypi:`psycopg` and :pypi:`psycopg2`. The other RDBMS supported by Django_ are also tested
+including SQLite_, MySQL_, MariaDB_ and Oracle_. For these RDBMS (with the exception of Oracle_),
+tests are run against the minimum and maximum supported version combinations to maximize coverage
+breadth.
 
 **See the** `latest test runs <https://github.com/django-commons/django-enum/actions/workflows/test.yml>`_
 **for our current test matrix**
@@ -215,7 +217,7 @@ run against the minimum and maximum supported version combinations to maximize c
 .. note::
 
     For Oracle_, only the latest version of the free database is tested against the minimum and
-    maximum supported versions of Python, Django and the cx-Oracle_ driver.
+    maximum supported versions of Python, Django and the :pypi:`cx-Oracle` driver.
 
 Further Reading
 ===============

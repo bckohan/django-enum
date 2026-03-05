@@ -5,15 +5,8 @@
 .. _PEP435: https://peps.python.org/pep-0435
 .. _DRY: https://en.wikipedia.org/wiki/Don%27t_repeat_yourself
 .. _DRF: https://www.django-rest-framework.org
-.. _django-enum: https://pypi.org/project/django-enum
-.. _django-filter: https://pypi.org/project/django-filter
-.. _djangorestframework: https://pypi.org/project/djangorestframework
 .. _PostgreSQL: https://www.postgresql.org
 .. _MySQL: https://www.mysql.com
 .. _MariaDB: https://mariadb.org
 .. _Oracle: https://www.oracle.com/database
 .. _SQLite: https://www.sqlite.org
-.. _cx-Oracle: https://pypi.org/project/cx-Oracle
-.. _psycopg2: https://pypi.org/project/psycopg2
-.. _psycopg3: https://pypi.org/project/psycopg
-.. _mysqlclient: https://pypi.org/project/mysqlclient

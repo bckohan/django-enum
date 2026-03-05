@@ -6,8 +6,8 @@
 Use Enums in URLs
 ==================
 
-django-enum_ provides a :ref:`converter <urls>` that can be used to register enum url parameters
-with the Django_ path resolver.
+:pypi:`django-enum` provides a :ref:`converter <urls>` that can be used to register enum url
+parameters with the Django_ path resolver.
 
 .. literalinclude:: ../../../tests/examples/urls.py
 
