@@ -122,7 +122,7 @@ docs: build-docs-html open-docs
 
 # serve the documentation, with auto-reload
 docs-live:
-    @just run --group docs --all-extras --isolated --no-default-groups sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8000 --delay 1
+    @just run --group docs --all-extras --isolated --no-default-groups sphinx-autobuild doc/source doc/build --open-browser --watch src --port 0 --delay 1
 
 _link-check:
     -uv run --no-default-groups --group docs sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
