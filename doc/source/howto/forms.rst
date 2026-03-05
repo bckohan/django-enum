@@ -6,9 +6,9 @@
 Use Forms
 =========
 
-django-enum_ provides custom :ref:`form fields <forms_ref>` and :ref:`widgets <widgets_ref>` that
-make including :class:`~django_enum.fields.EnumField` and :class:`~django_enum.fields.FlagField`
-fields on forms easy.
+:pypi:`django-enum` provides custom :ref:`form fields <forms_ref>` and :ref:`widgets <widgets_ref>`
+that make including :class:`~django_enum.fields.EnumField` and
+:class:`~django_enum.fields.FlagField` fields on forms easy.
 
 Using :class:`~django_enum.forms.EnumChoiceField`
 -------------------------------------------------
@@ -17,7 +17,7 @@ By default Django's :class:`~django.forms.ModelForm` will use :class:`~django.fo
 to represent :class:`~django_enum.fields.EnumField` fields. This works great, but if you're using
 an enumeration with :ref:`symmetric properties <enum-properties:howto_symmetric_properties>` or
 with custom :meth:`~enum.Enum._missing_` behavior that you would like the form to respect you must
-use django-enum_'s :class:`~django_enum.forms.EnumChoiceField` instead. **This will happen by
+use :pypi:`django-enum`'s :class:`~django_enum.forms.EnumChoiceField` instead. **This will happen by
 default when using** :class:`~django.forms.ModelForm` **forms because field construction is
 delegated to** :meth:`~django_enum.fields.EnumField.formfield`.
 

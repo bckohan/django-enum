@@ -29,7 +29,7 @@ following exceptions:
 
 :class:`~django.forms.ModelForm` classes, DRF_ serializers and filters will behave the same way
 with ``txt_enum`` and ``txt_choices``. A few types are provided for deeper integration with forms
-and django-filter_ but their usage is optional. See :ref:`forms` and :ref:`filtering`.
+and :pypi:`django-filter` but their usage is optional. See :ref:`forms` and :ref:`filtering`.
 
 Very rich enumeration fields that encapsulate much more functionality in a simple declarative syntax
 are possible with :class:`~django_enum.fields.EnumField`. See :ref:`enum_props`.

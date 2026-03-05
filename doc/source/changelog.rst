@@ -4,6 +4,11 @@
 Change Log
 ==========
 
+v2.4.2 (2026-03-05)
+===================
+
+* Bump minimum :pypi:`enum-properties` version to 2.7.0.
+
 v2.4.1 (2026-03-02)
 ===================
 
@@ -208,7 +213,7 @@ v1.1.1 (2023-01-15)
 v1.1.0 (2022-08-13)
 ===================
 
-* Fixed `django-filter intergration for non-strict values does not work. <https://github.com/django-commons/django-enum/issues/6>`_
+* Fixed :pypi:`django-filter` `intergration for non-strict values does not work. <https://github.com/django-commons/django-enum/issues/6>`_
 * Implemented `Set EnumChoiceField to the default form field type. <https://github.com/django-commons/django-enum/issues/5>`_
 * Implemented `Coerce default values to Enum types. <https://github.com/django-commons/django-enum/issues/4>`_
 * Implemented `Use custom descriptor to coerce fields to Enum type on assignment. <https://github.com/django-commons/django-enum/issues/3>`_

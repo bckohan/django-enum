@@ -6,7 +6,7 @@
 Properties
 ==========
 
-To run this example, we'll need to install django-enum_ with
+To run this example, we'll need to install :pypi:`django-enum` with
 :doc:`property support <enum-properties:index>`:
 
 .. code-block:: bash

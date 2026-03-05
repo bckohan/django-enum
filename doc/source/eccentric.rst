@@ -19,9 +19,9 @@ value type of either string or integer. If additional properties need to be asso
 enumeration values, a library like :doc:`enum-properties:index` should be used to store them on the
 enumeration value classes.
 
-However, the goal of django-enum_ is to provide as complete of a bridge as possible between Python
-and the database so eccentric enumerations are supported with caveats. The following enumeration
-value types are supported out of the box, and map to the obvious
+However, the goal of :pypi:`django-enum` is to provide as complete of a bridge as possible between
+Python and the database so eccentric enumerations are supported with caveats. The following
+enumeration value types are supported out of the box, and map to the obvious
 :ref:`model field type <ref/models/fields:field types>`.
 
 * :class:`int`

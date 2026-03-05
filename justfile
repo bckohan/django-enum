@@ -42,9 +42,6 @@ install-precommit:
 install *OPTS="--all-extras":
     uv sync {{ OPTS }}
 
-_install-docs:
-    uv sync --no-default-groups --group docs --all-extras
-
 # run the development server
 runserver:
     @just manage makemigrations
@@ -91,8 +88,8 @@ clean-git-ignored:
 clean: clean-docs clean-env clean-git-ignored
 
 # build html documentation
-build-docs-html: _install-docs
-    @just run sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
+build-docs-html:
+    @just run --group docs --all-extras --isolated --no-default-groups --exact sphinx-build --fresh-env --builder html --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/html
 
 [script]
 _open-pdf-docs:
@@ -101,8 +98,8 @@ _open-pdf-docs:
     webbrowser.open(f"file://{Path('./doc/build/pdf/django-enum.pdf').absolute()}")
 
 # build pdf documentation
-build-docs-pdf: _install-docs
-    @just run sphinx-build --fresh-env --builder latex --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
+build-docs-pdf:
+    @just run --group docs --all-extras --isolated --no-default-groups --exact sphinx-build --fresh-env --builder latex --doctree-dir ./doc/build/doctrees ./doc/source ./doc/build/pdf
     make -C ./doc/build/pdf
     @just _open-pdf-docs
 
@@ -124,8 +121,8 @@ open-docs:
 docs: build-docs-html open-docs
 
 # serve the documentation, with auto-reload
-docs-live: _install-docs
-    @just run --no-default-groups --group docs sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8000 --delay 1
+docs-live:
+    @just run --group docs --all-extras --isolated --no-default-groups sphinx-autobuild doc/source doc/build --open-browser --watch src --port 8000 --delay 1
 
 _link-check:
     -uv run --no-default-groups --group docs sphinx-build -b linkcheck -Q -D linkcheck_timeout=10 ./doc/source ./doc/build
@@ -154,6 +151,9 @@ check-docs-links: _link-check
 # lint the documentation
 check-docs *ENV:
     @just run {{ ENV }} --no-default-groups --group docs doc8 --ignore-path ./doc/build --max-line-length 100 -q ./doc
+
+_install-docs:
+    uv sync --no-default-groups --group docs --all-extras
 
 # fetch the intersphinx references for the given package
 [script]
