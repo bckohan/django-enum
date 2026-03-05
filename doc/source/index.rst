@@ -4,71 +4,83 @@
 Django Enum
 ===========
 
-|MIT license| |Ruff| |PyPI version fury.io| |PyPI pyversions| |PyPi djversions| |PyPI status|
-|PyPi Typed| |Documentation Status| |Code Cov| |Test Status| |Lint Status|
+.. only:: html
 
+   .. image:: https://img.shields.io/badge/License-MIT-blue.svg
+      :target: https://lbesson.mit-license.org/
+      :alt: MIT License
 
-|Django Packages| |OpenSSF Scorecard| |OpenSSF Best Practices|
+   .. image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
+      :target: https://docs.astral.sh/ruff
+      :alt: Ruff
 
+   .. image:: https://badge.fury.io/py/django-enum.svg
+      :target: https://pypi.python.org/pypi/django-enum/
+      :alt: PyPI Version
 
-|Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
+   .. image:: https://img.shields.io/pypi/pyversions/django-enum.svg
+      :target: https://pypi.python.org/pypi/django-enum/
+      :alt: Python Versions
 
-.. |MIT license| image:: https://img.shields.io/badge/License-MIT-blue.svg
-   :target: https://lbesson.mit-license.org/
+   .. image:: https://img.shields.io/pypi/djversions/django-enum.svg
+      :target: https://pypi.org/project/django-enum/
+      :alt: Django Versions
 
-.. |Ruff| image:: https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json
-   :target: https://docs.astral.sh/ruff
+   .. image:: https://img.shields.io/pypi/status/django-enum.svg
+      :target: https://pypi.python.org/pypi/django-enum
+      :alt: Development Status
 
-.. |PyPI version fury.io| image:: https://badge.fury.io/py/django-enum.svg
-   :target: https://pypi.python.org/pypi/django-enum/
+   .. image:: https://img.shields.io/pypi/types/django-enum.svg
+      :target: https://pypi.python.org/pypi/django-enum
+      :alt: Typed
 
-.. |PyPI pyversions| image:: https://img.shields.io/pypi/pyversions/django-enum.svg
-   :target: https://pypi.python.org/pypi/django-enum/
+   .. image:: https://readthedocs.org/projects/django-enum/badge/?version=latest
+      :target: http://django-enum.readthedocs.io/?badge=latest/
+      :alt: Documentation Status
 
-.. |PyPI djversions| image:: https://img.shields.io/pypi/djversions/django-enum.svg
-   :target: https://pypi.org/project/django-enum/
+   .. image:: https://codecov.io/gh/django-commons/django-enum/branch/main/graph/badge.svg?token=0IZOKN2DYL
+      :target: https://codecov.io/gh/django-commons/django-enum
+      :alt: Code Coverage
 
-.. |PyPI status| image:: https://img.shields.io/pypi/status/django-enum.svg
-   :target: https://pypi.python.org/pypi/django-enum
+   .. image:: https://github.com/django-commons/django-enum/actions/workflows/test.yml/badge.svg?branch=main
+      :target: https://github.com/django-commons/django-enum/actions/workflows/test.yml
+      :alt: Tests
 
-.. |PyPI Typed| image:: https://img.shields.io/pypi/types/django-enum.svg
-   :target: https://pypi.python.org/pypi/django-enum
+   .. image:: https://github.com/django-commons/django-enum/actions/workflows/lint.yml/badge.svg
+      :target: https://github.com/django-commons/django-enum/actions/workflows/lint.yml
+      :alt: Lint
 
-.. |Documentation Status| image:: https://readthedocs.org/projects/django-enum/badge/?version=latest
-   :target: http://django-enum.readthedocs.io/?badge=latest/
+   .. image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
+      :target: https://djangopackages.org/packages/p/django-enum/
+      :alt: Published on Django Packages
 
-.. |Code Cov| image:: https://codecov.io/gh/django-commons/django-enum/branch/main/graph/badge.svg?token=0IZOKN2DYL
-   :target: https://codecov.io/gh/django-commons/django-enum
+   .. image:: https://api.securityscorecards.dev/projects/github.com/django-commons/django-enum/badge
+      :target: https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-enum
+      :alt: OSSF Scorecard
 
-.. |Test Status| image:: https://github.com/django-commons/django-enum/actions/workflows/test.yml/badge.svg?branch=main
-   :target: https://github.com/django-commons/django-enum/actions/workflows/test.yml
+   .. image:: https://www.bestpractices.dev/projects/12044/badge
+      :target: https://www.bestpractices.dev/projects/12044
+      :alt: OSSF Best Practices
 
-.. |Lint Status| image:: https://github.com/django-commons/django-enum/actions/workflows/lint.yml/badge.svg
-   :target: https://github.com/django-commons/django-enum/actions/workflows/lint.yml
+   .. image:: https://img.shields.io/badge/Postgres-12+-blue
+      :target: https://www.postgresql.org/
+      :alt: Postgres Support
 
-.. |Django Packages| image:: https://img.shields.io/badge/Published%20on-Django%20Packages-0c3c26
-   :target: https://djangopackages.org/packages/p/django-enum/
+   .. image:: https://img.shields.io/badge/MySQL-8.0+-blue
+      :target: https://www.mysql.com
+      :alt: MySQL Support
 
-.. |OpenSSF Scorecard| image:: https://api.securityscorecards.dev/projects/github.com/django-commons/django-enum/badge
-   :target: https://securityscorecards.dev/viewer/?uri=github.com/django-commons/django-enum
+   .. image:: https://img.shields.io/badge/MariaDB-10.4+-blue
+      :target: https://mariadb.org/
+      :alt: MariaDB Support
 
-.. |OpenSSF Best Practices| image:: https://www.bestpractices.dev/projects/12044/badge
-   :target: https://www.bestpractices.dev/projects/12044
+   .. image:: https://img.shields.io/badge/SQLite-3.8+-blue
+      :target: https://www.sqlite.org/
+      :alt: SQLite Support
 
-.. |Postgres| image:: https://img.shields.io/badge/Postgres-12+-blue
-   :target: https://www.postgresql.org/
-
-.. |MySQL| image:: https://img.shields.io/badge/MySQL-8.0+-blue
-    :target: https://www.mysql.com
-
-.. |MariaDB| image:: https://img.shields.io/badge/MariaDB-10.4+-blue
-    :target: https://mariadb.org/
-
-.. |SQLite| image:: https://img.shields.io/badge/SQLite-3.8+-blue
-    :target: https://www.sqlite.org/
-
-.. |Oracle| image:: https://img.shields.io/badge/Oracle-21c+-blue
-    :target: https://www.oracle.com/database/
+   .. image:: https://img.shields.io/badge/Oracle-21c+-blue
+      :target: https://www.oracle.com/database/
+      :alt: Oracle Support
 
 ----
 
@@ -202,7 +214,27 @@ popular libraries to extend this basic functionality, these include:
 Database Support
 ================
 
-|Postgres| |MySQL| |MariaDB| |SQLite| |Oracle|
+.. only:: html
+
+   .. image:: https://img.shields.io/badge/Postgres-12+-blue
+      :target: https://www.postgresql.org/
+      :alt: Postgres Support
+
+   .. image:: https://img.shields.io/badge/MySQL-8.0+-blue
+      :target: https://www.mysql.com
+      :alt: MySQL Support
+
+   .. image:: https://img.shields.io/badge/MariaDB-10.4+-blue
+      :target: https://mariadb.org/
+      :alt: MariaDB Support
+
+   .. image:: https://img.shields.io/badge/SQLite-3.8+-blue
+      :target: https://www.sqlite.org/
+      :alt: SQLite Support
+
+   .. image:: https://img.shields.io/badge/Oracle-21c+-blue
+      :target: https://www.oracle.com/database/
+      :alt: Oracle Support
 
 Like with Django, PostgreSQL_ is the preferred database for support. The full test suite is run
 against all combinations of currently supported versions of Django_, Python_, and PostgreSQL_ as

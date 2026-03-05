@@ -95,7 +95,7 @@ build-docs-html:
 _open-pdf-docs:
     import webbrowser
     from pathlib import Path
-    webbrowser.open(f"file://{Path('./doc/build/pdf/django-enum.pdf').absolute()}")
+    webbrowser.open(f"file://{Path('./doc/build/pdf/djangoenum.pdf').absolute()}")
 
 # build pdf documentation
 build-docs-pdf:
