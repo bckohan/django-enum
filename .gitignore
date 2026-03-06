@@ -140,3 +140,4 @@ type_check.py
 CLAUDE.md
 requirements-test*.txt
 constraints.txt
+zizmor.sarif
