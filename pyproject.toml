@@ -101,7 +101,7 @@ exclude_dirs = [
     "./tests",
     "./example",
     "./.venv",
-    "./docs",
+    "./doc",
 ]
 
 skips = [
