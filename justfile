@@ -224,6 +224,11 @@ check-all *ENV:
     @just check {{ ENV }}
     @just check-docs-links
 
+# run zizmor security analysis of CI
+zizmor:
+    cargo install --locked zizmor
+    zizmor --format sarif .github/workflows/ > zizmor.sarif
+
 # regenerate test migrations using the lowest version of Django
 remake-test-migrations:
     - rm tests/**/migrations/00*.py

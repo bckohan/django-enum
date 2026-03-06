@@ -202,4 +202,5 @@ test-drf *TESTS              # test drf integration
 test-filters *TESTS          # test filters integration
 test-properties *TESTS       # test properties integration
 validate_version VERSION     # validate the given version string against the lib version
+zizmor                       # run zizmor security analysis of CI
 ```
