@@ -141,3 +141,4 @@ CLAUDE.md
 requirements-test*.txt
 constraints.txt
 zizmor.sarif
+bandit.sarif
