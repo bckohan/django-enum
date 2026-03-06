@@ -142,3 +142,4 @@ requirements-test*.txt
 constraints.txt
 zizmor.sarif
 bandit.sarif
+.ruff_cache
