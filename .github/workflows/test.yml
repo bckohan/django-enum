@@ -6,14 +6,14 @@ permissions:
 concurrency:
   group: test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
-  
+
 on:
   push:
     tags-ignore:
-      - '*'
-    branches: ['main']
+      - "*"
+    branches: ["main"]
   pull_request:
-    branches: ['main']
+    branches: ["main"]
     paths:
       - "src/**"
       - "tests/**"
@@ -25,65 +25,63 @@ on:
   workflow_dispatch:
     inputs:
       debug:
-        description: 'Open ssh debug session.'
+        description: "Open ssh debug session."
         required: true
         default: false
         type: boolean
       clear_cache:
-        description: 'Clear GitHub Tool cache.'
+        description: "Clear GitHub Tool cache."
         required: true
         default: false
         type: boolean
   schedule:
     # Every Sunday at 9:00 AM Los Angeles time.
     # GitHub cron is UTC; 09:00 PT == 17:00 UTC (PST).
-    - cron: '0 17 * * 0'
-
+    - cron: "0 17 * * 0"
 
 jobs:
-
   postgres:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-    # Service containers to run with `container-job`  
+    # Service containers to run with `container-job`
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.11', '3.12', '3.13', '3.14']
-        postgres-version: ['12', 'latest']
-        psycopg-version: ['psycopg2', 'psycopg3']
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
+        postgres-version: ["12", "latest"]
+        psycopg-version: ["psycopg2", "psycopg3"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # LTS April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # LTS April 2028
+          - "dj60" # April 2027
         exclude:
-          - django-version: 'dj42'
-            postgres-version: 'latest'
-          - python-version: '3.13'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
-          - postgres-version: '12'
-            psycopg-version: 'psycopg3'
+          - django-version: "dj42"
+            postgres-version: "latest"
+          - python-version: "3.13"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
+          - postgres-version: "12"
+            psycopg-version: "psycopg3"
 
-          - postgres-version: '12'
-            django-version: 'dj52'
-
-          # https://github.com/psycopg/psycopg2/pull/1695
-          - python-version: '3.13'
-            psycopg-version: 'psycopg2'
+          - postgres-version: "12"
+            django-version: "dj52"
 
           # https://github.com/psycopg/psycopg2/pull/1695
-          - python-version: '3.14'
-            psycopg-version: 'psycopg2'
+          - python-version: "3.13"
+            psycopg-version: "psycopg2"
 
-          - postgres-version: '12'
-            django-version: 'dj60'
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.11'
-            django-version: 'dj60'
+          # https://github.com/psycopg/psycopg2/pull/1695
+          - python-version: "3.14"
+            psycopg-version: "psycopg2"
+
+          - postgres-version: "12"
+            django-version: "dj60"
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.11"
+            django-version: "dj60"
 
     env:
       RDBMS: postgres
@@ -117,49 +115,48 @@ jobs:
           - 5432:5432
 
     steps:
-    - name: Clear Tool cache
-      if: ${{ github.event.inputs.clear_cache == 'true' }}
-      run: sudo rm -rf /opt/hostedtoolcache
-    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
-      with:
-        persist-credentials: false
-    - name: Set up Python ${{ matrix.python-version }}
-      id: sp
-      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
-      with:
-        python-version: ${{ matrix.python-version }}
-        allow-prereleases: true
-    - name: Install uv
-      uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
-      with:
-        enable-cache: false
-    - name: Setup Just
-      uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
-    - name: Install Emacs
-      if: ${{ github.event.inputs.debug == 'true' }}
-      run: |
-        sudo apt install emacs
-    - name: Setup tmate session
-      if: ${{ github.event.inputs.debug == 'true' }}
-      uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
-      timeout-minutes: 60
-    - name: Run Unit Tests
-      env:
-        TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
-      run: |
-        just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
-    - name: Store coverage files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: ${{ env.COVERAGE_FILE }}
-        path: ${{ env.COVERAGE_FILE }}
-    - name: Store env files
-      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
-      with:
-        name: requirements-${{ env.COVERAGE_FILE }}.txt
-        path: requirements-test*.txt
-        if-no-files-found: ignore
-    
+      - name: Clear Tool cache
+        if: ${{ github.event.inputs.clear_cache == 'true' }}
+        run: sudo rm -rf /opt/hostedtoolcache
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
+        with:
+          persist-credentials: false
+      - name: Set up Python ${{ matrix.python-version }}
+        id: sp
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: false
+      - name: Setup Just
+        uses: extractions/setup-just@53165ef7e734c5c07cb06b3c8e7b647c5aa16db3
+      - name: Install Emacs
+        if: ${{ github.event.inputs.debug == 'true' }}
+        run: |
+          sudo apt install emacs
+      - name: Setup tmate session
+        if: ${{ github.event.inputs.debug == 'true' }}
+        uses: mxschmitt/action-tmate@c0afd6f790e3a5564914980036ebf83216678101
+        timeout-minutes: 60
+      - name: Run Unit Tests
+        env:
+          TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
+        run: |
+          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+      - name: Store coverage files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ${{ env.COVERAGE_FILE }}
+          path: ${{ env.COVERAGE_FILE }}
+      - name: Store env files
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: requirements-${{ env.COVERAGE_FILE }}.txt
+          path: requirements-test*.txt
+          if-no-files-found: ignore
 
   sqlite:
     runs-on: ubuntu-latest
@@ -174,26 +171,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42'    # LTS April 2024
-          - 'dj52'    # LTS April 2028
-          - 'dj60'    # April 2027
+          - "dj42" # LTS April 2024
+          - "dj52" # LTS April 2028
+          - "dj60" # April 2027
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
     steps:
       - name: Clear Tool cache
@@ -238,7 +235,6 @@ jobs:
           name: requirements-${{ env.COVERAGE_FILE }}.txt
           path: requirements-test*.txt
           if-no-files-found: ignore
-        
 
   mysql:
     runs-on: ubuntu-latest
@@ -247,39 +243,39 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
-        mysql-version: ['8.0', 'latest']
-        mysqlclient-version: ['mysqlclient14', 'mysqlclient2x']
+        python-version: ["3.10", "3.12", "3.14"]
+        mysql-version: ["8.0", "latest"]
+        mysqlclient-version: ["mysqlclient14", "mysqlclient2x"]
         django-version:
-          - 'dj42'    # LTS April 2024
-          - 'dj52'    # LTS April 2028
-          - 'dj60'    # April 2027
+          - "dj42" # LTS April 2024
+          - "dj52" # LTS April 2028
+          - "dj60" # April 2027
         exclude:
-          - django-version: 'dj42'
-            mysql-version: 'latest'
+          - django-version: "dj42"
+            mysql-version: "latest"
 
-          - django-version: 'dj60'
-            mysql-version: '8.0'
+          - django-version: "dj60"
+            mysql-version: "8.0"
 
-          - mysql-version: 'latest'
-            mysqlclient-version: 'mysqlclient14'
+          - mysql-version: "latest"
+            mysqlclient-version: "mysqlclient14"
 
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
-          - django-version: 'dj52'
-            mysqlclient-version: 'mysqlclient14'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
+          - django-version: "dj52"
+            mysqlclient-version: "mysqlclient14"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
     env:
       RDBMS: mysql
@@ -367,49 +363,50 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
-        mysqlclient-version: ['mysqlclient14', 'mysqlclient2x']
-        mariadb-version: ['10.4', 'latest']
-        mariadb-healthcheck: ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
+        python-version: ["3.10", "3.12", "3.14"]
+        mysqlclient-version: ["mysqlclient14", "mysqlclient2x"]
+        mariadb-version: ["10.4", "latest"]
+        mariadb-healthcheck:
+          ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
-          - 'dj42'    # LTS April 2024
-          - 'dj52'    # LTS April 2028
-          - 'dj60'    # April 2027
+          - "dj42" # LTS April 2024
+          - "dj52" # LTS April 2028
+          - "dj60" # April 2027
         exclude:
-          - django-version: 'dj42'
-            mariadb-version: 'latest'
+          - django-version: "dj42"
+            mariadb-version: "latest"
 
-          - django-version: 'dj52'
-            mariadb-version: '10.4'
-          - django-version: 'dj60'
-            mariadb-version: '10.4'
+          - django-version: "dj52"
+            mariadb-version: "10.4"
+          - django-version: "dj60"
+            mariadb-version: "10.4"
 
-          - mariadb-version: 'latest'
-            mysqlclient-version: 'mysqlclient14'
+          - mariadb-version: "latest"
+            mysqlclient-version: "mysqlclient14"
 
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
-          - django-version: 'dj52'
-            mysqlclient-version: 'mysqlclient14'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
+          - django-version: "dj52"
+            mysqlclient-version: "mysqlclient14"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
-          - mariadb-version: '10.4'
-            mysqlclient-version: 'mysqlclient2x'
+          - mariadb-version: "10.4"
+            mysqlclient-version: "mysqlclient2x"
 
-          - mariadb-version: 'latest'
+          - mariadb-version: "latest"
             mariadb-healthcheck: "mysqladmin ping"
-          - mariadb-version: '10.4'
+          - mariadb-version: "10.4"
             mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
 
     services:
@@ -490,40 +487,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42' # LTS April 2026
-          - 'dj52' # LTS April 2028
-          - 'dj60' # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # LTS April 2028
+          - "dj60" # April 2027
         oracle-version:
-          - 'oracle-xe:21'
-          - 'oracle-free:latest'
+          - "oracle-xe:21"
+          - "oracle-free:latest"
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
-          - django-version: 'dj42'
-            oracle-version: 'oracle-free:latest'
-          - django-version: 'dj52'
-            oracle-version: 'oracle-xe:21'
-          - django-version: 'dj60'
-            oracle-version: 'oracle-xe:21'
+          - django-version: "dj42"
+            oracle-version: "oracle-free:latest"
+          - django-version: "dj52"
+            oracle-version: "oracle-xe:21"
+          - django-version: "dj60"
+            oracle-version: "oracle-xe:21"
 
     services:
       oracle:
-        image: gvenzl/${{ matrix.oracle-version }}  # zizmor: ignore[unpinned-images]
+        image: gvenzl/${{ matrix.oracle-version }} # zizmor: ignore[unpinned-images]
         env:
           ORACLE_PASSWORD: password
         # Forward Oracle port
@@ -607,7 +604,6 @@ jobs:
           name: requirements-${{ env.COVERAGE_FILE }}.txt
           path: requirements-test*.txt
           if-no-files-found: ignore
-  
 
   windows:
     runs-on: windows-latest
@@ -622,26 +618,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42'    # LTS April 2026
-          - 'dj52'    # LTS April 2028
-          - 'dj60'    # April 2027
+          - "dj42" # LTS April 2026
+          - "dj52" # LTS April 2028
+          - "dj60" # April 2027
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
     steps:
       - name: Clear Tool cache
@@ -687,7 +683,6 @@ jobs:
           path: requirements-test*.txt
           if-no-files-found: ignore
 
-  
   macos:
     runs-on: macos-latest
     permissions:
@@ -701,26 +696,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ['3.10', '3.12', '3.14']
+        python-version: ["3.10", "3.12", "3.14"]
         django-version:
-          - 'dj42'    # LTS April 2024
-          - 'dj52'    # LTS April 2028
-          - 'dj60'    # April 2027
+          - "dj42" # LTS April 2024
+          - "dj52" # LTS April 2028
+          - "dj60" # April 2027
         exclude:
-          - python-version: '3.12'
-            django-version: 'dj42'
-          - python-version: '3.14'
-            django-version: 'dj42'
+          - python-version: "3.12"
+            django-version: "dj42"
+          - python-version: "3.14"
+            django-version: "dj42"
 
-          - python-version: '3.10'
-            django-version: 'dj52'
-          - python-version: '3.14'
-            django-version: 'dj52'
+          - python-version: "3.10"
+            django-version: "dj52"
+          - python-version: "3.14"
+            django-version: "dj52"
 
-          - python-version: '3.10'
-            django-version: 'dj60'
-          - python-version: '3.12'
-            django-version: 'dj60'
+          - python-version: "3.10"
+            django-version: "dj60"
+          - python-version: "3.12"
+            django-version: "dj60"
 
     steps:
       - name: Clear Tool cache
@@ -765,14 +760,13 @@ jobs:
           name: requirements-${{ env.COVERAGE_FILE }}.txt
           path: requirements-test*.txt
           if-no-files-found: ignore
-        
 
   coverage-combine:
     needs: [postgres, sqlite, mysql, mariadb, oracle, windows, macos]
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write  # to allow codecov oidc upload
+      id-token: write # to allow codecov oidc upload
     steps:
       - name: Clear Tool cache
         if: ${{ github.event.inputs.clear_cache == 'true' }}
@@ -783,7 +777,7 @@ jobs:
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
         id: sp
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install uv
         uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
         with:
@@ -802,5 +796,4 @@ jobs:
         uses: codecov/codecov-action@57e3a136b779b570ffcdbf80b3bdc90e7fab3de2
         with:
           use_oidc: true
-          files:
-            ./coverage.xml
+          files: ./coverage.xml

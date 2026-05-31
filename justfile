@@ -200,6 +200,10 @@ format *ENV:
     just --fmt --unstable
     @just run {{ ENV }} --no-default-groups --group lint ruff format
 
+# format the github workflow files
+format-workflows:
+    npx prettier --write ".github/workflows/*.{yml,yaml}"
+
 # sort the imports and fix linting issues
 lint *ENV:
     @just sort-imports {{ ENV }}
