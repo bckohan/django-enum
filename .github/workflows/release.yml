@@ -1,7 +1,9 @@
 
 name: Publish Release
 
-permissions: read-all
+
+permissions:
+  contents: read
 
 concurrency:
   # stop previous release runs if tag is recreated
@@ -40,7 +42,7 @@ jobs:
     steps:
     - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd
       with:
-        persist-credentials: true
+        persist-credentials: false
     - name: Set up Python
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405
       id: sp

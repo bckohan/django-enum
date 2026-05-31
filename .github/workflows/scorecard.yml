@@ -9,7 +9,12 @@ on:
     branches: [ main ]
   workflow_dispatch:
 
-permissions: read-all
+concurrency:
+  group: scorecard-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   analysis:
