@@ -147,7 +147,7 @@ jobs:
       env:
         TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
       run: |
-        just test-all --group "${{ matrix.psycopg-version }}" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+        just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
     - name: Store coverage files
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
       with:
@@ -339,7 +339,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all --group "${{ matrix.mysqlclient-version }}" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -461,7 +461,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all --group "${{ matrix.mysqlclient-version }}" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -542,9 +542,9 @@ jobs:
         run: sudo rm -rf /opt/hostedtoolcache
       - name: Set coverage file
         run: |
-          ORACLE_TAG=$(echo "${{ matrix.oracle-version }}" | cut -d':' -f2)
-          echo "COVERAGE_FILE=linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-oracle${ORACLE_TAG}.coverage" >> $GITHUB_ENV
-          if [[ "${{ matrix.django-version }}" == "dj42" ]]; then
+          ORACLE_TAG=$(echo "$TEST_DATABASE_VERSION" | cut -d':' -f2)
+          echo "COVERAGE_FILE=linux-py${TEST_PYTHON_VERSION}-${TEST_DJANGO_VERSION}-oracle${ORACLE_TAG}.coverage" >> $GITHUB_ENV
+          if [[ "$TEST_DJANGO_VERSION" == "dj42" ]]; then
             echo "ORACLE_DATABASE=XEPDB1" >> $GITHUB_ENV
           else
             echo "ORACLE_DATABASE=FREEPDB1" >> $GITHUB_ENV
@@ -577,7 +577,7 @@ jobs:
         run: |
           sudo apt install alien libaio1t64
           sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
-          if [[ "${{ matrix.django-version }}" == "dj42" ]]; then
+          if [[ "$TEST_DJANGO_VERSION" == "dj42" ]]; then
             curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2116000/oracle-instantclient-basiclite-21.16.0.0.0-1.el8.x86_64.rpm
             sudo alien -i oracle-client.rpm
             sudo sh -c "echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf"
