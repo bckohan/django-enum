@@ -2,7 +2,11 @@ name: Lint
 
 permissions:
   contents: read
-  
+
+concurrency:
+  group: lint-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   push:
     tags-ignore:

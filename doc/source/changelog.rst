@@ -4,6 +4,12 @@
 Change Log
 ==========
 
+v2.4.3 (2026-05-31)
+===================
+
+* Fixed `drf: Input coercion does not match model field or django filter
+  <https://github.com/django-commons/django-enum/issues/194>`_.
+
 v2.4.2 (2026-03-05)
 ===================
 
