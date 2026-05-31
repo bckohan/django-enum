@@ -46,7 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     # Service containers to run with `container-job`  
     strategy:
       fail-fast: false
@@ -166,7 +165,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: sqlite
       COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
@@ -246,7 +244,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     strategy:
       fail-fast: false
       matrix:
@@ -359,7 +356,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: mariadb
       COVERAGE_FILE: linux-py${{ matrix.python-version }}-${{ matrix.django-version }}-${{ matrix.mysqlclient-version }}-mariadb${{ matrix.mariadb-version }}.coverage
@@ -482,7 +478,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: oracle
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
@@ -618,7 +613,6 @@ jobs:
     runs-on: windows-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: sqlite
       COVERAGE_FILE: windows-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
@@ -698,7 +692,6 @@ jobs:
     runs-on: macos-latest
     permissions:
       contents: read
-      actions: write
     env:
       RDBMS: sqlite
       COVERAGE_FILE: macos-py${{ matrix.python-version }}-${{ matrix.django-version }}-sqlite.coverage
@@ -779,7 +772,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write
+      id-token: write  # to allow codecov oidc upload
     steps:
       - name: Clear Tool cache
         if: ${{ github.event.inputs.clear_cache == 'true' }}
