@@ -83,6 +83,14 @@ jobs:
           - python-version: "3.11"
             django-version: "dj60"
 
+        # pin each image to its digest (satisfies zizmor unpinned-images)
+        # while keeping postgres-version driving the matrix
+        include:
+          - postgres-version: "12"
+            postgres-image: "postgres:12@sha256:2f2a8c2a7d10862e7fba2602e304523554f9df8244c632dafe2628ccb398fb5c"
+          - postgres-version: "latest"
+            postgres-image: "postgres:latest@sha256:8ff36f3c66371cba71d20ceedccfc3de9669a68737607888c4ef0af93abe8e39"
+
     env:
       RDBMS: postgres
       POSTGRES_PASSWORD: postgres
@@ -100,7 +108,7 @@ jobs:
       # Label used to access the service container
       postgres:
         # Docker Hub image
-        image: postgres:${{ matrix.postgres-version }}
+        image: ${{ matrix.postgres-image }}
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres
@@ -277,6 +285,14 @@ jobs:
           - python-version: "3.12"
             django-version: "dj60"
 
+        # pin each image to its digest (satisfies zizmor unpinned-images)
+        # while keeping mysql-version driving the matrix
+        include:
+          - mysql-version: "8.0"
+            mysql-image: "mysql:8.0@sha256:7dcddc01f13bab2f15cde676d44d01f61fc9f99fe7785e86196dfc07d358ae2b"
+          - mysql-version: "latest"
+            mysql-image: "mysql:latest@sha256:c11782aa2a96624c1efc121768641d96954faa136d6aa82751b032d8c426ffbc"
+
     env:
       RDBMS: mysql
       MYSQL_VERSION: ${{ matrix.mysql-version }}
@@ -289,7 +305,7 @@ jobs:
     services:
       mysql:
         # Docker Hub image
-        image: mysql:${{ matrix.mysql-version }}
+        image: ${{ matrix.mysql-image }}
         # Provide the password for mysql
         env:
           MYSQL_ROOT_PASSWORD: root
@@ -409,10 +425,18 @@ jobs:
           - mariadb-version: "10.4"
             mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
 
+        # pin each image to its digest (satisfies zizmor unpinned-images)
+        # while keeping mariadb-version driving the matrix
+        include:
+          - mariadb-version: "10.4"
+            mariadb-image: "mariadb:10.4@sha256:22edfe1c78349f8cae88bbb5c2873b7e6c515be767c91c691308ce57445806f3"
+          - mariadb-version: "latest"
+            mariadb-image: "mariadb:latest@sha256:6a4c4bbf0447c2247801309513fcc0dd17c3f35390368139ce419387fdd1144d"
+
     services:
       mysql:
         # Docker Hub image
-        image: mariadb:${{ matrix.mariadb-version }}
+        image: ${{ matrix.mariadb-image }}
         # Provide the password for mysql
         env:
           MYSQL_ROOT_PASSWORD: root
@@ -518,9 +542,17 @@ jobs:
           - django-version: "dj60"
             oracle-version: "oracle-xe:21"
 
+        # pin each image to its digest (satisfies zizmor unpinned-images)
+        # while keeping oracle-version driving the matrix
+        include:
+          - oracle-version: "oracle-xe:21"
+            oracle-image: "gvenzl/oracle-xe:21@sha256:c2682a4216b0fe65537912c4a049c7e5c15a85bb7c94bb8137d5f2d2eef60603"
+          - oracle-version: "oracle-free:latest"
+            oracle-image: "gvenzl/oracle-free:latest@sha256:e2763af84ecc345d48e4e3fe7999d0b7bb57885b6e0166051acd5f62e27eb605"
+
     services:
       oracle:
-        image: gvenzl/${{ matrix.oracle-version }} # zizmor: ignore[unpinned-images]
+        image: ${{ matrix.oracle-image }}
         env:
           ORACLE_PASSWORD: password
         # Forward Oracle port
