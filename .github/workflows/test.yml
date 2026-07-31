@@ -54,7 +54,7 @@ jobs:
         django-version:
           - "dj42" # LTS April 2026
           - "dj52" # LTS April 2028
-          - "dj60" # April 2027
+          - "dj61" # April 2027
         exclude:
           - django-version: "dj42"
             postgres-version: "latest"
@@ -77,11 +77,11 @@ jobs:
             psycopg-version: "psycopg2"
 
           - postgres-version: "12"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.10"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.11"
-            django-version: "dj60"
+            django-version: "dj61"
 
         # pin each image to its digest (satisfies zizmor unpinned-images)
         # while keeping postgres-version driving the matrix
@@ -183,7 +183,7 @@ jobs:
         django-version:
           - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
-          - "dj60" # April 2027
+          - "dj61" # April 2027
         exclude:
           - python-version: "3.12"
             django-version: "dj42"
@@ -196,9 +196,9 @@ jobs:
             django-version: "dj52"
 
           - python-version: "3.10"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.12"
-            django-version: "dj60"
+            django-version: "dj61"
 
     steps:
       - name: Clear Tool cache
@@ -257,12 +257,12 @@ jobs:
         django-version:
           - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
-          - "dj60" # April 2027
+          - "dj61" # April 2027
         exclude:
           - django-version: "dj42"
             mysql-version: "latest"
 
-          - django-version: "dj60"
+          - django-version: "dj61"
             mysql-version: "8.0"
 
           - mysql-version: "latest"
@@ -281,9 +281,9 @@ jobs:
             mysqlclient-version: "mysqlclient14"
 
           - python-version: "3.10"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.12"
-            django-version: "dj60"
+            django-version: "dj61"
 
         # pin each image to its digest (satisfies zizmor unpinned-images)
         # while keeping mysql-version driving the matrix
@@ -387,14 +387,14 @@ jobs:
         django-version:
           - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
-          - "dj60" # April 2027
+          - "dj61" # April 2027
         exclude:
           - django-version: "dj42"
             mariadb-version: "latest"
 
           - django-version: "dj52"
             mariadb-version: "10.4"
-          - django-version: "dj60"
+          - django-version: "dj61"
             mariadb-version: "10.4"
 
           - mariadb-version: "latest"
@@ -413,9 +413,9 @@ jobs:
             mysqlclient-version: "mysqlclient14"
 
           - python-version: "3.10"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.12"
-            django-version: "dj60"
+            django-version: "dj61"
 
           - mariadb-version: "10.4"
             mysqlclient-version: "mysqlclient2x"
@@ -515,7 +515,7 @@ jobs:
         django-version:
           - "dj42" # LTS April 2026
           - "dj52" # LTS April 2028
-          - "dj60" # April 2027
+          - "dj61" # April 2027
         oracle-version:
           - "oracle-xe:21"
           - "oracle-free:latest"
@@ -531,15 +531,15 @@ jobs:
             django-version: "dj52"
 
           - python-version: "3.10"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.12"
-            django-version: "dj60"
+            django-version: "dj61"
 
           - django-version: "dj42"
             oracle-version: "oracle-free:latest"
           - django-version: "dj52"
             oracle-version: "oracle-xe:21"
-          - django-version: "dj60"
+          - django-version: "dj61"
             oracle-version: "oracle-xe:21"
 
         # pin each image to its digest (satisfies zizmor unpinned-images)
@@ -654,7 +654,7 @@ jobs:
         django-version:
           - "dj42" # LTS April 2026
           - "dj52" # LTS April 2028
-          - "dj60" # April 2027
+          - "dj61" # April 2027
         exclude:
           - python-version: "3.12"
             django-version: "dj42"
@@ -667,9 +667,9 @@ jobs:
             django-version: "dj52"
 
           - python-version: "3.10"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.12"
-            django-version: "dj60"
+            django-version: "dj61"
 
     steps:
       - name: Clear Tool cache
@@ -732,7 +732,7 @@ jobs:
         django-version:
           - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
-          - "dj60" # April 2027
+          - "dj61" # April 2027
         exclude:
           - python-version: "3.12"
             django-version: "dj42"
@@ -745,9 +745,9 @@ jobs:
             django-version: "dj52"
 
           - python-version: "3.10"
-            django-version: "dj60"
+            django-version: "dj61"
           - python-version: "3.12"
-            django-version: "dj60"
+            django-version: "dj61"
 
     steps:
       - name: Clear Tool cache
