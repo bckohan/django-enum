@@ -54,7 +54,6 @@ conflicts = [
   [
     { group = "dj42" },
     { group = "dj52" },
-    { group = "dj60" },
     { group = "dj61" },
   ],
   [
@@ -296,3 +295,6 @@ target-version = "py310"
 
 [tool.ruff.lint]
 exclude = ["tests/**/*"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/django_enum/fields.pyi" = ["PYI001"]
