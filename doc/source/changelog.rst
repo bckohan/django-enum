@@ -8,7 +8,7 @@ v2.5.0 (2026-07-31)
 ===================
 
 * Support for Django 6.1
-* Fixed `Fix has_any, has_all lookups to remove incorrect 0 case, switch > to <>.
+* Merged `Fix has_any, has_all lookups to remove incorrect 0 case, switch > to <>.
   <https://github.com/django-commons/django-enum/pull/205>`_.
 
 v2.4.3 (2026-05-31)
