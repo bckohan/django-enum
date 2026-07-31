@@ -17,7 +17,7 @@ MapBox Styles
 -------------
 
 `MapBox <https://mapbox.com>`_ is a leading web mapping platform. It comes with a handful of default
-`map styles <https://docs.mapbox.com/api/maps/styles/#classic-mapbox-styles>`_. An enumeration is a
+`map styles <https://docs.mapbox.com/map-styles/reference/#classic-styles>`_. An enumeration is a
 natural choice to represent these styles but the styles are complicated by versioning and are
 identified by different properties depending on context. When used as a parameter in the MapBox API
 they are in URI format, but in our interface we would prefer a more human friendly label, and in
