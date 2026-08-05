@@ -70,13 +70,6 @@ conflicts = [
   ]
 ]
 
-[tool.uv.sources]
-# DRF's latest release (3.17.1) is incompatible with Django 6.1 (it imports the
-# removed django.utils.cache.cc_delim_re) - use master until a fixed release ships
-djangorestframework = [
-    { git = "https://github.com/encode/django-rest-framework", group = "dj61" },
-]
-
 
 [tool.hatch.build.targets.sdist]
 # todo - these artifacts should be moved into tests
@@ -191,7 +184,6 @@ dj52 = [
 ]
 dj61 = [
     "Django>=6.1rc1,<6.2; python_version >= '3.12'",
-    "djangorestframework; python_version >= '3.12'",
 ]
 mysqlclient14 = [
     "mysqlclient==1.4.3",
