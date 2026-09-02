@@ -48,46 +48,35 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
-        postgres-version: ["12", "latest"]
+        python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
+        postgres-version: ["14", "latest"]
         psycopg-version: ["psycopg2", "psycopg3"]
         django-version:
-          - "dj42" # LTS April 2026
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         exclude:
-          - django-version: "dj42"
-            postgres-version: "latest"
-          - python-version: "3.13"
-            django-version: "dj42"
-          - python-version: "3.14"
-            django-version: "dj42"
-          - postgres-version: "12"
-            psycopg-version: "psycopg3"
-
-          - postgres-version: "12"
-            django-version: "dj52"
-
-          # https://github.com/psycopg/psycopg2/pull/1695
-          - python-version: "3.13"
-            psycopg-version: "psycopg2"
-
-          # https://github.com/psycopg/psycopg2/pull/1695
-          - python-version: "3.14"
-            psycopg-version: "psycopg2"
-
-          - postgres-version: "12"
-            django-version: "dj61"
-          - python-version: "3.10"
-            django-version: "dj61"
           - python-version: "3.11"
             django-version: "dj61"
+          - python-version: "3.15"
+            django-version: "dj52"
+
+          - postgres-version: "14"
+            django-version: "dj61"
+
+          - postgres-version: "latest"
+            psycopg-version: "psycopg2"
+
+          # https://github.com/psycopg/psycopg2/pull/1695
+          - python-version: "3.13"
+            psycopg-version: "psycopg2"
+          - python-version: "3.14"
+            psycopg-version: "psycopg2"
 
         # pin each image to its digest (satisfies zizmor unpinned-images)
         # while keeping postgres-version driving the matrix
         include:
-          - postgres-version: "12"
-            postgres-image: "postgres:12@sha256:2f2a8c2a7d10862e7fba2602e304523554f9df8244c632dafe2628ccb398fb5c"
+          - postgres-version: "14"
+            postgres-image: "postgres:14@sha256:bbb8851608e3ff4901156bf6a4bf90735a9d44ae014c03811bfdb2f9c354b18b"
           - postgres-version: "latest"
             postgres-image: "postgres:latest@sha256:8ff36f3c66371cba71d20ceedccfc3de9669a68737607888c4ef0af93abe8e39"
 
@@ -181,26 +170,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12", "3.14"]
+        python-version: ["3.11", "3.15"]
         django-version:
-          - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         exclude:
-          - python-version: "3.12"
-            django-version: "dj42"
-          - python-version: "3.14"
-            django-version: "dj42"
-
-          - python-version: "3.10"
-            django-version: "dj52"
-          - python-version: "3.14"
-            django-version: "dj52"
-
-          - python-version: "3.10"
+          - python-version: "3.11"
             django-version: "dj61"
-          - python-version: "3.12"
-            django-version: "dj61"
+          - python-version: "3.15"
+            django-version: "dj52"
 
     steps:
       - name: Clear Tool cache
@@ -255,39 +233,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12", "3.14"]
+        python-version: ["3.11", "3.15"]
         mysql-version: ["8.0", "latest"]
         mysqlclient-version: ["mysqlclient14", "mysqlclient2x"]
         django-version:
-          - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         exclude:
-          - django-version: "dj42"
-            mysql-version: "latest"
-
-          - django-version: "dj61"
-            mysql-version: "8.0"
+          - python-version: "3.11"
+            django-version: "dj61"
+          - python-version: "3.15"
+            django-version: "dj52"
 
           - mysql-version: "latest"
             mysqlclient-version: "mysqlclient14"
+          - mysql-version: "8.0"
+            mysqlclient-version: "mysqlclient2x"
 
-          - python-version: "3.12"
-            django-version: "dj42"
-          - python-version: "3.14"
-            django-version: "dj42"
-
-          - python-version: "3.10"
-            django-version: "dj52"
-          - python-version: "3.14"
-            django-version: "dj52"
-          - django-version: "dj52"
-            mysqlclient-version: "mysqlclient14"
-
-          - python-version: "3.10"
+          - mysql-version: "8.0"
             django-version: "dj61"
-          - python-version: "3.12"
-            django-version: "dj61"
+          - mysql-version: "latest"
+            django-version: "dj52"
 
         # pin each image to its digest (satisfies zizmor unpinned-images)
         # while keeping mysql-version driving the matrix
@@ -385,57 +351,40 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12", "3.14"]
+        python-version: ["3.11", "3.15"]
         mysqlclient-version: ["mysqlclient14", "mysqlclient2x"]
-        mariadb-version: ["10.4", "latest"]
+        mariadb-version: ["10.5", "latest"]
         mariadb-healthcheck:
           ["mysqladmin ping", "healthcheck.sh --connect --innodb_initialized"]
         django-version:
-          - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         exclude:
-          - django-version: "dj42"
-            mariadb-version: "latest"
+          - python-version: "3.11"
+            django-version: "dj61"
+          - python-version: "3.15"
+            django-version: "dj52"
 
           - django-version: "dj52"
-            mariadb-version: "10.4"
+            mariadb-version: "latest"
           - django-version: "dj61"
-            mariadb-version: "10.4"
+            mariadb-version: "10.5"
 
           - mariadb-version: "latest"
             mysqlclient-version: "mysqlclient14"
-
-          - python-version: "3.12"
-            django-version: "dj42"
-          - python-version: "3.14"
-            django-version: "dj42"
-
-          - python-version: "3.10"
-            django-version: "dj52"
-          - python-version: "3.14"
-            django-version: "dj52"
-          - django-version: "dj52"
-            mysqlclient-version: "mysqlclient14"
-
-          - python-version: "3.10"
-            django-version: "dj61"
-          - python-version: "3.12"
-            django-version: "dj61"
-
-          - mariadb-version: "10.4"
+          - mariadb-version: "10.5"
             mysqlclient-version: "mysqlclient2x"
 
           - mariadb-version: "latest"
             mariadb-healthcheck: "mysqladmin ping"
-          - mariadb-version: "10.4"
+          - mariadb-version: "10.5"
             mariadb-healthcheck: "healthcheck.sh --connect --innodb_initialized"
 
         # pin each image to its digest (satisfies zizmor unpinned-images)
         # while keeping mariadb-version driving the matrix
         include:
-          - mariadb-version: "10.4"
-            mariadb-image: "mariadb:10.4@sha256:22edfe1c78349f8cae88bbb5c2873b7e6c515be767c91c691308ce57445806f3"
+          - mariadb-version: "10.5"
+            mariadb-image: "mariadb:10.5@sha256:a530aeeefd82f4fa5150f391b6c75462140904780338766f6b03acecb1cca3ce"
           - mariadb-version: "latest"
             mariadb-image: "mariadb:latest@sha256:6a4c4bbf0447c2247801309513fcc0dd17c3f35390368139ce419387fdd1144d"
 
@@ -519,34 +468,21 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12", "3.14"]
+        python-version: ["3.11", "3.15"]
         django-version:
-          - "dj42" # LTS April 2026
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         oracle-version:
           - "oracle-xe:21"
           - "oracle-free:latest"
         exclude:
-          - python-version: "3.12"
-            django-version: "dj42"
-          - python-version: "3.14"
-            django-version: "dj42"
-
-          - python-version: "3.10"
-            django-version: "dj52"
-          - python-version: "3.14"
+          - python-version: "3.11"
+            django-version: "dj61"
+          - python-version: "3.15"
             django-version: "dj52"
 
-          - python-version: "3.10"
-            django-version: "dj61"
-          - python-version: "3.12"
-            django-version: "dj61"
-
-          - django-version: "dj42"
-            oracle-version: "oracle-free:latest"
           - django-version: "dj52"
-            oracle-version: "oracle-xe:21"
+            oracle-version: "oracle-free:latest"
           - django-version: "dj61"
             oracle-version: "oracle-xe:21"
 
@@ -581,7 +517,7 @@ jobs:
         run: |
           ORACLE_TAG=$(echo "$TEST_DATABASE_VERSION" | cut -d':' -f2)
           echo "COVERAGE_FILE=linux-py${TEST_PYTHON_VERSION}-${TEST_DJANGO_VERSION}-oracle${ORACLE_TAG}.coverage" >> $GITHUB_ENV
-          if [[ "$TEST_DJANGO_VERSION" == "dj42" ]]; then
+          if [[ "$TEST_DATABASE_VERSION" == oracle-xe* ]]; then
             echo "ORACLE_DATABASE=XEPDB1" >> $GITHUB_ENV
           else
             echo "ORACLE_DATABASE=FREEPDB1" >> $GITHUB_ENV
@@ -616,7 +552,7 @@ jobs:
         run: |
           sudo apt install alien libaio1t64
           sudo ln -s /usr/lib/x86_64-linux-gnu/libaio.so.1t64 /usr/lib/x86_64-linux-gnu/libaio.so.1
-          if [[ "$TEST_DJANGO_VERSION" == "dj42" ]]; then
+          if [[ "$TEST_DATABASE_VERSION" == oracle-xe* ]]; then
             curl --output oracle-client.rpm https://download.oracle.com/otn_software/linux/instantclient/2116000/oracle-instantclient-basiclite-21.16.0.0.0-1.el8.x86_64.rpm
             sudo alien -i oracle-client.rpm
             sudo sh -c "echo /usr/lib/oracle/21/client64/lib/ > /etc/ld.so.conf.d/oracle.conf"
@@ -630,11 +566,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          if [[ "$TEST_DJANGO_VERSION" == "dj42" ]]; then
-            just test-all --group cx_oracle -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
-          else
-            just test-all --group oracledb -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
-          fi
+          just test-all --group oracledb -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -660,26 +592,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12", "3.14"]
+        python-version: ["3.11", "3.15"]
         django-version:
-          - "dj42" # LTS April 2026
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         exclude:
-          - python-version: "3.12"
-            django-version: "dj42"
-          - python-version: "3.14"
-            django-version: "dj42"
-
-          - python-version: "3.10"
-            django-version: "dj52"
-          - python-version: "3.14"
-            django-version: "dj52"
-
-          - python-version: "3.10"
+          - python-version: "3.11"
             django-version: "dj61"
-          - python-version: "3.12"
-            django-version: "dj61"
+          - python-version: "3.15"
+            django-version: "dj52"
 
     steps:
       - name: Clear Tool cache
@@ -740,26 +661,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.12", "3.14"]
+        python-version: ["3.11", "3.15"]
         django-version:
-          - "dj42" # LTS April 2024
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         exclude:
-          - python-version: "3.12"
-            django-version: "dj42"
-          - python-version: "3.14"
-            django-version: "dj42"
-
-          - python-version: "3.10"
-            django-version: "dj52"
-          - python-version: "3.14"
-            django-version: "dj52"
-
-          - python-version: "3.10"
+          - python-version: "3.11"
             django-version: "dj61"
-          - python-version: "3.12"
-            django-version: "dj61"
+          - python-version: "3.15"
+            django-version: "dj52"
 
     steps:
       - name: Clear Tool cache

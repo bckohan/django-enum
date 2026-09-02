@@ -4,11 +4,10 @@ Support for Django model fields built from enumeration types.
 
 from __future__ import annotations
 
-import sys
 from collections.abc import Sequence
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal, DecimalException
-from enum import Enum, Flag, IntFlag
+from enum import CONFORM, EJECT, STRICT, Enum, Flag, IntFlag
 from functools import reduce
 from operator import or_
 from typing import Any, ClassVar, Generic, TypeVar, cast, overload
@@ -69,15 +68,6 @@ class _DatabaseDefault:
 
 
 DatabaseDefault = getattr(expressions, "DatabaseDefault", _DatabaseDefault)
-
-CONFORM: Enum | type[NOT_PROVIDED]
-EJECT: Enum | type[NOT_PROVIDED]
-STRICT: Enum | type[NOT_PROVIDED]
-
-if sys.version_info >= (3, 11):
-    from enum import CONFORM, EJECT, STRICT
-else:
-    CONFORM = EJECT = STRICT = NOT_PROVIDED
 
 
 MAX_CONSTRAINT_NAME_LENGTH = 64

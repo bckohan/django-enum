@@ -2,7 +2,7 @@
 name = "django-enum"
 version = "2.5.0"
 description = "Full and natural support for enumerations as Django model fields."
-requires-python = ">=3.10,<4.0"
+requires-python = ">=3.11,<4.0"
 authors = [
   {name = "Brian Kohan", email = "bckohan@gmail.com"},
 ]
@@ -24,7 +24,6 @@ classifiers = [
     "Operating System :: OS Independent",
     "Topic :: Software Development :: Libraries :: Python Modules",
     "Development Status :: 5 - Production/Stable",
-    "Framework :: Django :: 4.2",
     "Framework :: Django :: 5.2",
     "Framework :: Django :: 6.0",
     "Framework :: Django :: 6.1",
@@ -32,11 +31,11 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Natural Language :: English",
     "Programming Language :: Python",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
     "Topic :: Internet :: WWW/HTTP",
     "Topic :: Internet :: WWW/HTTP :: Site Management",
     "Topic :: Software Development :: Libraries",
@@ -52,7 +51,6 @@ build-backend = "hatchling.build"
 package = true
 conflicts = [
   [
-    { group = "dj42" },
     { group = "dj52" },
     { group = "dj61" },
   ],
@@ -63,10 +61,6 @@ conflicts = [
   [
     { group = "psycopg2" },
     { group = "psycopg3" },
-  ],
-  [
-    { group = "cx_oracle" },
-    { group = "oracledb" },
   ]
 ]
 
@@ -176,9 +170,6 @@ dev = [
 ]
 
 # for CI and testing
-dj42 = [
-    "Django>=4.2,<5.0; python_version < '3.13'",
-]
 dj52 = [
     "Django>=5.2,<6.0"
 ]
@@ -196,9 +187,6 @@ psycopg3 = [
 ]
 mysqlclient2x = [
     "mysqlclient>=2.2.8",
-]
-cx_oracle = [
-    "cx-oracle>=8.3.0",
 ]
 oracledb = [
     "oracledb>=2.3.0",
@@ -221,7 +209,7 @@ django_settings_module = "tests.settings"
 
 
 [tool.pyright]
-pythonVersion = "3.10"
+pythonVersion = "3.11"
 typeCheckingMode = "basic"
 include = ["src/django_enum", "tests/examples/**"]
 reportMissingImports = true
@@ -291,7 +279,7 @@ exclude = [
     "examples",
     "plot_benchmarks.py"
 ]
-target-version = "py310"
+target-version = "py311"
 
 [tool.ruff.lint]
 exclude = ["tests/**/*"]
