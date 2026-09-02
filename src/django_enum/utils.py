@@ -1,6 +1,5 @@
 """Utility routines for django_enum."""
 
-import sys
 from collections.abc import Generator
 from datetime import date, datetime, time, timedelta
 from decimal import Decimal
@@ -318,8 +317,5 @@ def members(enum: type[E], aliases: bool = True) -> Generator[E, None, None]:
                 value = en.value
                 if value < 0 or is_power_of_two(value):
                     yield en  # type: ignore[misc]
-        elif sys.version_info[:2] >= (3, 11):
-            yield from enum  # type: ignore[misc]
         else:
-            for name in enum._member_names_:
-                yield enum[name]  # type: ignore[misc]
+            yield from enum  # type: ignore[misc]
