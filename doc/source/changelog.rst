@@ -4,6 +4,14 @@
 Change Log
 ==========
 
+v3.0.0 (2026-XX-XX)
+===================
+
+* Support Python 3.15
+* Drop support for Python 3.11
+* Drop support for Django 4.2
+
+
 v2.5.0 (2026-07-31)
 ===================
 
