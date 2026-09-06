@@ -41,8 +41,6 @@ jobs:
             django-version: "dj61"
           - python-version: "3.15"
             django-version: "dj52"
-          - python-version: "3.12"
-            django-version: "dj61"
 
     env:
       RDBMS: sqlite

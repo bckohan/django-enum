@@ -51,10 +51,23 @@ jobs:
         python-version: ["3.11", "3.12", "3.13", "3.14", "3.15"]
         postgres-version: ["14", "latest"]
         psycopg-version: ["psycopg2", "psycopg3"]
+        dependency-resolution: ["lowest-direct", "highest"]
         django-version:
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
         exclude:
+
+          - python-version: "3.11"
+            dependency-resolution: "highest"
+          - python-version: "3.12"
+            dependency-resolution: "lowest-direct"
+          - python-version: "3.13"
+            dependency-resolution: "lowest-direct"
+          - python-version: "3.14"
+            dependency-resolution: "lowest-direct"
+          - python-version: "3.15"
+            dependency-resolution: "lowest-direct"
+
           - python-version: "3.11"
             django-version: "dj61"
           - python-version: "3.15"
@@ -91,6 +104,7 @@ jobs:
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_CLIENT_VERSION: ${{ matrix.psycopg-version }}
       TEST_DATABASE_VERSION: ${{ matrix.postgres-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependency-resolution }}
 
     # Service containers to run with `runner-job`
     services:
@@ -144,7 +158,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -167,10 +181,12 @@ jobs:
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependency-resolution }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.11", "3.15"]
+        dependency-resolution: ["lowest-direct", "highest"]
         django-version:
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
@@ -179,6 +195,11 @@ jobs:
             django-version: "dj61"
           - python-version: "3.15"
             django-version: "dj52"
+
+          - python-version: "3.11"
+            dependency-resolution: "highest"
+          - python-version: "3.15"
+            dependency-resolution: "lowest-direct"
 
     steps:
       - name: Clear Tool cache
@@ -213,7 +234,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -236,6 +257,7 @@ jobs:
         python-version: ["3.11", "3.15"]
         mysql-version: ["8.0", "latest"]
         mysqlclient-version: ["mysqlclient14", "mysqlclient2x"]
+        dependency-resolution: ["lowest-direct", "highest"]
         django-version:
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
@@ -244,6 +266,11 @@ jobs:
             django-version: "dj61"
           - python-version: "3.15"
             django-version: "dj52"
+
+          - python-version: "3.11"
+            dependency-resolution: "highest"
+          - python-version: "3.15"
+            dependency-resolution: "lowest-direct"
 
           - mysql-version: "latest"
             mysqlclient-version: "mysqlclient14"
@@ -271,6 +298,7 @@ jobs:
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
       TEST_DATABASE_VERSION: ${{ matrix.mysql-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependency-resolution }}
 
     services:
       mysql:
@@ -323,7 +351,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -347,6 +375,7 @@ jobs:
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_CLIENT_VERSION: ${{ matrix.mysqlclient-version }}
       TEST_DATABASE_VERSION: ${{ matrix.mariadb-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependency-resolution }}
 
     strategy:
       fail-fast: false
@@ -359,11 +388,17 @@ jobs:
         django-version:
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
+        dependency-resolution: ["lowest-direct", "highest"]
         exclude:
           - python-version: "3.11"
             django-version: "dj61"
           - python-version: "3.15"
             django-version: "dj52"
+
+          - python-version: "3.11"
+            dependency-resolution: "highest"
+          - python-version: "3.15"
+            dependency-resolution: "lowest-direct"
 
           - django-version: "dj52"
             mariadb-version: "latest"
@@ -439,7 +474,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all --group "$TEST_DATABASE_CLIENT_VERSION" -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -461,6 +496,7 @@ jobs:
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: ${{ matrix.oracle-version }}
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependency-resolution }}
       # oracle bug is encountered in Linux CI - does not manifest using same
       # oracle DB containers on OSX
       IGNORE_ORA_01843: True
@@ -472,6 +508,7 @@ jobs:
         django-version:
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
+        dependency-resolution: ["lowest-direct", "highest"]
         oracle-version:
           - "oracle-xe:21"
           - "oracle-free:latest"
@@ -480,6 +517,11 @@ jobs:
             django-version: "dj61"
           - python-version: "3.15"
             django-version: "dj52"
+
+          - python-version: "3.11"
+            dependency-resolution: "highest"
+          - python-version: "3.15"
+            dependency-resolution: "lowest-direct"
 
           - django-version: "dj52"
             oracle-version: "oracle-free:latest"
@@ -566,7 +608,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all --group oracledb -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all --group oracledb -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -589,6 +631,7 @@ jobs:
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependency-resolution }}
     strategy:
       fail-fast: false
       matrix:
@@ -596,11 +639,17 @@ jobs:
         django-version:
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
+        dependency-resolution: ["lowest-direct", "highest"]
         exclude:
           - python-version: "3.11"
             django-version: "dj61"
           - python-version: "3.15"
             django-version: "dj52"
+          
+          - python-version: "3.11"
+            dependency-resolution: "highest"
+          - python-version: "3.15"
+            dependency-resolution: "lowest-direct"
 
     steps:
       - name: Clear Tool cache
@@ -634,7 +683,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION"
+          just test-all -p "$env:TEST_PYTHON" --group "$env:TEST_DJANGO_VERSION" --resolution "$env:DEPENDENCY_RESOLUTION"
         shell: pwsh
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
@@ -658,10 +707,12 @@ jobs:
       TEST_PYTHON_VERSION: ${{ matrix.python-version }}
       TEST_DJANGO_VERSION: ${{ matrix.django-version }}
       TEST_DATABASE_VERSION: "sqlite"
+      DEPENDENCY_RESOLUTION: ${{ matrix.dependency-resolution }}
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.11", "3.15"]
+        dependency-resolution: ["lowest-direct", "highest"]
         django-version:
           - "dj52" # LTS April 2028
           - "dj61" # April 2027
@@ -670,6 +721,10 @@ jobs:
             django-version: "dj61"
           - python-version: "3.15"
             django-version: "dj52"
+          - python-version: "3.11"
+            dependency-resolution: "highest"
+          - python-version: "3.15"
+            dependency-resolution: "lowest-direct"
 
     steps:
       - name: Clear Tool cache
@@ -704,7 +759,7 @@ jobs:
         env:
           TEST_PYTHON: ${{ steps.sp.outputs.python-path }}
         run: |
-          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION"
+          just test-all -p "$TEST_PYTHON" --group "$TEST_DJANGO_VERSION" --resolution "$DEPENDENCY_RESOLUTION"
       - name: Store coverage files
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -749,6 +804,16 @@ jobs:
           merge-multiple: true
       - run: ls -la *.coverage
       - run: just coverage
+
+      - name: Store merged coverage
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: coverage-merged
+          path: |
+            .coverage
+            coverage.xml
+          include-hidden-files: true
+          if-no-files-found: error
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f
