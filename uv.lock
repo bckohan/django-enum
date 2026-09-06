@@ -1019,7 +1019,7 @@ mysqlclient14 = [{ name = "mysqlclient", specifier = "==1.4.3" }]
 mysqlclient2x = [{ name = "mysqlclient", specifier = ">=2.2.8" }]
 oracledb = [{ name = "oracledb", specifier = ">=2.3.0" }]
 psycopg2 = [{ name = "psycopg2", specifier = ">=2.9.10" }]
-psycopg3 = [{ name = "psycopg" }]
+psycopg3 = [{ name = "psycopg", specifier = ">=3.1.8" }]
 test = [
     { name = "beautifulsoup4", specifier = ">=4.13.3" },
     { name = "coverage", specifier = ">=7.6.1" },
