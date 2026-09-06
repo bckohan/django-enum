@@ -64,6 +64,10 @@ conflicts = [
   ]
 ]
 
+[[tool.uv.dependency-metadata]]
+name = "mysqlclient"
+version = "1.4.3"
+requires-dist = []
 
 [tool.hatch.build.targets.sdist]
 # todo - these artifacts should be moved into tests
