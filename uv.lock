@@ -789,10 +789,10 @@ name = "django"
 version = "5.2.17"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
-    "python_full_version < '3.12'",
     "python_full_version >= '3.15'",
     "python_full_version >= '3.13' and python_full_version < '3.15'",
     "python_full_version == '3.12.*'",
+    "python_full_version < '3.12'",
 ]
 dependencies = [
     { name = "asgiref", marker = "python_full_version < '3.12' or extra == 'group-11-django-enum-dj52' or (extra == 'group-11-django-enum-mysqlclient14' and extra == 'group-11-django-enum-mysqlclient2x') or (extra == 'group-11-django-enum-psycopg2' and extra == 'group-11-django-enum-psycopg3')" },
@@ -825,7 +825,7 @@ wheels = [
 
 [[package]]
 name = "django-enum"
-version = "2.5.0"
+version = "3.0.0"
 source = { editable = "." }
 dependencies = [
     { name = "django", version = "5.2.17", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12' or extra == 'group-11-django-enum-dj52' or (extra == 'group-11-django-enum-mysqlclient14' and extra == 'group-11-django-enum-mysqlclient2x') or (extra == 'group-11-django-enum-psycopg2' and extra == 'group-11-django-enum-psycopg3')" },
@@ -948,7 +948,7 @@ typing = [
 
 [package.metadata]
 requires-dist = [
-    { name = "django", specifier = ">=4.2,<6.2" },
+    { name = "django", specifier = ">=5.2,<6.2" },
     { name = "django-filter", marker = "extra == 'filters'", specifier = ">=21" },
     { name = "djangorestframework", marker = "extra == 'rest'", specifier = ">=3.14,<4.0" },
     { name = "enum-properties", marker = "extra == 'properties'", specifier = ">=2.7.0" },
@@ -997,7 +997,7 @@ dev = [
     { name = "types-django-filter", specifier = ">=25.2.0.20251228" },
 ]
 dj52 = [{ name = "django", specifier = ">=5.2,<6.0" }]
-dj61 = [{ name = "django", marker = "python_full_version >= '3.12'", specifier = ">=6.1rc1,<6.2" }]
+dj61 = [{ name = "django", marker = "python_full_version >= '3.12'", specifier = ">=6.1,<6.2" }]
 docs = [
     { name = "doc8", specifier = ">=1.1.2" },
     { name = "docutils", specifier = ">=0.21.2" },
