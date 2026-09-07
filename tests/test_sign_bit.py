@@ -52,6 +52,41 @@ class FieldResolutionTests(SimpleTestCase):
             self.assertEqual(field.bit_length, bits)
             self.assertEqual(field.db_bit_length, db_bits)
 
+    def test_non_flag_resolution(self):
+        """
+        Non-flag integer enumerations are unaffected: positive values still
+        get positive columns, bit_length still overrides the width, and
+        values that do not fit a bigint get the binary field.
+        """
+        from enum import IntEnum
+
+        from django_enum.fields import (
+            EnumExtraBigIntegerField,
+            EnumPositiveIntegerField,
+            EnumPositiveSmallIntegerField,
+        )
+
+        class Small(IntEnum):
+            ONE = 1
+            TWO = 2
+
+        class Huge(IntEnum):
+            ONE = 1
+            BIG = 1 << 64
+
+        self.assertIsInstance(EnumField(Small), EnumPositiveSmallIntegerField)
+        self.assertEqual(EnumField(Small).bit_length, 2)
+        # positive columns cannot use their sign bit, so 31 bits is the most
+        # a 32 bit positive column holds
+        wide = EnumField(Small, bit_length=31)
+        self.assertIsInstance(wide, EnumPositiveIntegerField)
+        self.assertEqual(wide.bit_length, 31)
+        with self.assertRaises(AssertionError):
+            EnumField(Huge, bit_length=32)
+        huge = EnumField(Huge)
+        self.assertIsInstance(huge, EnumExtraBigIntegerField)
+        self.assertEqual(huge.bit_length, 65)
+
     def test_bit_length_override_widens(self):
         field = EnumField(flags_of(16), bit_length=32)
         self.assertIsInstance(field, IntegerFlagField)
@@ -118,6 +153,16 @@ class FieldResolutionTests(SimpleTestCase):
             self.assertIs(field.to_python(-top), enum.FIVE)
             self.assertEqual(field.get_prep_value(-top), -top)
             self.assertEqual(field.get_prep_value(-top + enum.ONE), -top + enum.ONE)
+
+            # negatives outside the column are not two's complement values
+            self.assertEqual(field._to_unsigned(-top - 1), -top - 1)
+            self.assertEqual(field._to_unsigned(-1), (1 << bits) - 1)
+
+        # binary columns have no width and no conversion
+        extra_big = EnumFlagTester._meta.get_field("extra_big_pos")
+        self.assertIsNone(extra_big.db_bit_length)
+        self.assertEqual(extra_big._to_unsigned(-1), -1)
+        self.assertEqual(extra_big._to_signed(1 << 70), 1 << 70)
 
 
 class StorageTests(TestCase):
